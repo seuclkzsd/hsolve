@@ -147,7 +147,11 @@ def summarize(raws: list[Path]) -> list[dict[str, Any]]:
             "peak_rss_gib": max((r.get("peak_rss_gib") or 0) for r in runs),
             "memory_mode": "/".join(sorted(ooc)) or "-",
             "certificate": first.get("certificate"),
-            "certified": bool(ok) and len(ok) == len(runs) and all(r.get("certificate_passed") for r in ok)})
+            # passed: every run succeeded with a passed certificate; none: no run performed one
+            # (e.g. B indefinite); failed: anything else
+            "certified": ("none" if all(r.get("certificate_passed") is None for r in runs) else
+                          "passed" if len(ok) == len(runs) and all(r.get("certificate_passed") for r in ok)
+                          else "failed")})
     family = {"yee": 0, "wg-": 1}
     rows.sort(key=lambda r: (family.get(r["case"][:3], 2), r["n"] or 0, -r["mem_gb"], -r["threads"]))
     return rows
@@ -159,7 +163,7 @@ def table(a: argparse.Namespace) -> int:
     lines = ["| case | n | problem | pairs | threads | RAM cap GiB | solve s [min-max] | wall s | peak RSS GiB | "
              "memory | certificate | runs ok |", "|---|---:|---|---:|---:|---:|---|---:|---:|---|---|---|"]
     for r in rows:
-        cert = f"{r['certificate']} {'passed' if r['certified'] else 'NOT passed'}" if r["certificate"] else "-"
+        cert = {"none": "-", "passed": f"{r['certificate']} passed"}.get(r["certified"], f"{r['certificate']} NOT passed")
         lines.append(f"| {r['case']} | {r['n']} | {r['problem']} | {r['pairs']} | {r['threads']} | {r['mem_gb']:g} | "
                      f"{f(r['time_median_s'])} [{f(r['time_min_s'])}-{f(r['time_max_s'])}] | {f(r['wall_median_s'])} | "
                      f"{f(r['peak_rss_gib'])} | {r['memory_mode']} | {cert} | {r['ok']}/{r['reps']} |")
@@ -193,7 +197,9 @@ def summary(rows: list[dict[str, Any]]) -> str:
     for r in rows:
         if r["mem_gb"] == full:
             by_case.setdefault(r["case"], {})[r["threads"]] = r
-    out = ["| 问题 | n | 非零元 | 峰值内存 | 求解时间，16 线程 | 求解时间，4 线程 |", "|---|---:|---:|---:|---:|---:|"]
+    out = ["| 问题 | n | 非零元 | 峰值内存 | 求解时间，16 线程 | 求解时间，4 线程 | 惯性证书 |",
+           "|---|---:|---:|---:|---:|---:|---|"]
+    cert_zh = {"passed": "通过", "none": "不适用（B 不定）"}
     for case, per in by_case.items():
         any_r = next(iter(per.values()))
         fam = case.rsplit("-", 1)[0]
@@ -201,7 +207,8 @@ def summary(rows: list[dict[str, Any]]) -> str:
         ok = all(r["ok"] == r["reps"] for r in per.values())
         out.append(f"| {label}（`{case}`）{'' if ok else '（有失败的运行）'} | {any_r['n']:,} | {any_r['nnz']:,} | "
                    f"{fmt_m(max(r['peak_rss_gib'] for r in per.values()))} | "
-                   f"{fmt_t((per.get(16) or {}).get('time_median_s'))} | {fmt_t((per.get(4) or {}).get('time_median_s'))} |")
+                   f"{fmt_t((per.get(16) or {}).get('time_median_s'))} | {fmt_t((per.get(4) or {}).get('time_median_s'))} | "
+                   f"{cert_zh.get(any_r['certified'], '未通过')} |")
     capped = [r for r in rows if r["mem_gb"] < full]
     if capped:
         out += ["", "| 问题 | 内存上限 | 线程 | 分解方式 | 峰值内存 | 求解时间 |", "|---|---:|---:|---|---:|---:|"]
