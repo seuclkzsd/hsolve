@@ -1,0 +1,192 @@
+{
+ "schema_version": 1,
+ "note": "written by tools/showcase/campaign.py tune",
+ "tunings": {
+  "multiplet-cube": {
+   "scenario": "multiplet-cube",
+   "case": "yee-pec-cube-32",
+   "mode": "nearest",
+   "target": {
+    "mode": "nearest",
+    "sigma": 478.3019632647284,
+    "k": 21
+   },
+   "cores": 16,
+   "host": "c005",
+   "date": "2026-10-23T01:39:41",
+   "tag": "showcase-tune",
+   "trials": 35,
+   "valid_trials": 0,
+   "configurations": 30,
+   "default_valid": false,
+   "default_median_s": 4.5152695,
+   "best": null,
+   "best_median_s": null,
+   "flaky": false,
+   "invalid_reasons": [
+    "1 of 21 pairs have backward error > tol=1e-10; completeness incomplete: 6 missing, boundary deficit 0, 21 distinct returned",
+    "1 of 21 pairs have backward error > tol=1e-10; completeness incomplete: 7 missing, boundary deficit 0, 21 distinct returned",
+    "11 of 21 pairs have backward error > tol=1e-10; completeness incomplete: 7 missing, boundary deficit 0, 21 distinct returned",
+    "13 of 21 pairs have backward error > tol=1e-10; completeness incomplete: 5 missing, boundary deficit 0, 21 distinct returned",
+    "2 of 21 pairs have backward error > tol=1e-10; completeness incomplete: 6 missing, boundary deficit 0, 21 distinct returned",
+    "3 of 21 pairs have backward error > tol=1e-10; completeness incomplete: 7 missing, boundary deficit 0, 21 distinct returned",
+    "4 of 21 pairs have backward error > tol=1e-10; completeness incomplete: 7 missing, boundary deficit 0, 21 distinct returned",
+    "5 of 21 pairs have backward error > tol=1e-10; completeness incomplete: 7 missing, boundary deficit 0, 21 distinct returned"
+   ]
+  },
+  "ss-2cubes-sphere": {
+   "scenario": "ss-2cubes-sphere",
+   "case": "ss-2cubes_sphere",
+   "mode": "nearest",
+   "target": {
+    "mode": "nearest",
+    "sigma": 283812833.11766344,
+    "k": 10
+   },
+   "cores": 16,
+   "host": "c005",
+   "date": "2026-10-23T01:44:18",
+   "tag": "showcase-tune",
+   "trials": 51,
+   "valid_trials": 18,
+   "configurations": 31,
+   "default_valid": false,
+   "default_median_s": 2.7081777,
+   "best": "1x16 eps_ncv=4k",
+   "best_median_s": 3.3084617,
+   "flaky": false,
+   "invalid_reasons": [
+    "3 of 10 pairs have backward error > tol=1e-10",
+    "5 of 10 pairs have backward error > tol=1e-10",
+    "6 of 10 pairs have backward error > tol=1e-10",
+    "6 of 10 pairs have backward error > tol=1e-10; completeness inconsistent: 1 missing, boundary deficit 0, 10 distinct returned"
+   ]
+  },
+  "zero-cluster": {
+   "scenario": "zero-cluster",
+   "case": "syn-zero-cluster-real-1e5",
+   "mode": "nearest",
+   "target": {
+    "mode": "nearest",
+    "sigma": 0.0,
+    "k": 21
+   },
+   "cores": 16,
+   "host": "c005",
+   "date": "2026-10-23T01:47:32",
+   "tag": "showcase-tune",
+   "trials": 50,
+   "valid_trials": 50,
+   "configurations": 30,
+   "default_valid": true,
+   "default_median_s": 1.0835503000000002,
+   "best": "8x2/core eps_krylovschur_restart=0.7 st_mat_mumps_icntl_8=0",
+   "best_median_s": 0.741642,
+   "flaky": false,
+   "invalid_reasons": []
+  },
+  "waveguide-slab": {
+   "scenario": "waveguide-slab",
+   "case": "wg-halfslab-1e5",
+   "mode": "nearest",
+   "target": {
+    "mode": "nearest",
+    "sigma": -1.144438215129414,
+    "k": 28
+   },
+   "cores": 16,
+   "host": "c005",
+   "date": "2026-10-23T01:52:15",
+   "tag": "showcase-tune",
+   "trials": 68,
+   "valid_trials": 59,
+   "configurations": 48,
+   "default_valid": false,
+   "default_median_s": 2.08888,
+   "best": "8x2/core eps_krylovschur_restart=0.7 eps_purify=0 eps_tol=1e-11 st_mat_mumps_icntl_7=0",
+   "best_median_s": 0.8728693,
+   "flaky": false,
+   "invalid_reasons": [
+    "2 of 28 pairs have backward error > tol=1e-10",
+    "completeness incomplete: 4 missing, boundary deficit 0, 24 distinct returned"
+   ]
+  },
+  "ss-tem27623": {
+   "scenario": "ss-tem27623",
+   "case": "ss-tem27623",
+   "mode": "nearest",
+   "target": {
+    "mode": "nearest",
+    "sigma": 58901586965876.016,
+    "k": 10
+   },
+   "cores": 16,
+   "host": "c005",
+   "date": "2026-10-23T01:55:12",
+   "tag": "showcase-tune",
+   "trials": 63,
+   "valid_trials": 57,
+   "configurations": 43,
+   "default_valid": true,
+   "default_median_s": 0.67485,
+   "best": "4x4/core eps_purify=0 st_mat_mumps_icntl_13=1 st_mat_mumps_icntl_7=0",
+   "best_median_s": 0.30539251,
+   "flaky": false,
+   "invalid_reasons": [
+    "completeness inconsistent: 1 missing, boundary deficit 0, 10 distinct returned",
+    "completeness inconsistent: 2 missing, boundary deficit 0, 10 distinct returned"
+   ]
+  },
+  "ss-tem152078": {
+   "scenario": "ss-tem152078",
+   "case": "ss-tem152078",
+   "mode": "nearest",
+   "target": {
+    "mode": "nearest",
+    "sigma": 170394601795980.1,
+    "k": 10
+   },
+   "cores": 16,
+   "host": "c005",
+   "date": "2026-10-23T02:03:54",
+   "tag": "showcase-tune",
+   "trials": 63,
+   "valid_trials": 62,
+   "configurations": 43,
+   "default_valid": true,
+   "default_median_s": 6.1062,
+   "best": "8x2 eps_ncv=2k eps_purify=0 st_mat_mumps_cntl_7=1e-10 st_mat_mumps_icntl_35=2 st_mat_mumps_icntl_7=4",
+   "best_median_s": 2.79777653,
+   "flaky": false,
+   "invalid_reasons": [
+    "completeness inconsistent: 2 missing, boundary deficit 0, 10 distinct returned"
+   ]
+  },
+  "lowfreq-null-space": {
+   "scenario": "lowfreq-null-space",
+   "case": "sc-pec-box-1e5-physical",
+   "mode": "nearest",
+   "target": {
+    "mode": "nearest",
+    "sigma": 0.0,
+    "k": 10
+   },
+   "cores": 16,
+   "host": "c005",
+   "date": "2026-10-23T02:09:11",
+   "tag": "showcase-tune",
+   "trials": 37,
+   "valid_trials": 0,
+   "configurations": 32,
+   "default_valid": false,
+   "default_median_s": 5.99968,
+   "best": null,
+   "best_median_s": null,
+   "flaky": false,
+   "invalid_reasons": [
+    "completeness incomplete: 10 missing, boundary deficit 0, 10 distinct returned; 10 spurious eigenvalue(s) absent from the complete reference",
+    "run failed (rc=1, killed=None)"
+   ]
+  }
+ }
+}

@@ -63,7 +63,12 @@ case "$step" in
     "$0" tuning-report
     exit "$rc" ;;
   tuning-report)   # the tuner's own report of every showcase tuning -> results/showcase/slepc_tuning.md
-    python tools/bench/tune_slepc.py --report results/raw/showcase-tune/*/tune.json > results/showcase/slepc_tuning.md ;;
+    { printf '# SLEPc per-case tuning of the showcase scenarios\n\n'
+      printf 'Written by `tools/showcase/run_all.sh tuning-report` (`tools/bench/tune_slepc.py --report`) from the\n'
+      printf 'tunings of `run_all.sh tunes` (16 cores of one socket, measurement slot); condensed records in\n'
+      printf '`slepc_tuning.json`, the resulting profiles in `slepc_tuned_showcase.json`.\n\n'
+      python tools/bench/tune_slepc.py --report results/raw/showcase-tune/*/tune.json
+    } > results/showcase/slepc_tuning.md ;;
   probe)
     read -r lo hi < <(python -c "import json,sys; s=json.load(open(sys.argv[1]))['scenarios']['bloch-interval']['target']; print(s['lower'], s['upper'])" "$ROOT/showcase-scenarios.json")
     "${lane[@]}" env "LD_LIBRARY_PATH=$REF_COMPLEX/lib" "$REF_COMPLEX/bin/python" -m tools.showcase.slepc_probe \

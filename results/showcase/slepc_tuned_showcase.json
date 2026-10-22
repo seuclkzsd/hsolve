@@ -1,0 +1,269 @@
+{
+ "schema_version": 1,
+ "note": "written by tools/bench/tune_slepc.py; read by tools/bench/compare.py --slepc-profile best (tools/bench/slepc_profile.py documents the format)",
+ "profiles": [
+  {
+   "scope": "case",
+   "name": "ss-2cubes_sphere",
+   "mode": "nearest",
+   "cores": 16,
+   "target": null,
+   "config": {
+    "ranks": 1,
+    "threads": 16,
+    "bind": "none",
+    "options": {
+     "eps_ncv": "4k"
+    }
+   },
+   "tuned": {
+    "tag": "showcase-tune",
+    "date": "2026-10-23T01:44:18",
+    "host": "c005",
+    "valid": true,
+    "solver_s": 3.3084617,
+    "default_solver_s": 2.7081777,
+    "default_valid": false,
+    "speedup_vs_default": 0.8185609946761662,
+    "reps": 5,
+    "flaky": false,
+    "phases": {
+     "analysis_s": 1.2093,
+     "numeric_s": 0.47926,
+     "solve_s": 1.5445,
+     "solves": 40,
+     "ortho_s": 0.040607,
+     "setup_s": 1.7045,
+     "eps_solve_s": 1.6015,
+     "vectors_s": 0.0024319,
+     "factorizations": 1
+    }
+   }
+  },
+  {
+   "scope": "case",
+   "name": "ss-tem152078",
+   "mode": "nearest",
+   "cores": 16,
+   "target": null,
+   "config": {
+    "ranks": 8,
+    "threads": 2,
+    "bind": "none",
+    "options": {
+     "eps_ncv": "2k",
+     "eps_purify": "0",
+     "st_mat_mumps_cntl_7": "1e-10",
+     "st_mat_mumps_icntl_35": "2",
+     "st_mat_mumps_icntl_7": "4"
+    }
+   },
+   "tuned": {
+    "tag": "showcase-tune",
+    "date": "2026-10-23T02:03:54",
+    "host": "c005",
+    "valid": true,
+    "solver_s": 2.79777653,
+    "default_solver_s": 6.1062,
+    "default_valid": true,
+    "speedup_vs_default": 2.182518844705585,
+    "reps": 5,
+    "flaky": false,
+    "phases": {
+     "analysis_s": 1.0657,
+     "numeric_s": 0.77756,
+     "solve_s": 0.74616,
+     "solves": 21,
+     "ortho_s": 0.10952,
+     "setup_s": 1.8925,
+     "eps_solve_s": 0.90386,
+     "vectors_s": 0.00081692,
+     "factorizations": 1
+    }
+   }
+  },
+  {
+   "scope": "case",
+   "name": "ss-tem27623",
+   "mode": "nearest",
+   "cores": 16,
+   "target": null,
+   "config": {
+    "ranks": 4,
+    "threads": 4,
+    "bind": "core",
+    "options": {
+     "eps_purify": "0",
+     "st_mat_mumps_icntl_13": "1",
+     "st_mat_mumps_icntl_7": "0"
+    }
+   },
+   "tuned": {
+    "tag": "showcase-tune",
+    "date": "2026-10-23T01:55:12",
+    "host": "c005",
+    "valid": true,
+    "solver_s": 0.30539251,
+    "default_solver_s": 0.67485,
+    "default_valid": true,
+    "speedup_vs_default": 2.2097791461879663,
+    "reps": 5,
+    "flaky": false,
+    "phases": {
+     "analysis_s": 0.035195,
+     "numeric_s": 0.10205,
+     "solve_s": 0.13708,
+     "solves": 26,
+     "ortho_s": 0.014894,
+     "setup_s": 0.148,
+     "eps_solve_s": 0.15713,
+     "vectors_s": 0.00026251,
+     "factorizations": 1
+    }
+   }
+  },
+  {
+   "scope": "case",
+   "name": "syn-zero-cluster-real-1e5",
+   "mode": "nearest",
+   "cores": 16,
+   "target": null,
+   "config": {
+    "ranks": 8,
+    "threads": 2,
+    "bind": "core",
+    "options": {
+     "eps_krylovschur_restart": "0.7",
+     "st_mat_mumps_icntl_8": "0"
+    }
+   },
+   "tuned": {
+    "tag": "showcase-tune",
+    "date": "2026-10-23T01:47:32",
+    "host": "c005",
+    "valid": true,
+    "solver_s": 0.741642,
+    "default_solver_s": 1.0835503000000002,
+    "default_valid": true,
+    "speedup_vs_default": 1.4610152876994562,
+    "reps": 5,
+    "flaky": false,
+    "phases": {
+     "analysis_s": 0.15812,
+     "numeric_s": 0.0695,
+     "solve_s": 0.4004,
+     "solves": 80,
+     "ortho_s": 0.10361,
+     "setup_s": 0.23053,
+     "eps_solve_s": 0.51006,
+     "vectors_s": 0.0010312,
+     "factorizations": 1
+    }
+   }
+  },
+  {
+   "scope": "case",
+   "name": "wg-halfslab-1e5",
+   "mode": "nearest",
+   "cores": 16,
+   "target": null,
+   "config": {
+    "ranks": 8,
+    "threads": 2,
+    "bind": "core",
+    "options": {
+     "eps_krylovschur_restart": "0.7",
+     "eps_purify": "0",
+     "eps_tol": "1e-11",
+     "st_mat_mumps_icntl_7": "0"
+    }
+   },
+   "tuned": {
+    "tag": "showcase-tune",
+    "date": "2026-10-23T01:52:15",
+    "host": "c005",
+    "valid": true,
+    "solver_s": 0.8728693,
+    "default_solver_s": 2.08888,
+    "default_valid": false,
+    "speedup_vs_default": 2.393118878164234,
+    "reps": 5,
+    "flaky": false,
+    "phases": {
+     "analysis_s": 0.082179,
+     "numeric_s": 0.079161,
+     "solve_s": 0.43274,
+     "solves": 68,
+     "ortho_s": 0.23193,
+     "setup_s": 0.18201,
+     "eps_solve_s": 0.68894,
+     "vectors_s": 0.0031093,
+     "factorizations": 1
+    }
+   }
+  },
+  {
+   "scope": "class",
+   "name": "GHEP/nearest",
+   "mode": "nearest",
+   "cores": 16,
+   "config": {
+    "ranks": 8,
+    "threads": 2,
+    "bind": "none",
+    "options": {
+     "eps_ncv": "2k",
+     "eps_purify": "0",
+     "st_mat_mumps_cntl_7": "1e-10",
+     "st_mat_mumps_icntl_35": "2",
+     "st_mat_mumps_icntl_7": "4"
+    }
+   },
+   "validated": false,
+   "from_cases": [
+    "ss-tem152078",
+    "ss-tem27623"
+   ]
+  },
+  {
+   "scope": "class",
+   "name": "GHIEP/nearest",
+   "mode": "nearest",
+   "cores": 16,
+   "config": {
+    "ranks": 8,
+    "threads": 2,
+    "bind": "core",
+    "options": {
+     "eps_krylovschur_restart": "0.7",
+     "eps_purify": "0",
+     "eps_tol": "1e-11",
+     "st_mat_mumps_icntl_7": "0"
+    }
+   },
+   "validated": false,
+   "from_cases": [
+    "wg-halfslab-1e5"
+   ]
+  },
+  {
+   "scope": "class",
+   "name": "HEP/nearest",
+   "mode": "nearest",
+   "cores": 16,
+   "config": {
+    "ranks": 1,
+    "threads": 16,
+    "bind": "none",
+    "options": {
+     "eps_ncv": "4k"
+    }
+   },
+   "validated": false,
+   "from_cases": [
+    "ss-2cubes_sphere",
+    "syn-zero-cluster-real-1e5"
+   ]
+  }
+ ]
+}
