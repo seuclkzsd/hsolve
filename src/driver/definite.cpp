@@ -64,9 +64,10 @@ double end_resolution(double scale, double s) {
 
 std::vector<index_t> assign_to_windows(const std::vector<double>& lambda, const std::vector<char>& excluded,
                                        const std::vector<WindowTally>& windows, double scale,
-                                       std::vector<index_t>& found) {
+                                       const EndIsClear& end_is_clear, std::vector<index_t>& found) {
   const auto m = static_cast<index_t>(lambda.size());
   if (excluded.size() != lambda.size()) HS_THROW(Internal, "assign_to_windows: excluded has the wrong size");
+  if (!end_is_clear) HS_THROW(Internal, "assign_to_windows: no end check");
   std::vector<index_t> owner(static_cast<std::size_t>(m), -1);
   found.assign(windows.size(), 0);
   for (index_t j = 0; j < m; ++j) {
@@ -82,39 +83,49 @@ std::vector<index_t> assign_to_windows(const std::vector<double>& lambda, const 
       break;
     }
   }
-  // Ends: count and computed eigenvalue disagree only about eigenvalues numerically on an end.
+  // Ends: count and computed eigenvalue disagree only about eigenvalues numerically on an end. A
+  // pair from outside proves a window only where a count beyond that end confirms that no
+  // eigenvalue lies there (end_is_clear, asked once per end and only when needed).
+  struct OnEnd {
+    double dist;  // to the end
+    index_t j;
+    bool upper;
+  };
   for (std::size_t w = 0; w < windows.size(); ++w) {
     const WindowTally& win = windows[w];
     if (win.partial || found[w] == win.required) continue;
     const double d_lo = end_resolution(scale, win.lo), d_hi = end_resolution(scale, win.hi);
     const bool short_of_count = found[w] < win.required;
-    std::vector<std::pair<double, index_t>> on_end;  // (distance to the end, pair)
+    std::vector<OnEnd> on_end;
     for (index_t j = 0; j < m; ++j) {
       const double l = lambda[j];
       if (short_of_count) {
-        if (owner[j] >= 0) continue;
+        if (owner[j] >= 0 || excluded[j]) continue;
         if (l < win.lo && l >= win.lo - d_lo) {
-          on_end.emplace_back(win.lo - l, j);
+          on_end.push_back({win.lo - l, j, false});
         } else if (l > win.hi && l <= win.hi + d_hi) {
-          on_end.emplace_back(l - win.hi, j);
+          on_end.push_back({l - win.hi, j, true});
         }
       } else if (owner[j] == static_cast<index_t>(w)) {
         if (l < win.lo + d_lo) {
-          on_end.emplace_back(l - win.lo, j);
+          on_end.push_back({l - win.lo, j, false});
         } else if (l > win.hi - d_hi) {
-          on_end.emplace_back(win.hi - l, j);
+          on_end.push_back({win.hi - l, j, true});
         }
       }
     }
-    std::stable_sort(on_end.begin(), on_end.end(),
-                     [](const auto& p, const auto& q) { return p.first < q.first; });
-    for (const auto& [dist, j] : on_end) {
+    std::stable_sort(on_end.begin(), on_end.end(), [](const OnEnd& p, const OnEnd& q) { return p.dist < q.dist; });
+    int clear[2] = {-1, -1};  // lower, upper end: not asked yet / not clear / clear
+    for (const OnEnd& e : on_end) {
       if (found[w] == win.required) break;
       if (short_of_count) {
-        owner[j] = static_cast<index_t>(w);
+        int& ok = clear[e.upper ? 1 : 0];
+        if (ok < 0) ok = end_is_clear(w, e.upper) ? 1 : 0;
+        if (ok == 0) continue;
+        owner[e.j] = static_cast<index_t>(w);
         ++found[w];
       } else {
-        owner[j] = -1;
+        owner[e.j] = -1;
         --found[w];
       }
     }
@@ -2119,15 +2130,35 @@ Solution<T> WindowSolver<T>::solve() {
   // ---- 4. Global certificate: distinct pairs per window vs its inertia count (partial cluster:
   //         at least the copies required, of which exactly that many are kept). A pair whose
   //         eigenvalue lies numerically on a window end counts on the side the end's count put
-  //         it (assign_to_windows), as in each slice's own check.
+  //         it (assign_to_windows): from outside only where a count at 2 d beyond the end shows no
+  //         further eigenvalue there (d = end_resolution); a count that cannot be made confirms
+  //         nothing, and the certificate then fails rather than claim a pair it cannot place.
   std::vector<WindowTally> tally;
   tally.reserve(windows.size());
   for (const Window& w : windows) tally.push_back({w.lo.s, w.hi.s, w.required(), w.want >= 0});
   const std::vector<double> pool_lambda(pool_.lambda.begin(), pool_.lambda.begin() + pool_.used);
   std::vector<char> in_zero_band(static_cast<std::size_t>(pool_.used), 0);
   for (index_t j = 0; j < pool_.used; ++j) in_zero_band[static_cast<std::size_t>(j)] = in_band(pool_lambda[j]);
+  auto end_is_clear = [&](std::size_t w, bool upper) {
+    const CountPoint& end = upper ? windows[w].hi : windows[w].lo;
+    const double dir = upper ? 1.0 : -1.0;
+    const double beyond = end.s + dir * 2.0 * end_resolution(scale_, end.s);
+    index_t nu = -1;
+    try {
+      nu = count(beyond, dir).nu;
+    } catch (const Error& e) {
+      if (e.code() == Error::Code::Internal) throw;
+      warn(c_, "no inertia count possible beyond the window end " + fmt(end.s) + " (" + e.what() +
+                   "): a pair computed just outside it does not count for the window");
+    }
+    const bool clear = nu == end.nu;
+    event(c_, "window_end_check", {{"window", static_cast<std::int64_t>(w)}, {"end", end.s}, {"beyond", beyond},
+                                   {"nu_end", static_cast<std::int64_t>(end.nu)},
+                                   {"nu_beyond", static_cast<std::int64_t>(nu)}, {"clear", clear}});
+    return clear;
+  };
   std::vector<index_t> found;
-  std::vector<index_t> in = assign_to_windows(pool_lambda, in_zero_band, tally, scale_, found);
+  std::vector<index_t> in = assign_to_windows(pool_lambda, in_zero_band, tally, scale_, end_is_clear, found);
   cert.count_found = static_cast<index_t>(in.size());
   cert.passed = true;
   for (std::size_t w = 0; w < windows.size(); ++w) cert.passed = cert.passed && found[w] == windows[w].required();

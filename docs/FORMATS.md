@@ -209,7 +209,10 @@ slices[...], zero_cluster_dim, zero_modes_filtered, success, warnings[]`。
   之前的廉价检验计入 `time_setup_s`。时间只覆盖 `hs::solve`（CLI 读矩阵不计入）。
 - `certificate.lower / upper`：±∞ 写作 `null`（smallest：lower = null；largest：upper = null）。
   `count_inertia` 是按 Sylvester 惯性**要求**的个数（smallest/largest 结束于数值相等的大簇内时为簇前
-  个数加仍需的副本数）；`count_found` 是窗口内不同 B-正交向量数。GHIEP：`performed = false`，
+  个数加仍需的副本数）；`count_found` 是窗口内不同 B-正交向量数。窗口目标的端点上（离端点 δ =
+  1e-9·max(scale, |端点|) 以内）的特征值按端点的计数归属：计数把它算进窗口时，它的值可能在 [lower, upper]
+  外至多 δ，仍计入 `count_found` 并返回——前提是端点外 2δ 处的确认计数表明那里没有别的特征值；计数把它留在
+  窗口外时，值落在端点内侧的对既不计入也不返回（DESIGN §3.6-8b）。GHIEP：`performed = false`，
   note 说明不可用；关闭证书的 nearest：`performed = false`，note 为 "disabled by configuration"。
   `passed`：计数时 count_inertia == count_found；随机检验时检验通过（声称半径内没有未找到的特征值，κ 有
   证明）。`passed` 总是证明：筛查结果从不作为结论报告（DESIGN §3.6-8）。P5 新增（最后下结论的检验）：
