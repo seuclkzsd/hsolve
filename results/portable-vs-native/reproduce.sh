@@ -78,7 +78,7 @@ EOF
       cp "$AB/binaries.txt" "$here/binaries.txt" ;;
     pack)
       for d in "ab-$host" "ab-$host-avx2"; do
-        python3 "$here/pack_raw.py" "$AB/$d" "$here/raw-$d.tar.gz"
+        python3 scripts/pack_raw.py "$AB/$d" "$here/raw-$d.tar.gz"
       done ;;
     retable)
       tmp="$(mktemp -d)"

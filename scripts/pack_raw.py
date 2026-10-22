@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Pack an ab_cases.py run directory as a reproducible raw-data archive for the repository.
+"""Pack a measurement run directory (tools/bench/ab_cases.py, scripts/resource_tiers.py) as a
+reproducible raw-data archive for the repository (results/).
 
     pack_raw.py RUN_DIR OUT.tar.gz
 
