@@ -243,8 +243,16 @@ if(HSOLVE_BUILD_TESTS)
     target_link_libraries(${name} PRIVATE hsolve hsolve_test_support GTest::gtest_main LAPACK::LAPACK
                                           BLAS::BLAS MUMPS::MUMPS nlohmann_json::nlohmann_json)
     # Test names are "<executable>.<Suite>.<Name>", so `ctest -R test_factor` selects one file.
-    gtest_discover_tests(${name} TEST_PREFIX "${name}." DISCOVERY_MODE PRE_TEST
-      PROPERTIES ENVIRONMENT "OMP_NUM_THREADS=2;OPENBLAS_NUM_THREADS=1")
+    if(name STREQUAL "test_parallel_session")
+      # Its Auto decisions compare the measured main factorization time with a cost model: run it
+      # alone, so that tests beside it on a small machine (a 4-CPU CI runner, ctest -j4) do not
+      # inflate that time and turn "too cheap for the helpers" into "worth it".
+      gtest_discover_tests(${name} TEST_PREFIX "${name}." DISCOVERY_MODE PRE_TEST
+        PROPERTIES ENVIRONMENT "OMP_NUM_THREADS=2;OPENBLAS_NUM_THREADS=1" RUN_SERIAL TRUE)
+    else()
+      gtest_discover_tests(${name} TEST_PREFIX "${name}." DISCOVERY_MODE PRE_TEST
+        PROPERTIES ENVIRONMENT "OMP_NUM_THREADS=2;OPENBLAS_NUM_THREADS=1")
+    endif()
   endforeach()
   # Multi-process sessions over MPI (tests/cpp/mpi/): every test program runs as an MPI job of 1, 2
   # 3 and 5 ranks (rank 0 runs the tests, the others serve). Not in the glob above: they need MPI.
