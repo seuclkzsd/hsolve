@@ -44,7 +44,7 @@ mkdir -p "$out"
 if [ -z "$cases" ]; then
   cases="$(cd "$root/examples/cases" && ls)"
 fi
-export OMP_NUM_THREADS="$threads" OPENBLAS_NUM_THREADS="${OPENBLAS_NUM_THREADS:-1}"
+export OMP_NUM_THREADS="$threads" OPENBLAS_NUM_THREADS="$threads"  # as tools/run/guard.py does
 version="$("$hsolve" --A unused.npz --version 2>&1 || true)"  # the parser wants --A even here
 echo "${version%%$'\n'*}"
 failed=0

@@ -160,8 +160,9 @@ def main(argv: list[str] | None = None) -> int:
         raise SystemExit(f"demo: unknown example(s) {unknown}; available: {', '.join(info)}")
     out = ns.out or Path(tempfile.mkdtemp(prefix="hsolve-demo-"))
     out.mkdir(parents=True, exist_ok=True)
-    env = dict(os.environ, OMP_NUM_THREADS=str(ns.threads))
-    env.setdefault("OPENBLAS_NUM_THREADS", "1")
+    # As tools/run/guard.py does: OpenMP and the OpenMP-threaded OpenBLAS get the same count
+    # (OPENBLAS_NUM_THREADS=1 would keep the dense kernels of the factorization single-threaded).
+    env = dict(os.environ, OMP_NUM_THREADS=str(ns.threads), OPENBLAS_NUM_THREADS=str(ns.threads))
     # The parser wants --A even with --version (which prints before anything is read).
     version = subprocess.run([str(hsolve), "--A", "unused.npz", "--version"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                              text=True).stdout.strip().splitlines()
