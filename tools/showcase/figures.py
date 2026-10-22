@@ -225,7 +225,8 @@ def fig_scenarios(summary: dict[str, Any]):
     fig.legend(handles=handles, loc="upper left", bbox_to_anchor=(0.0, 1.0), ncol=4, fontsize=9.5,
                handletextpad=0.3, columnspacing=1.1)
     footnote(fig, conditions_note(summary) + ". 'residual' = largest backward error of a returned pair "
-             "(tolerance 1e-10); 'missed n' = eigenvalues of the target set absent from the result.")
+             "(tolerance 1e-10); 'missed n' = eigenvalues of the target set absent from the result; "
+             "'null-space modes' = exact zero eigenpairs returned for the sigma = 0 query of physical modes.")
     return fig
 
 
