@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
-# Configure + build a preset under the resource guard.  Usage: tools/dev/build.sh [release|debug|portable]
+# Configure + build a preset under the resource guard.  Usage: tools/dev/build.sh [release|native|debug|portable]
+# Presets (CMakePresets.json): release = portable x86-64 (the default), native = -march=native,
+# portable = release under its old name, debug = ASan/UBSan.
 # HS_JOBS (default 4) sets the build parallelism; HS_CORES pins the build (see env/activate.sh).
 #
 # MUMPS (every preset links it; the Python module too) - HS_MUMPS selects which:
