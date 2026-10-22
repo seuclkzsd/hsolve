@@ -44,6 +44,9 @@ ROOT = Path(__file__).resolve().parents[2]
 SYSTEM_LIBS = {"linux-vdso.so.1", "ld-linux-x86-64.so.2", "libc.so.6", "libm.so.6", "libdl.so.2", "libpthread.so.0",
                "librt.so.1", "libutil.so.1", "libresolv.so.2", "libnsl.so.1", "libcrypt.so.1", "libmvec.so.1"}
 LEGAL = ("LICENSE", "NOTICE", "THIRD_PARTY_NOTICES")
+# conda-forge packages of GCC's runtime libraries: their licence texts come from tools/release/licenses.
+GCC_RUNTIME = {"libgcc", "libgcc-ng", "libstdcxx", "libstdcxx-ng", "libgfortran5", "libgfortran", "libgfortran-ng",
+               "libgomp", "libquadmath"}
 
 
 def run(cmd: list[str], **kw) -> str:
@@ -101,6 +104,11 @@ def set_rpath(elf: Path, rpath: str) -> None:
         run(["cmake", "-P", f.name])
     finally:
         os.unlink(f.name)
+
+
+def strip(elf: Path) -> None:
+    """Drop symbol tables and debug sections (the dynamic symbols stay): a smaller download."""
+    run([os.environ.get("STRIP") or "strip", "--strip-unneeded", str(elf)])
 
 
 def glibc_needed(elf: Path) -> tuple[int, ...]:
@@ -161,7 +169,7 @@ def stage(build: Path, stage_dir: Path, version: str, allow_missing_legal: bool)
         dst = stage_dir / "lib" / soname
         shutil.copy2(src, dst)
         os.chmod(dst, 0o755)
-        rec = owners.get(soname) or owners.get(src.name)
+        rec = owners.get(src.name) or owners.get(soname)  # the file's own package (libgomp.so.1 -> libomp.so)
         mumps_root = cmake_cache(build).get("HSOLVE_MUMPS_ROOT", "")
         if mumps_root and str(src).startswith(str(Path(mumps_root).resolve())):
             rows.append((soname, "MUMPS 5.8.2 (third_party/mumps, patched: patches/mumps-5.8.2-*.patch)",
@@ -169,17 +177,23 @@ def stage(build: Path, stage_dir: Path, version: str, allow_missing_legal: bool)
         elif rec:
             lic_dir = Path(rec.get("extracted_package_dir", "")) / "info" / "licenses"
             target = stage_dir / "licenses" / rec["name"]
+            if rec["name"] in GCC_RUNTIME:  # conda-forge ships no licence files with these
+                lic_dir = Path(__file__).with_name("licenses") / "gcc-runtime"
+                target = stage_dir / "licenses" / "gcc-runtime"
             if lic_dir.is_dir() and not target.exists():
                 copy_tree_files(lic_dir, target)
-            rows.append((soname, f"{rec['name']} {rec['version']} (conda-forge, {rec.get('url', '')})",
-                         rec.get("license", "?"), f"licenses/{rec['name']}/" if target.exists() else "-"))
+            rows.append((soname, f"conda-forge {rec['name']} {rec['version']} ({rec.get('build', '')})",
+                         rec.get("license", "?"), f"licenses/{target.name}/" if target.exists() else "-"))
         else:
             rows.append((soname, str(src), "?", "-"))
+        strip(dst)
         kind, _ = rpath_of(dst)
         if kind:
             set_rpath(dst, "$ORIGIN")
+    strip(exe)
     set_rpath(exe, "$ORIGIN/../lib")
     for m in module:
+        strip(pydir / m.name)
         set_rpath(pydir / m.name, "$ORIGIN/../../lib")
     mumps_lic = stage_dir / "licenses" / "mumps"
     mumps_lic.mkdir(parents=True, exist_ok=True)
