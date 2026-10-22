@@ -1,0 +1,93 @@
+name: 问题报告（Bug）
+description: 结果错误、证书异常、崩溃、构建失败或性能退化
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        感谢报告。请先确认问题在最新版本上仍能复现。**安全漏洞请不要在这里提交**，请按
+        [SECURITY.md](https://github.com/seuclkzsd/hsolve/blob/main/SECURITY.md) 私下报告。
+        hsolve 的日志与 `report.json` 不含矩阵元素，但矩阵文件本身可能包含你的工程数据：只上传你有权公开的数据。
+  - type: dropdown
+    id: kind
+    attributes:
+      label: 问题类型
+      options:
+        - 结果错误（特征值、特征向量或漏解）
+        - 完备性证书异常（错误结果上报告通过，或正确结果上不通过）
+        - 崩溃或报错
+        - 构建或安装失败
+        - 性能退化
+        - 其它
+    validations:
+      required: true
+  - type: textarea
+    id: version
+    attributes:
+      label: 版本与构建
+      description: |
+        粘贴 `hsolve --A x --version` 的输出（Python 接口用 `python -c "import hsolve; print(hsolve.build_info())"`），
+        并说明安装方式：容器镜像、Release 二进制包，或源码构建（预设 release / portable / debug，`HS_MUMPS` 的取值）。
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: 运行环境
+      description: 操作系统与版本、CPU 型号、核数与 `--threads`、内存及其限制（cgroup、ulimit），是否使用 `hsolve-mpirun` 或 `--gpu`。
+      placeholder: |
+        OS: Rocky Linux 9.4
+        CPU: 2 x Xeon Silver 4314, 16 cores used, --threads 16
+        Memory: 256 GiB, cgroup limit 32 GiB
+        MPI / GPU: none
+    validations:
+      required: true
+  - type: textarea
+    id: matrix
+    attributes:
+      label: 最小复现输入
+      description: |
+        矩阵的阶数 n、非零元个数、实对称或复厄密、是否有 B 以及 B 是否正定。
+        请附上能复现问题的最小矩阵（`.npz` 或 `.mtx`，压缩后不超过 25 MB），或生成它的脚本 / `python -m tools.gen...` 命令。
+    validations:
+      required: true
+  - type: textarea
+    id: command
+    attributes:
+      label: 命令与配置
+      description: 完整的命令行或 Python 调用，以及使用的 `config.json`。
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: 期望结果
+      description: 例如参考特征值及其来源（解析解、其它求解器、文献）。
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: 实际结果
+      description: 退出码，以及 `report.json` 中 `success`、`certificate`、`pairs[].backward_error` 与 `warnings` 的相关片段。
+      render: json
+    validations:
+      required: true
+  - type: textarea
+    id: log
+    attributes:
+      label: 事件日志（可选）
+      description: 用 `--log events.jsonl` 运行后的相关片段。
+      render: text
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: 确认
+      options:
+        - label: 我已在最新版本上复现这个问题
+          required: true
+        - label: 我上传的矩阵与日志可以公开
+          required: true

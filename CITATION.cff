@@ -1,0 +1,33 @@
+cff-version: 1.2.0
+message: "如果你在研究或工程报告中使用了 hsolve，请按以下信息引用。If you use hsolve in research or engineering reports, please cite it as below."
+type: software
+title: "hsolve: a certified shift-invert eigensolver for large sparse Hermitian (indefinite) eigenproblems from electromagnetic simulation"
+abstract: >-
+  hsolve computes eigenpairs of large sparse Hermitian standard and generalized eigenproblems
+  A x = lambda B x with indefinite A and positive definite or indefinite B, as they arise from
+  finite-element models of cavities, waveguides and photonic crystals. It combines MUMPS
+  symmetric indefinite LDL^T factorizations with its own block Krylov-Schur solvers and, when B is
+  positive definite, certifies through Sylvester inertia counts that no eigenvalue in the target
+  window was missed. It offers nearest-to-shift, interval (spectrum slicing) and extreme targets,
+  multi-threaded, multi-process and optional GPU execution, and command-line and Python interfaces.
+authors:
+  - alias: seuclkzsd
+    website: "https://github.com/seuclkzsd"
+repository-code: "https://github.com/seuclkzsd/hsolve"
+url: "https://seuclkzsd.github.io/hsolve/"
+license: Apache-2.0
+# The version and date-released follow CMakeLists.txt project(VERSION) and the CHANGELOG section of the
+# release (GOVERNANCE.md, release rules); both are set when the release is tagged.
+version: "{{TODO:release version = CMakeLists.txt project(VERSION) = CHANGELOG}}"
+keywords:
+  - eigensolver
+  - sparse matrices
+  - Hermitian eigenproblem
+  - generalized eigenproblem
+  - indefinite matrices
+  - shift-invert
+  - Krylov-Schur
+  - Sylvester inertia
+  - MUMPS
+  - computational electromagnetics
+  - finite element method

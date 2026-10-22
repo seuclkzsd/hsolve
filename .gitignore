@@ -1,5 +1,6 @@
 # build outputs
 /build/
+/site/
 compile_commands.json
 # generated matrices and raw experiment output (summaries in results/*.md|json are tracked)
 /data/
