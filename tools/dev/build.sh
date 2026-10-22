@@ -19,7 +19,7 @@ root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$root"
 # shellcheck disable=SC1091
 source env/activate.sh
-# Builds peak at ~0.5 GiB; stay within HS_MAX_SHARED_MEM_GB during parallel multi-agent phases.
+# Builds peak at ~0.5 GiB; stay within HS_MAX_SHARED_MEM_GB while several builds share a node.
 build_mem="${HS_BUILD_MEM_GB:-$(python3 -c "import os; print(min(12.0, float(os.environ.get('HS_MAX_SHARED_MEM_GB', 'inf'))))")}"
 guard=(python3 tools/run/guard.py --skip-busy-check --mem-gb "$build_mem" --timeout 3600 --)
 mumps="${HS_MUMPS:-source}"
@@ -32,5 +32,8 @@ case "$mumps" in
       mumps_root="$mumps" ;;
   *) echo "build.sh: HS_MUMPS must be source, env or an absolute install prefix, got '$mumps'" >&2; exit 2 ;;
 esac
-"${guard[@]}" cmake --preset "$preset" -DHSOLVE_MUMPS_ROOT="$mumps_root" >/dev/null
+# HS_CMAKE_ARGS: further cache settings, e.g. "-DHSOLVE_WERROR=ON" (CI) or
+# "-DHSOLVE_BUILD_TESTS=OFF -DHSOLVE_BUILD_BENCH=OFF" (release packages); they persist in the cache.
+read -r -a extra <<< "${HS_CMAKE_ARGS:-}"
+"${guard[@]}" cmake --preset "$preset" -DHSOLVE_MUMPS_ROOT="$mumps_root" ${extra[@]+"${extra[@]}"} >/dev/null
 "${guard[@]}" cmake --build --preset "$preset" -j "${HS_JOBS:-4}"
