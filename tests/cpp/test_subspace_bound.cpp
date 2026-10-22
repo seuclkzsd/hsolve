@@ -233,7 +233,9 @@ hs::driver::SubspaceOptions options(const Exact<T>& e, BKind kind) {
   opt.b_diagonal = kind == BKind::Diagonal;
   if (e.has_b) {
     const auto wb = hs::test::dense_eigenvalues(e.b, static_cast<const hs::CsrMatrix<T>*>(nullptr));
-    opt.b_min = {wb.front() * (1.0 - 1e-8), true, "test"};
+    opt.b_min.value = wb.front() * (1.0 - 1e-8);
+    opt.b_min.proven = true;
+    opt.b_min.source = "test";
   }
   return opt;
 }
