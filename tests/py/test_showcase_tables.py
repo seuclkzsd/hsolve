@@ -121,3 +121,15 @@ def test_raw_records_are_written_home_relative():
     assert out == '{"slepc_env": "~/envs/ref", "cmd": ["~/envs/ref/bin/mpiexec", "/share/home/uv/x"]}'
     assert json.loads(out)
     assert campaign.home_relative(text, "/") == text
+
+
+def test_reference_excerpt_keeps_levels_and_nearest_values():
+    from types import SimpleNamespace
+    import numpy as np
+    w = np.concatenate([np.zeros(5000), [3.0, 3.0, 4.0, 6.0, 6.0, 6.0, 9.0]])
+    ref = SimpleNamespace(eigenvalues=w, info={"kind": "discrete-exact", "complete": True, "window": None})
+    ex = campaign.reference_excerpt(ref, {"mode": "nearest", "sigma": 4.0, "k": 5}, limit=10)
+    # radius 2 x (5th nearest distance 2) = 4: the zero level is in range, 9.0 is not
+    assert ex["truncated"] and ex["levels"] == [[0.0, 5000], [3.0, 2], [4.0, 1], [6.0, 3]]
+    assert ex["eigenvalues"] == [0.0] * 4 + [3.0, 3.0, 4.0, 6.0, 6.0, 6.0]
+    assert campaign.reference_levels([1.0, 1.0 + 1e-12, 2.0]) == [[1.0, 2], [2.0, 1]]

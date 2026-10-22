@@ -202,8 +202,23 @@ def run_solver(solver: str, c: cio.Case, rec: dict[str, Any], out: Path, judge, 
     return entry
 
 
+def reference_levels(values: np.ndarray, rtol: float = 1e-9) -> list[list[float]]:
+    """[[level, multiplicity], ...] of sorted values: a value within rtol (relative) of the current
+    level's first value joins it, so a level of 35475 zeros is one entry."""
+    out: list[list[float]] = []
+    for v in np.sort(np.asarray(values, dtype=float)):
+        if out and abs(v - out[-1][0]) <= rtol * max(abs(out[-1][0]), 1.0):
+            out[-1][1] += 1
+        else:
+            out.append([float(v), 1])
+    return out
+
+
 def reference_excerpt(ref: cio.Reference | None, tgt: dict[str, Any], limit: int = 4000) -> dict[str, Any] | None:
-    """Reference eigenvalues around the target (for the certificate figure and the tables)."""
+    """Reference spectrum around the target (for the certificate figure and the tables): every
+    distinct level of the range with its multiplicity ("levels", complete), and the eigenvalues
+    nearest the target up to `limit` ("eigenvalues"; "truncated" when the range holds more, e.g. a
+    curl-curl null space of tens of thousands of zeros)."""
     if ref is None:
         return None
     w = np.sort(np.asarray(ref.eigenvalues).real)
@@ -211,13 +226,17 @@ def reference_excerpt(ref: cio.Reference | None, tgt: dict[str, Any], limit: int
         lo, hi = float(tgt["lower"]), float(tgt["upper"])
         pad = 0.1 * (hi - lo)
         sel = w[(w >= lo - pad) & (w <= hi + pad)]
+        centre = 0.5 * (lo + hi)
     else:
         sigma, k = float(tgt["sigma"]), int(tgt["k"])
         d = np.sort(np.abs(w - sigma))
         r = 2.0 * d[min(k, d.size) - 1] if d.size else 0.0
         sel = w[np.abs(w - sigma) <= r]
+        centre = sigma
+    nearest = np.sort(sel[np.argsort(np.abs(sel - centre), kind="stable")[:limit]])
     return {"kind": ref.info.get("kind"), "complete": ref.info.get("complete"), "window": ref.info.get("window"),
-            "eigenvalues": [float(x) for x in sel[:limit]], "truncated": bool(sel.size > limit)}
+            "eigenvalues": [float(x) for x in nearest], "truncated": bool(sel.size > limit),
+            "levels": reference_levels(sel)}
 
 
 def environment() -> dict[str, Any]:
