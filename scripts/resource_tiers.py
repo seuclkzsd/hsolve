@@ -159,7 +159,13 @@ def summarize(raws: list[Path]) -> list[dict[str, Any]]:
                           "passed" if all(r.get("certificate_passed") for r in ok) else "failed"),
             "errors": sorted({r["error_kind"] for r in runs if "error_kind" in r})})
     family = {"yee": 0, "wg-": 1}
-    rows.sort(key=lambda r: (family.get(r["case"][:3], 2), r["n"] or 0, -r["mem_gb"], -r["threads"]))
+    def size(case: str) -> float:
+        try:
+            return float(case.rsplit("-", 1)[1])
+        except (IndexError, ValueError):
+            return 0.0
+
+    rows.sort(key=lambda r: (family.get(r["case"][:3], 2), size(r["case"]), -r["mem_gb"], -r["threads"]))
     return rows
 
 
@@ -169,8 +175,10 @@ def table(a: argparse.Namespace) -> int:
     lines = ["| case | n | problem | pairs | threads | RAM cap GiB | solve s [min-max] | wall s | peak RSS GiB | "
              "memory | certificate | runs ok |", "|---|---:|---|---:|---:|---:|---|---:|---:|---|---|---|"]
     for r in rows:
-        cert = {"none": "-", "passed": f"{r['certificate']} passed"}.get(r["certified"], f"{r['certificate']} NOT passed")
-        lines.append(f"| {r['case']} | {r['n']} | {r['problem']} | {r['pairs']} | {r['threads']} | {r['mem_gb']:g} | "
+        cert = ("-" if r["certified"] == "none" or not r["certificate"] else
+                f"{r['certificate']} {'passed' if r['certified'] == 'passed' else 'NOT passed'}")
+        lines.append(f"| {r['case']} | {r['n'] or '-'} | {r['problem'] or '-'} | {r['pairs'] or '-'} | {r['threads']} | "
+                     f"{r['mem_gb']:g} | "
                      f"{f(r['time_median_s'])} [{f(r['time_min_s'])}-{f(r['time_max_s'])}] | {f(r['wall_median_s'])} | "
                      f"{f(r['peak_rss_gib'])} | {r['memory_mode']} | {cert} | {r['ok']}/{r['reps']}"
                      f"{' (' + ', '.join(r['errors']) + ')' if r['errors'] else ''} |")
