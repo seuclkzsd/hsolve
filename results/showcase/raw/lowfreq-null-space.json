@@ -31,7 +31,7 @@
   "dtype": "float64",
   "nnz_a": 1386440,
   "nnz_b": 109744,
-  "source_path": "/share/home/linzihan/os2026/data/cases/yee-pec-box-1e5",
+  "source_path": "~/os2026/data/cases/yee-pec-box-1e5",
   "reference_info": {
    "schema_version": 1,
    "kind": "discrete-exact",
@@ -58,8 +58,8 @@
   "cpu": "Intel(R) Xeon(R) Silver 4314 CPU @ 2.40GHz",
   "os": "Linux-3.10.0-1160.el7.x86_64-x86_64-with-glibc2.17",
   "python": "3.11.17",
-  "git_commit": "44b72c0885022e3dc381486b305e977a211e0944",
-  "source_commit": "0afe5c4b01c5e0c04fa314b9dea74f85b7db43c3",
+  "git_commit": "8c5187e41ce823975a872aae6681249ba32694a1",
+  "source_commit": "b9aadc47b09db34f9b72870ee912d7d1e8715c50",
   "hsolve_binary": "build/release/hsolve",
   "hsolve_md5": "8d69a98bc60e327e479a591ef93742c0",
   "cores": "16-31",
@@ -67,7 +67,7 @@
   "mem_gb": 32.0,
   "reps": 3,
   "slepc_version": "3.26.0",
-  "slepc_env": "/share/home/linzihan/envs/os2026-ref",
+  "slepc_env": "~/envs/os2026-ref",
   "tuned_profiles": "results/showcase/slepc_tuned_profiles.json"
  },
  "norms": {
@@ -311,7 +311,7 @@
     "omp_threads": 16,
     "petsc_options": [
      "-log_view",
-     ":/share/home/linzihan/rb-evidence/runs/lowfreq-null-space/log_view-slepc-default-r0.txt"
+     ":~/rb-evidence/runs/lowfreq-null-space/log_view-slepc-default-r0.txt"
     ],
     "unused_options": [],
     "warnings": [],
@@ -319,7 +319,7 @@
     "time_solve_s": 4.880758374929428,
     "success": true
    },
-   "stderr_tail": "[guard] {\"cmd\": [\"/share/home/linzihan/envs/os2026-ref/bin/mpiexec\", \"-n\", \"1\", \"--bind-to\", \"none\", \"-x\", \"OMP_NUM_THREADS=16\", \"-x\", \"OPENBLAS_NUM_THREADS=16\", \"/share/home/linzihan/envs/os2026-ref/bin/python\", \"/share/home/linzihan/os2026-wt/rb-evidence/tools/bench/baseline_slepc.py\", \"--case\", \"sc-pec-box-1e5-physical\", \"--out\", \"/share/home/linzihan/rb-evidence/runs/lowfreq-null-space/slepc-default-r0\", \"--root\", \"/share/home/linzihan/rb-evidence/data\", \"-log_view\", \":/share/home/linzihan/rb-evidence/runs/lowfreq-null-space/log_view-slepc-default-r0.txt\"], \"returncode\": 0, \"killed\": null, \"wall_s\": 9.61, \"peak_rss_gib\": 0.878, \"peak_sampled_gib\": 0.878, \"cpu_s\": 98.819, \"cores\": \"16-31\", \"threads\": 16, \"mem_limit_gib\": 32.0, \"exclusive\": true}\n",
+   "stderr_tail": "[guard] {\"cmd\": [\"~/envs/os2026-ref/bin/mpiexec\", \"-n\", \"1\", \"--bind-to\", \"none\", \"-x\", \"OMP_NUM_THREADS=16\", \"-x\", \"OPENBLAS_NUM_THREADS=16\", \"~/envs/os2026-ref/bin/python\", \"~/os2026-wt/rb-evidence/tools/bench/baseline_slepc.py\", \"--case\", \"sc-pec-box-1e5-physical\", \"--out\", \"~/rb-evidence/runs/lowfreq-null-space/slepc-default-r0\", \"--root\", \"~/rb-evidence/data\", \"-log_view\", \":~/rb-evidence/runs/lowfreq-null-space/log_view-slepc-default-r0.txt\"], \"returncode\": 0, \"killed\": null, \"wall_s\": 9.61, \"peak_rss_gib\": 0.878, \"peak_sampled_gib\": 0.878, \"cpu_s\": 98.819, \"cores\": \"16-31\", \"threads\": 16, \"mem_limit_gib\": 32.0, \"exclusive\": true}\n",
    "stdout_tail": "slepc: n=109744 target=nearest nconv=11 its=6 setup=2.38s solve=4.88s total=7.46s peak=0.85GiB\n",
    "rep": 0,
    "position": 1
@@ -429,7 +429,7 @@
      "-st_mat_mumps_icntl_35",
      "2",
      "-log_view",
-     ":/share/home/linzihan/rb-evidence/runs/lowfreq-null-space/log_view-slepc-tuned-r0.txt"
+     ":~/rb-evidence/runs/lowfreq-null-space/log_view-slepc-tuned-r0.txt"
     ],
     "unused_options": [],
     "warnings": [],
@@ -437,7 +437,7 @@
     "time_solve_s": 5.375744365155697,
     "success": true
    },
-   "stderr_tail": "[guard] {\"cmd\": [\"/share/home/linzihan/envs/os2026-ref/bin/mpiexec\", \"-n\", \"4\", \"--bind-to\", \"none\", \"-x\", \"OMP_NUM_THREADS=4\", \"-x\", \"OPENBLAS_NUM_THREADS=4\", \"-x\", \"OMP_PROC_BIND=close\", \"-x\", \"OMP_PLACES=cores\", \"/share/home/linzihan/envs/os2026-ref/bin/python\", \"/share/home/linzihan/os2026-wt/rb-evidence/tools/bench/baseline_slepc.py\", \"--case\", \"sc-pec-box-1e5-physical\", \"--out\", \"/share/home/linzihan/rb-evidence/runs/lowfreq-null-space/slepc-tuned-r0\", \"--bind\", \"core\", \"--root\", \"/share/home/linzihan/rb-evidence/data\", \"-eps_nev\", \"12\", \"-st_mat_mumps_cntl_7\", \"1e-10\", \"-st_mat_mumps_icntl_28\", \"2\", \"-st_mat_mumps_icntl_29\", \"2\", \"-st_mat_mumps_icntl_35\", \"2\", \"-log_view\", \":/share/home/linzihan/rb-evidence/runs/lowfreq-null-space/log_view-slepc-tuned-r0.txt\"], \"returncode\": 0, \"killed\": null, \"wall_s\": 9.785, \"peak_rss_gib\": 1.297, \"peak_sampled_gib\": 1.289, \"cpu_s\": 117.06, \"cores\": \"16-31\", \"threads\": 16, \"mem_limit_gib\": 32.0, \"exclusive\": true}\n",
+   "stderr_tail": "[guard] {\"cmd\": [\"~/envs/os2026-ref/bin/mpiexec\", \"-n\", \"4\", \"--bind-to\", \"none\", \"-x\", \"OMP_NUM_THREADS=4\", \"-x\", \"OPENBLAS_NUM_THREADS=4\", \"-x\", \"OMP_PROC_BIND=close\", \"-x\", \"OMP_PLACES=cores\", \"~/envs/os2026-ref/bin/python\", \"~/os2026-wt/rb-evidence/tools/bench/baseline_slepc.py\", \"--case\", \"sc-pec-box-1e5-physical\", \"--out\", \"~/rb-evidence/runs/lowfreq-null-space/slepc-tuned-r0\", \"--bind\", \"core\", \"--root\", \"~/rb-evidence/data\", \"-eps_nev\", \"12\", \"-st_mat_mumps_cntl_7\", \"1e-10\", \"-st_mat_mumps_icntl_28\", \"2\", \"-st_mat_mumps_icntl_29\", \"2\", \"-st_mat_mumps_icntl_35\", \"2\", \"-log_view\", \":~/rb-evidence/runs/lowfreq-null-space/log_view-slepc-tuned-r0.txt\"], \"returncode\": 0, \"killed\": null, \"wall_s\": 9.785, \"peak_rss_gib\": 1.297, \"peak_sampled_gib\": 1.289, \"cpu_s\": 117.06, \"cores\": \"16-31\", \"threads\": 16, \"mem_limit_gib\": 32.0, \"exclusive\": true}\n",
    "stdout_tail": "slepc: n=109744 target=nearest nconv=13 its=11 setup=2.06s solve=5.38s total=7.62s peak=1.28GiB\n",
    "rep": 0,
    "position": 2
@@ -537,7 +537,7 @@
     "omp_threads": 16,
     "petsc_options": [
      "-log_view",
-     ":/share/home/linzihan/rb-evidence/runs/lowfreq-null-space/log_view-slepc-default-r1.txt"
+     ":~/rb-evidence/runs/lowfreq-null-space/log_view-slepc-default-r1.txt"
     ],
     "unused_options": [],
     "warnings": [],
@@ -545,7 +545,7 @@
     "time_solve_s": 5.78579693287611,
     "success": true
    },
-   "stderr_tail": "[guard] {\"cmd\": [\"/share/home/linzihan/envs/os2026-ref/bin/mpiexec\", \"-n\", \"1\", \"--bind-to\", \"none\", \"-x\", \"OMP_NUM_THREADS=16\", \"-x\", \"OPENBLAS_NUM_THREADS=16\", \"/share/home/linzihan/envs/os2026-ref/bin/python\", \"/share/home/linzihan/os2026-wt/rb-evidence/tools/bench/baseline_slepc.py\", \"--case\", \"sc-pec-box-1e5-physical\", \"--out\", \"/share/home/linzihan/rb-evidence/runs/lowfreq-null-space/slepc-default-r1\", \"--root\", \"/share/home/linzihan/rb-evidence/data\", \"-log_view\", \":/share/home/linzihan/rb-evidence/runs/lowfreq-null-space/log_view-slepc-default-r1.txt\"], \"returncode\": 0, \"killed\": null, \"wall_s\": 11.035, \"peak_rss_gib\": 0.811, \"peak_sampled_gib\": 0.811, \"cpu_s\": 113.152, \"cores\": \"16-31\", \"threads\": 16, \"mem_limit_gib\": 32.0, \"exclusive\": true}\n",
+   "stderr_tail": "[guard] {\"cmd\": [\"~/envs/os2026-ref/bin/mpiexec\", \"-n\", \"1\", \"--bind-to\", \"none\", \"-x\", \"OMP_NUM_THREADS=16\", \"-x\", \"OPENBLAS_NUM_THREADS=16\", \"~/envs/os2026-ref/bin/python\", \"~/os2026-wt/rb-evidence/tools/bench/baseline_slepc.py\", \"--case\", \"sc-pec-box-1e5-physical\", \"--out\", \"~/rb-evidence/runs/lowfreq-null-space/slepc-default-r1\", \"--root\", \"~/rb-evidence/data\", \"-log_view\", \":~/rb-evidence/runs/lowfreq-null-space/log_view-slepc-default-r1.txt\"], \"returncode\": 0, \"killed\": null, \"wall_s\": 11.035, \"peak_rss_gib\": 0.811, \"peak_sampled_gib\": 0.811, \"cpu_s\": 113.152, \"cores\": \"16-31\", \"threads\": 16, \"mem_limit_gib\": 32.0, \"exclusive\": true}\n",
    "stdout_tail": "slepc: n=109744 target=nearest nconv=11 its=6 setup=2.83s solve=5.79s total=8.81s peak=0.79GiB\n",
    "rep": 1,
    "position": 0
@@ -655,7 +655,7 @@
      "-st_mat_mumps_icntl_35",
      "2",
      "-log_view",
-     ":/share/home/linzihan/rb-evidence/runs/lowfreq-null-space/log_view-slepc-tuned-r1.txt"
+     ":~/rb-evidence/runs/lowfreq-null-space/log_view-slepc-tuned-r1.txt"
     ],
     "unused_options": [],
     "warnings": [],
@@ -663,7 +663,7 @@
     "time_solve_s": 9.252049595117569,
     "success": true
    },
-   "stderr_tail": "[guard] {\"cmd\": [\"/share/home/linzihan/envs/os2026-ref/bin/mpiexec\", \"-n\", \"4\", \"--bind-to\", \"none\", \"-x\", \"OMP_NUM_THREADS=4\", \"-x\", \"OPENBLAS_NUM_THREADS=4\", \"-x\", \"OMP_PROC_BIND=close\", \"-x\", \"OMP_PLACES=cores\", \"/share/home/linzihan/envs/os2026-ref/bin/python\", \"/share/home/linzihan/os2026-wt/rb-evidence/tools/bench/baseline_slepc.py\", \"--case\", \"sc-pec-box-1e5-physical\", \"--out\", \"/share/home/linzihan/rb-evidence/runs/lowfreq-null-space/slepc-tuned-r1\", \"--bind\", \"core\", \"--root\", \"/share/home/linzihan/rb-evidence/data\", \"-eps_nev\", \"12\", \"-st_mat_mumps_cntl_7\", \"1e-10\", \"-st_mat_mumps_icntl_28\", \"2\", \"-st_mat_mumps_icntl_29\", \"2\", \"-st_mat_mumps_icntl_35\", \"2\", \"-log_view\", \":/share/home/linzihan/rb-evidence/runs/lowfreq-null-space/log_view-slepc-tuned-r1.txt\"], \"returncode\": 0, \"killed\": null, \"wall_s\": 13.7, \"peak_rss_gib\": 1.267, \"peak_sampled_gib\": 1.252, \"cpu_s\": 178.876, \"cores\": \"16-31\", \"threads\": 16, \"mem_limit_gib\": 32.0, \"exclusive\": true}\n",
+   "stderr_tail": "[guard] {\"cmd\": [\"~/envs/os2026-ref/bin/mpiexec\", \"-n\", \"4\", \"--bind-to\", \"none\", \"-x\", \"OMP_NUM_THREADS=4\", \"-x\", \"OPENBLAS_NUM_THREADS=4\", \"-x\", \"OMP_PROC_BIND=close\", \"-x\", \"OMP_PLACES=cores\", \"~/envs/os2026-ref/bin/python\", \"~/os2026-wt/rb-evidence/tools/bench/baseline_slepc.py\", \"--case\", \"sc-pec-box-1e5-physical\", \"--out\", \"~/rb-evidence/runs/lowfreq-null-space/slepc-tuned-r1\", \"--bind\", \"core\", \"--root\", \"~/rb-evidence/data\", \"-eps_nev\", \"12\", \"-st_mat_mumps_cntl_7\", \"1e-10\", \"-st_mat_mumps_icntl_28\", \"2\", \"-st_mat_mumps_icntl_29\", \"2\", \"-st_mat_mumps_icntl_35\", \"2\", \"-log_view\", \":~/rb-evidence/runs/lowfreq-null-space/log_view-slepc-tuned-r1.txt\"], \"returncode\": 0, \"killed\": null, \"wall_s\": 13.7, \"peak_rss_gib\": 1.267, \"peak_sampled_gib\": 1.252, \"cpu_s\": 178.876, \"cores\": \"16-31\", \"threads\": 16, \"mem_limit_gib\": 32.0, \"exclusive\": true}\n",
    "stdout_tail": "slepc: n=109744 target=nearest nconv=16 its=20 setup=2.08s solve=9.25s total=11.48s peak=1.25GiB\n",
    "rep": 1,
    "position": 1
@@ -872,7 +872,7 @@
      "-st_mat_mumps_icntl_35",
      "2",
      "-log_view",
-     ":/share/home/linzihan/rb-evidence/runs/lowfreq-null-space/log_view-slepc-tuned-r2.txt"
+     ":~/rb-evidence/runs/lowfreq-null-space/log_view-slepc-tuned-r2.txt"
     ],
     "unused_options": [],
     "warnings": [],
@@ -880,7 +880,7 @@
     "time_solve_s": 7.952139526605606,
     "success": true
    },
-   "stderr_tail": "[guard] {\"cmd\": [\"/share/home/linzihan/envs/os2026-ref/bin/mpiexec\", \"-n\", \"4\", \"--bind-to\", \"none\", \"-x\", \"OMP_NUM_THREADS=4\", \"-x\", \"OPENBLAS_NUM_THREADS=4\", \"-x\", \"OMP_PROC_BIND=close\", \"-x\", \"OMP_PLACES=cores\", \"/share/home/linzihan/envs/os2026-ref/bin/python\", \"/share/home/linzihan/os2026-wt/rb-evidence/tools/bench/baseline_slepc.py\", \"--case\", \"sc-pec-box-1e5-physical\", \"--out\", \"/share/home/linzihan/rb-evidence/runs/lowfreq-null-space/slepc-tuned-r2\", \"--bind\", \"core\", \"--root\", \"/share/home/linzihan/rb-evidence/data\", \"-eps_nev\", \"12\", \"-st_mat_mumps_cntl_7\", \"1e-10\", \"-st_mat_mumps_icntl_28\", \"2\", \"-st_mat_mumps_icntl_29\", \"2\", \"-st_mat_mumps_icntl_35\", \"2\", \"-log_view\", \":/share/home/linzihan/rb-evidence/runs/lowfreq-null-space/log_view-slepc-tuned-r2.txt\"], \"returncode\": 0, \"killed\": null, \"wall_s\": 13.644, \"peak_rss_gib\": 1.286, \"peak_sampled_gib\": 1.278, \"cpu_s\": 168.777, \"cores\": \"16-31\", \"threads\": 16, \"mem_limit_gib\": 32.0, \"exclusive\": true}\n",
+   "stderr_tail": "[guard] {\"cmd\": [\"~/envs/os2026-ref/bin/mpiexec\", \"-n\", \"4\", \"--bind-to\", \"none\", \"-x\", \"OMP_NUM_THREADS=4\", \"-x\", \"OPENBLAS_NUM_THREADS=4\", \"-x\", \"OMP_PROC_BIND=close\", \"-x\", \"OMP_PLACES=cores\", \"~/envs/os2026-ref/bin/python\", \"~/os2026-wt/rb-evidence/tools/bench/baseline_slepc.py\", \"--case\", \"sc-pec-box-1e5-physical\", \"--out\", \"~/rb-evidence/runs/lowfreq-null-space/slepc-tuned-r2\", \"--bind\", \"core\", \"--root\", \"~/rb-evidence/data\", \"-eps_nev\", \"12\", \"-st_mat_mumps_cntl_7\", \"1e-10\", \"-st_mat_mumps_icntl_28\", \"2\", \"-st_mat_mumps_icntl_29\", \"2\", \"-st_mat_mumps_icntl_35\", \"2\", \"-log_view\", \":~/rb-evidence/runs/lowfreq-null-space/log_view-slepc-tuned-r2.txt\"], \"returncode\": 0, \"killed\": null, \"wall_s\": 13.644, \"peak_rss_gib\": 1.286, \"peak_sampled_gib\": 1.278, \"cpu_s\": 168.777, \"cores\": \"16-31\", \"threads\": 16, \"mem_limit_gib\": 32.0, \"exclusive\": true}\n",
    "stdout_tail": "slepc: n=109744 target=nearest nconv=18 its=15 setup=3.02s solve=7.95s total=11.14s peak=1.27GiB\n",
    "rep": 2,
    "position": 0
@@ -1079,7 +1079,7 @@
     "omp_threads": 16,
     "petsc_options": [
      "-log_view",
-     ":/share/home/linzihan/rb-evidence/runs/lowfreq-null-space/log_view-slepc-default-r2.txt"
+     ":~/rb-evidence/runs/lowfreq-null-space/log_view-slepc-default-r2.txt"
     ],
     "unused_options": [],
     "warnings": [],
@@ -1087,7 +1087,7 @@
     "time_solve_s": 9.14359375834465,
     "success": true
    },
-   "stderr_tail": "[guard] {\"cmd\": [\"/share/home/linzihan/envs/os2026-ref/bin/mpiexec\", \"-n\", \"1\", \"--bind-to\", \"none\", \"-x\", \"OMP_NUM_THREADS=16\", \"-x\", \"OPENBLAS_NUM_THREADS=16\", \"/share/home/linzihan/envs/os2026-ref/bin/python\", \"/share/home/linzihan/os2026-wt/rb-evidence/tools/bench/baseline_slepc.py\", \"--case\", \"sc-pec-box-1e5-physical\", \"--out\", \"/share/home/linzihan/rb-evidence/runs/lowfreq-null-space/slepc-default-r2\", \"--root\", \"/share/home/linzihan/rb-evidence/data\", \"-log_view\", \":/share/home/linzihan/rb-evidence/runs/lowfreq-null-space/log_view-slepc-default-r2.txt\"], \"returncode\": 0, \"killed\": null, \"wall_s\": 16.574, \"peak_rss_gib\": 0.816, \"peak_sampled_gib\": 0.788, \"cpu_s\": 160.988, \"cores\": \"16-31\", \"threads\": 16, \"mem_limit_gib\": 32.0, \"exclusive\": true}\n",
+   "stderr_tail": "[guard] {\"cmd\": [\"~/envs/os2026-ref/bin/mpiexec\", \"-n\", \"1\", \"--bind-to\", \"none\", \"-x\", \"OMP_NUM_THREADS=16\", \"-x\", \"OPENBLAS_NUM_THREADS=16\", \"~/envs/os2026-ref/bin/python\", \"~/os2026-wt/rb-evidence/tools/bench/baseline_slepc.py\", \"--case\", \"sc-pec-box-1e5-physical\", \"--out\", \"~/rb-evidence/runs/lowfreq-null-space/slepc-default-r2\", \"--root\", \"~/rb-evidence/data\", \"-log_view\", \":~/rb-evidence/runs/lowfreq-null-space/log_view-slepc-default-r2.txt\"], \"returncode\": 0, \"killed\": null, \"wall_s\": 16.574, \"peak_rss_gib\": 0.816, \"peak_sampled_gib\": 0.788, \"cpu_s\": 160.988, \"cores\": \"16-31\", \"threads\": 16, \"mem_limit_gib\": 32.0, \"exclusive\": true}\n",
    "stdout_tail": "slepc: n=109744 target=nearest nconv=11 its=6 setup=5.10s solve=9.14s total=14.43s peak=0.79GiB\n",
    "rep": 2,
    "position": 2

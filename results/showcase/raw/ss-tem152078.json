@@ -28,7 +28,7 @@
   "dtype": "float64",
   "nnz_a": 6459326,
   "nnz_b": 6459330,
-  "source_path": "/share/home/linzihan/os2026/data/cases/ss-tem152078",
+  "source_path": "~/os2026/data/cases/ss-tem152078",
   "reference_info": {
    "schema_version": 1,
    "kind": "solver",
@@ -48,8 +48,8 @@
   "cpu": "Intel(R) Xeon(R) Silver 4314 CPU @ 2.40GHz",
   "os": "Linux-3.10.0-1160.el7.x86_64-x86_64-with-glibc2.17",
   "python": "3.11.17",
-  "git_commit": "9f6f373cff77fa6d2f96e223eac963f304157501",
-  "source_commit": "0afe5c4b01c5e0c04fa314b9dea74f85b7db43c3",
+  "git_commit": "ea7311747508de027120d9bd3b64fa94b88c3299",
+  "source_commit": "b9aadc47b09db34f9b72870ee912d7d1e8715c50",
   "hsolve_binary": "build/release/hsolve",
   "hsolve_md5": "8d69a98bc60e327e479a591ef93742c0",
   "cores": "16-31",
@@ -57,7 +57,7 @@
   "mem_gb": 32.0,
   "reps": 3,
   "slepc_version": "3.26.0",
-  "slepc_env": "/share/home/linzihan/envs/os2026-ref",
+  "slepc_env": "~/envs/os2026-ref",
   "tuned_profiles": "results/showcase/slepc_tuned_profiles.json"
  },
  "norms": {
@@ -266,7 +266,7 @@
     "omp_threads": 16,
     "petsc_options": [
      "-log_view",
-     ":/share/home/linzihan/rb-evidence/runs/ss-tem152078/log_view-slepc-default-r0.txt"
+     ":~/rb-evidence/runs/ss-tem152078/log_view-slepc-default-r0.txt"
     ],
     "unused_options": [],
     "warnings": [],
@@ -359,7 +359,7 @@
      "-st_mat_mumps_icntl_35",
      "2",
      "-log_view",
-     ":/share/home/linzihan/rb-evidence/runs/ss-tem152078/log_view-slepc-tuned-r0.txt"
+     ":~/rb-evidence/runs/ss-tem152078/log_view-slepc-tuned-r0.txt"
     ],
     "unused_options": [],
     "warnings": [],
@@ -442,7 +442,7 @@
     "omp_threads": 16,
     "petsc_options": [
      "-log_view",
-     ":/share/home/linzihan/rb-evidence/runs/ss-tem152078/log_view-slepc-default-r1.txt"
+     ":~/rb-evidence/runs/ss-tem152078/log_view-slepc-default-r1.txt"
     ],
     "unused_options": [],
     "warnings": [],
@@ -535,7 +535,7 @@
      "-st_mat_mumps_icntl_35",
      "2",
      "-log_view",
-     ":/share/home/linzihan/rb-evidence/runs/ss-tem152078/log_view-slepc-tuned-r1.txt"
+     ":~/rb-evidence/runs/ss-tem152078/log_view-slepc-tuned-r1.txt"
     ],
     "unused_options": [],
     "warnings": [],
@@ -723,7 +723,7 @@
      "-st_mat_mumps_icntl_35",
      "2",
      "-log_view",
-     ":/share/home/linzihan/rb-evidence/runs/ss-tem152078/log_view-slepc-tuned-r2.txt"
+     ":~/rb-evidence/runs/ss-tem152078/log_view-slepc-tuned-r2.txt"
     ],
     "unused_options": [],
     "warnings": [],
@@ -901,7 +901,7 @@
     "omp_threads": 16,
     "petsc_options": [
      "-log_view",
-     ":/share/home/linzihan/rb-evidence/runs/ss-tem152078/log_view-slepc-default-r2.txt"
+     ":~/rb-evidence/runs/ss-tem152078/log_view-slepc-default-r2.txt"
     ],
     "unused_options": [],
     "warnings": [],

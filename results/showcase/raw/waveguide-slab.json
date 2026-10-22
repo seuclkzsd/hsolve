@@ -26,7 +26,7 @@
   "dtype": "float64",
   "nnz_a": 371616,
   "nnz_b": 1052701,
-  "source_path": "/share/home/linzihan/os2026/data/cases/wg-halfslab-1e5",
+  "source_path": "~/os2026/data/cases/wg-halfslab-1e5",
   "reference_info": {
    "schema_version": 1,
    "kind": "solver",
@@ -46,8 +46,8 @@
   "cpu": "Intel(R) Xeon(R) Silver 4314 CPU @ 2.40GHz",
   "os": "Linux-3.10.0-1160.el7.x86_64-x86_64-with-glibc2.17",
   "python": "3.11.17",
-  "git_commit": "88bc92d32a553d0330113bae10a827e7e794538b",
-  "source_commit": "0afe5c4b01c5e0c04fa314b9dea74f85b7db43c3",
+  "git_commit": "ddd14a90fa6e0bb65eab9e5a4fcacb41f5b61abf",
+  "source_commit": "b9aadc47b09db34f9b72870ee912d7d1e8715c50",
   "hsolve_binary": "build/release/hsolve",
   "hsolve_md5": "8d69a98bc60e327e479a591ef93742c0",
   "cores": "16-31",
@@ -55,7 +55,7 @@
   "mem_gb": 32.0,
   "reps": 3,
   "slepc_version": "3.26.0",
-  "slepc_env": "/share/home/linzihan/envs/os2026-ref",
+  "slepc_env": "~/envs/os2026-ref",
   "tuned_profiles": "results/showcase/slepc_tuned_profiles.json"
  },
  "norms": {
@@ -320,7 +320,7 @@
     "omp_threads": 16,
     "petsc_options": [
      "-log_view",
-     ":/share/home/linzihan/rb-evidence/runs/waveguide-slab/log_view-slepc-default-r0.txt"
+     ":~/rb-evidence/runs/waveguide-slab/log_view-slepc-default-r0.txt"
     ],
     "unused_options": [],
     "warnings": [],
@@ -328,7 +328,7 @@
     "time_solve_s": 1.5170461013913155,
     "success": false
    },
-   "stderr_tail": "[guard] {\"cmd\": [\"/share/home/linzihan/envs/os2026-ref/bin/mpiexec\", \"-n\", \"1\", \"--bind-to\", \"none\", \"-x\", \"OMP_NUM_THREADS=16\", \"-x\", \"OPENBLAS_NUM_THREADS=16\", \"/share/home/linzihan/envs/os2026-ref/bin/python\", \"/share/home/linzihan/os2026-wt/rb-evidence/tools/bench/baseline_slepc.py\", \"--case\", \"wg-halfslab-1e5\", \"--out\", \"/share/home/linzihan/rb-evidence/runs/waveguide-slab/slepc-default-r0\", \"--root\", \"/share/home/linzihan/rb-evidence/data\", \"-log_view\", \":/share/home/linzihan/rb-evidence/runs/waveguide-slab/log_view-slepc-default-r0.txt\"], \"returncode\": 0, \"killed\": null, \"wall_s\": 5.948, \"peak_rss_gib\": 0.414, \"peak_sampled_gib\": 0.394, \"cpu_s\": 32.229, \"cores\": \"16-31\", \"threads\": 16, \"mem_limit_gib\": 32.0, \"exclusive\": true}\n",
+   "stderr_tail": "[guard] {\"cmd\": [\"~/envs/os2026-ref/bin/mpiexec\", \"-n\", \"1\", \"--bind-to\", \"none\", \"-x\", \"OMP_NUM_THREADS=16\", \"-x\", \"OPENBLAS_NUM_THREADS=16\", \"~/envs/os2026-ref/bin/python\", \"~/os2026-wt/rb-evidence/tools/bench/baseline_slepc.py\", \"--case\", \"wg-halfslab-1e5\", \"--out\", \"~/rb-evidence/runs/waveguide-slab/slepc-default-r0\", \"--root\", \"~/rb-evidence/data\", \"-log_view\", \":~/rb-evidence/runs/waveguide-slab/log_view-slepc-default-r0.txt\"], \"returncode\": 0, \"killed\": null, \"wall_s\": 5.948, \"peak_rss_gib\": 0.414, \"peak_sampled_gib\": 0.394, \"cpu_s\": 32.229, \"cores\": \"16-31\", \"threads\": 16, \"mem_limit_gib\": 32.0, \"exclusive\": true}\n",
    "stdout_tail": "slepc: n=99225 target=nearest nconv=28 its=2 setup=0.82s solve=1.52s total=2.62s peak=0.37GiB\n",
    "rep": 0,
    "position": 1
@@ -427,7 +427,7 @@
      "-st_mat_mumps_icntl_7",
      "0",
      "-log_view",
-     ":/share/home/linzihan/rb-evidence/runs/waveguide-slab/log_view-slepc-tuned-r0.txt"
+     ":~/rb-evidence/runs/waveguide-slab/log_view-slepc-tuned-r0.txt"
     ],
     "unused_options": [],
     "warnings": [],
@@ -537,7 +537,7 @@
     "omp_threads": 16,
     "petsc_options": [
      "-log_view",
-     ":/share/home/linzihan/rb-evidence/runs/waveguide-slab/log_view-slepc-default-r1.txt"
+     ":~/rb-evidence/runs/waveguide-slab/log_view-slepc-default-r1.txt"
     ],
     "unused_options": [],
     "warnings": [],
@@ -545,7 +545,7 @@
     "time_solve_s": 1.3200024962425232,
     "success": false
    },
-   "stderr_tail": "[guard] {\"cmd\": [\"/share/home/linzihan/envs/os2026-ref/bin/mpiexec\", \"-n\", \"1\", \"--bind-to\", \"none\", \"-x\", \"OMP_NUM_THREADS=16\", \"-x\", \"OPENBLAS_NUM_THREADS=16\", \"/share/home/linzihan/envs/os2026-ref/bin/python\", \"/share/home/linzihan/os2026-wt/rb-evidence/tools/bench/baseline_slepc.py\", \"--case\", \"wg-halfslab-1e5\", \"--out\", \"/share/home/linzihan/rb-evidence/runs/waveguide-slab/slepc-default-r1\", \"--root\", \"/share/home/linzihan/rb-evidence/data\", \"-log_view\", \":/share/home/linzihan/rb-evidence/runs/waveguide-slab/log_view-slepc-default-r1.txt\"], \"returncode\": 0, \"killed\": null, \"wall_s\": 4.536, \"peak_rss_gib\": 0.441, \"peak_sampled_gib\": 0.397, \"cpu_s\": 29.267, \"cores\": \"16-31\", \"threads\": 16, \"mem_limit_gib\": 32.0, \"exclusive\": true}\n",
+   "stderr_tail": "[guard] {\"cmd\": [\"~/envs/os2026-ref/bin/mpiexec\", \"-n\", \"1\", \"--bind-to\", \"none\", \"-x\", \"OMP_NUM_THREADS=16\", \"-x\", \"OPENBLAS_NUM_THREADS=16\", \"~/envs/os2026-ref/bin/python\", \"~/os2026-wt/rb-evidence/tools/bench/baseline_slepc.py\", \"--case\", \"wg-halfslab-1e5\", \"--out\", \"~/rb-evidence/runs/waveguide-slab/slepc-default-r1\", \"--root\", \"~/rb-evidence/data\", \"-log_view\", \":~/rb-evidence/runs/waveguide-slab/log_view-slepc-default-r1.txt\"], \"returncode\": 0, \"killed\": null, \"wall_s\": 4.536, \"peak_rss_gib\": 0.441, \"peak_sampled_gib\": 0.397, \"cpu_s\": 29.267, \"cores\": \"16-31\", \"threads\": 16, \"mem_limit_gib\": 32.0, \"exclusive\": true}\n",
    "stdout_tail": "slepc: n=99225 target=nearest nconv=28 its=2 setup=0.81s solve=1.32s total=2.37s peak=0.39GiB\n",
    "rep": 1,
    "position": 0
@@ -644,7 +644,7 @@
      "-st_mat_mumps_icntl_7",
      "0",
      "-log_view",
-     ":/share/home/linzihan/rb-evidence/runs/waveguide-slab/log_view-slepc-tuned-r1.txt"
+     ":~/rb-evidence/runs/waveguide-slab/log_view-slepc-tuned-r1.txt"
     ],
     "unused_options": [],
     "warnings": [],
@@ -862,7 +862,7 @@
      "-st_mat_mumps_icntl_7",
      "0",
      "-log_view",
-     ":/share/home/linzihan/rb-evidence/runs/waveguide-slab/log_view-slepc-tuned-r2.txt"
+     ":~/rb-evidence/runs/waveguide-slab/log_view-slepc-tuned-r2.txt"
     ],
     "unused_options": [],
     "warnings": [],
@@ -1085,7 +1085,7 @@
     "omp_threads": 16,
     "petsc_options": [
      "-log_view",
-     ":/share/home/linzihan/rb-evidence/runs/waveguide-slab/log_view-slepc-default-r2.txt"
+     ":~/rb-evidence/runs/waveguide-slab/log_view-slepc-default-r2.txt"
     ],
     "unused_options": [],
     "warnings": [],
@@ -1093,7 +1093,7 @@
     "time_solve_s": 1.322422631084919,
     "success": false
    },
-   "stderr_tail": "[guard] {\"cmd\": [\"/share/home/linzihan/envs/os2026-ref/bin/mpiexec\", \"-n\", \"1\", \"--bind-to\", \"none\", \"-x\", \"OMP_NUM_THREADS=16\", \"-x\", \"OPENBLAS_NUM_THREADS=16\", \"/share/home/linzihan/envs/os2026-ref/bin/python\", \"/share/home/linzihan/os2026-wt/rb-evidence/tools/bench/baseline_slepc.py\", \"--case\", \"wg-halfslab-1e5\", \"--out\", \"/share/home/linzihan/rb-evidence/runs/waveguide-slab/slepc-default-r2\", \"--root\", \"/share/home/linzihan/rb-evidence/data\", \"-log_view\", \":/share/home/linzihan/rb-evidence/runs/waveguide-slab/log_view-slepc-default-r2.txt\"], \"returncode\": 0, \"killed\": null, \"wall_s\": 4.416, \"peak_rss_gib\": 0.404, \"peak_sampled_gib\": 0.398, \"cpu_s\": 29.309, \"cores\": \"16-31\", \"threads\": 16, \"mem_limit_gib\": 32.0, \"exclusive\": true}\n",
+   "stderr_tail": "[guard] {\"cmd\": [\"~/envs/os2026-ref/bin/mpiexec\", \"-n\", \"1\", \"--bind-to\", \"none\", \"-x\", \"OMP_NUM_THREADS=16\", \"-x\", \"OPENBLAS_NUM_THREADS=16\", \"~/envs/os2026-ref/bin/python\", \"~/os2026-wt/rb-evidence/tools/bench/baseline_slepc.py\", \"--case\", \"wg-halfslab-1e5\", \"--out\", \"~/rb-evidence/runs/waveguide-slab/slepc-default-r2\", \"--root\", \"~/rb-evidence/data\", \"-log_view\", \":~/rb-evidence/runs/waveguide-slab/log_view-slepc-default-r2.txt\"], \"returncode\": 0, \"killed\": null, \"wall_s\": 4.416, \"peak_rss_gib\": 0.404, \"peak_sampled_gib\": 0.398, \"cpu_s\": 29.309, \"cores\": \"16-31\", \"threads\": 16, \"mem_limit_gib\": 32.0, \"exclusive\": true}\n",
    "stdout_tail": "slepc: n=99225 target=nearest nconv=28 its=2 setup=0.81s solve=1.32s total=2.36s peak=0.36GiB\n",
    "rep": 2,
    "position": 2

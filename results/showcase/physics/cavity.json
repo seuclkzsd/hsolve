@@ -265,7 +265,7 @@
  "conditions": {
   "hsolve_binary": "build/release/hsolve",
   "threads": 8,
-  "git_commit": "9f6f373cff77fa6d2f96e223eac963f304157501",
+  "git_commit": "ea7311747508de027120d9bd3b64fa94b88c3299",
   "host": "c005",
   "date": "2026-10-22T22:08:39",
   "note": "accuracy runs in the build/test lane; times are not measurements"
