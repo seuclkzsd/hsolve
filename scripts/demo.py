@@ -51,7 +51,7 @@ def describe_target(t: dict[str, Any]) -> str:
     if mode == "nearest":
         return f"nearest {t['k']} to {t['sigma']:.6g}"
     if mode == "interval":
-        return f"all in [{t['lower']:.3g}, {t['upper']:.4g}]"
+        return f"all in [{t['lower']:.4g}, {t['upper']:.4g}]"
     return f"{mode} {t['k']}"
 
 
@@ -99,7 +99,10 @@ def evaluate_case(examples: Path, name: str, out: Path) -> dict[str, Any]:
 
 def python_api_check(hsolve: Path, env: dict[str, str]) -> str:
     """The in-process Python API on a small diagonal matrix, in a subprocess (its own import path)."""
-    pkg = [p for p in (ROOT / "python", hsolve.parent / "python") if (p / "hsolve" / "__init__.py").is_file()]
+    # The package next to the executable: <prefix>/python (release package, bin/../python) or
+    # build/<preset>/python (build tree); the source tree's python/ holds no compiled module.
+    pkg = [p for p in (hsolve.parent.parent / "python", hsolve.parent / "python")
+           if list((p / "hsolve").glob("_hsolve*.so"))]
     if not pkg:
         return "skipped (Python module not built)"
     code = ("import numpy as np, scipy.sparse as sp, hsolve\n"
