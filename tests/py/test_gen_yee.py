@@ -192,5 +192,7 @@ def test_case_writers(tmp_path):
     assert case.load_ref("t-phc", root=tmp_path) is None
     assert c.meta["dtype"] == "complex128" and c.meta["scenarios"] == ["zero-cluster", "complex-hermitian"]
     assert c.meta["targets"][0]["sigma"] > 0 and c.meta["inertia"]["B"] == [0, 0, c.n]
-    assert set(yee.PRESETS) >= {"yee-pec-cube-16", "yee-pec-box-1e5", "yee-bloch-1e4",
+    assert set(yee.PRESETS) >= {"yee-pec-cube-16", "yee-pec-box-1e5", "yee-pec-box-1e6", "yee-bloch-1e4",
                                 "yee-photonic-spheres-1e4"}
+    # the order-1e6 cavity of the showcase and results/p7_membudget.md: n = 1027733 unknowns
+    assert yee.YeeGrid((92, 71, 54), (1.0, 0.75, 0.55)).edge_count == 1027733
