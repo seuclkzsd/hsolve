@@ -75,7 +75,7 @@ def attempt(case: str, root: str, lower: float, upper: float, pc_type: str, solv
 
 def petsc_message(stderr: str) -> str:
     """The text lines of PETSc's error report ("[0] No support for ..."), without the stack frames."""
-    lines = [ln.split("]", 1)[1].strip() for ln in stderr.splitlines() if ln.startswith("[0]") and "]" in ln]
+    lines = [ln.split("]", 1)[1].strip() for ln in stderr.splitlines() if ln.startswith("[0]")]
     keep = [ln for ln in lines if ln and " at " not in ln and not ln.startswith("#") and "----" not in ln
             and not ln.startswith("See https") and "PETSc Release" not in ln and "Configure options" not in ln]
     return "; ".join(dict.fromkeys(keep))[:400]
@@ -104,14 +104,12 @@ def main(argv: list[str] | None = None) -> int:
             rec = json.loads(lines[-1]) if lines else {}
         except ValueError:
             rec = {}
-        rec.update(pc_type=pc_type, solver=solver, returncode=proc.returncode,
-                   stderr_tail=proc.stderr[-4000:], petsc_message=petsc_message(proc.stderr))
+        rec.update(pc_type=pc_type, solver=solver, returncode=proc.returncode, stderr_tail=proc.stderr[-4000:],
+                   petsc_message=petsc_message((rec.get("message") or "") + "\n" + proc.stderr))
         if not rec.get("status"):
             rec["status"] = "crashed"
-        if not rec.get("message"):
-            rec["message"] = rec["petsc_message"]
         results.append(rec)
-        print(f"{pc_type}/{solver}: {rec['status']} {rec.get('message', '')[:200]}", flush=True)
+        print(f"{pc_type}/{solver}: {rec['status']} {rec['petsc_message'][:300]}", flush=True)
     doc = {"schema_version": 1, "case": args.case, "target": {"mode": "interval", "lower": args.lower,
                                                               "upper": args.upper},
            "python": sys.executable, "attempts": results}

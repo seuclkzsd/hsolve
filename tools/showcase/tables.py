@@ -41,6 +41,7 @@ SOLVERS = ("hsolve", "slepc-default", "slepc-tuned")
 SOLVER_LABELS = {"hsolve": "hsolve", "slepc-default": "SLEPc 常规用法", "slepc-tuned": "SLEPc 逐例调优"}
 OUTCOME_LABELS = {"missed": "漏解", "spurious": "伪特征值", "residual": "残差超限", "duplicate": "重复向量",
                   "empty": "未返回特征对", "error": "报错退出", "unclaimed": "自报失败", "invalid": "未通过"}
+PROBE_STATUS = {"error": "报错", "crashed": "进程崩溃", "solved": "求解完成"}
 SCOPE_LABELS = {"case": "该算例的调优配置", "class": "同类问题的调优配置（未针对该算例）", "default": "默认配置"}
 
 
@@ -144,7 +145,8 @@ def summarize_scenario(doc: dict[str, Any], probe: dict[str, Any] | None) -> dic
     if probe is not None and probe.get("case") == rec["case"] and rec["target"].get("mode") == "interval" \
             and rec["dtype"] == "complex128":
         out["slepc_probe"] = [{"pc_type": a["pc_type"], "status": a["status"],
-                               "message": (a.get("message") or "").strip()[:240]} for a in probe["attempts"]]
+                               "message": (a.get("petsc_message") or a.get("message") or "").strip()[:240]}
+                              for a in probe["attempts"]]
     return out
 
 
@@ -269,8 +271,8 @@ def failure_details(summary: dict[str, Any]) -> str:
             if e.get("error"):
                 msg += ("；" if msg else "") + f"stderr：`{e['error']}`"
             if r.get("slepc_probe") and s != "hsolve":
-                probes = "；".join(f"{p['pc_type']}：{p['status']} `{p['message'].splitlines()[0] if p['message'] else ''}`"
-                                   for p in r["slepc_probe"])
+                probes = "；".join(f"{p['pc_type']} 分解：{PROBE_STATUS.get(p['status'], p['status'])}"
+                                   + (f" `{p['message']}`" if p["message"] else "") for p in r["slepc_probe"])
                 msg += f"；直接调用 SLEPc 的结果：{probes}"
             lines.append(f"- **{r['title']} / {SOLVER_LABELS[s]}**（{e['valid_runs']}/{e['reps']} 次有效）：{msg}")
     return "\n".join(lines) if lines else "（无）"
