@@ -1,0 +1,71 @@
+hsolve
+Copyright 2026 seuclkzsd and the hsolve contributors
+
+This product is licensed under the Apache License, Version 2.0 (see LICENSE).
+本软件以 Apache License 2.0 授权（见 LICENSE）。
+
+This product includes, adapts or links third-party software that is distributed under its own
+license. The complete copyright notices and license texts are in THIRD_PARTY_NOTICES; versions,
+purposes and the way each component is used are listed in docs/DEPENDENCIES.md. Binary
+distributions of hsolve (release archives, container images) that contain any of the libraries
+below must carry this NOTICE together with THIRD_PARTY_NOTICES.
+
+本软件包含、改编或链接下列第三方组件，它们各自遵循自己的许可证。完整的版权声明与许可证文本见
+THIRD_PARTY_NOTICES，版本、用途与调用方式见 docs/DEPENDENCIES.md。分发含有这些库的 hsolve 二进制
+（Release 压缩包、容器镜像）时，须同时附上本 NOTICE 与 THIRD_PARTY_NOTICES。
+
+
+Bundled in this repository
+--------------------------
+MUMPS 5.8.2                       CeCILL-C (parts BSD-3-Clause; PORD under its own license)
+    Copyright 1991-2026 CERFACS, CNRS, ENS Lyon, INP Toulouse, Inria, Mumps Technologies,
+    University of Bordeaux.
+    The official source tarball is shipped unchanged in third_party/mumps/ (sha256 verified before
+    every build). hsolve's default build compiles it MODIFIED by the patches in patches/
+    (mumps-5.8.2-l0-blocking.patch, mumps-5.8.2-pivot-extrema.patch,
+    mumps-5.8.2-local-scatter.patch). These patches are modifications of MUMPS and are distributed
+    under the CeCILL-C license, not under Apache-2.0. The resulting MUMPS libraries are a modified
+    version of MUMPS 5.8.2; `hsolve --version` names the install, whose BUILD-INFO.txt lists the
+    patches.
+
+Adapted into hsolve's own sources
+---------------------------------
+OpenBLAS 0.3.34 kernels           BSD-3-Clause
+    Copyright (c) 2014, 2021 The OpenBLAS Project.
+    The narrow dgemm kernels of the BLAS hook (src/blas/narrow_kernels.cpp,
+    src/blas/simd_kernels.hpp) adapt the structure of OpenBLAS SkylakeX kernels.
+
+Compiled into hsolve binaries (header-only libraries)
+-----------------------------------------------------
+nlohmann/json 3.12                MIT           Copyright (c) 2013-2025 Niels Lohmann
+CLI11 2.7                         BSD-3-Clause  Copyright (c) 2017-2026 University of Cincinnati
+                                                (hsolve executable only)
+pybind11 3.1                      BSD-3-Clause  Copyright (c) 2016 Wenzel Jakob
+                                                (Python extension module only)
+
+Linked at run time (installed from conda-forge; not contained in this repository)
+---------------------------------------------------------------------------------
+OpenBLAS 0.3.34 (BLAS, LAPACK)    BSD-3-Clause
+METIS 5.1.0                       Apache-2.0    called only through MUMPS
+SCOTCH 7.0                        CeCILL-C      called only through MUMPS
+zlib 1.3                          Zlib          .npz decompression
+GCC runtime libraries 13          GPL-3.0 with the GCC Runtime Library Exception 3.1
+
+Optional components (never required; not distributed with hsolve)
+------------------------------------------------------------------
+Open MPI 5.0.11 and its run-time  BSD-3-Clause (some dependencies LGPL-2.1, dynamically linked)
+libraries                             Only the optional hsolve-mpi executable and the hsolve-mpirun
+                                      launcher use an MPI library installed by the user. The hsolve
+                                      executable, libhsolve and the Python module do not link MPI.
+NVIDIA CUDA runtime and cuBLAS    NVIDIA proprietary license (CUDA Toolkit EULA)
+                                      Loaded at run time with dlopen() only when GPU offload is
+                                      requested (--gpu auto|on or HS_GPU). hsolve is neither compiled
+                                      nor linked against CUDA, and no CUDA library is distributed
+                                      with it. Without a GPU or without the libraries hsolve runs
+                                      its CPU path.
+
+Used only for tests, tools and comparisons (not part of the hsolve binaries)
+----------------------------------------------------------------------------
+GoogleTest 1.18 (BSD-3-Clause); NumPy 2.4 and SciPy 1.17 (BSD-3-Clause); PETSc / SLEPc 3.26
+(BSD-2-Clause, comparison baseline); public test matrices of the SuiteSparse Matrix Collection
+(CC-BY 4.0), downloaded by tools/gen and not shipped.
