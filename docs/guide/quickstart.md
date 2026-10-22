@@ -19,6 +19,7 @@
 
     ```bash
     curl -LO https://github.com/seuclkzsd/hsolve/releases/download/v1.0.0/{{TODO:rb-eng 的压缩包名}}
+    curl -LO https://github.com/seuclkzsd/hsolve/releases/download/v1.0.0/{{TODO:rb-eng 的 SHA256SUMS 文件名}}
     sha256sum -c {{TODO:rb-eng 的 SHA256SUMS 文件名}} --ignore-missing
     tar xf {{TODO:rb-eng 的压缩包名}}
     ```
@@ -54,7 +55,7 @@ build/portable/hsolve --A data/cases/wg-square-2e4/A.npz --B data/cases/wg-squar
 ```
 
 这是一个 B **不定**的广义问题（GHIEP），而且 A 有维数与内部节点数相同的零空间。hsolve 自动识别这两点：问题类型
-由 B 的惯性判定，零空间由单边位移排除，返回的是 18 个传播模，而不是一串零。
+由 B 的正定性检验自动判定，零空间由单边位移排除，返回的是 18 个传播模，而不是一串零。
 
 ## 3. 读结果
 
