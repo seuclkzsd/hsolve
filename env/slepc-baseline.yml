@@ -1,0 +1,28 @@
+# SLEPc comparison baseline for tools/bench (compare.py --solvers slepc, tune_slepc.py,
+# baseline_slepc.py): PETSc / SLEPc with their own MPI build of MUMPS, kept apart from
+# env/environment.yml so that it never mixes with the patched MUMPS hsolve links.
+#
+#   conda env create -p "$HOME/envs/hsolve-slepc" -f env/slepc-baseline.yml
+#   export HS_REF_ENV="$HOME/envs/hsolve-slepc"      # where tools/bench looks for this environment
+#
+# The versions are those of the published comparisons. The exact package lists those ran with are
+# env/slepc-baseline-real.explicit.txt and env/slepc-baseline-complex.explicit.txt (linux-64 with
+# AVX-512); this file lets conda solve the same versions for any x86-64 Linux machine.
+# Complex scalars (the complex Hermitian cases): replace the real_* builds of petsc and slepc below by
+# complex_* and use another prefix (e.g. $HOME/envs/hsolve-slepc-complex).
+name: hsolve-slepc
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - numpy=2.4
+  - scipy=1.17
+  - petsc=3.26.0=real_*
+  - slepc=3.26.0=real_*
+  - petsc4py=3.26.0
+  - slepc4py=3.26.0
+  - mumps-mpi=5.8.2
+  - openmpi=5.0.11
+  - libopenblas=0.3.34
+  - libblas=*=*openblas
+  - liblapack=*=*openblas
