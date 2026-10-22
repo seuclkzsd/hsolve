@@ -199,6 +199,15 @@ struct SolverConfig {
   /// performed but not completed, a window target the pairs of its completed slices
   /// (docs/FORMATS.md §3).
   index_t certificate_fault_count = 0;
+  /// Optional, experimental structure-exploiting path of nearest targets (DESIGN §3.6-5): Off (the
+  /// default) - the general shift-invert path only; Auto - with method auto, the exact certificate
+  /// and double factors, first try a candidate space for matrices verified entry by entry to be a
+  /// separable Cartesian (real, PEC) or Bloch-periodic (complex) curl-curl operator with a constant
+  /// diagonal mass (src/eigen/separable_*). Candidates are accepted only after Rayleigh-Ritz and a
+  /// backward error <= tol/2 on the original A, B; the exact Sylvester certificate and the
+  /// deflated reruns follow as on the general path (report.candidate_source says which ran).
+  /// config.json takes "off" | "auto"; in the C++ API On acts as Auto.
+  Toggle structure_candidates = Toggle::Off;
   double zero_filter_tol = -1.0;  ///< < 0 disables; else |lambda| <= zero_filter_tol*scale is a
                                   ///< (non-physical) zero mode, avoided by shift placement (§3.6)
   double complex_tol = 1e-8;      ///< GHIEP: a pair is complex only if |Im lambda| >

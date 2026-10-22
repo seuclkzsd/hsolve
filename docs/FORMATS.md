@@ -58,6 +58,7 @@ data/refs/<name>/ref.json        {"kind","note","count","complete","window"}
   "certificate_delta": 1e-12,
   "certificate_fault_drop": 0,
   "certificate_fault_count": 0,
+  "structure_candidates": "off",
   "zero_filter_tol": -1.0,
   "complex_tol": 1e-8,
   "max_shift_retries": 5
@@ -68,7 +69,7 @@ data/refs/<name>/ref.json        {"kind","note","count","complete","window"}
 `problem ∈ {auto, standard, generalized_definite, generalized_indefinite}`；
 `method ∈ {auto, shift_invert_lanczos, shift_invert_krylov_schur, lanczos}`；
 `factor_precision ∈ {double, single, auto}`；`blr / out_of_core / inertia_check / inertia_counter ∈ {auto, on, off}`；
-`certificate ∈ {exact, randomized, auto, off}`。
+`certificate ∈ {exact, randomized, auto, off}`；`structure_candidates ∈ {off, auto}`。
 
 取值与语义（校验见 `parse_config`；算法见 `docs/DESIGN.md` §3.6）：
 - `tol ∈ (0, 1)`；`inner_tol_factor ∈ (0, 1]`；`ncv, block_size, slice_size, threads, max_shift_retries ≥ 0`；
@@ -146,6 +147,12 @@ data/refs/<name>/ref.json        {"kind","note","count","complete","window"}
   拿到的每个任务（证书计数、切片）都在 helper 上失败（种类同上，默认内存不足），由 leader 自己做（`report.parallel.
   fallbacks`）。计数失败时改在另一个计数来源上计数；都不能计数时 nearest 目标返回已收敛的对、窗口目标返回已完成各片
   的对，证书「已做但未完成」（§3）。
+- `structure_candidates`：可选的、实验性的结构识别路径，默认 `off`（求解只走通用的位移反演路径，与不设此键时
+  逐位相同）。`auto` = nearest 目标在 `method = auto`、`certificate = exact`、惯性检查开启且主分解为精确双精度时，
+  先检查矩阵是否为可分离笛卡尔（实数 PEC）或 Bloch 周期（复数）curl-curl 算子加分量常数对角质量阵（逐个矩阵元素
+  核对，不读测例名称或网格元数据），是则由张量积公式构造候选向量；候选须在原始 A、B 上通过秩揭示 Rayleigh–Ritz
+  与每对后向误差 ≤ tol/2，之后照常做精确 Sylvester 证书与缺对重跑（`docs/DESIGN.md` §3.6-5）。报告的
+  `candidate_source` 写明首次候选来源。这条路径只适用于上述结构化网格算子，不作为一般性能的依据。
 - 当前限制：B 不定（GHIEP）只支持 `mode = nearest`（其余抛 Unsupported）；`method = lanczos`
   （免分解）抛 Unsupported。
 
@@ -159,7 +166,7 @@ data/refs/<name>/ref.json        {"kind","note","count","complete","window"}
 把 nearest 证书的两次计数 / 窗口目标的切片交给 helper 进程，auto 按代价规则；`hsolve` 接受而不起作用，见
 `docs/PARALLEL.md`）、`--gpu off|auto|on`（P10，也可用环境变量 `HS_GPU`：BLAS hook 把 MUMPS 分解中的大 dgemm 以
 FP64 cuBLAS 卸载到 GPU，CUDA 库运行时加载；默认 off，auto 只在分解估计 ≥ 3e12 flops 时用 GPU，无 GPU 时为 CPU 路径，
-`docs/DESIGN.md` §3.10）；
+`docs/DESIGN.md` §3.10）；`--structure-candidates off|auto`（→ `structure_candidates`）；
 另有 `--log FILE`（JSON-lines 事件日志；P7 起每条记录带进程当时的 `rss_mb` 与峰值 `peak_rss_mb`，以及地址
 空间 `vm_mb`（VmSize）与其峰值 `peak_vm_mb`（VmPeak））、`-v/--verbose`、`-q/--quiet`、`--version`。stdout
 摘要的证书行注明方法（计数时为窗口、两个计数与结论；随机检验时为找到数、结论与失败概率）。退出码：0 = 全部达标
@@ -187,9 +194,9 @@ slices[...], zero_cluster_dim, zero_modes_filtered, success, warnings[]`。
 
 - `solver`（P4）：恒为 `"hsolve"`（评测在调用方未指名时用它作求解器名，§4）；`version`：`hs::version()`。
   Python 接口的 `report` 是同一份 JSON。
-- `candidate_source`：首次候选向量的来源，默认 `"iterative"`；自动路径从完整矩阵验证可分离笛卡尔
-  curl-curl 结构并通过原问题残差检查时，实数 PEC 为 `"separable_cartesian_curl"`，复数 Bloch 周期为
-  `"separable_bloch_curl"`（DESIGN §3.6-5）。它只描述首次
+- `candidate_source`：首次候选向量的来源，默认 `"iterative"`；只在 `structure_candidates = auto`（§2，默认 off）时，
+  结构识别路径从完整矩阵验证可分离笛卡尔 curl-curl 结构并通过原问题残差检查后，实数 PEC 为
+  `"separable_cartesian_curl"`，复数 Bloch 周期为 `"separable_bloch_curl"`（DESIGN §3.6-5）。它只描述首次
   候选来源；最终残差、精确完备性证书及必要时的迭代补救照常执行，`method` 仍为解析后的驱动方法。
 - `block_size`（P4）：第一次位移反演运行实际使用的块宽（配置解析 + 内存适配之后，DESIGN §3.6-5）。
   首次候选直接来自已验证结构时为 0；后续补救的块宽见事件日志。

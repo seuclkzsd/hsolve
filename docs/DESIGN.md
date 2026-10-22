@@ -966,7 +966,9 @@ factor（InertiaCounter）、sparse、linalg；不打印；固定种子与线程
    「最近 k 个」的选择始终相对原始 σ₀。P2 的第二次 10× 扰动在该例上落到所需半径的 5 倍处（证书数出 166 个、
    找到 21 个），已废。有意放在或紧挨重特征值的位移（§3.6-8b 的部分簇与重根重跑，`on_eigenvalue`）不按簇
    判定、照常扰动，不告警、不计 shift_retries。
-5. **候选向量与迭代求解**：nearest 在 `method = auto`、`certificate = exact`、惯性检查开启且
+5. **候选向量与迭代求解**：**可选的结构识别路径**（实验性，`SolverConfig::structure_candidates`，默认 `off`：
+   此时下面整段不执行，求解与没有这条路径时逐位相同，`tests/cpp/test_separable_curl.cpp`
+   `OffByDefaultTakesTheGeneralPath`）。设为 `auto` 时，nearest 在 `method = auto`、`certificate = exact`、惯性检查开启且
    主分解为精确双精度时，先尝试可分离笛卡尔 curl-curl 候选空间（`eigen/separable_curl.cpp`）。只从矩阵推断
    三个方向的网格尺寸、常系数与分量常数对角质量阵，逐行核对完整稀疏模板；不读取测例名称、网格元数据或参考谱。
    实数 PEC 以节点正弦、边单元余弦的张量积和横向极化构造候选。复数 Bloch 周期路径

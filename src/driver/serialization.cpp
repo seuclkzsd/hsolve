@@ -80,6 +80,15 @@ E enum_parse(const json& j, const char* key) {
   HS_THROW(InvalidInput, "config: '" << key << "' = \"" << s << "\" is not one of {" << allowed << "}");
 }
 
+// A switch whose only values are "auto" and "off".
+Toggle auto_or_off(const json& j, const char* key) {
+  if (!j.is_string()) HS_THROW(InvalidInput, "config: '" << key << "' must be a string");
+  const auto s = j.get<std::string>();
+  if (s == "auto") return Toggle::Auto;
+  if (s == "off") return Toggle::Off;
+  HS_THROW(InvalidInput, "config: '" << key << "' = \"" << s << "\" is not one of {auto, off}");
+}
+
 double get_number(const json& j, const char* key) {
   if (!j.is_number()) HS_THROW(InvalidInput, "config: '" << key << "' must be a number");
   return j.get<double>();
@@ -189,6 +198,7 @@ SolverConfig parse_config(const std::string& json_text, const SolverConfig& base
       c.inexact_fault_reject = v.get<bool>();
     }
     else if (key == "certificate_fault_count") c.certificate_fault_count = get_integer<index_t>(v, k);
+    else if (key == "structure_candidates") c.structure_candidates = auto_or_off(v, k);
     else if (key == "zero_filter_tol") c.zero_filter_tol = get_number(v, k);
     else if (key == "complex_tol") c.complex_tol = get_number(v, k);
     else if (key == "max_shift_retries") c.max_shift_retries = get_integer<index_t>(v, k);
@@ -252,6 +262,7 @@ std::string config_to_json(const SolverConfig& c, int indent) {
             {"certificate_fault_drop", c.certificate_fault_drop},
             {"inexact_fault_reject", c.inexact_fault_reject},
             {"certificate_fault_count", c.certificate_fault_count},
+            {"structure_candidates", enum_name(c.structure_candidates)},
             {"zero_filter_tol", c.zero_filter_tol},
             {"complex_tol", c.complex_tol},
             {"max_shift_retries", c.max_shift_retries}};

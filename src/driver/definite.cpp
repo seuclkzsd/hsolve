@@ -395,8 +395,11 @@ Solution<T> solve_nearest(Ctx& c, const ShiftedPencil<T>& pencil, SparseFactoriz
   index_t p = 1;
   DefiniteRun<T> run;
   bool structured = false;
-  if (cfg.method == Method::Auto && cfg.certificate == CertificateMode::Exact &&
-      cfg.inertia_check != Toggle::Off && !inexact_factor(fac.options())) {
+  // The optional structure-recognition path (SolverConfig::structure_candidates, off by default):
+  // with it off the solve below is exactly the general one.
+  if (cfg.structure_candidates != Toggle::Off && cfg.method == Method::Auto &&
+      cfg.certificate == CertificateMode::Exact && cfg.inertia_check != Toggle::Off &&
+      !inexact_factor(fac.options())) {
     std::string why;
     PhaseScope phase(c.clock, Phase::Iterate);
     // AX/BX, RR replacements, selection, and the small projected eigensystems beside X.

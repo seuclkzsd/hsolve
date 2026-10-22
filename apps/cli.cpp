@@ -180,6 +180,7 @@ int hs::cli::run(int argc, char** argv, hs::Transport* peers) {
   std::vector<double> interval;
   int threads = -1;
   std::string precision, certificate, budget, gpu_mode, helper_counts = "auto", helper_slices = "auto";
+  std::string structure;
   bool verbose = false, quiet = false, version = false;
 
   app.add_option("--A", a_path, "matrix A (.npz scipy sparse, .npy dense, .mtx)")->required();
@@ -211,6 +212,11 @@ int hs::cli::run(int argc, char** argv, hs::Transport* peers) {
                                 "B is not proven) | auto (the cheapest that certifies, predicted from measured "
                                 "times) | off")
                      ->check(CLI::IsMember({"exact", "randomized", "auto", "off"}));
+  auto* o_structure = app.add_option("--structure-candidates", structure,
+                                     "optional, experimental structure-exploiting path of nearest targets for "
+                                     "matrices verified to be separable Cartesian / Bloch curl-curl operators: off "
+                                     "(default) | auto; the exact certificate follows either way")
+                          ->check(CLI::IsMember({"off", "auto"}));
   auto* o_gpu = app.add_option("--gpu", gpu_mode,
                                "GPU offload of the factorizations' large dense updates (BLAS hook, FP64 cuBLAS on the "
                                "first visible GPU, loaded at run time): off (default; or HS_GPU) | auto (when the "
@@ -297,6 +303,7 @@ int hs::cli::run(int argc, char** argv, hs::Transport* peers) {
     if (*o_zero) cfg.zero_filter_tol = zero_filter;
     if (*o_prec) cfg = hs::parse_config("{\"factor_precision\": \"" + precision + "\"}", cfg);
     if (*o_cert) cfg = hs::parse_config("{\"certificate\": \"" + certificate + "\"}", cfg);
+    if (*o_structure) cfg = hs::parse_config("{\"structure_candidates\": \"" + structure + "\"}", cfg);
     // Re-validate the merged configuration (overrides bypass parse_config's checks otherwise).
     cfg = hs::parse_config(hs::config_to_json(cfg));
     if (*o_gpu) {
