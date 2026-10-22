@@ -28,6 +28,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import socket
 import statistics
 import subprocess
@@ -130,6 +131,10 @@ def summarize(raws: list[Path]) -> list[dict[str, Any]]:
     for raw in raws:
         for line in (raw / "runs.jsonl").read_text().splitlines():
             r = json.loads(line)
+            if r.get("rc") != 0:  # the solver's error kind, e.g. out_of_memory_budget
+                err = raw / r["case"] / f"stderr-t{r['threads']}-m{r['mem_gb']:g}-r{r['rep']}.txt"
+                m = re.search(r"hsolve: error \[(\w+)\]", err.read_text()) if err.is_file() else None
+                r["error_kind"] = m.group(1) if m else f"exit {r.get('rc')}"
             groups.setdefault((r["case"], r["threads"], r["mem_gb"]), []).append(r)
     rows = []
     for (case, threads, mem), runs in groups.items():
@@ -147,11 +152,12 @@ def summarize(raws: list[Path]) -> list[dict[str, Any]]:
             "peak_rss_gib": max((r.get("peak_rss_gib") or 0) for r in runs),
             "memory_mode": "/".join(sorted(ooc)) or "-",
             "certificate": first.get("certificate"),
-            # passed: every run succeeded with a passed certificate; none: no run performed one
-            # (e.g. B indefinite); failed: anything else
-            "certified": ("none" if all(r.get("certificate_passed") is None for r in runs) else
-                          "passed" if len(ok) == len(runs) and all(r.get("certificate_passed") for r in ok)
-                          else "failed")})
+            # passed: every run succeeded with a passed certificate; none: every run succeeded, none
+            # performed one (e.g. B indefinite); failed: anything else
+            "certified": ("failed" if len(ok) < len(runs) else
+                          "none" if all(r.get("certificate_passed") is None for r in ok) else
+                          "passed" if all(r.get("certificate_passed") for r in ok) else "failed"),
+            "errors": sorted({r["error_kind"] for r in runs if "error_kind" in r})})
     family = {"yee": 0, "wg-": 1}
     rows.sort(key=lambda r: (family.get(r["case"][:3], 2), r["n"] or 0, -r["mem_gb"], -r["threads"]))
     return rows
@@ -166,7 +172,8 @@ def table(a: argparse.Namespace) -> int:
         cert = {"none": "-", "passed": f"{r['certificate']} passed"}.get(r["certified"], f"{r['certificate']} NOT passed")
         lines.append(f"| {r['case']} | {r['n']} | {r['problem']} | {r['pairs']} | {r['threads']} | {r['mem_gb']:g} | "
                      f"{f(r['time_median_s'])} [{f(r['time_min_s'])}-{f(r['time_max_s'])}] | {f(r['wall_median_s'])} | "
-                     f"{f(r['peak_rss_gib'])} | {r['memory_mode']} | {cert} | {r['ok']}/{r['reps']} |")
+                     f"{f(r['peak_rss_gib'])} | {r['memory_mode']} | {cert} | {r['ok']}/{r['reps']}"
+                     f"{' (' + ', '.join(r['errors']) + ')' if r['errors'] else ''} |")
     hosts = sorted({r["host"] for r in rows})
     versions = sorted({r["version"] for r in rows})
     lines += ["", f"Hosts: {', '.join(hosts)}; build: {'; '.join(versions)}. Solve = report time_total_s (after the "
@@ -214,6 +221,8 @@ def summary(rows: list[dict[str, Any]]) -> str:
         out += ["", "| 问题 | 内存上限 | 线程 | 分解方式 | 峰值内存 | 求解时间 |", "|---|---:|---:|---|---:|---:|"]
         for r in capped:
             mode = {"in-core": "内存内", "out-of-core": "外存"}.get(r["memory_mode"], r["memory_mode"])
+            if r["ok"] < r["reps"]:  # e.g. out_of_memory_budget: refused after the analysis
+                mode = "拒绝运行（" + "、".join(f"`{e}`" for e in r["errors"]) + "）"
             out.append(f"| `{r['case']}` | {r['mem_gb']:g} GiB | {r['threads']} | {mode} | {fmt_m(r['peak_rss_gib'])} | "
                        f"{fmt_t(r['time_median_s'])} |")
     return "\n".join(out) + "\n"
