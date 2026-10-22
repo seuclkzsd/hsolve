@@ -157,6 +157,7 @@ def summarize_scenario(doc: dict[str, Any], probe: dict[str, Any] | None) -> dic
 def load_raw(raw_dir: Path) -> tuple[list[dict[str, Any]], dict[str, Any] | None]:
     order = [s.id for s in scn.SCENARIOS]
     docs = [json.loads(p.read_text()) for p in sorted(raw_dir.glob("*.json")) if p.name != "slepc-probe.json"]
+    docs = [d for d in docs if "scenario" in d and "runs" in d]   # campaign records only
     docs.sort(key=lambda d: order.index(d["scenario"]["id"]) if d["scenario"]["id"] in order else len(order))
     probe_path = raw_dir / "slepc-probe.json"
     probe = json.loads(probe_path.read_text()) if probe_path.exists() else None

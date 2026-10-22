@@ -107,7 +107,8 @@ def test_readme_quotes_count_from_the_summary(raw):
 
 
 def test_campaign_tuning_is_reported(raw, tmp_path):
-    tf = tmp_path / "tuning.json"
+    tf = tmp_path / "elsewhere" / "tuning.json"
+    tf.parent.mkdir()
     tf.write_text(json.dumps({"tunings": {"multiplet-cube": {"configurations": 31, "trials": 70, "valid_trials": 0,
                                                              "best": None}}}))
     s = tables.build_summary(raw, tuning_file=tf)
