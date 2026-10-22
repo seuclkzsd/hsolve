@@ -59,6 +59,7 @@ data/refs/<name>/ref.json        {"kind","note","count","complete","window"}
   "certificate_fault_drop": 0,
   "certificate_fault_count": 0,
   "structure_candidates": "off",
+  "subspace_bound": "auto",
   "zero_filter_tol": -1.0,
   "complex_tol": 1e-8,
   "max_shift_retries": 5
@@ -69,7 +70,7 @@ data/refs/<name>/ref.json        {"kind","note","count","complete","window"}
 `problem ∈ {auto, standard, generalized_definite, generalized_indefinite}`；
 `method ∈ {auto, shift_invert_lanczos, shift_invert_krylov_schur, lanczos}`；
 `factor_precision ∈ {double, single, auto}`；`blr / out_of_core / inertia_check / inertia_counter ∈ {auto, on, off}`；
-`certificate ∈ {exact, randomized, auto, off}`；`structure_candidates ∈ {off, auto}`。
+`certificate ∈ {exact, randomized, auto, off}`；`structure_candidates ∈ {off, auto}`；`subspace_bound ∈ {auto, off}`。
 
 取值与语义（校验见 `parse_config`；算法见 `docs/DESIGN.md` §3.6）：
 - `tol ∈ (0, 1)`；`inner_tol_factor ∈ (0, 1]`；`ncv, block_size, slice_size, threads, max_shift_retries ≥ 0`；
@@ -153,6 +154,10 @@ data/refs/<name>/ref.json        {"kind","note","count","complete","window"}
   核对，不读测例名称或网格元数据），是则由张量积公式构造候选向量；候选须在原始 A、B 上通过秩揭示 Rayleigh–Ritz
   与每对后向误差 ≤ tol/2，之后照常做精确 Sylvester 证书与缺对重跑（`docs/DESIGN.md` §3.6-5）。报告的
   `candidate_source` 写明首次候选来源。这条路径只适用于上述结构化网格算子，不作为一般性能的依据。
+- `subspace_bound`（特征向量子空间夹角的后验界，`docs/DESIGN.md` §3.6-8c）：`auto`（默认）= HEP/GHEP 的证书通过时，
+  按 Davis–Kahan sinΘ 定理给出每个返回特征对所在簇的子空间夹角上界，写入报告 `subspace` 与 `pairs[].subspace_sin_bound`
+  （§3）；`off` = 不计算（`subspace.note` 为 "disabled by configuration"）。代价：返回向量上各一次 A、B 乘积与簇内 Gram
+  矩阵，一般 B 另有每列一次 Jacobi 预条件 CG（B = I 与对角 B 不需要），计入 `time_verify_s`。
 - 当前限制：B 不定（GHIEP）只支持 `mode = nearest`（其余抛 Unsupported）；`method = lanczos`
   （免分解）抛 Unsupported。
 
@@ -166,7 +171,8 @@ data/refs/<name>/ref.json        {"kind","note","count","complete","window"}
 把 nearest 证书的两次计数 / 窗口目标的切片交给 helper 进程，auto 按代价规则；`hsolve` 接受而不起作用，见
 `docs/PARALLEL.md`）、`--gpu off|auto|on`（P10，也可用环境变量 `HS_GPU`：BLAS hook 把 MUMPS 分解中的大 dgemm 以
 FP64 cuBLAS 卸载到 GPU，CUDA 库运行时加载；默认 off，auto 只在分解估计 ≥ 3e12 flops 时用 GPU，无 GPU 时为 CPU 路径，
-`docs/DESIGN.md` §3.10）；`--structure-candidates off|auto`（→ `structure_candidates`）；
+`docs/DESIGN.md` §3.10）；`--structure-candidates off|auto`（→ `structure_candidates`）、`--subspace-bound auto|off`
+（→ `subspace_bound`）；
 另有 `--log FILE`（JSON-lines 事件日志；P7 起每条记录带进程当时的 `rss_mb` 与峰值 `peak_rss_mb`，以及地址
 空间 `vm_mb`（VmSize）与其峰值 `peak_vm_mb`（VmPeak））、`-v/--verbose`、`-q/--quiet`、`--version`。stdout
 摘要的证书行注明方法（计数时为窗口、两个计数与结论；随机检验时为找到数、结论与失败概率）。退出码：0 = 全部达标
@@ -187,9 +193,10 @@ solver, version, n, nnz_a, nnz_b, complex_scalars, problem, norm2_a, norm2_b, sc
 hermitian_defect_b, method, candidate_source, sigma_requested, sigma_used, shift_retries, block_size, factor_options{...},
 factor_stats{...}, restarts, op_applies, time_total_s, time_setup_s, time_factor_s, time_iterate_s, time_verify_s,
 time_certificate_s, peak_rss_bytes, memory{...}, precision{...}, parallel{...}, pairs[{lambda_re, lambda_im, abs_residual, rel_residual,
-backward_error, accepted}], certificate{performed, lower, upper, count_inertia, count_found,
+backward_error, accepted, subspace_sin_bound}], certificate{performed, lower, upper, count_inertia, count_found,
 endpoint_moves, passed, note, method, rigorous, failure_probability, solves, seconds, statement},
-slices[...], zero_cluster_dim, zero_modes_filtered, success, warnings[]`。
+subspace{performed, max_sin_bound, rigorous, failure_probability, residual_norm, b_min, b_min_source, groups[...], note,
+seconds}, slices[...], zero_cluster_dim, zero_modes_filtered, success, warnings[]`；命令行另可写入 `gpu`（见下）。
 `pairs` 先列实特征对（与 `eigenvalues.npy` 同序），再列复特征对。
 
 - `solver`（P4）：恒为 `"hsolve"`（评测在调用方未指名时用它作求解器名，§4）；`version`：`hs::version()`。
@@ -276,6 +283,27 @@ slices[...], zero_cluster_dim, zero_modes_filtered, success, warnings[]`。
   helper 任务时间之和，以及 `notes`（为何没交给 helper——代价规则、内存规则（发送前预测或 helper 报告后）、可用 helper
   不足——与失败、回退）。多进程模式的证书 `statement` 注明各次计数在哪里做（例如 "2 of the 2 counts made by helper
   processes"；一次由 helper、一次由 leader 时分别写明 InertiaCounter 或 main factorization）。
+- `subspace`（特征向量子空间夹角的后验界，`docs/DESIGN.md` §3.6-8c）：只在 HEP/GHEP、`subspace_bound = auto` 且证书
+  通过（`certificate.passed`）时计算，否则 `performed = false`、`max_sin_bound = null`、各对的 `subspace_sin_bound = null`，
+  `note` 说明原因（"disabled by configuration"、"not available for indefinite B ..."、"no completeness certificate ..."、
+  "the completeness certificate did not pass"）。夹角都按 B 内积（B = I 时即欧氏 2-范数）度量。
+  - `pairs[i].subspace_sin_bound`：第 i 对所在组的界，即该对向量（及同组向量张成的子空间）与对应精确特征子空间之间
+    夹角正弦的上界；没有界时为 null。
+  - `max_sin_bound`：全部返回对的界的最大值；有任一对没有界时为 null（`note` 写明几对、为什么）。
+  - `groups[]`：`{kind, pairs[], unreturned, lower, upper, dimension, gap, residual, orthogonality, sin_bound}`。
+    `kind = "cluster"`：证书窗口内的簇（相邻特征值相距 ≤ 1e-6·(|λ| + scale)，或其残差区间相交），其向量张成的子空间与
+    区间 [lower, upper] 内全部精确特征值的特征子空间比较，后者恰含 `dimension` 个特征值；`kind = "window"`：窗口内算出的
+    对少于窗口的特征值（smallest / largest 的部分簇）或簇无法在窗口内分开时，整个窗口为一组，与窗口的
+    `dimension` 维谱子空间比较。`unreturned`：组内在窗口里算出、但目标未返回的对数（nearest 的 k 截断了重特征值、
+    smallest / largest 的窗口多于 k 个），它们的向量属于被界定的子空间。`gap`：组内特征值到其余全部特征值的距离下界
+    δ（窗口端点与其它组的 Kahan 区间）；`residual` ≥ ‖B^{-1/2}(AX − BXΛ)‖_F（含舍入误差的先验界）；
+    `orthogonality` ≥ ‖XᴴBX − I‖₂；`sin_bound = min(1, residual / (gap·sqrt(1 − orthogonality)))`。
+  - `rigorous`：证书为证明（计数，或 κ 有证明的随机检验）且 λ_min(B) 有证明（B = I、对角 B、Gershgorin 或不完全
+    Cholesky 证明）时为 true；λ_min(B) 只是估计时为 false（`note` 说明，只影响 B^{-1}-范数的余项与舍入项）。
+    `failure_probability`：取自证书（计数为 0，随机检验为其 δ）。`residual_norm`：`"2"`（B = I）、
+    `"b_inverse_diagonal"`（对角 B，精确加权）、`"b_inverse_cg"`（一般 B：Jacobi 预条件 CG，余项以 λ_min(B) 的下界界定）。
+    `b_min` / `b_min_source`：所用的 λ_min(B) 下界（或估计）及其来源（`identity`、`diagonal`、`gershgorin`、
+    `incomplete_cholesky`、`estimate`）。`seconds`：计入 `time_verify_s`。
 - `gpu`（P10，可选，只在 GPU 模式不是 off——`--gpu` 或 `HS_GPU`——时由命令行写入，`docs/DESIGN.md` §3.10、
   `docs/BLAS.md` §10）：GPU 卸载的报告——`mode`、`available`（true / false / null = auto 低于阈值、未加载 CUDA）、
   `device`、分解数与卸载的分解数、GPU 上的 GFlop 与占估计的份额、`init_s`；不能卸载时 `reason` 说明为何走 CPU 路径

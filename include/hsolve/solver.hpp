@@ -208,6 +208,11 @@ struct SolverConfig {
   /// deflated reruns follow as on the general path (report.candidate_source says which ran).
   /// config.json takes "off" | "auto"; in the C++ API On acts as Auto.
   Toggle structure_candidates = Toggle::Off;
+  /// A-posteriori bound on the eigenvector subspace angles (DESIGN §3.6-8c, SolveReport::subspace):
+  /// Auto (the default) - computed for HEP/GHEP results whose certificate passed; Off - not
+  /// computed (report.subspace.note says so). config.json takes "auto" | "off"; in the C++ API On
+  /// acts as Auto.
+  Toggle subspace_bound = Toggle::Auto;
   double zero_filter_tol = -1.0;  ///< < 0 disables; else |lambda| <= zero_filter_tol*scale is a
                                   ///< (non-physical) zero mode, avoided by shift placement (§3.6)
   double complex_tol = 1e-8;      ///< GHIEP: a pair is complex only if |Im lambda| >
@@ -298,6 +303,59 @@ struct PairReport {
   double rel_residual = 0.0;    ///< abs_residual / (|lambda| ||B x||_2)
   double backward_error = 0.0;  ///< abs_residual / ((||A||_2 + |lambda| ||B||_2) ||x||_2)
   bool accepted = false;        ///< backward_error <= tol
+  /// Bound on the sine of the angle (B inner product) between this pair's vector - more precisely
+  /// the span of its group, SubspaceGroup - and the exact eigenspace it approximates; NaN (JSON
+  /// null) when SubspaceReport has no bound for it.
+  double subspace_sin_bound = std::numeric_limits<double>::quiet_NaN();
+};
+
+/// The returned pairs of one SubspaceReport group and the bound on their subspace (DESIGN §3.6-8c).
+/// A "cluster" group compares the span of its vectors with the exact spectral subspace of the
+/// interval [lower, upper], which holds exactly `dimension` = pairs.size() + unreturned
+/// eigenvalues (located by the certificate's counts and Kahan's residual intervals). A "window"
+/// group holds the pairs of a certified window that contains more eigenvalues than pairs computed
+/// (a partial cluster of a smallest / largest target), or whose clusters cannot be separated
+/// inside it: its subspace is compared with the `dimension`-dimensional spectral subspace of the
+/// window [lower, upper].
+struct SubspaceGroup {
+  std::string kind = "cluster";  ///< "cluster" or "window"
+  std::vector<index_t> pairs;    ///< indices into SolveReport::pairs (= Solution::eigenvalues)
+  /// Further pairs of the group that were computed inside the window but are not returned (a
+  /// nearest target's other copies of a multiple eigenvalue cut by k, a smallest / largest window's
+  /// pairs beyond k): their vectors belong to the bounded span, which contains the returned ones.
+  index_t unreturned = 0;
+  double lower = 0.0;            ///< interval of the exact eigenvalues the subspace is compared with
+  double upper = 0.0;
+  index_t dimension = 0;         ///< their number (dimension of the exact spectral subspace)
+  double gap = 0.0;              ///< delta: distance of the pairs' eigenvalues to every other eigenvalue
+  double residual = 0.0;         ///< >= ||B^{-1/2} (A X - B X Lambda)||_F, rounding included
+  double orthogonality = 0.0;    ///< >= ||X^H B X - I||_2
+  double sin_bound = 0.0;        ///< residual / (gap sqrt(1 - orthogonality)), at most 1
+};
+
+/// A-posteriori bound on the eigenvector subspace angles of a HEP/GHEP result (DESIGN §3.6-8c,
+/// SolverConfig::subspace_bound): the Davis-Kahan sin(Theta) theorem in the B inner product,
+///   ||sin Theta(span X_c, E_c)||_F <= ||B^{-1/2} R_c||_F / (delta_c sqrt(1 - eps_c)),
+/// with the gap delta_c taken from the certificate's windows (no further eigenvalue inside; those
+/// outside lie beyond the window ends) and from Kahan's residual intervals of the other groups.
+/// Computed only when the certificate passed; otherwise performed == false and `note` says why.
+struct SubspaceReport {
+  bool performed = false;
+  /// Largest pair bound; NaN (JSON null) when not performed or when some pair has no bound.
+  double max_sin_bound = std::numeric_limits<double>::quiet_NaN();
+  /// A proof (up to rounding, which is bounded a priori): the certificate counted (or was a
+  /// rigorous randomized check) and lambda_min(B) - which weighs the B^{-1}-norm's remainder and
+  /// rounding terms - is proven (B = I, diagonal B, Gershgorin or the incomplete-Cholesky proof).
+  bool rigorous = false;
+  double failure_probability = 1.0;  ///< the certificate's (0 for counts, the randomized check's delta)
+  /// "2" (B = I), "b_inverse_diagonal" (diagonal B), "b_inverse_cg" (general B: preconditioned CG
+  /// with a bounded remainder).
+  std::string residual_norm;
+  double b_min = 0.0;        ///< lower bound (or estimate) of lambda_min(B) used; 1 for B = I
+  std::string b_min_source;  ///< "identity", "diagonal", "gershgorin", "incomplete_cholesky", "estimate"
+  std::vector<SubspaceGroup> groups;
+  std::string note;          ///< why not performed, pairs without a bound, caveats
+  double seconds = 0.0;      ///< wall time (part of time_verify_s)
 };
 
 /// Completeness certificate (HEP/GHEP only; DESIGN §3.6 step 8). Windows by target mode:
@@ -429,6 +487,7 @@ struct SolveReport {
   // results
   std::vector<PairReport> pairs;
   InertiaCertificate certificate;
+  SubspaceReport subspace;          ///< eigenvector subspace-angle bounds (HEP/GHEP, passed certificate)
   std::vector<SliceReport> slices;  ///< per-run records of sliced / one-sided solves
   index_t zero_cluster_dim = -1;    ///< GHIEP: dim null(A) (zero pivots of A), when it was needed;
                                     ///< -1 = not computed

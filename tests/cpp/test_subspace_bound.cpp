@@ -1,0 +1,491 @@
+// Eigenvector subspace-angle bounds (src/driver/subspace.hpp, SolveReport::subspace; DESIGN §3.6-8c).
+// Small dense problems with exactly known eigenvectors: A = W^H diag(lambda) W, B = W^H W, so that the
+// B-orthonormal eigenvectors are V = W^{-1} and W maps the B geometry to the Euclidean one with the
+// exact eigenvectors on the unit vectors. The bound must hold for the true angles and stay within
+// three orders of magnitude of them; multiplicities, unreturned copies, GHEP with diagonal and
+// general B, and the end-to-end report.
+#include <gtest/gtest.h>
+
+#include <algorithm>
+#include <cmath>
+#include <complex>
+#include <cstdint>
+#include <limits>
+#include <random>
+#include <string>
+#include <vector>
+
+#include <nlohmann/json.hpp>
+
+#include "driver/subspace.hpp"
+#include "hsolve/solver.hpp"
+#include "hsolve/sparse.hpp"
+#include "support/fixtures.hpp"
+
+namespace {
+
+using hs::cplx;
+using hs::DenseMatrix;
+using hs::index_t;
+
+template <class T>
+T random_entry(std::mt19937_64& g) {
+  std::uniform_real_distribution<double> u(-1.0, 1.0);
+  if constexpr (hs::is_complex_v<T>) {
+    const double re = u(g);
+    return T(re, u(g));
+  } else {
+    return u(g);
+  }
+}
+
+template <class T>
+T conj_of(T v) {
+  if constexpr (hs::is_complex_v<T>)
+    return std::conj(v);
+  else
+    return v;
+}
+
+template <class T>
+DenseMatrix<T> multiply(const DenseMatrix<T>& a, const DenseMatrix<T>& b, bool adjoint_a = false) {
+  const index_t m = adjoint_a ? a.cols() : a.rows(), k = adjoint_a ? a.rows() : a.cols(), n = b.cols();
+  DenseMatrix<T> c(m, n);
+  for (index_t j = 0; j < n; ++j)
+    for (index_t p = 0; p < k; ++p)
+      for (index_t i = 0; i < m; ++i) c(i, j) += (adjoint_a ? conj_of(a(p, i)) : a(i, p)) * b(p, j);
+  return c;
+}
+
+// Orthonormal columns by modified Gram-Schmidt, twice (columns assumed independent).
+template <class T>
+void orthonormalize(DenseMatrix<T>& q) {
+  const index_t n = q.rows(), m = q.cols();
+  for (int pass = 0; pass < 2; ++pass)
+    for (index_t j = 0; j < m; ++j) {
+      for (index_t i = 0; i < j; ++i) {
+        T d = 0;
+        for (index_t r = 0; r < n; ++r) d += conj_of(q(r, i)) * q(r, j);
+        for (index_t r = 0; r < n; ++r) q(r, j) -= d * q(r, i);
+      }
+      double s = 0;
+      for (index_t r = 0; r < n; ++r) s += std::norm(q(r, j));
+      for (index_t r = 0; r < n; ++r) q(r, j) /= std::sqrt(s);
+    }
+}
+
+template <class T>
+DenseMatrix<T> random_unitary(index_t n, std::mt19937_64& g) {
+  DenseMatrix<T> q(n, n);
+  for (index_t j = 0; j < n; ++j)
+    for (index_t i = 0; i < n; ++i) q(i, j) = random_entry<T>(g);
+  orthonormalize(q);
+  return q;
+}
+
+enum class BKind { Identity, Diagonal, General };
+
+template <class T>
+struct Exact {
+  hs::CsrMatrix<T> a, b;
+  bool has_b = false;
+  DenseMatrix<T> v;  // B-orthonormal eigenvectors (columns)
+  DenseMatrix<T> w;  // V^{-1}
+  std::vector<double> lambda;
+};
+
+// A = W^H diag(lambda) W, B = W^H W with W = U diag(s) Q^H (identity: s = 1, U = I; diagonal:
+// Q = I, U = I, s = sqrt(d)); V = W^{-1} = Q diag(1/s) U^H.
+template <class T>
+Exact<T> exact_problem(const std::vector<double>& lambda, BKind kind, std::uint64_t seed) {
+  std::mt19937_64 g(seed);
+  const auto n = static_cast<index_t>(lambda.size());
+  const DenseMatrix<T> q = random_unitary<T>(n, g);
+  DenseMatrix<T> u(n, n);
+  std::vector<double> s(static_cast<std::size_t>(n), 1.0);
+  std::uniform_real_distribution<double> spread(0.5, 2.0);
+  if (kind == BKind::General) {
+    u = random_unitary<T>(n, g);
+    for (double& x : s) x = spread(g);
+  } else {
+    for (index_t i = 0; i < n; ++i) u(i, i) = 1.0;
+    if (kind == BKind::Diagonal)
+      for (double& x : s) x = std::sqrt(spread(g));
+  }
+  Exact<T> e;
+  e.lambda = lambda;
+  e.has_b = kind != BKind::Identity;
+  // Diagonal B: W = diag(s) Q^H gives B = W^H W = Q diag(s^2) Q^H - not diagonal; instead take
+  // W = Q diag(s): B = diag(s^2), V = diag(1/s) Q^H.
+  DenseMatrix<T> w(n, n), v(n, n);
+  for (index_t i = 0; i < n; ++i)
+    for (index_t j = 0; j < n; ++j) {
+      T wij = 0, vij = 0;
+      if (kind == BKind::Diagonal) {
+        wij = q(i, j) * s[static_cast<std::size_t>(j)];
+        vij = conj_of(q(j, i)) / s[static_cast<std::size_t>(i)];
+      } else {
+        for (index_t p = 0; p < n; ++p) {
+          wij += u(i, p) * s[static_cast<std::size_t>(p)] * conj_of(q(j, p));
+          vij += q(i, p) / s[static_cast<std::size_t>(p)] * conj_of(u(j, p));
+        }
+      }
+      w(i, j) = wij;
+      v(i, j) = vij;
+    }
+  DenseMatrix<T> lw(n, n);
+  for (index_t j = 0; j < n; ++j)
+    for (index_t i = 0; i < n; ++i) lw(i, j) = lambda[static_cast<std::size_t>(i)] * w(i, j);
+  DenseMatrix<T> a = multiply(w, lw, true), b = multiply(w, w, true);
+  // Exactly Hermitian storage.
+  for (index_t j = 0; j < n; ++j)
+    for (index_t i = 0; i < j; ++i) {
+      a(i, j) = conj_of(a(j, i));
+      b(i, j) = conj_of(b(j, i));
+    }
+  for (index_t i = 0; i < n; ++i) {
+    a(i, i) = std::real(a(i, i));
+    b(i, i) = std::real(b(i, i));
+  }
+  e.a = hs::test::from_dense(a);
+  if (e.has_b) e.b = hs::test::from_dense(b, kind == BKind::Diagonal ? 1e-14 : 0.0);
+  e.v = std::move(v);
+  e.w = std::move(w);
+  return e;
+}
+
+// ||sin Theta||_F between span(x) (columns, B geometry) and the exact eigenvectors `exact`
+// (indices into lambda): W x in Euclidean coordinates, orthonormalized; the mass outside the rows
+// `exact`.
+template <class T>
+double true_sin(const Exact<T>& e, const DenseMatrix<T>& x, const std::vector<index_t>& exact) {
+  DenseMatrix<T> z = multiply(e.w, x);
+  orthonormalize(z);
+  std::vector<char> in(static_cast<std::size_t>(z.rows()), 0);
+  for (index_t i : exact) in[static_cast<std::size_t>(i)] = 1;
+  double s = 0;
+  for (index_t j = 0; j < z.cols(); ++j)
+    for (index_t i = 0; i < z.rows(); ++i)
+      if (!in[static_cast<std::size_t>(i)]) s += std::norm(z(i, j));
+  return std::sqrt(s);
+}
+
+template <class T>
+DenseMatrix<T> columns(const DenseMatrix<T>& x, const std::vector<index_t>& cols) {
+  DenseMatrix<T> out(x.rows(), static_cast<index_t>(cols.size()));
+  for (std::size_t c = 0; c < cols.size(); ++c)
+    for (index_t i = 0; i < x.rows(); ++i) out(i, static_cast<index_t>(c)) = x(i, cols[c]);
+  return out;
+}
+
+// Perturbed exact eigenvectors (relative size eps), B-normalized, with their Rayleigh quotients.
+template <class T>
+void perturbed_pairs(const Exact<T>& e, const std::vector<index_t>& idx, double eps, std::uint64_t seed,
+                     DenseMatrix<T>& x, std::vector<double>& theta) {
+  std::mt19937_64 g(seed);
+  const index_t n = e.v.rows();
+  x = columns(e.v, idx);
+  for (index_t j = 0; j < x.cols(); ++j) {
+    double vn = 0;
+    for (index_t i = 0; i < n; ++i) vn += std::norm(x(i, j));
+    for (index_t i = 0; i < n; ++i) x(i, j) += eps * std::sqrt(vn / static_cast<double>(n)) * random_entry<T>(g);
+  }
+  theta.clear();
+  const DenseMatrix<T> ad = hs::test::to_dense(e.a);
+  const DenseMatrix<T> bd = e.has_b ? hs::test::to_dense(e.b) : DenseMatrix<T>{};
+  for (index_t j = 0; j < x.cols(); ++j) {
+    T xax = 0, xbx = 0;
+    for (index_t i = 0; i < n; ++i) {
+      T ai = 0, bi = 0;
+      for (index_t p = 0; p < n; ++p) {
+        ai += ad(i, p) * x(p, j);
+        bi += e.has_b ? bd(i, p) * x(p, j) : (i == p ? x(p, j) : T(0));
+      }
+      xax += conj_of(x(i, j)) * ai;
+      xbx += conj_of(x(i, j)) * bi;
+    }
+    theta.push_back(std::real(xax) / std::real(xbx));
+    for (index_t i = 0; i < n; ++i) x(i, j) /= std::sqrt(std::real(xbx));
+  }
+}
+
+// Spectrum with a triple and a double eigenvalue inside [0, 2.6), three eigenvalues in [-3.5, -0.5);
+// the outer eigenvalues are not equally spaced (on a lattice of equal gaps, which the 36-step Lanczos
+// estimate of this small problem resolves exactly, count interpolation lands on eigenvalues).
+std::vector<double> spectrum() {
+  std::vector<double> l{-3.0, -2.0, -1.2, 0.5, 0.5, 0.5, 1.4, 2.0, 2.0, 3.3};
+  for (int i = 0; i < 15; ++i) l.push_back(4.0 + 0.37 * i + 0.019 * i * i);
+  for (int i = 0; i < 11; ++i) l.push_back(-4.0 - 0.41 * i - 0.023 * i * i);
+  return l;
+}
+
+std::vector<index_t> exact_in(const std::vector<double>& lambda, double lo, double hi) {
+  std::vector<index_t> out;
+  for (std::size_t i = 0; i < lambda.size(); ++i)
+    if (lambda[i] >= lo && lambda[i] <= hi) out.push_back(static_cast<index_t>(i));
+  return out;
+}
+
+template <class T>
+hs::driver::SubspaceOptions options(const Exact<T>& e, BKind kind) {
+  hs::driver::SubspaceOptions opt;
+  opt.scale = 10.0;
+  opt.b_diagonal = kind == BKind::Diagonal;
+  if (e.has_b) {
+    const auto wb = hs::test::dense_eigenvalues(e.b, static_cast<const hs::CsrMatrix<T>*>(nullptr));
+    opt.b_min = {wb.front() * (1.0 - 1e-8), true, "test"};
+  }
+  return opt;
+}
+
+// Every group: the bound holds for the true angle of its returned vectors against the exact
+// eigenvectors of [lower, upper] and is at most `orders` decades above it.
+template <class T>
+void expect_bounds(const Exact<T>& e, const DenseMatrix<T>& x, const hs::SubspaceReport& rep, double orders) {
+  ASSERT_TRUE(rep.performed);
+  for (const auto& g : rep.groups) {
+    const auto exact = exact_in(e.lambda, g.lower, g.upper);
+    EXPECT_EQ(static_cast<index_t>(exact.size()), g.dimension) << g.kind << " [" << g.lower << ", " << g.upper << "]";
+    const double truth = true_sin(e, columns(x, g.pairs), exact);
+    EXPECT_LE(truth, g.sin_bound * (1.0 + 1e-8) + 1e-15) << g.kind << " [" << g.lower << ", " << g.upper << "]";
+    EXPECT_LE(g.sin_bound, std::pow(10.0, orders) * truth) << g.kind << " [" << g.lower << ", " << g.upper << "]";
+  }
+}
+
+template <class T>
+class SubspaceBoundCore : public ::testing::Test {};
+using Scalars = ::testing::Types<double, cplx>;
+TYPED_TEST_SUITE(SubspaceBoundCore, Scalars);
+
+TYPED_TEST(SubspaceBoundCore, ClustersOfMultipleEigenvaluesAreBoundedTightly) {
+  using T = TypeParam;
+  for (const BKind kind : {BKind::Identity, BKind::Diagonal, BKind::General}) {
+    const auto e = exact_problem<T>(spectrum(), kind, 7 + static_cast<int>(kind));
+    const auto idx = exact_in(e.lambda, 0.0, 2.6);  // 0.5 (x3), 1.4, 2.0 (x2)
+    ASSERT_EQ(idx.size(), 6u);
+    DenseMatrix<T> x;
+    std::vector<double> theta;
+    perturbed_pairs(e, idx, 1e-7, 11, x, theta);
+    std::vector<double> per_pair;
+    const auto rep = hs::driver::subspace_bounds(e.a, e.has_b ? &e.b : nullptr, theta, x, {}, DenseMatrix<T>{},
+                                                 {{0.0, 2.6, 6}}, options(e, kind), per_pair);
+    ASSERT_EQ(rep.groups.size(), 3u) << rep.note;
+    std::vector<index_t> dims;
+    for (const auto& g : rep.groups) {
+      EXPECT_EQ(g.kind, "cluster");
+      dims.push_back(g.dimension);
+    }
+    EXPECT_EQ(dims, (std::vector<index_t>{3, 1, 2}));
+    expect_bounds(e, x, rep, 3.0);
+    EXPECT_TRUE(std::isfinite(rep.max_sin_bound));
+    EXPECT_LT(rep.max_sin_bound, 1e-4);
+    EXPECT_EQ(rep.rigorous, true);
+    for (std::size_t j = 0; j < per_pair.size(); ++j) EXPECT_LE(per_pair[j], rep.max_sin_bound);
+    EXPECT_EQ(rep.residual_norm, kind == BKind::Identity   ? "2"
+                                 : kind == BKind::Diagonal ? "b_inverse_diagonal"
+                                                           : "b_inverse_cg");
+  }
+}
+
+TYPED_TEST(SubspaceBoundCore, TwoWindowsAndAPairOutsideBoth) {
+  using T = TypeParam;
+  const auto e = exact_problem<T>(spectrum(), BKind::Identity, 21);
+  auto idx = exact_in(e.lambda, -3.5, 2.6);  // 3 + 6 pairs
+  idx.push_back(9);                          // 3.3: in no window
+  DenseMatrix<T> x;
+  std::vector<double> theta;
+  perturbed_pairs(e, idx, 1e-8, 5, x, theta);
+  std::vector<double> per_pair;
+  const auto rep = hs::driver::subspace_bounds(e.a, static_cast<const hs::CsrMatrix<T>*>(nullptr), theta, x, {},
+                                               DenseMatrix<T>{}, {{-3.5, -0.5, 3}, {0.0, 2.6, 6}},
+                                               options(e, BKind::Identity), per_pair);
+  EXPECT_EQ(rep.groups.size(), 6u);
+  expect_bounds(e, x, rep, 3.0);
+  EXPECT_TRUE(std::isnan(per_pair.back()));
+  EXPECT_TRUE(std::isnan(rep.max_sin_bound));
+  EXPECT_NE(rep.note.find("1 of 10 pair(s) without a bound"), std::string::npos) << rep.note;
+}
+
+TYPED_TEST(SubspaceBoundCore, FewerPairsThanEigenvaluesBoundTheWindowOrUseTheUnreturnedCopies) {
+  using T = TypeParam;
+  const auto e = exact_problem<T>(spectrum(), BKind::General, 3);
+  const auto all = exact_in(e.lambda, 0.0, 2.6);
+  const std::vector<index_t> kept(all.begin(), all.end() - 1);  // one copy of 2.0 left out
+  DenseMatrix<T> x, x_all;
+  std::vector<double> theta, theta_all;
+  perturbed_pairs(e, all, 1e-7, 17, x_all, theta_all);
+  x = columns(x_all, {0, 1, 2, 3, 4});
+  theta.assign(theta_all.begin(), theta_all.end() - 1);
+  const auto opt = options(e, BKind::General);
+  std::vector<double> per_pair;
+  // Without the unreturned copy the window's whole spectral subspace is the reference.
+  auto rep = hs::driver::subspace_bounds(e.a, &e.b, theta, x, {}, DenseMatrix<T>{}, {{0.0, 2.6, 6}}, opt, per_pair);
+  ASSERT_EQ(rep.groups.size(), 1u);
+  EXPECT_EQ(rep.groups[0].kind, "window");
+  EXPECT_EQ(rep.groups[0].dimension, 6);
+  expect_bounds(e, x, rep, 3.0);
+  // With it, clusters again: the 2.0 group holds one returned and one unreturned copy.
+  const DenseMatrix<T> extra = columns(x_all, {5});
+  rep = hs::driver::subspace_bounds(e.a, &e.b, theta, x, {theta_all.back()}, extra, {{0.0, 2.6, 6}}, opt, per_pair);
+  ASSERT_EQ(rep.groups.size(), 3u);
+  EXPECT_EQ(rep.groups[2].unreturned, 1);
+  EXPECT_EQ(rep.groups[2].dimension, 2);
+  EXPECT_EQ(rep.groups[2].pairs, (std::vector<index_t>{4}));
+  expect_bounds(e, x, rep, 3.0);
+  EXPECT_TRUE(std::isfinite(rep.max_sin_bound));
+}
+
+TYPED_TEST(SubspaceBoundCore, ResidualNormsBoundTheBInverseNorm) {
+  using T = TypeParam;
+  for (const BKind kind : {BKind::Diagonal, BKind::General}) {
+    const auto e = exact_problem<T>(spectrum(), kind, 31);
+    DenseMatrix<T> x;
+    std::vector<double> theta;
+    perturbed_pairs(e, exact_in(e.lambda, 0.0, 2.6), 1e-5, 2, x, theta);
+    const auto rho = hs::driver::residual_b_inverse_norms(e.a, &e.b, theta, x, options(e, kind));
+    // ||B^{-1/2} r|| = ||W^{-H} r|| = ||(Lambda - theta) W x||: exact by construction.
+    const DenseMatrix<T> z = multiply(e.w, x);
+    for (index_t j = 0; j < x.cols(); ++j) {
+      double s = 0;
+      for (index_t i = 0; i < z.rows(); ++i)
+        s += std::norm((e.lambda[static_cast<std::size_t>(i)] - theta[static_cast<std::size_t>(j)]) * z(i, j));
+      EXPECT_GE(rho[static_cast<std::size_t>(j)], std::sqrt(s) * (1.0 - 1e-6));
+      EXPECT_LE(rho[static_cast<std::size_t>(j)], std::sqrt(s) * (1.0 + 1e-3));
+    }
+  }
+}
+
+TEST(SubspaceBoundGershgorin, ProvesOnlyWhatHolds) {
+  // Diagonally dominant: positive and below the true lambda_min.
+  const auto b = hs::test::random_hpd<double>(60, 0.05, 4);
+  const double g = hs::driver::gershgorin_lambda_min(b);
+  const auto wb = hs::test::dense_eigenvalues(b, static_cast<const hs::CsrMatrix<double>*>(nullptr));
+  EXPECT_GT(g, 0.0);
+  EXPECT_LE(g, wb.front());
+  // The 1-D Laplacian (eigenvalues down to ~1e-3, not strictly dominant): no proof.
+  EXPECT_EQ(hs::driver::gershgorin_lambda_min(hs::test::laplacian_1d<double>(50)), 0.0);
+}
+
+// ---------------------------------------------------------------- end to end (hs::solve)
+
+template <class T>
+hs::SolverConfig base_config() {
+  hs::SolverConfig c;
+  c.threads = 2;
+  c.memory_budget_gb = 2;
+  c.deterministic = true;
+  return c;
+}
+
+template <class T>
+void expect_solution_bounds(const Exact<T>& e, const hs::Solution<T>& s) {
+  const auto& sub = s.report.subspace;
+  ASSERT_TRUE(sub.performed) << sub.note;
+  ASSERT_TRUE(std::isfinite(sub.max_sin_bound)) << sub.note;
+  EXPECT_LT(sub.max_sin_bound, 1e-6);
+  EXPECT_TRUE(sub.rigorous);
+  EXPECT_EQ(sub.failure_probability, 0.0);
+  index_t covered = 0;
+  for (const auto& g : sub.groups) {
+    covered += static_cast<index_t>(g.pairs.size());
+    const auto exact = exact_in(e.lambda, g.lower, g.upper);
+    EXPECT_EQ(static_cast<index_t>(exact.size()), g.dimension);
+    // The computed vectors are accurate to rounding: compare with a floor for the true angle's own
+    // rounding.
+    EXPECT_LE(true_sin(e, columns(s.eigenvectors, g.pairs), exact), g.sin_bound + 1e-12);
+  }
+  EXPECT_EQ(covered, static_cast<index_t>(s.eigenvalues.size()));
+  for (const auto& p : s.report.pairs) EXPECT_LE(p.subspace_sin_bound, sub.max_sin_bound);
+}
+
+template <class T>
+class SubspaceBoundSolve : public ::testing::Test {};
+TYPED_TEST_SUITE(SubspaceBoundSolve, Scalars);
+
+TYPED_TEST(SubspaceBoundSolve, NearestWithAMultipleEigenvalueCutByK) {
+  using T = TypeParam;
+  const auto e = exact_problem<T>(spectrum(), BKind::Identity, 41);
+  auto cfg = base_config<T>();
+  cfg.target.sigma = 0.6;
+  cfg.target.k = 4;  // 0.5 (x3) and 1.4
+  auto s = hs::solve(e.a, static_cast<const hs::CsrMatrix<T>*>(nullptr), cfg);
+  ASSERT_TRUE(s.report.success) << s.report.to_json();
+  expect_solution_bounds(e, s);
+  cfg.target.k = 2;  // two of the three copies of 0.5
+  s = hs::solve(e.a, static_cast<const hs::CsrMatrix<T>*>(nullptr), cfg);
+  ASSERT_TRUE(s.report.success) << s.report.to_json();
+  expect_solution_bounds(e, s);
+  ASSERT_EQ(s.report.subspace.groups.size(), 1u);
+  EXPECT_EQ(s.report.subspace.groups[0].dimension, 3);
+}
+
+TYPED_TEST(SubspaceBoundSolve, GeneralizedWindowTargets) {
+  using T = TypeParam;
+  for (const BKind kind : {BKind::Diagonal, BKind::General}) {
+    const auto e = exact_problem<T>(spectrum(), kind, 51 + static_cast<int>(kind));
+    auto cfg = base_config<T>();
+    cfg.target.mode = hs::TargetMode::Interval;
+    cfg.target.lower = -2.5;
+    cfg.target.upper = 2.6;
+    cfg.slice_size = 3;  // several slices
+    auto s = hs::solve(e.a, &e.b, cfg);
+    ASSERT_TRUE(s.report.success) << s.report.to_json();
+    EXPECT_EQ(s.eigenvalues.size(), 8u);
+    expect_solution_bounds(e, s);
+    cfg = base_config<T>();
+    cfg.target.mode = hs::TargetMode::Smallest;
+    cfg.target.k = 5;
+    s = hs::solve(e.a, &e.b, cfg);
+    ASSERT_TRUE(s.report.success) << s.report.to_json();
+    expect_solution_bounds(e, s);
+  }
+}
+
+TEST(SubspaceBoundSolveReport, NullWithAReasonUnlessACertificatePassed) {
+  const auto e = exact_problem<double>(spectrum(), BKind::Identity, 61);
+  auto cfg = base_config<double>();
+  cfg.target.sigma = 1.3;
+  cfg.target.k = 3;
+  cfg.certificate = hs::CertificateMode::Off;
+  auto s = hs::solve(e.a, static_cast<const hs::CsrMatrix<double>*>(nullptr), cfg);
+  EXPECT_FALSE(s.report.subspace.performed);
+  EXPECT_NE(s.report.subspace.note.find("no completeness certificate"), std::string::npos);
+  auto j = nlohmann::json::parse(s.report.to_json());
+  EXPECT_TRUE(j["subspace"]["max_sin_bound"].is_null());
+  EXPECT_TRUE(j["pairs"][0]["subspace_sin_bound"].is_null());
+
+  cfg.certificate = hs::CertificateMode::Exact;
+  cfg.subspace_bound = hs::Toggle::Off;
+  s = hs::solve(e.a, static_cast<const hs::CsrMatrix<double>*>(nullptr), cfg);
+  EXPECT_TRUE(s.report.success);
+  EXPECT_FALSE(s.report.subspace.performed);
+  EXPECT_EQ(s.report.subspace.note, "disabled by configuration");
+
+  cfg.subspace_bound = hs::Toggle::Auto;
+  s = hs::solve(e.a, static_cast<const hs::CsrMatrix<double>*>(nullptr), cfg);
+  j = nlohmann::json::parse(s.report.to_json());
+  for (const char* key : {"performed", "max_sin_bound", "rigorous", "failure_probability", "residual_norm", "b_min",
+                          "b_min_source", "groups", "note", "seconds"})
+    EXPECT_TRUE(j["subspace"].contains(key)) << key;
+  for (const char* key : {"kind", "pairs", "unreturned", "lower", "upper", "dimension", "gap", "residual",
+                          "orthogonality", "sin_bound"})
+    EXPECT_TRUE(j["subspace"]["groups"][0].contains(key)) << key;
+  EXPECT_TRUE(j["subspace"]["max_sin_bound"].is_number());
+  EXPECT_TRUE(j["pairs"][0]["subspace_sin_bound"].is_number());
+  EXPECT_EQ(j["subspace"]["b_min_source"], "identity");
+
+  // Indefinite B: no certificate, no bound.
+  const index_t n = 40;
+  const auto a = hs::test::laplacian_1d<double>(n);
+  auto b = hs::identity<double>(n);
+  for (index_t i = 0; i < n; i += 3) b.values[static_cast<std::size_t>(i)] = -1.0;
+  auto gcfg = base_config<double>();
+  gcfg.target.sigma = 0.3;
+  gcfg.target.k = 2;
+  s = hs::solve(a, &b, gcfg);
+  EXPECT_EQ(s.report.problem, hs::ProblemType::GeneralizedIndefinite);
+  EXPECT_FALSE(s.report.subspace.performed);
+  EXPECT_NE(s.report.subspace.note.find("indefinite B"), std::string::npos);
+}
+
+}  // namespace

@@ -12,6 +12,7 @@
 // 2 = error (message on stderr).
 #include "cli.hpp"
 
+#include <cmath>
 #include <cstdio>
 #include <filesystem>
 #include <fstream>
@@ -135,6 +136,13 @@ void print_summary(const hs::Solution<T>& sol) {
                 "wait=%.3fs\n",
                 p.processes, p.threads, p.helper_threads, static_cast<long long>(p.helper_counts),
                 static_cast<long long>(p.helper_slices), static_cast<long long>(p.fallbacks), p.wait_s);
+  const auto& sub = r.subspace;
+  if (sub.performed && std::isfinite(sub.max_sin_bound))
+    std::printf("eigenvector subspace angles: sin <= %.3g (%s%s)\n", sub.max_sin_bound,
+                sub.rigorous ? "rigorous" : "not rigorous",
+                sub.failure_probability > 0.0 ? ", with the certificate's failure probability" : "");
+  else if (sub.performed)
+    std::printf("eigenvector subspace angles: no bound for every pair (%s)\n", sub.note.c_str());
   for (const auto& w : r.warnings) std::printf("warning: %s\n", w.c_str());
 }
 
@@ -180,7 +188,7 @@ int hs::cli::run(int argc, char** argv, hs::Transport* peers) {
   std::vector<double> interval;
   int threads = -1;
   std::string precision, certificate, budget, gpu_mode, helper_counts = "auto", helper_slices = "auto";
-  std::string structure;
+  std::string structure, subspace;
   bool verbose = false, quiet = false, version = false;
 
   app.add_option("--A", a_path, "matrix A (.npz scipy sparse, .npy dense, .mtx)")->required();
@@ -217,6 +225,10 @@ int hs::cli::run(int argc, char** argv, hs::Transport* peers) {
                                      "matrices verified to be separable Cartesian / Bloch curl-curl operators: off "
                                      "(default) | auto; the exact certificate follows either way")
                           ->check(CLI::IsMember({"off", "auto"}));
+  auto* o_subspace = app.add_option("--subspace-bound", subspace,
+                                    "a-posteriori bound on the eigenvector subspace angles (report.subspace): auto "
+                                    "(default; HEP/GHEP with a passed certificate) | off")
+                         ->check(CLI::IsMember({"auto", "off"}));
   auto* o_gpu = app.add_option("--gpu", gpu_mode,
                                "GPU offload of the factorizations' large dense updates (BLAS hook, FP64 cuBLAS on the "
                                "first visible GPU, loaded at run time): off (default; or HS_GPU) | auto (when the "
@@ -304,6 +316,7 @@ int hs::cli::run(int argc, char** argv, hs::Transport* peers) {
     if (*o_prec) cfg = hs::parse_config("{\"factor_precision\": \"" + precision + "\"}", cfg);
     if (*o_cert) cfg = hs::parse_config("{\"certificate\": \"" + certificate + "\"}", cfg);
     if (*o_structure) cfg = hs::parse_config("{\"structure_candidates\": \"" + structure + "\"}", cfg);
+    if (*o_subspace) cfg = hs::parse_config("{\"subspace_bound\": \"" + subspace + "\"}", cfg);
     // Re-validate the merged configuration (overrides bypass parse_config's checks otherwise).
     cfg = hs::parse_config(hs::config_to_json(cfg));
     if (*o_gpu) {

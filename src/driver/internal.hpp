@@ -12,6 +12,7 @@
 #include <vector>
 
 #include "driver/norms.hpp"
+#include "driver/subspace.hpp"
 #include "eigen/block_rule.hpp"
 #include "hsolve/dense.hpp"
 #include "hsolve/eigen.hpp"
@@ -95,7 +96,23 @@ struct Ctx {
   /// Helper processes of a multi-process solve (driver/helpers.hpp; DESIGN §3.9), a HelpersOf<T>
   /// of the solve's scalar type; nullptr: a single-process solve (hs::solve).
   Helpers* helpers = nullptr;
+  /// The windows of a passed certificate (exact counts, or the radius a randomized check cleared):
+  /// set by the solve paths, read by attach_subspace_bound (DESIGN §3.6-8c).
+  std::vector<CertifiedWindow> certified{};
+  /// Pairs computed inside those windows that the target does not return (beyond k): their
+  /// eigenvalues and vectors (in the member of the solve's scalar type, unreturned_vectors<T>).
+  std::vector<double> unreturned_lambda{};
+  DenseMatrix<double> unreturned_real{};
+  DenseMatrix<cplx> unreturned_complex{};
 };
+
+template <class T>
+DenseMatrix<T>& unreturned_vectors(Ctx& c) {
+  if constexpr (is_complex_v<T>)
+    return c.unreturned_complex;
+  else
+    return c.unreturned_real;
+}
 
 void warn(Ctx& c, const std::string& msg);
 void event(Ctx& c, const std::string& name, std::initializer_list<LogField> fields);
@@ -109,6 +126,14 @@ std::string fmt(double x);
 double memory_in_use(const Ctx& c);
 /// What the budget leaves now: memory_budget_gb - memory_in_use(c), bytes (< 0: exceeded).
 double budget_left(const Ctx& c);
+
+/// The subspace-angle bounds of a finished HEP/GHEP solve (DESIGN §3.6-8c): fills c.rep.subspace
+/// and every pair's subspace_sin_bound from the certified windows c.certified, when
+/// SolverConfig::subspace_bound is not off and the certificate passed (else the note says why).
+/// A, B: the solve's exact Hermitian working copies. Charged to Phase::Verify; a memory shortage
+/// leaves the bound out (note), it never fails the solve.
+template <class T>
+void attach_subspace_bound(Ctx& c, const CsrMatrix<T>& a, const CsrMatrix<T>* b, const Solution<T>& sol);
 
 // ------------------------------------------------------------------------------ pair blocks
 

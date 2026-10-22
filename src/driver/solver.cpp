@@ -640,6 +640,9 @@ Solution<T> driver::solve_with_helpers(const CsrMatrix<T>& a_in, const CsrMatrix
     rep.precision.decision = decision;
     rep.warnings.insert(rep.warnings.end(), auto_warnings.begin(), auto_warnings.end());
     c.held = driver::FactorHeld{};
+    c.certified.clear();
+    c.unreturned_lambda.clear();
+    driver::unreturned_vectors<T>(c) = DenseMatrix<T>{};
     cfg.factor_precision = FactorPrecision::Double;
     if (cfg.blr == Toggle::On) cfg.blr = Toggle::Off;
     rep.precision.fallback = true;
@@ -653,6 +656,11 @@ Solution<T> driver::solve_with_helpers(const CsrMatrix<T>& a_in, const CsrMatrix
     event(c, "precision_fallback", {{"reason", fallback}, {"attempt_s", attempt_s}, {"blr", was_blr}});
     sol = solve_with_factors(c, pencil, d, type, fac, std::move(order));
   }
+  // Eigenvector subspace-angle bounds of the returned pairs (DESIGN §3.6-8c); the factors are
+  // released first: the bound needs only A, B and the vectors.
+  fac.reset();
+  driver::attach_subspace_bound(c, *a, b, sol);
+  driver::unreturned_vectors<T>(c) = DenseMatrix<T>{};
   // Exclusive phase times: they add up to the total by construction (driver::PhaseClock).
   rep.time_setup_s = clock.seconds(driver::Phase::Setup);
   rep.time_factor_s = clock.seconds(driver::Phase::Factor);

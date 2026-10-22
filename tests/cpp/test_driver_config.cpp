@@ -174,8 +174,8 @@ TEST(DriverReport, JsonHasDocumentedKeysAndNullForInfiniteBounds) {
                           "scale", "method", "candidate_source", "sigma_requested", "sigma_used", "shift_retries", "factor_options",
                           "factor_stats", "restarts", "op_applies", "time_total_s", "time_setup_s", "time_factor_s",
                           "time_iterate_s", "time_verify_s", "time_certificate_s", "peak_rss_bytes", "pairs",
-                          "certificate", "slices", "zero_cluster_dim", "zero_modes_filtered", "success", "warnings",
-                          "block_size", "solver", "version"})
+                          "certificate", "subspace", "slices", "zero_cluster_dim", "zero_modes_filtered", "success",
+                          "warnings", "block_size", "solver", "version"})
     EXPECT_TRUE(j.contains(key)) << key;
   EXPECT_EQ(j["problem"], "generalized_definite");
   EXPECT_EQ(j["solver"], "hsolve");
@@ -196,6 +196,9 @@ TEST(DriverReport, JsonHasDocumentedKeysAndNullForInfiniteBounds) {
   EXPECT_EQ(j["zero_cluster_dim"], 30);
   EXPECT_EQ(j["zero_modes_filtered"], 12);
   EXPECT_EQ(j["pairs"][0]["lambda_re"], 1.5);
+  EXPECT_TRUE(j["pairs"][0]["subspace_sin_bound"].is_null());  // no bound computed
+  EXPECT_FALSE(j["subspace"]["performed"]);
+  EXPECT_TRUE(j["subspace"]["max_sin_bound"].is_null());
   EXPECT_TRUE(j["factor_stats"].contains("estimate"));
 }
 

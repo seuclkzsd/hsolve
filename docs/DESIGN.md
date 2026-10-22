@@ -1204,6 +1204,37 @@ factor（InertiaCounter）、sparse、linalg；不打印；固定种子与线程
      ≤ 1e-8 相对）的两次计数证实整簇数值相等后接受任意这些副本；否则整簇求解（先查内存预算）。
    - 报告：每次运行一条 `slices[]`（窗口、位移、which、计数、找到数、nev、重跑、重启、算子作用
      次数、是否通过）；`sigma_used` 为首片位移。
+8c. **特征向量子空间夹角的后验界**（`driver/subspace.*`，`SolverConfig::subspace_bound`，默认 `auto`；报告
+   `subspace` 与 `pairs[].subspace_sin_bound`，`docs/FORMATS.md` §3）。证书通过后，在 B 内积下界定每个返回特征对所在簇的
+   特征向量子空间与精确特征子空间的夹角：
+   - **变换**：C = B^{-1/2} A B^{-1/2} 为厄密矩阵，返回块 X（B-正交归一至舍入）对应 Y = B^{1/2}X，残差
+     CY − YΘ = B^{-1/2}(AX − BXΘ)；G = XᴴBX，ε ≥ ‖G − I‖₂ < 1/2（否则该组无界）。
+   - **Davis–Kahan sinΘ**（Frobenius 范数）：若 C 在精确谱子空间 E 之外的特征值与组内每个 θ 至少相距 δ，则
+     S = E⊥ᴴY 满足 Λ₂S − SΘ = E⊥ᴴR，‖S‖_F ≤ ‖R‖_F/δ，于是 ‖sinΘ(span X, E)‖_F ≤ ‖B^{-1/2}R‖_F / (δ·sqrt(1 − ε))；它同时界定
+     组内每个向量与 E 的夹角。
+   - **间隙 δ 的来源**：证书窗口 [lower, upper) 内恰有 count 个特征值（Sylvester 计数；随机检验为其声称半径与找到数），
+     窗口外的特征值离组内 θ 不近于窗口端点。窗口内算出的对（返回的，加上在窗口内找到但目标未返回的：nearest 的 k 截断
+     了重特征值、smallest / largest 的窗口多于 k 个；`Ctx::unreturned_*`）与 count 相等时，按特征值排序分簇——相邻者
+     相距 ≤ 1e-6·(|λ| + scale)（与评测的参考簇同一规则）或单对残差区间相交即同簇——再对每簇用 **Kahan 定理**
+     （Parlett, *The Symmetric Eigenvalue Problem*, Thm 11.5.1，作用于正交化的 YG^{-1/2}、H = Θ）：C 有 |c| 个特征值落在
+     J_c = [min θ_c − η_c, max θ_c + η_c]，η_c = ‖R_c‖_F/sqrt(1 − ε_c) + sqrt(1 + ε_c)·(max θ_c − min θ_c)·(1/sqrt(1 − ε_c) − 1)
+     （第二项来自 Θ 与 G^{-1/2} 的换位子）。各 J_c 互不相交（相交即合并、重算）且都在窗口内时，计数推出每个 J_c 恰含 |c| 个
+     特征值、窗口内 J 之外没有特征值，δ_c 取到窗口端点与相邻 J 的距离，E_c 为 J_c 的谱子空间（维数 |c|）。算出的对少于
+     count（smallest / largest 的部分簇），或某个 J 伸出窗口时，整个窗口为一组（`kind = "window"`），与窗口的
+     count 维谱子空间比较，δ 为到窗口端点的距离。
+   - **残差的 B^{-1}-范数**：B = I 为 2-范数；对角 B 精确加权；一般 HPD B 对每列做 Jacobi 预条件 CG 得 z ≈ B^{-1}r，
+     对任意 z 有 rᴴB^{-1}r = Re zᴴ(2r − Bz) + sᴴB^{-1}s（s = r − Bz 显式计算），余项 ≤ ‖s‖²/λ_min(B)。λ_min(B) 的下界依次取：
+     对角元（对角 B）、Gershgorin（原矩阵与 Jacobi 缩放后两者取大）、不完全 Cholesky 证明（norms.hpp，预算为平均一次
+     分解时间的 1/4）；都不成立时用 Lanczos 估计的一半，报告 `rigorous = false` 并说明——估计只进入余项与舍入项。
+   - **舍入**：残差、Gram 矩阵元与 B^{-1}-范数的浮点误差都按先验界计入（Higham §3.1 的 γ_k，取 2 倍余量覆盖复数运算；
+     |A|、|B| 的范数用行绝对值和上界），所以界对精确量成立。`rigorous` = 证书为证明且 λ_min(B) 有证明。
+   - **代价**：返回（与未返回）向量上各一次 A、B 稀疏乘积、每簇一个 Gram 矩阵（窗口组为 n·m²），一般 B 另加每列至多
+     300 步 CG；分块（每块 ≤ 16 列）以控制内存，放不下预算余量时不计算（`note`）。计入 verify 阶段；在计算之前先释放
+     主分解对象（界只需要 A、B 与向量）。GHIEP（无证书）、证书未通过或关闭时不计算，`note` 写明原因。
+   - **测试**：`tests/cpp/test_subspace_bound.cpp`——已知特征向量的稠密小例（B = I、对角 B、一般 B，实数与复数）上界
+     必须不小于真实夹角且至多大 3 个数量级；三重与二重特征值、未返回的副本、窗口组、两个窗口与窗口外的对；端到端的
+     nearest（k 截断重特征值）、interval（多片）与 smallest。
+
 9. **零模（零空间）处理**：EM 零空间可达 n 的 20% 以上，**不得显式 deflation 或剔除重算**；零簇
    靠位移放置排除，不靠事后过滤。`zero_filter_tol` 定义为相对 scale（< 0 关闭）。
    - HEP/GHEP（仅当 `zero_filter_tol` ≥ 0；带宽 band = zero_filter_tol·scale）：在 −band、+band 两点
