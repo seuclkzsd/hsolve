@@ -1,0 +1,3388 @@
+{
+ "case": "ss-2cubes_sphere",
+ "problem": "HEP",
+ "mode": "nearest",
+ "target": {
+  "mode": "nearest",
+  "sigma": 283812833.11766344,
+  "k": 10
+ },
+ "target_override": null,
+ "cores": "16-31",
+ "ncores": 16,
+ "tol": 1e-10,
+ "n": 101492,
+ "tag": "showcase-tune",
+ "date": "2026-10-23T01:44:18",
+ "host": "c005",
+ "screen_reps": 1,
+ "confirm_reps": 5,
+ "flaky_confirm_reps": 20,
+ "flaky": false,
+ "random_failures": [],
+ "margin": 0.03,
+ "default": "1x16",
+ "decisions": [
+  {
+   "group": "default",
+   "incumbent": "1x16",
+   "time": null,
+   "valid": false
+  },
+  {
+   "group": "accuracy",
+   "candidates": [
+    "1x16 eps_tol=1e-11",
+    "1x16 eps_nev=k+2",
+    "1x16 eps_nev=k+4",
+    "1x16 eps_ncv=3k",
+    "1x16 eps_nev=k+4 eps_tol=1e-11"
+   ],
+   "incumbent": "1x16",
+   "time": null,
+   "valid": false,
+   "moved": false
+  },
+  {
+   "group": "layout",
+   "candidates": [
+    "1x16/core",
+    "2x8",
+    "2x8/core",
+    "4x4",
+    "4x4/core",
+    "8x2",
+    "8x2/core",
+    "16x1",
+    "16x1/core"
+   ],
+   "incumbent": "1x16",
+   "time": null,
+   "valid": false,
+   "moved": false
+  },
+  {
+   "group": "ordering",
+   "candidates": [
+    "1x16 st_mat_mumps_icntl_7=0",
+    "1x16 st_mat_mumps_icntl_7=2",
+    "1x16 st_mat_mumps_icntl_7=3",
+    "1x16 st_mat_mumps_icntl_7=4",
+    "1x16 st_mat_mumps_icntl_7=5",
+    "1x16 st_mat_mumps_icntl_7=6"
+   ],
+   "incumbent": "1x16",
+   "time": null,
+   "valid": false,
+   "moved": false
+  },
+  {
+   "group": "layout2",
+   "candidates": [
+    "1x16/core",
+    "2x8",
+    "2x8/core",
+    "4x4",
+    "4x4/core",
+    "8x2",
+    "8x2/core",
+    "16x1",
+    "16x1/core"
+   ],
+   "incumbent": "1x16",
+   "time": null,
+   "valid": false,
+   "moved": false
+  },
+  {
+   "group": "icntl_48",
+   "candidates": [
+    "1x16 st_mat_mumps_icntl_48=0"
+   ],
+   "incumbent": "1x16",
+   "time": null,
+   "valid": false,
+   "moved": false
+  },
+  {
+   "group": "icntl_58",
+   "candidates": [
+    "1x16 st_mat_mumps_icntl_58=1"
+   ],
+   "incumbent": "1x16",
+   "time": null,
+   "valid": false,
+   "moved": false
+  },
+  {
+   "group": "icntl_8",
+   "candidates": [
+    "1x16 st_mat_mumps_icntl_8=0"
+   ],
+   "incumbent": "1x16",
+   "time": null,
+   "valid": false,
+   "moved": false
+  },
+  {
+   "group": "blr",
+   "candidates": [
+    "1x16 st_mat_mumps_cntl_7=1e-12 st_mat_mumps_icntl_35=2",
+    "1x16 st_mat_mumps_cntl_7=1e-10 st_mat_mumps_icntl_35=2"
+   ],
+   "incumbent": "1x16",
+   "time": null,
+   "valid": false,
+   "moved": false
+  },
+  {
+   "group": "ncv",
+   "candidates": [
+    "1x16 eps_ncv=k+8",
+    "1x16 eps_ncv=2k",
+    "1x16 eps_ncv=3k",
+    "1x16 eps_ncv=4k"
+   ],
+   "incumbent": "1x16 eps_ncv=4k",
+   "time": 3.3262055999999998,
+   "valid": true,
+   "moved": true
+  },
+  {
+   "group": "restart",
+   "candidates": [
+    "1x16 eps_krylovschur_restart=0.3 eps_ncv=4k",
+    "1x16 eps_krylovschur_restart=0.7 eps_ncv=4k"
+   ],
+   "incumbent": "1x16 eps_ncv=4k",
+   "time": 3.3262055999999998,
+   "valid": true,
+   "moved": false
+  },
+  {
+   "group": "prune",
+   "candidates": [
+    "1x16"
+   ],
+   "incumbent": "1x16 eps_ncv=4k",
+   "time": 3.3262055999999998,
+   "valid": true,
+   "moved": false
+  }
+ ],
+ "confirmation": {
+  "configs": {
+   "1x16": {
+    "config": {
+     "ranks": 1,
+     "threads": 16,
+     "bind": "none",
+     "options": {}
+    },
+    "valid": false,
+    "n": 5,
+    "invalid_reasons": [
+     "5 of 10 pairs have backward error > tol=1e-10"
+    ],
+    "median_s": 2.7081777,
+    "min_s": 2.7001144,
+    "max_s": 2.73005,
+    "times_s": [
+     2.7044425999999997,
+     2.7273987,
+     2.73005,
+     2.7081777,
+     2.7001144
+    ],
+    "phases": {
+     "analysis_s": 1.2096,
+     "numeric_s": 0.4866,
+     "solve_s": 0.97106,
+     "solves": 25,
+     "ortho_s": 0.018758,
+     "setup_s": 1.7085,
+     "eps_solve_s": 0.9983,
+     "vectors_s": 0.0021987,
+     "factorizations": 1
+    },
+    "median_wall_s": 4.941,
+    "peak_rss_bytes": 846696448,
+    "max_eta": 1.3152259561825277e-05,
+    "trial_ids": [
+     31,
+     38,
+     41,
+     44,
+     47
+    ],
+    "runs_total": 6
+   },
+   "1x16 eps_ncv=4k": {
+    "config": {
+     "ranks": 1,
+     "threads": 16,
+     "bind": "none",
+     "options": {
+      "eps_ncv": "4k"
+     }
+    },
+    "valid": true,
+    "n": 5,
+    "invalid_reasons": [],
+    "median_s": 3.3084617,
+    "min_s": 3.2894026000000003,
+    "max_s": 3.3397319,
+    "times_s": [
+     3.307838,
+     3.3084617,
+     3.3397319,
+     3.2894026000000003,
+     3.3157001
+    ],
+    "phases": {
+     "analysis_s": 1.2093,
+     "numeric_s": 0.47926,
+     "solve_s": 1.5445,
+     "solves": 40,
+     "ortho_s": 0.040607,
+     "setup_s": 1.7045,
+     "eps_solve_s": 1.6015,
+     "vectors_s": 0.0024319,
+     "factorizations": 1
+    },
+    "median_wall_s": 5.588,
+    "peak_rss_bytes": 873680896,
+    "max_eta": 1.75008050222112e-12,
+    "trial_ids": [
+     32,
+     35,
+     42,
+     45,
+     48
+    ],
+    "runs_total": 6
+   },
+   "1x16 eps_krylovschur_restart=0.3 eps_ncv=4k": {
+    "config": {
+     "ranks": 1,
+     "threads": 16,
+     "bind": "none",
+     "options": {
+      "eps_krylovschur_restart": "0.3",
+      "eps_ncv": "4k"
+     }
+    },
+    "valid": true,
+    "n": 5,
+    "invalid_reasons": [],
+    "median_s": 3.3379936999999997,
+    "min_s": 3.3143166,
+    "max_s": 3.35081,
+    "times_s": [
+     3.3367487,
+     3.35081,
+     3.3143166,
+     3.3443334,
+     3.3379936999999997
+    ],
+    "phases": {
+     "analysis_s": 1.2101,
+     "numeric_s": 0.49372,
+     "solve_s": 1.5618,
+     "solves": 40,
+     "ortho_s": 0.040536,
+     "setup_s": 1.7208,
+     "eps_solve_s": 1.6165,
+     "vectors_s": 0.00221,
+     "factorizations": 1
+    },
+    "median_wall_s": 5.583,
+    "peak_rss_bytes": 861868032,
+    "max_eta": 1.7463413893600693e-12,
+    "trial_ids": [
+     33,
+     36,
+     39,
+     46,
+     49
+    ],
+    "runs_total": 6
+   },
+   "1x16 eps_krylovschur_restart=0.7 eps_ncv=4k": {
+    "config": {
+     "ranks": 1,
+     "threads": 16,
+     "bind": "none",
+     "options": {
+      "eps_krylovschur_restart": "0.7",
+      "eps_ncv": "4k"
+     }
+    },
+    "valid": true,
+    "n": 5,
+    "invalid_reasons": [],
+    "median_s": 3.3147111000000002,
+    "min_s": 3.3119018000000002,
+    "max_s": 3.3410704,
+    "times_s": [
+     3.3173730999999997,
+     3.3410704,
+     3.3133467999999997,
+     3.3147111000000002,
+     3.3119018000000002
+    ],
+    "phases": {
+     "analysis_s": 1.2092,
+     "numeric_s": 0.48258,
+     "solve_s": 1.5486,
+     "solves": 40,
+     "ortho_s": 0.040269,
+     "setup_s": 1.7083,
+     "eps_solve_s": 1.6029,
+     "vectors_s": 0.0024111,
+     "factorizations": 1
+    },
+    "median_wall_s": 5.539,
+    "peak_rss_bytes": 873709568,
+    "max_eta": 1.7477556660215546e-12,
+    "trial_ids": [
+     34,
+     37,
+     40,
+     43,
+     50
+    ],
+    "runs_total": 6
+   }
+  },
+  "best": "1x16 eps_ncv=4k",
+  "default": "1x16",
+  "start": null,
+  "extended": []
+ },
+ "trials": [
+  {
+   "id": 0,
+   "phase": "default",
+   "label": "1x16",
+   "config": {
+    "ranks": 1,
+    "threads": 16,
+    "bind": "none",
+    "options": {}
+   },
+   "guard": {
+    "returncode": 0,
+    "killed": null,
+    "wall_s": 4.984,
+    "peak_rss_gib": 0.806
+   },
+   "report": {
+    "time_setup_s": 1.7147997692227364,
+    "time_solve_s": 0.9964508041739464,
+    "time_eps_solve_s": 0.9939906820654869,
+    "time_vectors_s": 0.0024601221084594727,
+    "time_load_s": 0.1544419378042221,
+    "nconv": 25,
+    "iterations": 1,
+    "peak_rss_bytes": 840749056,
+    "unused_options": [],
+    "success": false,
+    "mpi_ranks": 1
+   },
+   "phases": {
+    "analysis_s": 1.2135,
+    "analyses": 1,
+    "numeric_s": 0.4864,
+    "factorizations": 1,
+    "solve_s": 0.96682,
+    "solves": 25,
+    "ortho_s": 0.018717,
+    "setup_s": 1.7148,
+    "eps_solve_s": 0.994,
+    "vectors_s": 0.002462,
+    "solver_s": 2.711262,
+    "staged": true,
+    "ranks": 1,
+    "omp_threads": 16
+   },
+   "eval": {
+    "verdict": "fail",
+    "reasons": [
+     "5 of 10 pairs have backward error > tol=1e-10"
+    ],
+    "max_eta": 1.3152259561624715e-05,
+    "completeness": "consistent",
+    "pairs": 10
+   },
+   "valid": false,
+   "why": "5 of 10 pairs have backward error > tol=1e-10",
+   "solver_s": 2.711262
+  },
+  {
+   "id": 1,
+   "phase": "accuracy",
+   "label": "1x16 eps_tol=1e-11",
+   "config": {
+    "ranks": 1,
+    "threads": 16,
+    "bind": "none",
+    "options": {
+     "eps_tol": "1e-11"
+    }
+   },
+   "guard": {
+    "returncode": 0,
+    "killed": null,
+    "wall_s": 5.217,
+    "peak_rss_gib": 0.827
+   },
+   "report": {
+    "time_setup_s": 1.7073469087481499,
+    "time_solve_s": 1.012782670557499,
+    "time_eps_solve_s": 1.0103276744484901,
+    "time_vectors_s": 0.002454996109008789,
+    "time_load_s": 0.16934268921613693,
+    "nconv": 25,
+    "iterations": 1,
+    "peak_rss_bytes": 863219712,
+    "unused_options": [],
+    "success": false,
+    "mpi_ranks": 1
+   },
+   "phases": {
+    "analysis_s": 1.2118,
+    "analyses": 1,
+    "numeric_s": 0.48072,
+    "factorizations": 1,
+    "solve_s": 0.98293,
+    "solves": 25,
+    "ortho_s": 0.018833,
+    "setup_s": 1.7074,
+    "eps_solve_s": 1.0103,
+    "vectors_s": 0.0024568,
+    "solver_s": 2.7201568,
+    "staged": true,
+    "ranks": 1,
+    "omp_threads": 16
+   },
+   "eval": {
+    "verdict": "fail",
+    "reasons": [
+     "5 of 10 pairs have backward error > tol=1e-10"
+    ],
+    "max_eta": 1.3152259559643097e-05,
+    "completeness": "consistent",
+    "pairs": 10
+   },
+   "valid": false,
+   "why": "5 of 10 pairs have backward error > tol=1e-10",
+   "solver_s": 2.7201568
+  },
+  {
+   "id": 2,
+   "phase": "accuracy",
+   "label": "1x16 eps_nev=k+2",
+   "config": {
+    "ranks": 1,
+    "threads": 16,
+    "bind": "none",
+    "options": {
+     "eps_nev": "k+2"
+    }
+   },
+   "guard": {
+    "returncode": 0,
+    "killed": null,
+    "wall_s": 5.187,
+    "peak_rss_gib": 0.81
+   },
+   "report": {
+    "time_setup_s": 1.7166791930794716,
+    "time_solve_s": 1.0906814113259315,
+    "time_eps_solve_s": 1.0885110571980476,
+    "time_vectors_s": 0.002170354127883911,
+    "time_load_s": 0.1943548545241356,
+    "nconv": 27,
+    "iterations": 1,
+    "peak_rss_bytes": 844984320,
+    "unused_options": [],
+    "success": false,
+    "mpi_ranks": 1
+   },
+   "phases": {
+    "analysis_s": 1.2077,
+    "analyses": 1,
+    "numeric_s": 0.49405,
+    "factorizations": 1,
+    "solve_s": 1.058,
+    "solves": 27,
+    "ortho_s": 0.021081,
+    "setup_s": 1.7167,
+    "eps_solve_s": 1.0885,
+    "vectors_s": 0.0021725,
+    "solver_s": 2.8073725,
+    "staged": true,
+    "ranks": 1,
+    "omp_threads": 16
+   },
+   "eval": {
+    "verdict": "fail",
+    "reasons": [
+     "5 of 10 pairs have backward error > tol=1e-10"
+    ],
+    "max_eta": 2.0770416658155284e-06,
+    "completeness": "consistent",
+    "pairs": 10
+   },
+   "valid": false,
+   "why": "5 of 10 pairs have backward error > tol=1e-10",
+   "solver_s": 2.8073725
+  },
+  {
+   "id": 3,
+   "phase": "accuracy",
+   "label": "1x16 eps_nev=k+4",
+   "config": {
+    "ranks": 1,
+    "threads": 16,
+    "bind": "none",
+    "options": {
+     "eps_nev": "k+4"
+    }
+   },
+   "guard": {
+    "returncode": 0,
+    "killed": null,
+    "wall_s": 5.135,
+    "peak_rss_gib": 0.796
+   },
+   "report": {
+    "time_setup_s": 1.6934324130415916,
+    "time_solve_s": 1.156892441213131,
+    "time_eps_solve_s": 1.1547097116708755,
+    "time_vectors_s": 0.0021827295422554016,
+    "time_load_s": 0.13470106571912766,
+    "nconv": 29,
+    "iterations": 1,
+    "peak_rss_bytes": 828321792,
+    "unused_options": [],
+    "success": false,
+    "mpi_ranks": 1
+   },
+   "phases": {
+    "analysis_s": 1.2117,
+    "analyses": 1,
+    "numeric_s": 0.46691,
+    "factorizations": 1,
+    "solve_s": 1.1216,
+    "solves": 29,
+    "ortho_s": 0.023208,
+    "setup_s": 1.6935,
+    "eps_solve_s": 1.1547,
+    "vectors_s": 0.0021843,
+    "solver_s": 2.8503843000000004,
+    "staged": true,
+    "ranks": 1,
+    "omp_threads": 16
+   },
+   "eval": {
+    "verdict": "fail",
+    "reasons": [
+     "3 of 10 pairs have backward error > tol=1e-10"
+    ],
+    "max_eta": 2.1478809764929238e-07,
+    "completeness": "consistent",
+    "pairs": 10
+   },
+   "valid": false,
+   "why": "3 of 10 pairs have backward error > tol=1e-10",
+   "solver_s": 2.8503843000000004
+  },
+  {
+   "id": 4,
+   "phase": "accuracy",
+   "label": "1x16 eps_ncv=3k",
+   "config": {
+    "ranks": 1,
+    "threads": 16,
+    "bind": "none",
+    "options": {
+     "eps_ncv": "3k"
+    }
+   },
+   "guard": {
+    "returncode": 0,
+    "killed": null,
+    "wall_s": 5.28,
+    "peak_rss_gib": 0.784
+   },
+   "report": {
+    "time_setup_s": 1.7105370461940765,
+    "time_solve_s": 1.2116293162107468,
+    "time_eps_solve_s": 1.209260880947113,
+    "time_vectors_s": 0.002368435263633728,
+    "time_load_s": 0.1725691556930542,
+    "nconv": 30,
+    "iterations": 1,
+    "peak_rss_bytes": 816881664,
+    "unused_options": [],
+    "success": false,
+    "mpi_ranks": 1
+   },
+   "phases": {
+    "analysis_s": 1.2113,
+    "analyses": 1,
+    "numeric_s": 0.48331,
+    "factorizations": 1,
+    "solve_s": 1.1742,
+    "solves": 30,
+    "ortho_s": 0.024823,
+    "setup_s": 1.7106,
+    "eps_solve_s": 1.2093,
+    "vectors_s": 0.0023706,
+    "solver_s": 2.9222706,
+    "staged": true,
+    "ranks": 1,
+    "omp_threads": 16
+   },
+   "eval": {
+    "verdict": "fail",
+    "reasons": [
+     "3 of 10 pairs have backward error > tol=1e-10"
+    ],
+    "max_eta": 2.3132876419735837e-09,
+    "completeness": "consistent",
+    "pairs": 10
+   },
+   "valid": false,
+   "why": "3 of 10 pairs have backward error > tol=1e-10",
+   "solver_s": 2.9222706
+  },
+  {
+   "id": 5,
+   "phase": "accuracy",
+   "label": "1x16 eps_nev=k+4 eps_tol=1e-11",
+   "config": {
+    "ranks": 1,
+    "threads": 16,
+    "bind": "none",
+    "options": {
+     "eps_nev": "k+4",
+     "eps_tol": "1e-11"
+    }
+   },
+   "guard": {
+    "returncode": 0,
+    "killed": null,
+    "wall_s": 5.381,
+    "peak_rss_gib": 0.817
+   },
+   "report": {
+    "time_setup_s": 1.7040164396166801,
+    "time_solve_s": 1.1571318954229355,
+    "time_eps_solve_s": 1.1549600213766098,
+    "time_vectors_s": 0.0021718740463256836,
+    "time_load_s": 0.14938753098249435,
+    "nconv": 29,
+    "iterations": 1,
+    "peak_rss_bytes": 852373504,
+    "unused_options": [],
+    "success": false,
+    "mpi_ranks": 1
+   },
+   "phases": {
+    "analysis_s": 1.2087,
+    "analyses": 1,
+    "numeric_s": 0.48013,
+    "factorizations": 1,
+    "solve_s": 1.1222,
+    "solves": 29,
+    "ortho_s": 0.022844,
+    "setup_s": 1.704,
+    "eps_solve_s": 1.155,
+    "vectors_s": 0.002174,
+    "solver_s": 2.861174,
+    "staged": true,
+    "ranks": 1,
+    "omp_threads": 16
+   },
+   "eval": {
+    "verdict": "fail",
+    "reasons": [
+     "3 of 10 pairs have backward error > tol=1e-10"
+    ],
+    "max_eta": 2.1478809626280273e-07,
+    "completeness": "consistent",
+    "pairs": 10
+   },
+   "valid": false,
+   "why": "3 of 10 pairs have backward error > tol=1e-10",
+   "solver_s": 2.861174
+  },
+  {
+   "id": 6,
+   "phase": "layout",
+   "label": "1x16/core",
+   "config": {
+    "ranks": 1,
+    "threads": 16,
+    "bind": "core",
+    "options": {}
+   },
+   "guard": {
+    "returncode": 0,
+    "killed": null,
+    "wall_s": 4.939,
+    "peak_rss_gib": 0.783
+   },
+   "report": {
+    "time_setup_s": 1.708124779164791,
+    "time_solve_s": 1.019001953303814,
+    "time_eps_solve_s": 1.016530990600586,
+    "time_vectors_s": 0.002470962703227997,
+    "time_load_s": 0.15038588643074036,
+    "nconv": 25,
+    "iterations": 1,
+    "peak_rss_bytes": 814678016,
+    "unused_options": [],
+    "success": false,
+    "mpi_ranks": 1
+   },
+   "phases": {
+    "analysis_s": 1.2107,
+    "analyses": 1,
+    "numeric_s": 0.48267,
+    "factorizations": 1,
+    "solve_s": 0.9891,
+    "solves": 25,
+    "ortho_s": 0.018861,
+    "setup_s": 1.7081,
+    "eps_solve_s": 1.0165,
+    "vectors_s": 0.002473,
+    "solver_s": 2.727073,
+    "staged": true,
+    "ranks": 1,
+    "omp_threads": 16
+   },
+   "eval": {
+    "verdict": "fail",
+    "reasons": [
+     "5 of 10 pairs have backward error > tol=1e-10"
+    ],
+    "max_eta": 1.315225955922418e-05,
+    "completeness": "consistent",
+    "pairs": 10
+   },
+   "valid": false,
+   "why": "5 of 10 pairs have backward error > tol=1e-10",
+   "solver_s": 2.727073
+  },
+  {
+   "id": 7,
+   "phase": "layout",
+   "label": "2x8",
+   "config": {
+    "ranks": 2,
+    "threads": 8,
+    "bind": "none",
+    "options": {}
+   },
+   "guard": {
+    "returncode": 0,
+    "killed": null,
+    "wall_s": 4.94,
+    "peak_rss_gib": 0.959
+   },
+   "report": {
+    "time_setup_s": 1.7801861837506294,
+    "time_solve_s": 0.7958119437098503,
+    "time_eps_solve_s": 0.7943548932671547,
+    "time_vectors_s": 0.0014570504426956177,
+    "time_load_s": 0.1627017930150032,
+    "nconv": 25,
+    "iterations": 1,
+    "peak_rss_bytes": 1007509504,
+    "unused_options": [],
+    "success": false,
+    "mpi_ranks": 2
+   },
+   "phases": {
+    "analysis_s": 1.217,
+    "analyses": 1,
+    "numeric_s": 0.55079,
+    "factorizations": 1,
+    "solve_s": 0.77407,
+    "solves": 25,
+    "ortho_s": 0.015623,
+    "setup_s": 1.7802,
+    "eps_solve_s": 0.79436,
+    "vectors_s": 0.0014589,
+    "solver_s": 2.5760189,
+    "staged": true,
+    "ranks": 2,
+    "omp_threads": 8
+   },
+   "eval": {
+    "verdict": "fail",
+    "reasons": [
+     "5 of 10 pairs have backward error > tol=1e-10"
+    ],
+    "max_eta": 1.3703054270332825e-05,
+    "completeness": "consistent",
+    "pairs": 10
+   },
+   "valid": false,
+   "why": "5 of 10 pairs have backward error > tol=1e-10",
+   "solver_s": 2.5760189
+  },
+  {
+   "id": 8,
+   "phase": "layout",
+   "label": "2x8/core",
+   "config": {
+    "ranks": 2,
+    "threads": 8,
+    "bind": "core",
+    "options": {}
+   },
+   "guard": {
+    "returncode": 0,
+    "killed": null,
+    "wall_s": 4.885,
+    "peak_rss_gib": 0.957
+   },
+   "report": {
+    "time_setup_s": 1.7874668762087822,
+    "time_solve_s": 0.7996789589524269,
+    "time_eps_solve_s": 0.7982036247849464,
+    "time_vectors_s": 0.0014753341674804688,
+    "time_load_s": 0.16299419105052948,
+    "nconv": 25,
+    "iterations": 1,
+    "peak_rss_bytes": 1003773952,
+    "unused_options": [],
+    "success": false,
+    "mpi_ranks": 2
+   },
+   "phases": {
+    "analysis_s": 1.2177,
+    "analyses": 1,
+    "numeric_s": 0.55704,
+    "factorizations": 1,
+    "solve_s": 0.77805,
+    "solves": 25,
+    "ortho_s": 0.015418,
+    "setup_s": 1.7875,
+    "eps_solve_s": 0.79821,
+    "vectors_s": 0.0014774,
+    "solver_s": 2.5871874000000004,
+    "staged": true,
+    "ranks": 2,
+    "omp_threads": 8
+   },
+   "eval": {
+    "verdict": "fail",
+    "reasons": [
+     "5 of 10 pairs have backward error > tol=1e-10"
+    ],
+    "max_eta": 1.3703054267927385e-05,
+    "completeness": "consistent",
+    "pairs": 10
+   },
+   "valid": false,
+   "why": "5 of 10 pairs have backward error > tol=1e-10",
+   "solver_s": 2.5871874000000004
+  },
+  {
+   "id": 9,
+   "phase": "layout",
+   "label": "4x4",
+   "config": {
+    "ranks": 4,
+    "threads": 4,
+    "bind": "none",
+    "options": {}
+   },
+   "guard": {
+    "returncode": 0,
+    "killed": null,
+    "wall_s": 4.992,
+    "peak_rss_gib": 1.21
+   },
+   "report": {
+    "time_setup_s": 1.8382026478648186,
+    "time_solve_s": 0.7283239662647247,
+    "time_eps_solve_s": 0.7275366261601448,
+    "time_vectors_s": 0.0007873401045799255,
+    "time_load_s": 0.1481042206287384,
+    "nconv": 25,
+    "iterations": 1,
+    "peak_rss_bytes": 1279148032,
+    "unused_options": [],
+    "success": false,
+    "mpi_ranks": 4
+   },
+   "phases": {
+    "analysis_s": 1.199,
+    "analyses": 1,
+    "numeric_s": 0.63223,
+    "factorizations": 1,
+    "solve_s": 0.70917,
+    "solves": 25,
+    "ortho_s": 0.015476,
+    "setup_s": 1.8382,
+    "eps_solve_s": 0.72754,
+    "vectors_s": 0.00078944,
+    "solver_s": 2.56652944,
+    "staged": true,
+    "ranks": 4,
+    "omp_threads": 4
+   },
+   "eval": {
+    "verdict": "fail",
+    "reasons": [
+     "5 of 10 pairs have backward error > tol=1e-10"
+    ],
+    "max_eta": 1.3266753181759292e-05,
+    "completeness": "consistent",
+    "pairs": 10
+   },
+   "valid": false,
+   "why": "5 of 10 pairs have backward error > tol=1e-10",
+   "solver_s": 2.56652944
+  },
+  {
+   "id": 10,
+   "phase": "layout",
+   "label": "4x4/core",
+   "config": {
+    "ranks": 4,
+    "threads": 4,
+    "bind": "core",
+    "options": {}
+   },
+   "guard": {
+    "returncode": 0,
+    "killed": null,
+    "wall_s": 4.993,
+    "peak_rss_gib": 1.217
+   },
+   "report": {
+    "time_setup_s": 1.8998540118336678,
+    "time_solve_s": 0.739203155040741,
+    "time_eps_solve_s": 0.7384475693106651,
+    "time_vectors_s": 0.0007555857300758362,
+    "time_load_s": 0.1635213866829872,
+    "nconv": 25,
+    "iterations": 1,
+    "peak_rss_bytes": 1279373312,
+    "unused_options": [],
+    "success": false,
+    "mpi_ranks": 4
+   },
+   "phases": {
+    "analysis_s": 1.2086,
+    "analyses": 1,
+    "numeric_s": 0.68414,
+    "factorizations": 1,
+    "solve_s": 0.72046,
+    "solves": 25,
+    "ortho_s": 0.015042,
+    "setup_s": 1.8999,
+    "eps_solve_s": 0.73846,
+    "vectors_s": 0.00075758,
+    "solver_s": 2.63911758,
+    "staged": true,
+    "ranks": 4,
+    "omp_threads": 4
+   },
+   "eval": {
+    "verdict": "fail",
+    "reasons": [
+     "5 of 10 pairs have backward error > tol=1e-10"
+    ],
+    "max_eta": 1.3266753181875968e-05,
+    "completeness": "consistent",
+    "pairs": 10
+   },
+   "valid": false,
+   "why": "5 of 10 pairs have backward error > tol=1e-10",
+   "solver_s": 2.63911758
+  },
+  {
+   "id": 11,
+   "phase": "layout",
+   "label": "8x2",
+   "config": {
+    "ranks": 8,
+    "threads": 2,
+    "bind": "none",
+    "options": {}
+   },
+   "guard": {
+    "returncode": 0,
+    "killed": null,
+    "wall_s": 5.307,
+    "peak_rss_gib": 1.852
+   },
+   "report": {
+    "time_setup_s": 2.0001576021313667,
+    "time_solve_s": 0.703345887362957,
+    "time_eps_solve_s": 0.7028745859861374,
+    "time_vectors_s": 0.0004713013768196106,
+    "time_load_s": 0.2395152747631073,
+    "nconv": 25,
+    "iterations": 1,
+    "peak_rss_bytes": 1964855296,
+    "unused_options": [],
+    "success": false,
+    "mpi_ranks": 8
+   },
+   "phases": {
+    "analysis_s": 1.216,
+    "analyses": 1,
+    "numeric_s": 0.77891,
+    "factorizations": 1,
+    "solve_s": 0.68697,
+    "solves": 25,
+    "ortho_s": 0.013936,
+    "setup_s": 2.0002,
+    "eps_solve_s": 0.70288,
+    "vectors_s": 0.00047402,
+    "solver_s": 2.70355402,
+    "staged": true,
+    "ranks": 8,
+    "omp_threads": 2
+   },
+   "eval": {
+    "verdict": "fail",
+    "reasons": [
+     "5 of 10 pairs have backward error > tol=1e-10"
+    ],
+    "max_eta": 1.6253663337436898e-05,
+    "completeness": "consistent",
+    "pairs": 10
+   },
+   "valid": false,
+   "why": "5 of 10 pairs have backward error > tol=1e-10",
+   "solver_s": 2.70355402
+  },
+  {
+   "id": 12,
+   "phase": "layout",
+   "label": "8x2/core",
+   "config": {
+    "ranks": 8,
+    "threads": 2,
+    "bind": "core",
+    "options": {}
+   },
+   "guard": {
+    "returncode": 0,
+    "killed": null,
+    "wall_s": 5.147,
+    "peak_rss_gib": 1.855
+   },
+   "report": {
+    "time_setup_s": 1.9965694472193718,
+    "time_solve_s": 0.7100329026579857,
+    "time_eps_solve_s": 0.7095512077212334,
+    "time_vectors_s": 0.00048169493675231934,
+    "time_load_s": 0.15246492624282837,
+    "nconv": 25,
+    "iterations": 1,
+    "peak_rss_bytes": 1974198272,
+    "unused_options": [],
+    "success": false,
+    "mpi_ranks": 8
+   },
+   "phases": {
+    "analysis_s": 1.2174,
+    "analyses": 1,
+    "numeric_s": 0.77422,
+    "factorizations": 1,
+    "solve_s": 0.69375,
+    "solves": 25,
+    "ortho_s": 0.01383,
+    "setup_s": 1.9966,
+    "eps_solve_s": 0.70956,
+    "vectors_s": 0.00048631,
+    "solver_s": 2.7066463099999996,
+    "staged": true,
+    "ranks": 8,
+    "omp_threads": 2
+   },
+   "eval": {
+    "verdict": "fail",
+    "reasons": [
+     "5 of 10 pairs have backward error > tol=1e-10"
+    ],
+    "max_eta": 1.6253663336893587e-05,
+    "completeness": "consistent",
+    "pairs": 10
+   },
+   "valid": false,
+   "why": "5 of 10 pairs have backward error > tol=1e-10",
+   "solver_s": 2.7066463099999996
+  },
+  {
+   "id": 13,
+   "phase": "layout",
+   "label": "16x1",
+   "config": {
+    "ranks": 16,
+    "threads": 1,
+    "bind": "none",
+    "options": {}
+   },
+   "guard": {
+    "returncode": 0,
+    "killed": null,
+    "wall_s": 5.366,
+    "peak_rss_gib": 2.973
+   },
+   "report": {
+    "time_setup_s": 1.98412274569273,
+    "time_solve_s": 0.679870493710041,
+    "time_eps_solve_s": 0.6794428825378418,
+    "time_vectors_s": 0.00042761117219924927,
+    "time_load_s": 0.2494441643357277,
+    "nconv": 25,
+    "iterations": 1,
+    "peak_rss_bytes": 3181707264,
+    "unused_options": [],
+    "success": false,
+    "mpi_ranks": 16
+   },
+   "phases": {
+    "analysis_s": 1.2667,
+    "analyses": 1,
+    "numeric_s": 0.71312,
+    "factorizations": 1,
+    "solve_s": 0.66694,
+    "solves": 25,
+    "ortho_s": 0.010794,
+    "setup_s": 1.9841,
+    "eps_solve_s": 0.67945,
+    "vectors_s": 0.00042925,
+    "solver_s": 2.6639792499999997,
+    "staged": true,
+    "ranks": 16,
+    "omp_threads": 1
+   },
+   "eval": {
+    "verdict": "fail",
+    "reasons": [
+     "5 of 10 pairs have backward error > tol=1e-10"
+    ],
+    "max_eta": 1.2492734322696159e-05,
+    "completeness": "consistent",
+    "pairs": 10
+   },
+   "valid": false,
+   "why": "5 of 10 pairs have backward error > tol=1e-10",
+   "solver_s": 2.6639792499999997
+  },
+  {
+   "id": 14,
+   "phase": "layout",
+   "label": "16x1/core",
+   "config": {
+    "ranks": 16,
+    "threads": 1,
+    "bind": "core",
+    "options": {}
+   },
+   "guard": {
+    "returncode": 0,
+    "killed": null,
+    "wall_s": 5.372,
+    "peak_rss_gib": 2.989
+   },
+   "report": {
+    "time_setup_s": 2.048091985285282,
+    "time_solve_s": 0.6832665577530861,
+    "time_eps_solve_s": 0.6828372925519943,
+    "time_vectors_s": 0.00042926520109176636,
+    "time_load_s": 0.24844057857990265,
+    "nconv": 25,
+    "iterations": 1,
+    "peak_rss_bytes": 3199049728,
+    "unused_options": [],
+    "success": false,
+    "mpi_ranks": 16
+   },
+   "phases": {
+    "analysis_s": 1.2632,
+    "analyses": 1,
+    "numeric_s": 0.78061,
+    "factorizations": 1,
+    "solve_s": 0.67061,
+    "solves": 25,
+    "ortho_s": 0.010543,
+    "setup_s": 2.0481,
+    "eps_solve_s": 0.68285,
+    "vectors_s": 0.00043175,
+    "solver_s": 2.73138175,
+    "staged": true,
+    "ranks": 16,
+    "omp_threads": 1
+   },
+   "eval": {
+    "verdict": "fail",
+    "reasons": [
+     "5 of 10 pairs have backward error > tol=1e-10"
+    ],
+    "max_eta": 1.2492734325872631e-05,
+    "completeness": "consistent",
+    "pairs": 10
+   },
+   "valid": false,
+   "why": "5 of 10 pairs have backward error > tol=1e-10",
+   "solver_s": 2.73138175
+  },
+  {
+   "id": 15,
+   "phase": "ordering",
+   "label": "1x16 st_mat_mumps_icntl_7=0",
+   "config": {
+    "ranks": 1,
+    "threads": 16,
+    "bind": "none",
+    "options": {
+     "st_mat_mumps_icntl_7": "0"
+    }
+   },
+   "guard": {
+    "returncode": 0,
+    "killed": null,
+    "wall_s": 5.544,
+    "peak_rss_gib": 1.411
+   },
+   "report": {
+    "time_setup_s": 1.43040432035923,
+    "time_solve_s": 1.8047487139701843,
+    "time_eps_solve_s": 1.802463635802269,
+    "time_vectors_s": 0.0022850781679153442,
+    "time_load_s": 0.14796382933855057,
+    "nconv": 25,
+    "iterations": 1,
+    "peak_rss_bytes": 1490833408,
+    "unused_options": [],
+    "success": false,
+    "mpi_ranks": 1
+   },
+   "phases": {
+    "analysis_s": 0.12664,
+    "analyses": 1,
+    "numeric_s": 1.2887,
+    "factorizations": 1,
+    "solve_s": 1.7754,
+    "solves": 25,
+    "ortho_s": 0.018604,
+    "setup_s": 1.4304,
+    "eps_solve_s": 1.8025,
+    "vectors_s": 0.0022871,
+    "solver_s": 3.2351871,
+    "staged": true,
+    "ranks": 1,
+    "omp_threads": 16
+   },
+   "eval": {
+    "verdict": "fail",
+    "reasons": [
+     "5 of 10 pairs have backward error > tol=1e-10"
+    ],
+    "max_eta": 1.315225956136705e-05,
+    "completeness": "consistent",
+    "pairs": 10
+   },
+   "valid": false,
+   "why": "5 of 10 pairs have backward error > tol=1e-10",
+   "solver_s": 3.2351871
+  },
+  {
+   "id": 16,
+   "phase": "ordering",
+   "label": "1x16 st_mat_mumps_icntl_7=2",
+   "config": {
+    "ranks": 1,
+    "threads": 16,
+    "bind": "none",
+    "options": {
+     "st_mat_mumps_icntl_7": "2"
+    }
+   },
+   "guard": {
+    "returncode": 0,
+    "killed": null,
+    "wall_s": 4.737,
+    "peak_rss_gib": 1.03
+   },
+   "report": {
+    "time_setup_s": 1.0062607005238533,
+    "time_solve_s": 1.3920931965112686,
+    "time_eps_solve_s": 1.389793038368225,
+    "time_vectors_s": 0.002300158143043518,
+    "time_load_s": 0.14924968779087067,
+    "nconv": 25,
+    "iterations": 1,
+    "peak_rss_bytes": 1081221120,
+    "unused_options": [],
+    "success": false,
+    "mpi_ranks": 1
+   },
+   "phases": {
+    "analysis_s": 0.16177,
+    "analyses": 1,
+    "numeric_s": 0.82979,
+    "factorizations": 1,
+    "solve_s": 1.3627,
+    "solves": 25,
+    "ortho_s": 0.018628,
+    "setup_s": 1.0063,
+    "eps_solve_s": 1.3898,
+    "vectors_s": 0.0023023,
+    "solver_s": 2.3984023,
+    "staged": true,
+    "ranks": 1,
+    "omp_threads": 16
+   },
+   "eval": {
+    "verdict": "fail",
+    "reasons": [
+     "5 of 10 pairs have backward error > tol=1e-10"
+    ],
+    "max_eta": 1.315225956095556e-05,
+    "completeness": "consistent",
+    "pairs": 10
+   },
+   "valid": false,
+   "why": "5 of 10 pairs have backward error > tol=1e-10",
+   "solver_s": 2.3984023
+  },
+  {
+   "id": 17,
+   "phase": "ordering",
+   "label": "1x16 st_mat_mumps_icntl_7=3",
+   "config": {
+    "ranks": 1,
+    "threads": 16,
+    "bind": "none",
+    "options": {
+     "st_mat_mumps_icntl_7": "3"
+    }
+   },
+   "guard": {
+    "returncode": 0,
+    "killed": null,
+    "wall_s": 4.631,
+    "peak_rss_gib": 0.747
+   },
+   "report": {
+    "time_setup_s": 1.3351030498743057,
+    "time_solve_s": 0.9993819668889046,
+    "time_eps_solve_s": 0.9972290173172951,
+    "time_vectors_s": 0.002152949571609497,
+    "time_load_s": 0.15340156853199005,
+    "nconv": 25,
+    "iterations": 1,
+    "peak_rss_bytes": 775606272,
+    "unused_options": [],
+    "success": false,
+    "mpi_ranks": 1
+   },
+   "phases": {
+    "analysis_s": 0.90401,
+    "analyses": 1,
+    "numeric_s": 0.41729,
+    "factorizations": 1,
+    "solve_s": 0.97037,
+    "solves": 25,
+    "ortho_s": 0.018362,
+    "setup_s": 1.3351,
+    "eps_solve_s": 0.99724,
+    "vectors_s": 0.0021555,
+    "solver_s": 2.3344955,
+    "staged": true,
+    "ranks": 1,
+    "omp_threads": 16
+   },
+   "eval": {
+    "verdict": "fail",
+    "reasons": [
+     "5 of 10 pairs have backward error > tol=1e-10"
+    ],
+    "max_eta": 1.3152259560944502e-05,
+    "completeness": "consistent",
+    "pairs": 10
+   },
+   "valid": false,
+   "why": "5 of 10 pairs have backward error > tol=1e-10",
+   "solver_s": 2.3344955
+  },
+  {
+   "id": 18,
+   "phase": "ordering",
+   "label": "1x16 st_mat_mumps_icntl_7=4",
+   "config": {
+    "ranks": 1,
+    "threads": 16,
+    "bind": "none",
+    "options": {
+     "st_mat_mumps_icntl_7": "4"
+    }
+   },
+   "guard": {
+    "returncode": 0,
+    "killed": null,
+    "wall_s": 5.139,
+    "peak_rss_gib": 0.841
+   },
+   "report": {
+    "time_setup_s": 1.7914094850420952,
+    "time_solve_s": 1.0183271989226341,
+    "time_eps_solve_s": 1.016014538705349,
+    "time_vectors_s": 0.0023126602172851562,
+    "time_load_s": 0.1431787759065628,
+    "nconv": 25,
+    "iterations": 1,
+    "peak_rss_bytes": 878530560,
+    "unused_options": [],
+    "success": false,
+    "mpi_ranks": 1
+   },
+   "phases": {
+    "analysis_s": 1.192,
+    "analyses": 1,
+    "numeric_s": 0.58449,
+    "factorizations": 1,
+    "solve_s": 0.98959,
+    "solves": 25,
+    "ortho_s": 0.01807,
+    "setup_s": 1.7914,
+    "eps_solve_s": 1.016,
+    "vectors_s": 0.0023144,
+    "solver_s": 2.8097144000000003,
+    "staged": true,
+    "ranks": 1,
+    "omp_threads": 16
+   },
+   "eval": {
+    "verdict": "fail",
+    "reasons": [
+     "5 of 10 pairs have backward error > tol=1e-10"
+    ],
+    "max_eta": 1.3152259561744186e-05,
+    "completeness": "consistent",
+    "pairs": 10
+   },
+   "valid": false,
+   "why": "5 of 10 pairs have backward error > tol=1e-10",
+   "solver_s": 2.8097144000000003
+  },
+  {
+   "id": 19,
+   "phase": "ordering",
+   "label": "1x16 st_mat_mumps_icntl_7=5",
+   "config": {
+    "ranks": 1,
+    "threads": 16,
+    "bind": "none",
+    "options": {
+     "st_mat_mumps_icntl_7": "5"
+    }
+   },
+   "guard": {
+    "returncode": 0,
+    "killed": null,
+    "wall_s": 5.085,
+    "peak_rss_gib": 0.819
+   },
+   "report": {
+    "time_setup_s": 1.7124023288488388,
+    "time_solve_s": 0.9879677146673203,
+    "time_eps_solve_s": 0.9856961071491241,
+    "time_vectors_s": 0.002271607518196106,
+    "time_load_s": 0.14945626258850098,
+    "nconv": 25,
+    "iterations": 1,
+    "peak_rss_bytes": 852393984,
+    "unused_options": [],
+    "success": false,
+    "mpi_ranks": 1
+   },
+   "phases": {
+    "analysis_s": 1.2073,
+    "analyses": 1,
+    "numeric_s": 0.48981,
+    "factorizations": 1,
+    "solve_s": 0.95925,
+    "solves": 25,
+    "ortho_s": 0.018045,
+    "setup_s": 1.7124,
+    "eps_solve_s": 0.9857,
+    "vectors_s": 0.002274,
+    "solver_s": 2.700374,
+    "staged": true,
+    "ranks": 1,
+    "omp_threads": 16
+   },
+   "eval": {
+    "verdict": "fail",
+    "reasons": [
+     "5 of 10 pairs have backward error > tol=1e-10"
+    ],
+    "max_eta": 1.3152259561427844e-05,
+    "completeness": "consistent",
+    "pairs": 10
+   },
+   "valid": false,
+   "why": "5 of 10 pairs have backward error > tol=1e-10",
+   "solver_s": 2.700374
+  },
+  {
+   "id": 20,
+   "phase": "ordering",
+   "label": "1x16 st_mat_mumps_icntl_7=6",
+   "config": {
+    "ranks": 1,
+    "threads": 16,
+    "bind": "none",
+    "options": {
+     "st_mat_mumps_icntl_7": "6"
+    }
+   },
+   "guard": {
+    "returncode": 0,
+    "killed": null,
+    "wall_s": 5.543,
+    "peak_rss_gib": 1.444
+   },
+   "report": {
+    "time_setup_s": 1.427364930510521,
+    "time_solve_s": 1.7987396121025085,
+    "time_eps_solve_s": 1.7965648546814919,
+    "time_vectors_s": 0.002174757421016693,
+    "time_load_s": 0.16888613253831863,
+    "nconv": 25,
+    "iterations": 1,
+    "peak_rss_bytes": 1525657600,
+    "unused_options": [],
+    "success": false,
+    "mpi_ranks": 1
+   },
+   "phases": {
+    "analysis_s": 0.13318,
+    "analyses": 1,
+    "numeric_s": 1.2788,
+    "factorizations": 1,
+    "solve_s": 1.7692,
+    "solves": 25,
+    "ortho_s": 0.018861,
+    "setup_s": 1.4274,
+    "eps_solve_s": 1.7966,
+    "vectors_s": 0.0021765,
+    "solver_s": 3.2261765000000002,
+    "staged": true,
+    "ranks": 1,
+    "omp_threads": 16
+   },
+   "eval": {
+    "verdict": "fail",
+    "reasons": [
+     "5 of 10 pairs have backward error > tol=1e-10"
+    ],
+    "max_eta": 1.3152259560468898e-05,
+    "completeness": "consistent",
+    "pairs": 10
+   },
+   "valid": false,
+   "why": "5 of 10 pairs have backward error > tol=1e-10",
+   "solver_s": 3.2261765000000002
+  },
+  {
+   "id": 21,
+   "phase": "icntl_48",
+   "label": "1x16 st_mat_mumps_icntl_48=0",
+   "config": {
+    "ranks": 1,
+    "threads": 16,
+    "bind": "none",
+    "options": {
+     "st_mat_mumps_icntl_48": "0"
+    }
+   },
+   "guard": {
+    "returncode": 0,
+    "killed": null,
+    "wall_s": 5.816,
+    "peak_rss_gib": 0.663
+   },
+   "report": {
+    "time_setup_s": 1.8796264082193375,
+    "time_solve_s": 1.6957858726382256,
+    "time_eps_solve_s": 1.6935201063752174,
+    "time_vectors_s": 0.0022657662630081177,
+    "time_load_s": 0.13507774472236633,
+    "nconv": 25,
+    "iterations": 1,
+    "peak_rss_bytes": 687640576,
+    "unused_options": [],
+    "success": false,
+    "mpi_ranks": 1
+   },
+   "phases": {
+    "analysis_s": 1.2102,
+    "analyses": 1,
+    "numeric_s": 0.65467,
+    "factorizations": 1,
+    "solve_s": 1.667,
+    "solves": 25,
+    "ortho_s": 0.018136,
+    "setup_s": 1.8796,
+    "eps_solve_s": 1.6935,
+    "vectors_s": 0.0022681,
+    "solver_s": 3.5753681000000004,
+    "staged": true,
+    "ranks": 1,
+    "omp_threads": 16
+   },
+   "eval": {
+    "verdict": "fail",
+    "reasons": [
+     "5 of 10 pairs have backward error > tol=1e-10"
+    ],
+    "max_eta": 1.315225956090815e-05,
+    "completeness": "consistent",
+    "pairs": 10
+   },
+   "valid": false,
+   "why": "5 of 10 pairs have backward error > tol=1e-10",
+   "solver_s": 3.5753681000000004
+  },
+  {
+   "id": 22,
+   "phase": "icntl_58",
+   "label": "1x16 st_mat_mumps_icntl_58=1",
+   "config": {
+    "ranks": 1,
+    "threads": 16,
+    "bind": "none",
+    "options": {
+     "st_mat_mumps_icntl_58": "1"
+    }
+   },
+   "guard": {
+    "returncode": 0,
+    "killed": null,
+    "wall_s": 5.133,
+    "peak_rss_gib": 0.777
+   },
+   "report": {
+    "time_setup_s": 1.806501217186451,
+    "time_solve_s": 1.0014223009347916,
+    "time_eps_solve_s": 0.9992298483848572,
+    "time_vectors_s": 0.002192452549934387,
+    "time_load_s": 0.15089961141347885,
+    "nconv": 25,
+    "iterations": 1,
+    "peak_rss_bytes": 809148416,
+    "unused_options": [],
+    "success": false,
+    "mpi_ranks": 1
+   },
+   "phases": {
+    "analysis_s": 1.3093,
+    "analyses": 1,
+    "numeric_s": 0.48324,
+    "factorizations": 1,
+    "solve_s": 0.97215,
+    "solves": 25,
+    "ortho_s": 0.018656,
+    "setup_s": 1.8065,
+    "eps_solve_s": 0.99924,
+    "vectors_s": 0.0021948,
+    "solver_s": 2.8079348,
+    "staged": true,
+    "ranks": 1,
+    "omp_threads": 16
+   },
+   "eval": {
+    "verdict": "fail",
+    "reasons": [
+     "5 of 10 pairs have backward error > tol=1e-10"
+    ],
+    "max_eta": 1.315225956166939e-05,
+    "completeness": "consistent",
+    "pairs": 10
+   },
+   "valid": false,
+   "why": "5 of 10 pairs have backward error > tol=1e-10",
+   "solver_s": 2.8079348
+  },
+  {
+   "id": 23,
+   "phase": "icntl_8",
+   "label": "1x16 st_mat_mumps_icntl_8=0",
+   "config": {
+    "ranks": 1,
+    "threads": 16,
+    "bind": "none",
+    "options": {
+     "st_mat_mumps_icntl_8": "0"
+    }
+   },
+   "guard": {
+    "returncode": 0,
+    "killed": null,
+    "wall_s": 4.936,
+    "peak_rss_gib": 0.802
+   },
+   "report": {
+    "time_setup_s": 1.7048130184412003,
+    "time_solve_s": 0.9851413741707802,
+    "time_eps_solve_s": 0.9828831106424332,
+    "time_vectors_s": 0.0022582635283470154,
+    "time_load_s": 0.1410117819905281,
+    "nconv": 25,
+    "iterations": 1,
+    "peak_rss_bytes": 836763648,
+    "unused_options": [],
+    "success": false,
+    "mpi_ranks": 1
+   },
+   "phases": {
+    "analysis_s": 1.2108,
+    "analyses": 1,
+    "numeric_s": 0.47907,
+    "factorizations": 1,
+    "solve_s": 0.95638,
+    "solves": 25,
+    "ortho_s": 0.018232,
+    "setup_s": 1.7048,
+    "eps_solve_s": 0.98289,
+    "vectors_s": 0.0022604,
+    "solver_s": 2.6899504,
+    "staged": true,
+    "ranks": 1,
+    "omp_threads": 16
+   },
+   "eval": {
+    "verdict": "fail",
+    "reasons": [
+     "5 of 10 pairs have backward error > tol=1e-10"
+    ],
+    "max_eta": 1.315225956023701e-05,
+    "completeness": "consistent",
+    "pairs": 10
+   },
+   "valid": false,
+   "why": "5 of 10 pairs have backward error > tol=1e-10",
+   "solver_s": 2.6899504
+  },
+  {
+   "id": 24,
+   "phase": "blr",
+   "label": "1x16 st_mat_mumps_cntl_7=1e-12 st_mat_mumps_icntl_35=2",
+   "config": {
+    "ranks": 1,
+    "threads": 16,
+    "bind": "none",
+    "options": {
+     "st_mat_mumps_cntl_7": "1e-12",
+     "st_mat_mumps_icntl_35": "2"
+    }
+   },
+   "guard": {
+    "returncode": 0,
+    "killed": null,
+    "wall_s": 4.58,
+    "peak_rss_gib": 0.691
+   },
+   "report": {
+    "time_setup_s": 1.7701991870999336,
+    "time_solve_s": 0.4719337075948715,
+    "time_eps_solve_s": 0.4694129154086113,
+    "time_vectors_s": 0.0025207921862602234,
+    "time_load_s": 0.20525218546390533,
+    "nconv": 25,
+    "iterations": 1,
+    "peak_rss_bytes": 733421568,
+    "unused_options": [],
+    "success": false,
+    "mpi_ranks": 1
+   },
+   "phases": {
+    "analysis_s": 1.2861,
+    "analyses": 1,
+    "numeric_s": 0.46673,
+    "factorizations": 1,
+    "solve_s": 0.44314,
+    "solves": 25,
+    "ortho_s": 0.017873,
+    "setup_s": 1.7702,
+    "eps_solve_s": 0.46942,
+    "vectors_s": 0.0025226,
+    "solver_s": 2.2421425999999998,
+    "staged": true,
+    "ranks": 1,
+    "omp_threads": 16
+   },
+   "eval": {
+    "verdict": "fail",
+    "reasons": [
+     "5 of 10 pairs have backward error > tol=1e-10"
+    ],
+    "max_eta": 1.3152259561076983e-05,
+    "completeness": "consistent",
+    "pairs": 10
+   },
+   "valid": false,
+   "why": "5 of 10 pairs have backward error > tol=1e-10",
+   "solver_s": 2.2421425999999998
+  },
+  {
+   "id": 25,
+   "phase": "blr",
+   "label": "1x16 st_mat_mumps_cntl_7=1e-10 st_mat_mumps_icntl_35=2",
+   "config": {
+    "ranks": 1,
+    "threads": 16,
+    "bind": "none",
+    "options": {
+     "st_mat_mumps_cntl_7": "1e-10",
+     "st_mat_mumps_icntl_35": "2"
+    }
+   },
+   "guard": {
+    "returncode": 0,
+    "killed": null,
+    "wall_s": 4.447,
+    "peak_rss_gib": 0.653
+   },
+   "report": {
+    "time_setup_s": 1.7606514319777489,
+    "time_solve_s": 0.46286559104919434,
+    "time_eps_solve_s": 0.45995939522981644,
+    "time_vectors_s": 0.002906195819377899,
+    "time_load_s": 0.14863982051610947,
+    "nconv": 25,
+    "iterations": 1,
+    "peak_rss_bytes": 693272576,
+    "unused_options": [],
+    "success": false,
+    "mpi_ranks": 1
+   },
+   "phases": {
+    "analysis_s": 1.2925,
+    "analyses": 1,
+    "numeric_s": 0.45446,
+    "factorizations": 1,
+    "solve_s": 0.43323,
+    "solves": 25,
+    "ortho_s": 0.018301,
+    "setup_s": 1.7607,
+    "eps_solve_s": 0.45997,
+    "vectors_s": 0.0029081,
+    "solver_s": 2.2235781,
+    "staged": true,
+    "ranks": 1,
+    "omp_threads": 16
+   },
+   "eval": {
+    "verdict": "fail",
+    "reasons": [
+     "5 of 10 pairs have backward error > tol=1e-10"
+    ],
+    "max_eta": 1.3152259484030971e-05,
+    "completeness": "consistent",
+    "pairs": 10
+   },
+   "valid": false,
+   "why": "5 of 10 pairs have backward error > tol=1e-10",
+   "solver_s": 2.2235781
+  },
+  {
+   "id": 26,
+   "phase": "ncv",
+   "label": "1x16 eps_ncv=k+8",
+   "config": {
+    "ranks": 1,
+    "threads": 16,
+    "bind": "none",
+    "options": {
+     "eps_ncv": "k+8"
+    }
+   },
+   "guard": {
+    "returncode": 0,
+    "killed": null,
+    "wall_s": 4.817,
+    "peak_rss_gib": 0.782
+   },
+   "report": {
+    "time_setup_s": 1.7123502790927887,
+    "time_solve_s": 0.7220493406057358,
+    "time_eps_solve_s": 0.7199216410517693,
+    "time_vectors_s": 0.002127699553966522,
+    "time_load_s": 0.14992176741361618,
+    "nconv": 18,
+    "iterations": 1,
+    "peak_rss_bytes": 815165440,
+    "unused_options": [],
+    "success": false,
+    "mpi_ranks": 1
+   },
+   "phases": {
+    "analysis_s": 1.2111,
+    "analyses": 1,
+    "numeric_s": 0.48824,
+    "factorizations": 1,
+    "solve_s": 0.7028,
+    "solves": 18,
+    "ortho_s": 0.010854,
+    "setup_s": 1.7124,
+    "eps_solve_s": 0.71993,
+    "vectors_s": 0.0021294,
+    "solver_s": 2.4344593999999997,
+    "staged": true,
+    "ranks": 1,
+    "omp_threads": 16
+   },
+   "eval": {
+    "verdict": "fail",
+    "reasons": [
+     "6 of 10 pairs have backward error > tol=1e-10",
+     "completeness inconsistent: 1 missing, boundary deficit 0, 10 distinct returned"
+    ],
+    "max_eta": 0.00035681740872459523,
+    "completeness": "inconsistent",
+    "pairs": 10
+   },
+   "valid": false,
+   "why": "6 of 10 pairs have backward error > tol=1e-10; completeness inconsistent: 1 missing, boundary deficit 0, 10 distinct returned",
+   "solver_s": 2.4344593999999997
+  },
+  {
+   "id": 27,
+   "phase": "ncv",
+   "label": "1x16 eps_ncv=2k",
+   "config": {
+    "ranks": 1,
+    "threads": 16,
+    "bind": "none",
+    "options": {
+     "eps_ncv": "2k"
+    }
+   },
+   "guard": {
+    "returncode": 0,
+    "killed": null,
+    "wall_s": 4.88,
+    "peak_rss_gib": 0.794
+   },
+   "report": {
+    "time_setup_s": 1.7133612930774689,
+    "time_solve_s": 0.799468956887722,
+    "time_eps_solve_s": 0.797156848013401,
+    "time_vectors_s": 0.002312108874320984,
+    "time_load_s": 0.19002239406108856,
+    "nconv": 20,
+    "iterations": 1,
+    "peak_rss_bytes": 828170240,
+    "unused_options": [],
+    "success": false,
+    "mpi_ranks": 1
+   },
+   "phases": {
+    "analysis_s": 1.2092,
+    "analyses": 1,
+    "numeric_s": 0.49004,
+    "factorizations": 1,
+    "solve_s": 0.77737,
+    "solves": 20,
+    "ortho_s": 0.013063,
+    "setup_s": 1.7134,
+    "eps_solve_s": 0.79716,
+    "vectors_s": 0.0023145,
+    "solver_s": 2.5128745,
+    "staged": true,
+    "ranks": 1,
+    "omp_threads": 16
+   },
+   "eval": {
+    "verdict": "fail",
+    "reasons": [
+     "6 of 10 pairs have backward error > tol=1e-10"
+    ],
+    "max_eta": 0.00013694466823181123,
+    "completeness": "consistent",
+    "pairs": 10
+   },
+   "valid": false,
+   "why": "6 of 10 pairs have backward error > tol=1e-10",
+   "solver_s": 2.5128745
+  },
+  {
+   "id": 28,
+   "phase": "ncv",
+   "label": "1x16 eps_ncv=4k",
+   "config": {
+    "ranks": 1,
+    "threads": 16,
+    "bind": "none",
+    "options": {
+     "eps_ncv": "4k"
+    }
+   },
+   "guard": {
+    "returncode": 0,
+    "killed": null,
+    "wall_s": 5.622,
+    "peak_rss_gib": 0.811
+   },
+   "report": {
+    "time_setup_s": 1.7304631993174553,
+    "time_solve_s": 1.5956525206565857,
+    "time_eps_solve_s": 1.5932491943240166,
+    "time_vectors_s": 0.0024033263325691223,
+    "time_load_s": 0.1632561758160591,
+    "nconv": 40,
+    "iterations": 1,
+    "peak_rss_bytes": 854855680,
+    "unused_options": [],
+    "success": true,
+    "mpi_ranks": 1
+   },
+   "phases": {
+    "analysis_s": 1.2098,
+    "analyses": 1,
+    "numeric_s": 0.50337,
+    "factorizations": 1,
+    "solve_s": 1.539,
+    "solves": 40,
+    "ortho_s": 0.040292,
+    "setup_s": 1.7305,
+    "eps_solve_s": 1.5933,
+    "vectors_s": 0.0024056,
+    "solver_s": 3.3262055999999998,
+    "staged": true,
+    "ranks": 1,
+    "omp_threads": 16
+   },
+   "eval": {
+    "verdict": "pass",
+    "reasons": [],
+    "max_eta": 1.7445982097573632e-12,
+    "completeness": "consistent",
+    "pairs": 10
+   },
+   "valid": true,
+   "why": null,
+   "solver_s": 3.3262055999999998
+  },
+  {
+   "id": 29,
+   "phase": "restart",
+   "label": "1x16 eps_krylovschur_restart=0.3 eps_ncv=4k",
+   "config": {
+    "ranks": 1,
+    "threads": 16,
+    "bind": "none",
+    "options": {
+     "eps_krylovschur_restart": "0.3",
+     "eps_ncv": "4k"
+    }
+   },
+   "guard": {
+    "returncode": 0,
+    "killed": null,
+    "wall_s": 5.54,
+    "peak_rss_gib": 0.802
+   },
+   "report": {
+    "time_setup_s": 1.7005718275904655,
+    "time_solve_s": 1.6148789077997208,
+    "time_eps_solve_s": 1.612462729215622,
+    "time_vectors_s": 0.002416178584098816,
+    "time_load_s": 0.13436774164438248,
+    "nconv": 40,
+    "iterations": 1,
+    "peak_rss_bytes": 836395008,
+    "unused_options": [],
+    "success": true,
+    "mpi_ranks": 1
+   },
+   "phases": {
+    "analysis_s": 1.2163,
+    "analyses": 1,
+    "numeric_s": 0.467,
+    "factorizations": 1,
+    "solve_s": 1.5575,
+    "solves": 40,
+    "ortho_s": 0.040624,
+    "setup_s": 1.7006,
+    "eps_solve_s": 1.6125,
+    "vectors_s": 0.0024186,
+    "solver_s": 3.3155186,
+    "staged": true,
+    "ranks": 1,
+    "omp_threads": 16
+   },
+   "eval": {
+    "verdict": "pass",
+    "reasons": [],
+    "max_eta": 1.746519631751485e-12,
+    "completeness": "consistent",
+    "pairs": 10
+   },
+   "valid": true,
+   "why": null,
+   "solver_s": 3.3155186
+  },
+  {
+   "id": 30,
+   "phase": "restart",
+   "label": "1x16 eps_krylovschur_restart=0.7 eps_ncv=4k",
+   "config": {
+    "ranks": 1,
+    "threads": 16,
+    "bind": "none",
+    "options": {
+     "eps_krylovschur_restart": "0.7",
+     "eps_ncv": "4k"
+    }
+   },
+   "guard": {
+    "returncode": 0,
+    "killed": null,
+    "wall_s": 5.533,
+    "peak_rss_gib": 0.784
+   },
+   "report": {
+    "time_setup_s": 1.7118140012025833,
+    "time_solve_s": 1.6055209040641785,
+    "time_eps_solve_s": 1.6033831164240837,
+    "time_vectors_s": 0.002137787640094757,
+    "time_load_s": 0.1484772488474846,
+    "nconv": 40,
+    "iterations": 1,
+    "peak_rss_bytes": 816889856,
+    "unused_options": [],
+    "success": true,
+    "mpi_ranks": 1
+   },
+   "phases": {
+    "analysis_s": 1.2112,
+    "analyses": 1,
+    "numeric_s": 0.48473,
+    "factorizations": 1,
+    "solve_s": 1.548,
+    "solves": 40,
+    "ortho_s": 0.041215,
+    "setup_s": 1.7118,
+    "eps_solve_s": 1.6034,
+    "vectors_s": 0.0021395,
+    "solver_s": 3.3173395,
+    "staged": true,
+    "ranks": 1,
+    "omp_threads": 16
+   },
+   "eval": {
+    "verdict": "pass",
+    "reasons": [],
+    "max_eta": 1.7436745711000373e-12,
+    "completeness": "consistent",
+    "pairs": 10
+   },
+   "valid": true,
+   "why": null,
+   "solver_s": 3.3173395
+  },
+  {
+   "id": 31,
+   "phase": "confirm0",
+   "label": "1x16",
+   "config": {
+    "ranks": 1,
+    "threads": 16,
+    "bind": "none",
+    "options": {}
+   },
+   "guard": {
+    "returncode": 0,
+    "killed": null,
+    "wall_s": 5.022,
+    "peak_rss_gib": 0.809
+   },
+   "report": {
+    "time_setup_s": 1.7084846049547195,
+    "time_solve_s": 0.9959324300289154,
+    "time_eps_solve_s": 0.9934517294168472,
+    "time_vectors_s": 0.0024807006120681763,
+    "time_load_s": 0.17658119648694992,
+    "nconv": 25,
+    "iterations": 1,
+    "peak_rss_bytes": 844054528,
+    "unused_options": [],
+    "success": false,
+    "mpi_ranks": 1
+   },
+   "phases": {
+    "analysis_s": 1.2075,
+    "analyses": 1,
+    "numeric_s": 0.4866,
+    "factorizations": 1,
+    "solve_s": 0.96658,
+    "solves": 25,
+    "ortho_s": 0.018297,
+    "setup_s": 1.7085,
+    "eps_solve_s": 0.99346,
+    "vectors_s": 0.0024826,
+    "solver_s": 2.7044425999999997,
+    "staged": true,
+    "ranks": 1,
+    "omp_threads": 16
+   },
+   "eval": {
+    "verdict": "fail",
+    "reasons": [
+     "5 of 10 pairs have backward error > tol=1e-10"
+    ],
+    "max_eta": 1.3152259558706478e-05,
+    "completeness": "consistent",
+    "pairs": 10
+   },
+   "valid": false,
+   "why": "5 of 10 pairs have backward error > tol=1e-10",
+   "solver_s": 2.7044425999999997
+  },
+  {
+   "id": 32,
+   "phase": "confirm0",
+   "label": "1x16 eps_ncv=4k",
+   "config": {
+    "ranks": 1,
+    "threads": 16,
+    "bind": "none",
+    "options": {
+     "eps_ncv": "4k"
+    }
+   },
+   "guard": {
+    "returncode": 0,
+    "killed": null,
+    "wall_s": 5.588,
+    "peak_rss_gib": 0.838
+   },
+   "report": {
+    "time_setup_s": 1.6917452216148376,
+    "time_solve_s": 1.6159900650382042,
+    "time_eps_solve_s": 1.613454557955265,
+    "time_vectors_s": 0.002535507082939148,
+    "time_load_s": 0.14857463538646698,
+    "nconv": 40,
+    "iterations": 1,
+    "peak_rss_bytes": 873680896,
+    "unused_options": [],
+    "success": true,
+    "mpi_ranks": 1
+   },
+   "phases": {
+    "analysis_s": 1.2121,
+    "analyses": 1,
+    "numeric_s": 0.46267,
+    "factorizations": 1,
+    "solve_s": 1.5582,
+    "solves": 40,
+    "ortho_s": 0.04126,
+    "setup_s": 1.6918,
+    "eps_solve_s": 1.6135,
+    "vectors_s": 0.002538,
+    "solver_s": 3.307838,
+    "staged": true,
+    "ranks": 1,
+    "omp_threads": 16
+   },
+   "eval": {
+    "verdict": "pass",
+    "reasons": [],
+    "max_eta": 1.7465059254971292e-12,
+    "completeness": "consistent",
+    "pairs": 10
+   },
+   "valid": true,
+   "why": null,
+   "solver_s": 3.307838
+  },
+  {
+   "id": 33,
+   "phase": "confirm0",
+   "label": "1x16 eps_krylovschur_restart=0.3 eps_ncv=4k",
+   "config": {
+    "ranks": 1,
+    "threads": 16,
+    "bind": "none",
+    "options": {
+     "eps_krylovschur_restart": "0.3",
+     "eps_ncv": "4k"
+    }
+   },
+   "guard": {
+    "returncode": 0,
+    "killed": null,
+    "wall_s": 5.583,
+    "peak_rss_gib": 0.782
+   },
+   "report": {
+    "time_setup_s": 1.7177871614694595,
+    "time_solve_s": 1.618958979845047,
+    "time_eps_solve_s": 1.616512082517147,
+    "time_vectors_s": 0.002446897327899933,
+    "time_load_s": 0.16505105793476105,
+    "nconv": 40,
+    "iterations": 1,
+    "peak_rss_bytes": 815448064,
+    "unused_options": [],
+    "success": true,
+    "mpi_ranks": 1
+   },
+   "phases": {
+    "analysis_s": 1.2103,
+    "analyses": 1,
+    "numeric_s": 0.49015,
+    "factorizations": 1,
+    "solve_s": 1.5618,
+    "solves": 40,
+    "ortho_s": 0.040426,
+    "setup_s": 1.7178,
+    "eps_solve_s": 1.6165,
+    "vectors_s": 0.0024487,
+    "solver_s": 3.3367487,
+    "staged": true,
+    "ranks": 1,
+    "omp_threads": 16
+   },
+   "eval": {
+    "verdict": "pass",
+    "reasons": [],
+    "max_eta": 1.7431124211671159e-12,
+    "completeness": "consistent",
+    "pairs": 10
+   },
+   "valid": true,
+   "why": null,
+   "solver_s": 3.3367487
+  },
+  {
+   "id": 34,
+   "phase": "confirm0",
+   "label": "1x16 eps_krylovschur_restart=0.7 eps_ncv=4k",
+   "config": {
+    "ranks": 1,
+    "threads": 16,
+    "bind": "none",
+    "options": {
+     "eps_krylovschur_restart": "0.7",
+     "eps_ncv": "4k"
+    }
+   },
+   "guard": {
+    "returncode": 0,
+    "killed": null,
+    "wall_s": 5.536,
+    "peak_rss_gib": 0.811
+   },
+   "report": {
+    "time_setup_s": 1.7201382368803024,
+    "time_solve_s": 1.5971317440271378,
+    "time_eps_solve_s": 1.5947603657841682,
+    "time_vectors_s": 0.002371378242969513,
+    "time_load_s": 0.14157605171203613,
+    "nconv": 40,
+    "iterations": 1,
+    "peak_rss_bytes": 846057472,
+    "unused_options": [],
+    "success": true,
+    "mpi_ranks": 1
+   },
+   "phases": {
+    "analysis_s": 1.2093,
+    "analyses": 1,
+    "numeric_s": 0.4942,
+    "factorizations": 1,
+    "solve_s": 1.5403,
+    "solves": 40,
+    "ortho_s": 0.040269,
+    "setup_s": 1.7202,
+    "eps_solve_s": 1.5948,
+    "vectors_s": 0.0023731,
+    "solver_s": 3.3173730999999997,
+    "staged": true,
+    "ranks": 1,
+    "omp_threads": 16
+   },
+   "eval": {
+    "verdict": "pass",
+    "reasons": [],
+    "max_eta": 1.7418034309323546e-12,
+    "completeness": "consistent",
+    "pairs": 10
+   },
+   "valid": true,
+   "why": null,
+   "solver_s": 3.3173730999999997
+  },
+  {
+   "id": 35,
+   "phase": "confirm1",
+   "label": "1x16 eps_ncv=4k",
+   "config": {
+    "ranks": 1,
+    "threads": 16,
+    "bind": "none",
+    "options": {
+     "eps_ncv": "4k"
+    }
+   },
+   "guard": {
+    "returncode": 0,
+    "killed": null,
+    "wall_s": 5.588,
+    "peak_rss_gib": 0.802
+   },
+   "report": {
+    "time_setup_s": 1.7044695988297462,
+    "time_solve_s": 1.60396146774292,
+    "time_eps_solve_s": 1.6015034168958664,
+    "time_vectors_s": 0.002458050847053528,
+    "time_load_s": 0.15456990152597427,
+    "nconv": 40,
+    "iterations": 1,
+    "peak_rss_bytes": 836579328,
+    "unused_options": [],
+    "success": true,
+    "mpi_ranks": 1
+   },
+   "phases": {
+    "analysis_s": 1.2082,
+    "analyses": 1,
+    "numeric_s": 0.47926,
+    "factorizations": 1,
+    "solve_s": 1.5445,
+    "solves": 40,
+    "ortho_s": 0.040041,
+    "setup_s": 1.7045,
+    "eps_solve_s": 1.6015,
+    "vectors_s": 0.0024617,
+    "solver_s": 3.3084617,
+    "staged": true,
+    "ranks": 1,
+    "omp_threads": 16
+   },
+   "eval": {
+    "verdict": "pass",
+    "reasons": [],
+    "max_eta": 1.75008050222112e-12,
+    "completeness": "consistent",
+    "pairs": 10
+   },
+   "valid": true,
+   "why": null,
+   "solver_s": 3.3084617
+  },
+  {
+   "id": 36,
+   "phase": "confirm1",
+   "label": "1x16 eps_krylovschur_restart=0.3 eps_ncv=4k",
+   "config": {
+    "ranks": 1,
+    "threads": 16,
+    "bind": "none",
+    "options": {
+     "eps_krylovschur_restart": "0.3",
+     "eps_ncv": "4k"
+    }
+   },
+   "guard": {
+    "returncode": 0,
+    "killed": null,
+    "wall_s": 5.733,
+    "peak_rss_gib": 0.826
+   },
+   "report": {
+    "time_setup_s": 1.7223041951656342,
+    "time_solve_s": 1.6285382881760597,
+    "time_eps_solve_s": 1.626330353319645,
+    "time_vectors_s": 0.002207934856414795,
+    "time_load_s": 0.17968805134296417,
+    "nconv": 40,
+    "iterations": 1,
+    "peak_rss_bytes": 861868032,
+    "unused_options": [],
+    "success": true,
+    "mpi_ranks": 1
+   },
+   "phases": {
+    "analysis_s": 1.2075,
+    "analyses": 1,
+    "numeric_s": 0.49779,
+    "factorizations": 1,
+    "solve_s": 1.5717,
+    "solves": 40,
+    "ortho_s": 0.040536,
+    "setup_s": 1.7223,
+    "eps_solve_s": 1.6263,
+    "vectors_s": 0.00221,
+    "solver_s": 3.35081,
+    "staged": true,
+    "ranks": 1,
+    "omp_threads": 16
+   },
+   "eval": {
+    "verdict": "pass",
+    "reasons": [],
+    "max_eta": 1.7448007555233522e-12,
+    "completeness": "consistent",
+    "pairs": 10
+   },
+   "valid": true,
+   "why": null,
+   "solver_s": 3.35081
+  },
+  {
+   "id": 37,
+   "phase": "confirm1",
+   "label": "1x16 eps_krylovschur_restart=0.7 eps_ncv=4k",
+   "config": {
+    "ranks": 1,
+    "threads": 16,
+    "bind": "none",
+    "options": {
+     "eps_krylovschur_restart": "0.7",
+     "eps_ncv": "4k"
+    }
+   },
+   "guard": {
+    "returncode": 0,
+    "killed": null,
+    "wall_s": 5.623,
+    "peak_rss_gib": 0.793
+   },
+   "report": {
+    "time_setup_s": 1.7189678251743317,
+    "time_solve_s": 1.6220842748880386,
+    "time_eps_solve_s": 1.61961629986763,
+    "time_vectors_s": 0.0024679750204086304,
+    "time_load_s": 0.16059645265340805,
+    "nconv": 40,
+    "iterations": 1,
+    "peak_rss_bytes": 835592192,
+    "unused_options": [],
+    "success": true,
+    "mpi_ranks": 1
+   },
+   "phases": {
+    "analysis_s": 1.2076,
+    "analyses": 1,
+    "numeric_s": 0.49439,
+    "factorizations": 1,
+    "solve_s": 1.5645,
+    "solves": 40,
+    "ortho_s": 0.041015,
+    "setup_s": 1.719,
+    "eps_solve_s": 1.6196,
+    "vectors_s": 0.0024704,
+    "solver_s": 3.3410704,
+    "staged": true,
+    "ranks": 1,
+    "omp_threads": 16
+   },
+   "eval": {
+    "verdict": "pass",
+    "reasons": [],
+    "max_eta": 1.7477556660215546e-12,
+    "completeness": "consistent",
+    "pairs": 10
+   },
+   "valid": true,
+   "why": null,
+   "solver_s": 3.3410704
+  },
+  {
+   "id": 38,
+   "phase": "confirm1",
+   "label": "1x16",
+   "config": {
+    "ranks": 1,
+    "threads": 16,
+    "bind": "none",
+    "options": {}
+   },
+   "guard": {
+    "returncode": 0,
+    "killed": null,
+    "wall_s": 4.94,
+    "peak_rss_gib": 0.811
+   },
+   "report": {
+    "time_setup_s": 1.7193212062120438,
+    "time_solve_s": 1.0080860778689384,
+    "time_eps_solve_s": 1.005889281630516,
+    "time_vectors_s": 0.002196796238422394,
+    "time_load_s": 0.14688219875097275,
+    "nconv": 25,
+    "iterations": 1,
+    "peak_rss_bytes": 846696448,
+    "unused_options": [],
+    "success": false,
+    "mpi_ranks": 1
+   },
+   "phases": {
+    "analysis_s": 1.2095,
+    "analyses": 1,
+    "numeric_s": 0.49576,
+    "factorizations": 1,
+    "solve_s": 0.97823,
+    "solves": 25,
+    "ortho_s": 0.019197,
+    "setup_s": 1.7193,
+    "eps_solve_s": 1.0059,
+    "vectors_s": 0.0021987,
+    "solver_s": 2.7273987,
+    "staged": true,
+    "ranks": 1,
+    "omp_threads": 16
+   },
+   "eval": {
+    "verdict": "fail",
+    "reasons": [
+     "5 of 10 pairs have backward error > tol=1e-10"
+    ],
+    "max_eta": 1.3152259558735764e-05,
+    "completeness": "consistent",
+    "pairs": 10
+   },
+   "valid": false,
+   "why": "5 of 10 pairs have backward error > tol=1e-10",
+   "solver_s": 2.7273987
+  },
+  {
+   "id": 39,
+   "phase": "confirm2",
+   "label": "1x16 eps_krylovschur_restart=0.3 eps_ncv=4k",
+   "config": {
+    "ranks": 1,
+    "threads": 16,
+    "bind": "none",
+    "options": {
+     "eps_krylovschur_restart": "0.3",
+     "eps_ncv": "4k"
+    }
+   },
+   "guard": {
+    "returncode": 0,
+    "killed": null,
+    "wall_s": 5.536,
+    "peak_rss_gib": 0.814
+   },
+   "report": {
+    "time_setup_s": 1.7207965701818466,
+    "time_solve_s": 1.5935156419873238,
+    "time_eps_solve_s": 1.5911011174321175,
+    "time_vectors_s": 0.002414524555206299,
+    "time_load_s": 0.14624104648828506,
+    "nconv": 40,
+    "iterations": 1,
+    "peak_rss_bytes": 849084416,
+    "unused_options": [],
+    "success": true,
+    "mpi_ranks": 1
+   },
+   "phases": {
+    "analysis_s": 1.2101,
+    "analyses": 1,
+    "numeric_s": 0.49372,
+    "factorizations": 1,
+    "solve_s": 1.5363,
+    "solves": 40,
+    "ortho_s": 0.040892,
+    "setup_s": 1.7208,
+    "eps_solve_s": 1.5911,
+    "vectors_s": 0.0024166,
+    "solver_s": 3.3143166,
+    "staged": true,
+    "ranks": 1,
+    "omp_threads": 16
+   },
+   "eval": {
+    "verdict": "pass",
+    "reasons": [],
+    "max_eta": 1.7449292985104173e-12,
+    "completeness": "consistent",
+    "pairs": 10
+   },
+   "valid": true,
+   "why": null,
+   "solver_s": 3.3143166
+  },
+  {
+   "id": 40,
+   "phase": "confirm2",
+   "label": "1x16 eps_krylovschur_restart=0.7 eps_ncv=4k",
+   "config": {
+    "ranks": 1,
+    "threads": 16,
+    "bind": "none",
+    "options": {
+     "eps_krylovschur_restart": "0.7",
+     "eps_ncv": "4k"
+    }
+   },
+   "guard": {
+    "returncode": 0,
+    "killed": null,
+    "wall_s": 5.539,
+    "peak_rss_gib": 0.786
+   },
+   "report": {
+    "time_setup_s": 1.7082754969596863,
+    "time_solve_s": 1.6050420925021172,
+    "time_eps_solve_s": 1.602896898984909,
+    "time_vectors_s": 0.0021451935172080994,
+    "time_load_s": 0.14746250957250595,
+    "nconv": 40,
+    "iterations": 1,
+    "peak_rss_bytes": 819208192,
+    "unused_options": [],
+    "success": true,
+    "mpi_ranks": 1
+   },
+   "phases": {
+    "analysis_s": 1.2092,
+    "analyses": 1,
+    "numeric_s": 0.48183,
+    "factorizations": 1,
+    "solve_s": 1.5486,
+    "solves": 40,
+    "ortho_s": 0.039978,
+    "setup_s": 1.7083,
+    "eps_solve_s": 1.6029,
+    "vectors_s": 0.0021468,
+    "solver_s": 3.3133467999999997,
+    "staged": true,
+    "ranks": 1,
+    "omp_threads": 16
+   },
+   "eval": {
+    "verdict": "pass",
+    "reasons": [],
+    "max_eta": 1.7468002733744844e-12,
+    "completeness": "consistent",
+    "pairs": 10
+   },
+   "valid": true,
+   "why": null,
+   "solver_s": 3.3133467999999997
+  },
+  {
+   "id": 41,
+   "phase": "confirm2",
+   "label": "1x16",
+   "config": {
+    "ranks": 1,
+    "threads": 16,
+    "bind": "none",
+    "options": {}
+   },
+   "guard": {
+    "returncode": 0,
+    "killed": null,
+    "wall_s": 4.941,
+    "peak_rss_gib": 0.802
+   },
+   "report": {
+    "time_setup_s": 1.7242029458284378,
+    "time_solve_s": 1.0058316886425018,
+    "time_eps_solve_s": 1.0034836009144783,
+    "time_vectors_s": 0.002348087728023529,
+    "time_load_s": 0.154886893928051,
+    "nconv": 25,
+    "iterations": 1,
+    "peak_rss_bytes": 834600960,
+    "unused_options": [],
+    "success": false,
+    "mpi_ranks": 1
+   },
+   "phases": {
+    "analysis_s": 1.2125,
+    "analyses": 1,
+    "numeric_s": 0.49659,
+    "factorizations": 1,
+    "solve_s": 0.97632,
+    "solves": 25,
+    "ortho_s": 0.018768,
+    "setup_s": 1.7242,
+    "eps_solve_s": 1.0035,
+    "vectors_s": 0.00235,
+    "solver_s": 2.73005,
+    "staged": true,
+    "ranks": 1,
+    "omp_threads": 16
+   },
+   "eval": {
+    "verdict": "fail",
+    "reasons": [
+     "5 of 10 pairs have backward error > tol=1e-10"
+    ],
+    "max_eta": 1.3152259559213987e-05,
+    "completeness": "consistent",
+    "pairs": 10
+   },
+   "valid": false,
+   "why": "5 of 10 pairs have backward error > tol=1e-10",
+   "solver_s": 2.73005
+  },
+  {
+   "id": 42,
+   "phase": "confirm2",
+   "label": "1x16 eps_ncv=4k",
+   "config": {
+    "ranks": 1,
+    "threads": 16,
+    "bind": "none",
+    "options": {
+     "eps_ncv": "4k"
+    }
+   },
+   "guard": {
+    "returncode": 0,
+    "killed": null,
+    "wall_s": 5.593,
+    "peak_rss_gib": 0.815
+   },
+   "report": {
+    "time_setup_s": 1.718918964266777,
+    "time_solve_s": 1.6208281219005585,
+    "time_eps_solve_s": 1.6183987632393837,
+    "time_vectors_s": 0.002429358661174774,
+    "time_load_s": 0.1423889398574829,
+    "nconv": 40,
+    "iterations": 1,
+    "peak_rss_bytes": 848617472,
+    "unused_options": [],
+    "success": true,
+    "mpi_ranks": 1
+   },
+   "phases": {
+    "analysis_s": 1.2121,
+    "analyses": 1,
+    "numeric_s": 0.48982,
+    "factorizations": 1,
+    "solve_s": 1.5632,
+    "solves": 40,
+    "ortho_s": 0.040855,
+    "setup_s": 1.7189,
+    "eps_solve_s": 1.6184,
+    "vectors_s": 0.0024319,
+    "solver_s": 3.3397319,
+    "staged": true,
+    "ranks": 1,
+    "omp_threads": 16
+   },
+   "eval": {
+    "verdict": "pass",
+    "reasons": [],
+    "max_eta": 1.747596195452263e-12,
+    "completeness": "consistent",
+    "pairs": 10
+   },
+   "valid": true,
+   "why": null,
+   "solver_s": 3.3397319
+  },
+  {
+   "id": 43,
+   "phase": "confirm3",
+   "label": "1x16 eps_krylovschur_restart=0.7 eps_ncv=4k",
+   "config": {
+    "ranks": 1,
+    "threads": 16,
+    "bind": "none",
+    "options": {
+     "eps_krylovschur_restart": "0.7",
+     "eps_ncv": "4k"
+    }
+   },
+   "guard": {
+    "returncode": 0,
+    "killed": null,
+    "wall_s": 5.537,
+    "peak_rss_gib": 0.837
+   },
+   "report": {
+    "time_setup_s": 1.6974365413188934,
+    "time_solve_s": 1.6172360256314278,
+    "time_eps_solve_s": 1.614826887845993,
+    "time_vectors_s": 0.002409137785434723,
+    "time_load_s": 0.1375642567873001,
+    "nconv": 40,
+    "iterations": 1,
+    "peak_rss_bytes": 873709568,
+    "unused_options": [],
+    "success": true,
+    "mpi_ranks": 1
+   },
+   "phases": {
+    "analysis_s": 1.2101,
+    "analyses": 1,
+    "numeric_s": 0.4708,
+    "factorizations": 1,
+    "solve_s": 1.5603,
+    "solves": 40,
+    "ortho_s": 0.040254,
+    "setup_s": 1.6975,
+    "eps_solve_s": 1.6148,
+    "vectors_s": 0.0024111,
+    "solver_s": 3.3147111000000002,
+    "staged": true,
+    "ranks": 1,
+    "omp_threads": 16
+   },
+   "eval": {
+    "verdict": "pass",
+    "reasons": [],
+    "max_eta": 1.7449456492703833e-12,
+    "completeness": "consistent",
+    "pairs": 10
+   },
+   "valid": true,
+   "why": null,
+   "solver_s": 3.3147111000000002
+  },
+  {
+   "id": 44,
+   "phase": "confirm3",
+   "label": "1x16",
+   "config": {
+    "ranks": 1,
+    "threads": 16,
+    "bind": "none",
+    "options": {}
+   },
+   "guard": {
+    "returncode": 0,
+    "killed": null,
+    "wall_s": 4.937,
+    "peak_rss_gib": 0.765
+   },
+   "report": {
+    "time_setup_s": 1.7076693773269653,
+    "time_solve_s": 1.0004735216498375,
+    "time_eps_solve_s": 0.9982976168394089,
+    "time_vectors_s": 0.0021759048104286194,
+    "time_load_s": 0.1462910994887352,
+    "nconv": 25,
+    "iterations": 1,
+    "peak_rss_bytes": 797179904,
+    "unused_options": [],
+    "success": false,
+    "mpi_ranks": 1
+   },
+   "phases": {
+    "analysis_s": 1.2096,
+    "analyses": 1,
+    "numeric_s": 0.48389,
+    "factorizations": 1,
+    "solve_s": 0.97106,
+    "solves": 25,
+    "ortho_s": 0.018758,
+    "setup_s": 1.7077,
+    "eps_solve_s": 0.9983,
+    "vectors_s": 0.0021777,
+    "solver_s": 2.7081777,
+    "staged": true,
+    "ranks": 1,
+    "omp_threads": 16
+   },
+   "eval": {
+    "verdict": "fail",
+    "reasons": [
+     "5 of 10 pairs have backward error > tol=1e-10"
+    ],
+    "max_eta": 1.3152259561825277e-05,
+    "completeness": "consistent",
+    "pairs": 10
+   },
+   "valid": false,
+   "why": "5 of 10 pairs have backward error > tol=1e-10",
+   "solver_s": 2.7081777
+  },
+  {
+   "id": 45,
+   "phase": "confirm3",
+   "label": "1x16 eps_ncv=4k",
+   "config": {
+    "ranks": 1,
+    "threads": 16,
+    "bind": "none",
+    "options": {
+     "eps_ncv": "4k"
+    }
+   },
+   "guard": {
+    "returncode": 0,
+    "killed": null,
+    "wall_s": 5.536,
+    "peak_rss_gib": 0.817
+   },
+   "report": {
+    "time_setup_s": 1.691086508333683,
+    "time_solve_s": 1.5983057841658592,
+    "time_eps_solve_s": 1.5962053686380386,
+    "time_vectors_s": 0.002100415527820587,
+    "time_load_s": 0.13450819998979568,
+    "nconv": 40,
+    "iterations": 1,
+    "peak_rss_bytes": 850747392,
+    "unused_options": [],
+    "success": true,
+    "mpi_ranks": 1
+   },
+   "phases": {
+    "analysis_s": 1.2093,
+    "analyses": 1,
+    "numeric_s": 0.46529,
+    "factorizations": 1,
+    "solve_s": 1.5415,
+    "solves": 40,
+    "ortho_s": 0.040607,
+    "setup_s": 1.6911,
+    "eps_solve_s": 1.5962,
+    "vectors_s": 0.0021026,
+    "solver_s": 3.2894026000000003,
+    "staged": true,
+    "ranks": 1,
+    "omp_threads": 16
+   },
+   "eval": {
+    "verdict": "pass",
+    "reasons": [],
+    "max_eta": 1.7429784322904933e-12,
+    "completeness": "consistent",
+    "pairs": 10
+   },
+   "valid": true,
+   "why": null,
+   "solver_s": 3.2894026000000003
+  },
+  {
+   "id": 46,
+   "phase": "confirm3",
+   "label": "1x16 eps_krylovschur_restart=0.3 eps_ncv=4k",
+   "config": {
+    "ranks": 1,
+    "threads": 16,
+    "bind": "none",
+    "options": {
+     "eps_krylovschur_restart": "0.3",
+     "eps_ncv": "4k"
+    }
+   },
+   "guard": {
+    "returncode": 0,
+    "killed": null,
+    "wall_s": 5.626,
+    "peak_rss_gib": 0.809
+   },
+   "report": {
+    "time_setup_s": 1.7414327412843704,
+    "time_solve_s": 1.602876253426075,
+    "time_eps_solve_s": 1.6007448807358742,
+    "time_vectors_s": 0.0021313726902008057,
+    "time_load_s": 0.14922591298818588,
+    "nconv": 40,
+    "iterations": 1,
+    "peak_rss_bytes": 842399744,
+    "unused_options": [],
+    "success": true,
+    "mpi_ranks": 1
+   },
+   "phases": {
+    "analysis_s": 1.2123,
+    "analyses": 1,
+    "numeric_s": 0.51217,
+    "factorizations": 1,
+    "solve_s": 1.5465,
+    "solves": 40,
+    "ortho_s": 0.040094,
+    "setup_s": 1.7414,
+    "eps_solve_s": 1.6008,
+    "vectors_s": 0.0021334,
+    "solver_s": 3.3443334,
+    "staged": true,
+    "ranks": 1,
+    "omp_threads": 16
+   },
+   "eval": {
+    "verdict": "pass",
+    "reasons": [],
+    "max_eta": 1.746107808029104e-12,
+    "completeness": "consistent",
+    "pairs": 10
+   },
+   "valid": true,
+   "why": null,
+   "solver_s": 3.3443334
+  },
+  {
+   "id": 47,
+   "phase": "confirm4",
+   "label": "1x16",
+   "config": {
+    "ranks": 1,
+    "threads": 16,
+    "bind": "none",
+    "options": {}
+   },
+   "guard": {
+    "returncode": 0,
+    "killed": null,
+    "wall_s": 5.082,
+    "peak_rss_gib": 0.802
+   },
+   "report": {
+    "time_setup_s": 1.7066873162984848,
+    "time_solve_s": 0.9933999180793762,
+    "time_eps_solve_s": 0.9913573265075684,
+    "time_vectors_s": 0.0020425915718078613,
+    "time_load_s": 0.14660216867923737,
+    "nconv": 25,
+    "iterations": 1,
+    "peak_rss_bytes": 836366336,
+    "unused_options": [],
+    "success": false,
+    "mpi_ranks": 1
+   },
+   "phases": {
+    "analysis_s": 1.2097,
+    "analyses": 1,
+    "numeric_s": 0.48316,
+    "factorizations": 1,
+    "solve_s": 0.96477,
+    "solves": 25,
+    "ortho_s": 0.018265,
+    "setup_s": 1.7067,
+    "eps_solve_s": 0.99137,
+    "vectors_s": 0.0020444,
+    "solver_s": 2.7001144,
+    "staged": true,
+    "ranks": 1,
+    "omp_threads": 16
+   },
+   "eval": {
+    "verdict": "fail",
+    "reasons": [
+     "5 of 10 pairs have backward error > tol=1e-10"
+    ],
+    "max_eta": 1.3152259559432724e-05,
+    "completeness": "consistent",
+    "pairs": 10
+   },
+   "valid": false,
+   "why": "5 of 10 pairs have backward error > tol=1e-10",
+   "solver_s": 2.7001144
+  },
+  {
+   "id": 48,
+   "phase": "confirm4",
+   "label": "1x16 eps_ncv=4k",
+   "config": {
+    "ranks": 1,
+    "threads": 16,
+    "bind": "none",
+    "options": {
+     "eps_ncv": "4k"
+    }
+   },
+   "guard": {
+    "returncode": 0,
+    "killed": null,
+    "wall_s": 5.621,
+    "peak_rss_gib": 0.786
+   },
+   "report": {
+    "time_setup_s": 1.7160336822271347,
+    "time_solve_s": 1.5995472073554993,
+    "time_eps_solve_s": 1.597349390387535,
+    "time_vectors_s": 0.0021978169679641724,
+    "time_load_s": 0.14919492602348328,
+    "nconv": 40,
+    "iterations": 1,
+    "peak_rss_bytes": 819060736,
+    "unused_options": [],
+    "success": true,
+    "mpi_ranks": 1
+   },
+   "phases": {
+    "analysis_s": 1.2091,
+    "analyses": 1,
+    "numeric_s": 0.49001,
+    "factorizations": 1,
+    "solve_s": 1.5428,
+    "solves": 40,
+    "ortho_s": 0.040558,
+    "setup_s": 1.7161,
+    "eps_solve_s": 1.5974,
+    "vectors_s": 0.0022001,
+    "solver_s": 3.3157001,
+    "staged": true,
+    "ranks": 1,
+    "omp_threads": 16
+   },
+   "eval": {
+    "verdict": "pass",
+    "reasons": [],
+    "max_eta": 1.746516137656165e-12,
+    "completeness": "consistent",
+    "pairs": 10
+   },
+   "valid": true,
+   "why": null,
+   "solver_s": 3.3157001
+  },
+  {
+   "id": 49,
+   "phase": "confirm4",
+   "label": "1x16 eps_krylovschur_restart=0.3 eps_ncv=4k",
+   "config": {
+    "ranks": 1,
+    "threads": 16,
+    "bind": "none",
+    "options": {
+     "eps_krylovschur_restart": "0.3",
+     "eps_ncv": "4k"
+    }
+   },
+   "guard": {
+    "returncode": 0,
+    "killed": null,
+    "wall_s": 5.541,
+    "peak_rss_gib": 0.793
+   },
+   "report": {
+    "time_setup_s": 1.7073400020599365,
+    "time_solve_s": 1.6305464878678322,
+    "time_eps_solve_s": 1.6283548325300217,
+    "time_vectors_s": 0.0021916553378105164,
+    "time_load_s": 0.15296881645917892,
+    "nconv": 40,
+    "iterations": 1,
+    "peak_rss_bytes": 827244544,
+    "unused_options": [],
+    "success": true,
+    "mpi_ranks": 1
+   },
+   "phases": {
+    "analysis_s": 1.2096,
+    "analyses": 1,
+    "numeric_s": 0.48048,
+    "factorizations": 1,
+    "solve_s": 1.5732,
+    "solves": 40,
+    "ortho_s": 0.040804,
+    "setup_s": 1.7074,
+    "eps_solve_s": 1.6284,
+    "vectors_s": 0.0021937,
+    "solver_s": 3.3379936999999997,
+    "staged": true,
+    "ranks": 1,
+    "omp_threads": 16
+   },
+   "eval": {
+    "verdict": "pass",
+    "reasons": [],
+    "max_eta": 1.7463413893600693e-12,
+    "completeness": "consistent",
+    "pairs": 10
+   },
+   "valid": true,
+   "why": null,
+   "solver_s": 3.3379936999999997
+  },
+  {
+   "id": 50,
+   "phase": "confirm4",
+   "label": "1x16 eps_krylovschur_restart=0.7 eps_ncv=4k",
+   "config": {
+    "ranks": 1,
+    "threads": 16,
+    "bind": "none",
+    "options": {
+     "eps_krylovschur_restart": "0.7",
+     "eps_ncv": "4k"
+    }
+   },
+   "guard": {
+    "returncode": 0,
+    "killed": null,
+    "wall_s": 5.585,
+    "peak_rss_gib": 0.816
+   },
+   "report": {
+    "time_setup_s": 1.708103470504284,
+    "time_solve_s": 1.6037533730268478,
+    "time_eps_solve_s": 1.6012536734342575,
+    "time_vectors_s": 0.002499699592590332,
+    "time_load_s": 0.18311119824647903,
+    "nconv": 40,
+    "iterations": 1,
+    "peak_rss_bytes": 851214336,
+    "unused_options": [],
+    "success": true,
+    "mpi_ranks": 1
+   },
+   "phases": {
+    "analysis_s": 1.2086,
+    "analyses": 1,
+    "numeric_s": 0.48258,
+    "factorizations": 1,
+    "solve_s": 1.547,
+    "solves": 40,
+    "ortho_s": 0.040328,
+    "setup_s": 1.7081,
+    "eps_solve_s": 1.6013,
+    "vectors_s": 0.0025018,
+    "solver_s": 3.3119018000000002,
+    "staged": true,
+    "ranks": 1,
+    "omp_threads": 16
+   },
+   "eval": {
+    "verdict": "pass",
+    "reasons": [],
+    "max_eta": 1.7438467850574373e-12,
+    "completeness": "consistent",
+    "pairs": 10
+   },
+   "valid": true,
+   "why": null,
+   "solver_s": 3.3119018000000002
+  }
+ ],
+ "best": "1x16 eps_ncv=4k",
+ "best_config": {
+  "ranks": 1,
+  "threads": 16,
+  "bind": "none",
+  "options": {
+   "eps_ncv": "4k"
+  }
+ },
+ "default_median_s": 2.7081777,
+ "default_valid": false,
+ "best_median_s": 3.3084617,
+ "speedup_vs_default": 0.8185609946761662
+}
