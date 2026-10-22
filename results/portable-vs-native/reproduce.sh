@@ -21,13 +21,14 @@
 #     pack    the run directories without eigenvectors, home paths as $HOME, into
 #             raw-ab-<host>.tar.gz / raw-ab-<host>-avx2.tar.gz here
 #     retable the tables again from the committed raw-*.tar.gz (no solver run needed)
-# $AB defaults to $HOME/hsolve-ab/portable-vs-native; HS_DATA_ROOT (default data/) holds the cases.
+# $AB defaults to $HOME/hsolve-ab/portable-vs-native; HS_DATA_ROOT (default data/) holds the cases;
+# AB_HOST (default: this host) names the node whose runs eval / table / pack use.
 set -euo pipefail
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 root="$(cd "$here/../.." && pwd)"
 cd "$root"
 AB="${AB:-$HOME/hsolve-ab/portable-vs-native}"
-host="$(hostname -s)"
+host="${AB_HOST:-$(hostname -s)}"
 cases=(yee-pec-box-1e5 syn-mem27-46 wg-square-1e5 cav2d-rect-pert-1e5 ss-qa8fk-qa8fm syn-near-singular-complex-1e5)
 lane=(python3 tools/run/guard.py --skip-busy-check --mem-gb 12 --timeout 3600 --)
 
