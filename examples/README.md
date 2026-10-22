@@ -35,4 +35,6 @@ scripts/demo.sh --quick    # 只跑 waveguide-50ghz 与 near-singular-shift（�
   在 `env/environment.yml` 的环境中重新生成的字节与入库文件一致；稠密参考谱（LAPACK）在其他 CPU 上末位可能不同。
 - `manifest.json` 列出每个算例的规模、类型、目标与文件。
 
-更大规模的算例（10⁵–10⁶ 阶）由同一组生成器产生，见 `docs/INSTALL.md` 的资源档位表与 `tools/gen`。
+更大规模的算例（10⁴–10⁶ 阶的三维谐振腔与二维波导）由同一组生成器产生：
+`python3 scripts/resource_tiers.py generate --root DIR`；它们的内存与时间见
+[`docs/INSTALL.md`](../docs/INSTALL.md#5-资源需求) 的资源档位表。
