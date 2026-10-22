@@ -255,7 +255,8 @@ int hs::cli::run(int argc, char** argv, hs::Transport* peers) {
   std::string structure, subspace;
   bool verbose = false, quiet = false, version = false, secure = false;
 
-  auto* o_a = app.add_option("--A", a_path, "matrix A (.npz scipy sparse, .npy dense, .mtx); required except with --version");
+  auto* o_a =
+      app.add_option("--A", a_path, "matrix A (.npz scipy sparse, .npy dense, .mtx); required except with --version");
   app.add_option("--B", b_path, "matrix B (generalized problem)");
   app.add_option("--config", config_path, "config.json (docs/FORMATS.md section 2)");
   app.add_option("--out", out_dir, "output directory")->capture_default_str();
