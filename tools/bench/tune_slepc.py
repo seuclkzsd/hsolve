@@ -6,7 +6,7 @@ claimed against it is a claim against the strongest open-source setup we can bui
 Search space (SlepcConfig, tools/bench/slepc_profile.py) - greedy coordinate descent from the
 untuned default (1 rank x P threads, SLEPc/MUMPS defaults); each group's candidates are measured
 against the incumbent, which moves to the fastest VALID one if it is faster by more than --margin:
-  accuracy   only while the incumbent is invalid: -eps_tol tol/10, -eps_nev k+2 / k+4,
+  accuracy   only while the incumbent is invalid: -eps_tol tol/10, -eps_nev k+2 / k+4 / 2k / 3k,
              -eps_ncv 3k, and tol/10 with k+4. SLEPc's convergence test judges the Krylov
              residual estimate of the shift-inverted operator, and the true residual of a pair it
              accepts can exceed tol: baseline_slepc.py's EPSComputeError then rejects it as well
@@ -14,7 +14,7 @@ against the incumbent, which moves to the fastest VALID one if it is faster by m
              the remedy. The ||.||_inf norm of EPS_CONV_NORM (an upper bound of ||.||_2) makes the
              test more lenient than tools/eval's only by ||A||_inf/||A||_2, about 1.3x on
              yee-pec-box-1e5. Single-vector Krylov can also miss copies of a multiple eigenvalue
-             (the -eps_nev padding).
+             (the -eps_nev padding; 2k / 3k for targets holding whole high-multiplicity levels).
   layout     ranks x threads over the divisors of P (1xP, ..., Px1), --bind-to none | core
   ordering   MUMPS ICNTL(7) AMD/AMF/SCOTCH/PORD/METIS/QAMD (default 7 = automatic choice), and
              with >1 rank parallel analysis ICNTL(28)=2 with ICNTL(29) PT-SCOTCH / ParMETIS
@@ -123,7 +123,10 @@ def g_accuracy(inc: SlepcConfig, ctx: Context) -> list[SlepcConfig]:
     cands = [inc.with_options(eps_tol=tight)]
     if ctx.mode == "nearest":
         cands += [inc.with_options(eps_nev="k+2"), inc.with_options(eps_nev="k+4"),
-                  inc.with_options(eps_ncv="3k"), inc.with_options(eps_tol=tight, eps_nev="k+4")]
+                  inc.with_options(eps_ncv="3k"), inc.with_options(eps_tol=tight, eps_nev="k+4"),
+                  # whole multiplets: a 12-fold level needs more padding than k+4 (yee-pec-cube-32,
+                  # k = 21 with 3-, 6- and 12-fold levels: k+4 still misses 5 copies, 3k finds all)
+                  inc.with_options(eps_nev="2k"), inc.with_options(eps_nev="3k")]
     return cands
 
 

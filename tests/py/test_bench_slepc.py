@@ -373,6 +373,9 @@ def test_tune_layouts_and_groups():
     assert tune_slepc.g_problem_type(inc, _ctx(problem="GHIEP"))[0].option("eps_gen_non_hermitian") == "1"
     acc = tune_slepc.g_accuracy(inc, _ctx())
     assert acc[0].option("eps_tol") == "1e-11" and any(c.option("eps_nev") == "k+4" for c in acc)
+    # padding by whole multiples of k for targets made of high-multiplicity levels
+    assert [c.option("eps_nev") for c in acc if c.option("eps_tol") is None and c.option("eps_ncv") is None] \
+        == ["k+2", "k+4", "2k", "3k"]
     assert [c.option("eps_tol") for c in tune_slepc.g_accuracy(inc, _ctx(mode="interval", k=None))] == ["1e-11"]
     parts = tune_slepc.g_partitions(SlepcConfig(2, 1), _ctx(mode="interval", k=None))
     assert [c.option("eps_krylovschur_partitions") for c in parts] == ["2"]
