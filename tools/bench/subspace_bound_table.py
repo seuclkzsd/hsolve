@@ -50,6 +50,30 @@ def checked_groups(doc: dict) -> list[tuple[str, int, dict]]:
     return out
 
 
+def cost_summary(doc: dict) -> list[str]:
+    """The default (auto) bound's time against the solve without it, and the timing spread."""
+    runs = doc["runs"]
+    shares, spreads = [], []
+    for case in dict.fromkeys(r["case"] for r in runs):
+        auto = [r for r in runs if r["case"] == case and r["variant"] == "auto" and "subspace" in r]
+        off = [r["time_total_s"] for r in runs if r["case"] == case and r["variant"] == "off" and "time_total_s" in r]
+        if auto and off and auto[0]["subspace"]["performed"]:
+            shares.append((median(r["subspace"]["seconds"] for r in auto) / median(off), case))
+        for variant in ("auto", "off", "on"):
+            ts = [r["time_total_s"] for r in runs if r["case"] == case and r["variant"] == variant and "time_total_s" in r]
+            if len(ts) > 1:
+                spreads.append((max(ts) - min(ts)) / median(ts))
+    w = []
+    if shares:
+        shares.sort()
+        w.append(f"- 代价（默认 auto）：界的计算时间 / 不计算界时的总时间，{len(shares)} 个测例的中位数 "
+                 f"{100 * statistics.median(s for s, _ in shares):.1f}%，最大 {100 * shares[-1][0]:.1f}%（{shares[-1][1]}）。")
+    if spreads:
+        w.append(f"- 同一测例同一变体各次运行的总时间离散（(最大 − 最小) / 中位数）：中位数 {100 * statistics.median(spreads):.0f}%，"
+                 f"最大 {100 * max(spreads):.0f}%；表中时间都取中位数。")
+    return w
+
+
 def summary(doc: dict) -> list[str]:
     w = []
     groups = [(c, i, g) for c, i, g in checked_groups(doc) if g["measured_sin"] is not None and g["sin_bound"] is not None]
@@ -73,6 +97,7 @@ def summary(doc: dict) -> list[str]:
         w.append(f"- 已知完整谱的 {len(gaps)} 组中，真实间隙 / 界所用的间隙 δ：中位数 {statistics.median(gaps):.3g}，"
                  f"最大 {max(gaps):.3g}：证书窗口与 Kahan 区间给出的 δ 基本就是真实间隙，界与实测之差来自残差项"
                  "（第 4 节）。")
+    w += cost_summary(doc)
     w.append("")
     return w
 

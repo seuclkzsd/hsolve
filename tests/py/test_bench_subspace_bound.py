@@ -159,6 +159,8 @@ def test_table_from_a_fabricated_raw_file(tmp_path: Path, capsys):
     assert "真实间隙 / 界所用的间隙 δ：中位数 10，" in out
     assert "| c1 | HEP | 100 | 2 | inertia_counts | 1.00e-10 | 是 | 2 | identity | 1/0 | 0.020 | 1.050 | 0.980 | 2.0% |" in out
     assert "| c2 | — | — | — | — | 运行失败（返回码 3） |" in out
+    assert "2 个测例的中位数 1.5%，最大 2.0%（c1）" in out    # 0.02 / 0.98 and 0.01 / 0.99
+    assert "中位数 5%，最大 10%" in out                       # c1 auto: 1.0 and 1.1 s; c1 off: equal
     assert "| c3 | estimate → inertia_count | 否 → 是 | 1.00e-06 → 5.00e-07 | 0.010 → 0.300 | 1.300 | 0.990 | 30% |" in out
     assert "| c1 | estimate" not in out  # on and auto agree for c1: not in the on table
     assert "| c1 | 0（0, 1 + 1 未返回） | cluster | 3 | 3 | 1.00e-02 | 1.00e-01 |" in out
