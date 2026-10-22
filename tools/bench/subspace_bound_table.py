@@ -17,9 +17,10 @@ from collections import Counter
 from pathlib import Path
 
 PROBLEM = {"standard": "HEP", "generalized_definite": "GHEP", "generalized_indefinite": "GHIEP"}
-# delta (the gap the bound uses) is called close to the true gap when the true gap / delta ratios of
-# the groups with a known complete spectrum have a median and a maximum of at most this.
-GAP_AGREEMENT = 2.0
+# The bound exceeds the measured angle by (true gap / delta) x (the residual term's excess). The
+# excess is said to come mainly from the residual term when the largest true gap / delta factor is
+# at most this share of the median bound / measured ratio, in decades.
+GAP_SHARE = 0.25
 
 
 def fmt(x, spec=".2e"):
@@ -151,20 +152,26 @@ def summary(doc: dict) -> list[str]:
         runs = (f"各 {counts[0]} 次" if len(counts) == 1 else f"共 {sum(per_case.values())} 次") + " auto 运行"
         w.append(f"- {len(cases)} 个测例（其中 {len(exact)} 个有生成器给出的精确特征向量）{runs}的 {len(groups)} 个组与参考子空间"
                  f"比较：界不小于实测夹角的有 {holds} / {len(groups)} 组。")
+        med_ratio = None
         if ratios:
             lr = sorted(math.log10(r) for r in ratios)
-            w.append(f"- 界 / 实测（界 < 1 的 {len(ratios)} 组）：中位数 {10 ** statistics.median(lr):.3g}，"
+            med_ratio = 10 ** statistics.median(lr)
+            w.append(f"- 界 / 实测（界 < 1 的 {len(ratios)} 组）：中位数 {med_ratio:.3g}，"
                      f"最小 {10 ** lr[0]:.3g}，最大 {10 ** lr[-1]:.3g}；在 10 倍以内 {sum(r <= 10 for r in ratios)} 组，"
                      f"100 倍以内 {sum(r <= 100 for r in ratios)} 组，1000 倍以内 {sum(r <= 1000 for r in ratios)} 组。")
         gaps = [g["true_gap"] / g["gap"] for _, _, _, g in groups if g.get("true_gap") and g["gap"]]
         if gaps:
             med, top = statistics.median(gaps), max(gaps)
             line = f"- 已知完整谱的 {len(gaps)} 组中，真实间隙 / 界所用的间隙 δ：中位数 {med:.3g}，最大 {top:.3g}"
-            if med <= GAP_AGREEMENT and top <= GAP_AGREEMENT:
-                line += (f"：证书窗口与 Kahan 区间给出的 δ 与真实间隙相差不到 {GAP_AGREEMENT:g} 倍，界与实测之差主要来自"
-                         "残差项（第 4 节）。")
+            share = math.log10(max(top, 1.0)) / math.log10(med_ratio) if med_ratio and med_ratio > 1 else None
+            if share is not None and share <= GAP_SHARE:
+                line += (f"：δ 至多比真实间隙小 {top:.3g} 倍，占界 / 实测（中位数 {med_ratio:.3g}）数量级的 "
+                         f"{100 * share:.0f}%，界与实测之差主要来自残差项（第 4 节）。")
+            elif share is not None:
+                line += (f"：δ 比真实间隙小的倍数占界 / 实测（中位数 {med_ratio:.3g}）数量级的 {100 * share:.0f}%，"
+                         "界与实测之差有相当一部分来自 δ。")
             else:
-                line += "：δ 比真实间隙小，界与实测之差有一部分来自 δ。"
+                line += "。"
             w.append(line)
     w += cost_summary(doc)
     w.append("")
@@ -210,7 +217,7 @@ def cost_table(doc: dict) -> list[str]:
 
 def on_table(doc: dict) -> list[str]:
     """Cases where auto only estimates lambda_min(B), or where on and auto differ."""
-    rows = []
+    rows, notes = [], []
     for case in cases_of(doc):
         auto, on, off = runs_of(doc, case, "auto"), runs_of(doc, case, "on"), runs_of(doc, case, "off")
         if not auto or not on:
@@ -218,6 +225,12 @@ def on_table(doc: dict) -> list[str]:
         a, o = auto[0]["subspace"], on[0]["subspace"]
         if a["b_min_source"] == o["b_min_source"] and a["b_min_source"] != "estimate":
             continue
+        if a["b_min_source"] == "estimate" and o["b_min_source"] == "inertia_count" and o["b_min"] < 0.5 * a["b_min"]:
+            # The count at auto's estimate (mu = theta/2) found negative pivots; theta/20 proved it.
+            ab, ob = median(bounds_of(auto)), median(bounds_of(on))
+            notes.append(f"- {case}：on 证明的下界是 auto 估计的 {o['b_min'] / a['b_min']:.2g} 倍——在 auto 的估计处"
+                         "（μ = θ/2）的计数有负主元，即 λ_min(D^{-1/2}BD^{-1/2}) ≤ θ/2，auto 的估计偏大；θ/20 处的计数给出证明。"
+                         + (f"auto 的（非严格）界比 on 的严格界小 {100 * (ob - ab) / ob:.2g}%。" if ab and ob and ab < ob else ""))
         t_off = median(r["time_total_s"] for r in off)
         t_on_bound = median(r["subspace"]["seconds"] for r in on)
         share = f"{100 * t_on_bound / t_off:.0f}%" if t_off else "—"
@@ -234,7 +247,7 @@ def on_table(doc: dict) -> list[str]:
             "下表是 auto 只有估计的测例：`b_min` 为所用的 λ_min(B) 下界（auto 为估计），界与时间为中位数。\n",
             "| 测例 | λ_min(B) 来源 auto → on | b_min auto → on | 严格 | max sin 界 | 界 (s) | 总时间 on (s) | "
             "总时间 off (s) | 增量 (on) |",
-            "|---|---|---:|---|---:|---:|---:|---:|---:|", *rows, ""]
+            "|---|---|---:|---|---:|---:|---:|---:|---:|", *rows, "", *notes, *([""] if notes else [])]
 
 
 def check_table(doc: dict) -> list[str]:
