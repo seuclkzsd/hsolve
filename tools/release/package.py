@@ -148,6 +148,8 @@ def stage(build: Path, stage_dir: Path, version: str, allow_missing_legal: bool)
     exe = stage_dir / "bin" / "hsolve"
     shutil.copy2(build / "hsolve", exe)
     module = sorted((build / "python" / "hsolve").glob("_hsolve*.so"))
+    if not module:
+        raise SystemExit(f"package: no compiled Python module in {build}/python/hsolve (needs pybind11 at configure time)")
     pydir = stage_dir / "python" / "hsolve"
     pydir.mkdir(parents=True)
     for p in sorted((build / "python" / "hsolve").glob("*.py")) + module:
