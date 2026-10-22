@@ -116,10 +116,11 @@ reference solutions.
 | GPU (`--gpu auto`) | large dense updates of 1e6-size factorizations (FP64 cuBLAS, loaded at run time) | {{TODO:rb-evidence whole-run speedup}} |
 
 Without MPI or a GPU the single-process CPU path is the default. Multi-process runs and GPU offload keep the
-completeness certificate's conditions and guarantees, and their results pass the same residual acceptance; in the
-measurements the multi-process mode gave the same inertia counts and spectrum slices as one process
-([P10 multi-process record](results/p10_mpi.md)), and GPU offload eigenvalues within 3.3e-15 relative of the CPU
-path's (two 1e6 cases, 5 runs each; [P10 GPU record](results/p10_gpu.md) §5).
+completeness certificate's conditions and guarantees, and their results pass the same residual acceptance. In the
+measurements of development stage P10 the multi-process mode gave the same inertia counts and spectrum slices as one
+process (2x Xeon Silver 4314, 16 cores, every run checked by the independent evaluator;
+[P10 multi-process record](results/p10_mpi.md)), and GPU offload eigenvalues within 3.3e-15 relative of the CPU path's
+(one Tesla V100 and 16 cores, two 1e6 cases, 5 runs each; [P10 GPU record](results/p10_gpu.md) §5).
 
 ## Documentation
 
