@@ -126,6 +126,8 @@ def failure_short(e: dict[str, Any] | None, unsupported: bool = False) -> str:
         parts.append(f"missed {e['max_missing']}" if e.get("max_missing") else "missed eigenvalues")
     if "spurious" in oc:
         parts.append(f"{e['max_spurious']} spurious" if e.get("max_spurious") else "spurious modes")
+    if "nullspace" in oc:
+        parts.append(f"{e['max_spurious']} null-space modes" if e.get("max_spurious") else "null-space modes")
     if "residual" in oc:
         parts.append(f"residual {_fmt_e(e.get('max_backward_error'))}")
     if "duplicate" in oc:
@@ -227,24 +229,44 @@ def fig_scenarios(summary: dict[str, Any]):
     return fig
 
 
+CELL_CHARS = 26   # status text that fits one line of a correctness cell (9 pt, a third of 7.1 in)
+
+
+def wrap_status(text: str, width: int = CELL_CHARS) -> list[str]:
+    """A status text in lines of at most `width` characters, broken after its commas (a single part
+    longer than that keeps its own line)."""
+    lines: list[str] = []
+    for part in text.split(", "):
+        if lines and len(lines[-1]) + 2 + len(part) <= width:
+            lines[-1] += ", " + part
+        else:
+            if lines:
+                lines[-1] += ","
+            lines.append(part)
+    return lines
+
+
 def fig_correctness(summary: dict[str, Any]):
     """Scenario x solver matrix: a check and the valid count where every repetition is correct, a
-    cross and what went wrong otherwise."""
+    cross and what went wrong otherwise (wrapped to two lines where it is long)."""
     plt = _plt()
     from matplotlib.patches import FancyBboxPatch
     rows = summary["scenarios"]
-    height = 0.34 * len(rows) + 0.9
+    cells = [[status(r, s) for s in SOLVERS] for r in rows]
+    tall = any(len(wrap_status(why)) > 1 for row in cells for _, why in row)
+    height = (0.42 if tall else 0.34) * len(rows) + 0.9
     fig, ax = plt.subplots(figsize=(WIDTH, height))
     fig.subplots_adjust(left=0.28, right=0.99, top=1 - 0.6 / height, bottom=0.05 / height)
-    for i, r in enumerate(rows):
-        for j, s in enumerate(SOLVERS):
-            ok, why = status(r, s)
+    for i, row in enumerate(cells):
+        for j, (ok, why) in enumerate(row):
             color = GOOD if ok else CRITICAL
-            ax.add_patch(FancyBboxPatch((j + 0.03, i + 0.1), 0.94, 0.8, boxstyle="round,pad=0,rounding_size=0.1",
+            ax.add_patch(FancyBboxPatch((j + 0.03, i + 0.08), 0.94, 0.84, boxstyle="round,pad=0,rounding_size=0.1",
                                         fc=color, ec="none", alpha=0.12))
             ax.text(j + 0.08, i + 0.5, "✓" if ok else "✗", color=color, fontsize=11, fontweight="bold",
                     va="center", ha="left")
-            ax.text(j + 0.2, i + 0.5, why, color=INK, fontsize=9, va="center", ha="left")
+            lines = wrap_status(why)
+            ax.text(j + 0.2, i + 0.5, "\n".join(lines), color=INK, fontsize=9 if len(lines) == 1 else 8.5,
+                    va="center", ha="left", linespacing=1.05)
     ax.set_xlim(0, len(SOLVERS))
     ax.set_ylim(len(rows), 0)
     counts = summary["correct_counts"]

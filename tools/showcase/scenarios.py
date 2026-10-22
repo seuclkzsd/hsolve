@@ -8,17 +8,26 @@ an eigenvalue, the gradient null space at zero (low-frequency breakdown) and a d
 generalized problems with an indefinite B, all eigenvalues of an interval, complex Hermitian
 (Bloch-periodic) problems, SuiteSparse matrices and one case of order 1e6.
 
+`data` writes the source cases the catalogue needs into a data root (default: the repository's
+data/), each with the generator that made the measured one (SOURCES: tools/gen presets, the recorded
+tools.gen.waveguide command lines, SuiteSparse downloads - these need internet - and the ARPACK
+references of tools/eval/reference.py where a scenario judges against the source's reference).
+Cases already present are left alone.
+
 `prepare` builds the campaign data root (default $HOME/rb-evidence/data on the cluster):
 
-    <root>/cases/<case>   a symlink to the source case, or a derived / generated case directory
+    <root>/cases/<case>   a symlink to the source case, or a derived / generated case directory:
+                          physical modes only (null space removed from the reference), or the
+                          source's matrices with the scenario's resolved target as the case's own
+                          target (so the SLEPc tuner, whose profiles are per case, tunes for it)
     <root>/refs/<case>    a symlink to the source reference, or a reference built here:
                           physical spectrum (null space removed), TE/TM family reference of a hollow
                           waveguide (tools/showcase/waveguide_ref.py), ARPACK reference
                           (tools/eval/reference.py) for SuiteSparse matrices without one
     <root>/showcase-scenarios.json   the resolved catalogue read by tools/showcase/campaign.py
 
-Source cases are looked up in the --source-root directories in order (the shared data/ of the
-repository and the 1e6 cases' directory). Nothing in a source root is written.
+Source cases are looked up in the --source-root directories in order. Nothing in a source root is
+written by `prepare`.
 
 The structure-recognition fast path of hsolve (separable Cartesian / Bloch curl-curl candidates,
 src/eigen/separable_*) is kept out of every measurement: on B-definite problems hsolve gets
@@ -29,8 +38,9 @@ campaign.py checks every report for `candidate_source == "iterative"`. GHIEP has
 Usage (from the repository root, numerics under tools/run/guard.py):
     python -m tools.showcase.scenarios list
     python3 tools/run/guard.py --skip-busy-check --timeout 3600 --mem-gb 12 -- \\
-        python -m tools.showcase.scenarios prepare --root $HOME/rb-evidence/data \\
-        --source-root data --source-root $HOME/p7_p7-membudget/data
+        python -m tools.showcase.scenarios data --root data
+    python3 tools/run/guard.py --skip-busy-check --timeout 3600 --mem-gb 12 -- \\
+        python -m tools.showcase.scenarios prepare --root $HOME/rb-evidence/data --source-root data
 """
 from __future__ import annotations
 
@@ -38,6 +48,7 @@ import argparse
 import json
 import os
 import shutil
+import subprocess
 import sys
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
@@ -47,6 +58,7 @@ import numpy as np
 
 from tools import case as cio
 
+REPO = Path(__file__).resolve().parents[2]
 DEFAULT_ROOT = Path(os.environ.get("HS_SHOWCASE_ROOT", str(Path.home() / "rb-evidence/data")))
 RESOLVED_FILE = "showcase-scenarios.json"
 TOL = 1e-10
@@ -81,7 +93,9 @@ class Scenario:
     target: str | dict[str, Any] | None = None
     hsolve: dict[str, Any] = field(default_factory=dict)   # keys beyond the method pin
     reference: str = "source"
-    derived: bool = False         # a case directory of its own (new config / reference)
+    # A case directory of its own sharing the source's matrices: reference "physical" (the null space
+    # removed), or a resolved target that becomes the case's config target (one case per target).
+    derived: bool = False
     reps: int = 3
     timeout_s: int = 900          # per solver run
 
@@ -92,6 +106,8 @@ class Scenario:
             raise ValueError(f"{self.id}: unknown reference {self.reference!r}")
         if isinstance(self.target, str) and self.target not in RESOLVERS:
             raise ValueError(f"{self.id}: unknown target resolver {self.target!r}")
+        if self.derived and self.reference != "physical" and not isinstance(self.target, str):
+            raise ValueError(f"{self.id}: a derived case needs a physical reference or a target resolver")
 
 
 # ------------------------------------------------------------------------------ target resolvers
@@ -218,15 +234,16 @@ SCENARIOS: tuple[Scenario, ...] = (
              "yee-pec-box-1e5", "yee-pec-box-1e5",
              "每个 m,n,p ≥ 1 的谐振频率都是 TE/TM 二重，漏掉副本时残差仍然很小"),
     Scenario("sigma-on-eigenvalue", "near-singular", "位移 σ 恰为特征值（K = A − σB 奇异）",
-             "yee-pec-box-1e5", "yee-pec-box-1e5",
+             "sc-pec-box-1e5-sigma-on", "yee-pec-box-1e5",
              "σ 取精确特征值（与矩阵特征值只差装配舍入），位移矩阵数值奇异",
-             target="sigma-on-eigenvalue"),
+             target="sigma-on-eigenvalue", derived=True),
     Scenario("sigma-1e-13", "near-singular", "位移 σ 距特征值 1e-13（相对）",
-             "yee-pec-box-1e5", "yee-pec-box-1e5",
-             "位移矩阵的最小特征值比其范数小约 13 个数量级", target="sigma-1e-13-off"),
+             "sc-pec-box-1e5-sigma-1e-13", "yee-pec-box-1e5",
+             "位移矩阵的最小特征值比其范数小约 13 个数量级", target="sigma-1e-13-off", derived=True),
     Scenario("lowfreq-null-space", "zero", "PEC 腔 σ = 0：最低 k 个物理谐振（梯度零空间 35475 维）",
              "sc-pec-box-1e5-physical", "yee-pec-box-1e5",
-             "旋度-旋度算子的梯度零空间在 0 处形成巨大重特征值，σ ≈ 0 的位移反演收敛到非物理零模",
+             "旋度-旋度算子的梯度零空间在 0 处是 35475 重特征值：σ = 0 最近的 k 个特征对都是零空间里的"
+             "非物理模，要的是其上的物理谐振",
              hsolve={"zero_filter_tol": ZERO_FILTER_TOL}, reference="physical", derived=True),
     Scenario("zero-cluster", "zero", "零附近 1e4 个特征值挤在 [−1e−5, 1e−5]",
              "syn-zero-cluster-real-1e5", "syn-zero-cluster-real-1e5",
@@ -292,6 +309,43 @@ SHORT_LABELS: dict[str, str] = {
     "ss-tem152078": "SuiteSparse TEM152078 (GHEP)",
     "pec-box-1e6": "PEC box n=1.03e6 (GHEP)",
     "waveguide-1e6": "square waveguide n=1.0e6",
+}
+
+
+# How each source case of the catalogue is made (`data`): python -m <module> <args> --root <data root>.
+# The waveguide command lines are the ones recorded in the measured cases' meta.json; `reference`
+# builds the ARPACK reference that a scenario with reference "source" judges against, where the
+# generator writes none (SuiteSparse) or only a continuum one (the slab-loaded guide).
+WAVEGUIDE = ("tools.gen.waveguide", "--family", "waveguide", "--a", "10.0", "--b", "10.0", "--freq", "50.0",
+             "--mu-slab", "1.0", "--pattern", "unionjack", "--perturb", "0.0", "--seed", "0")
+
+
+@dataclass(frozen=True)
+class Source:
+    case: tuple[str, ...]                    # module and arguments writing <root>/cases/<name>
+    reference: tuple[str, ...] | None = None
+    download: bool = False                   # needs internet (SuiteSparse Matrix Collection)
+
+
+SOURCES: dict[str, Source] = {
+    "yee-pec-cube-32": Source(("tools.gen.yee", "yee-pec-cube-32")),
+    "yee-pec-box-1e5": Source(("tools.gen.yee", "yee-pec-box-1e5")),
+    "yee-pec-box-1e6": Source(("tools.gen.yee", "yee-pec-box-1e6")),
+    "yee-bloch-1e4": Source(("tools.gen.yee", "yee-bloch-1e4")),
+    "syn-zero-cluster-real-1e5": Source(("tools.gen.synthetic", "syn-zero-cluster-real-1e5")),
+    "wg-square-1e5": Source(WAVEGUIDE + ("--eps-slab", "1.0", "--nx", "158", "--ny", "158",
+                                         "--name", "wg-square-1e5")),
+    "wg-square-1e6": Source(WAVEGUIDE + ("--eps-slab", "1.0", "--nx", "500", "--ny", "500",
+                                         "--name", "wg-square-1e6")),
+    "wg-halfslab-1e5": Source(WAVEGUIDE + ("--eps-slab", "2.25", "--slab-width", "5.0", "--nx", "158",
+                                           "--ny", "158", "--name", "wg-halfslab-1e5"),
+                              ("tools.eval.reference", "wg-halfslab-1e5")),
+    "ss-2cubes_sphere": Source(("tools.gen.suitesparse", "ss-2cubes_sphere"), download=True),
+    "ss-qa8fk-qa8fm": Source(("tools.gen.suitesparse", "ss-qa8fk-qa8fm"),
+                             ("tools.eval.reference", "ss-qa8fk-qa8fm"), download=True),
+    "ss-tem27623": Source(("tools.gen.suitesparse", "ss-tem27623"), ("tools.eval.reference", "ss-tem27623"),
+                          download=True),
+    "ss-tem152078": Source(("tools.gen.suitesparse", "ss-tem152078"), download=True),
 }
 
 
@@ -362,6 +416,30 @@ def _write_physical_case(sc: Scenario, src: Path, root: Path) -> None:
                        "a returned null-space vector is therefore spurious for this case"))
 
 
+def _write_retargeted_case(sc: Scenario, src: Path, root: Path) -> None:
+    """A case directory sharing the source matrices whose config target is the scenario's resolved
+    target (RESOLVERS on the source's exact reference); _reference links the source's reference.
+    One case per target, because tuned SLEPc profiles are stored per case."""
+    c = cio.load_case(src)
+    ref = cio.load_ref(src.name, root=src.parent.parent)
+    if ref is None or not ref.info.get("complete") or ref.info.get("window") is not None:
+        raise ValueError(f"{sc.id}: resolver {sc.target} needs a complete whole-spectrum reference")
+    target = RESOLVERS[sc.target](c, np.asarray(ref.eigenvalues, dtype=float).real)
+    out = root / "cases" / sc.case
+    out.mkdir(parents=True, exist_ok=True)
+    for f in ("A.npz", "B.npz"):
+        if (src / f).exists():
+            _symlink(src / f, out / f)
+    meta = dict(c.meta)
+    meta.update(name=sc.case, derived_from=src.name,
+                description=f"{c.meta.get('description', '')}; scenario {sc.id}: "
+                            + ", ".join(f"{k} = {v}" for k, v in target.items()))
+    meta.pop("targets", None)
+    (out / "meta.json").write_text(json.dumps(meta, indent=2, ensure_ascii=False) + "\n")
+    config = {"target": {k: v for k, v in target.items() if k in TARGET_KEYS}, "tol": c.config.get("tol", TOL)}
+    (out / "config.json").write_text(json.dumps(config, indent=2) + "\n")
+
+
 def _generate_bloch_1e5(root: Path) -> None:
     """Empty Bloch-periodic cell of 32^3 Yee cells (complex Hermitian, exact spectrum)."""
     from tools.gen import yee
@@ -397,9 +475,10 @@ def prepare_one(sc: Scenario, root: Path, source_roots: list[Path]) -> dict[str,
             GENERATORS[sc.case](root)
     elif sc.derived:
         if not (case_dir / "config.json").exists():
-            if sc.reference != "physical":
-                raise ValueError(f"{sc.id}: derived cases are written for physical references only")
-            _write_physical_case(sc, src, root)
+            if sc.reference == "physical":
+                _write_physical_case(sc, src, root)
+            else:
+                _write_retargeted_case(sc, src, root)
     else:
         _symlink(src, case_dir)
     _reference(sc, src, root)
@@ -430,6 +509,27 @@ def prepare_one(sc: Scenario, root: Path, source_roots: list[Path]) -> dict[str,
     return rec
 
 
+def write_sources(root: Path, ids: list[str] | None = None, run: Callable[..., Any] = subprocess.run) -> list[str]:
+    """Generate the missing source cases (and references) of these scenarios under root with SOURCES;
+    returns the names that failed. Existing cases and references are never touched."""
+    root = Path(root)
+    failed = []
+    for name in dict.fromkeys(s.source for s in by_id(ids) if s.source):
+        src = SOURCES[name]
+        steps = [] if (root / "cases" / name / "A.npz").exists() else [src.case]
+        if src.reference and not (root / "refs" / name / "eigenvalues.npy").exists():
+            steps.append(src.reference)
+        for step in steps:
+            cmd = [sys.executable, "-m", *step, "--root", str(root)]
+            print(f"[showcase data] {name}: python -m {' '.join(cmd[2:])}", flush=True)
+            if run(cmd, cwd=REPO).returncode != 0:
+                hint = " (SuiteSparse download: needs internet, or a mirror via --base-url)" if src.download else ""
+                print(f"[showcase data] {name}: failed{hint}", flush=True)
+                failed.append(name)
+                break
+    return failed
+
+
 def load_resolved(root: Path) -> dict[str, dict[str, Any]]:
     path = Path(root) / RESOLVED_FILE
     return json.loads(path.read_text())["scenarios"] if path.exists() else {}
@@ -458,6 +558,9 @@ def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="cmd", required=True)
     sub.add_parser("list", help="print the catalogue")
+    d = sub.add_parser("data", help="generate the missing source cases into a data root")
+    d.add_argument("--root", type=Path, default=cio.DEFAULT_ROOT, help="data root (default: the repository's data/)")
+    d.add_argument("--only", nargs="+", default=None, help="scenario ids (default: all)")
     p = sub.add_parser("prepare", help="build the campaign data root")
     p.add_argument("--root", type=Path, default=DEFAULT_ROOT)
     p.add_argument("--source-root", type=Path, action="append", default=None,
@@ -470,6 +573,11 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     from tools.eval import common
     common.require_guard("showcase.scenarios")
+    if args.cmd == "data":
+        failed = write_sources(args.root, args.only)
+        if failed:
+            print(f"[showcase data] not generated: {', '.join(failed)}", file=sys.stderr)
+        return 1 if failed else 0
     prepare(args.root, args.source_root or [cio.DEFAULT_ROOT], args.only)
     return 0
 

@@ -15,7 +15,9 @@
 
 A solver is "correct" on a scenario when every repetition is valid: exit 0, success claimed, and the
 independent evaluation (tools/eval) passes - every backward error <= tol, no expected eigenvalue
-missing (completeness against the reference), no spurious eigenvalue, no duplicate vector.
+missing (completeness against the reference), no spurious eigenvalue, no duplicate vector. The
+failure classes of a run are derived here from its raw evaluation (tools/showcase/campaign.outcome),
+so a refined classification applies to every committed record alike.
 """
 from __future__ import annotations
 
@@ -29,6 +31,8 @@ from typing import Any
 REPO = Path(__file__).resolve().parents[2]
 if str(REPO) not in sys.path:
     sys.path.insert(0, str(REPO))
+from tools.bench.slepc_profile import default_config  # noqa: E402
+from tools.showcase import campaign  # noqa: E402
 from tools.showcase import scenarios as scn  # noqa: E402
 
 RAW_DIR = REPO / "results/showcase/raw"
@@ -40,11 +44,17 @@ PHYSICS_PAGE = REPO / "docs/showcase/物理场景.md"
 README_SUMMARY = REPO / "results/showcase/README.md"
 SOLVERS =("hsolve", "slepc-default", "slepc-tuned")
 SOLVER_LABELS = {"hsolve": "hsolve", "slepc-default": "SLEPc 常规用法", "slepc-tuned": "SLEPc 逐例调优"}
-OUTCOME_LABELS = {"missed": "漏解", "spurious": "伪特征值", "residual": "残差超限", "duplicate": "重复向量",
-                  "empty": "未返回特征对", "error": "报错退出", "unclaimed": "自报失败", "invalid": "未通过"}
+OUTCOME_LABELS = {"missed": "漏解", "spurious": "伪特征值", "nullspace": "返回零空间模", "residual": "残差超限",
+                  "duplicate": "重复向量", "empty": "未返回特征对", "error": "报错退出", "unclaimed": "自报失败",
+                  "invalid": "未通过"}
+CLASS_ORDER = ("unsupported", "missed", "spurious", "nullspace", "residual", "duplicate", "empty", "error",
+               "unclaimed", "invalid")
 PROBE_STATUS = {"error": "报错", "crashed": "进程崩溃", "solved": "求解完成"}
-SCOPE_LABELS = {"case": "该算例的调优配置", "class": "同类问题的调优配置（未针对该算例）", "default": "默认配置"}
+# Where the slepc-tuned configuration of a row comes from (tuned_kind).
+TUNED_LABELS = {"case": "该算例的调优配置", "other-target": "同一矩阵、其他 σ 的调优配置（未针对该场景）",
+                "class": "同类问题的调优配置（未针对该算例）", "default": "默认配置（无该算例的调优配置）"}
 TUNING_FILE_NAME = "slepc_tuning.json"    # next to raw/: results/showcase/slepc_tuning.json
+CLAIM_REASON = "solver claims no success"   # compare.run_once's reason; shown as its own field
 
 
 # ------------------------------------------------------------------------------------ summary
@@ -68,6 +78,19 @@ def error_line(run: dict[str, Any]) -> str | None:
     return None
 
 
+def claimed(run: dict[str, Any]) -> bool:
+    """Whether the solver itself reported success (compare.run_once's claimed_success; else the report's)."""
+    if "claimed_success" in run:
+        return bool(run["claimed_success"])
+    return (run.get("report") or {}).get("success") is True
+
+
+def silent(run: dict[str, Any]) -> bool:
+    """A wrong result reported as a success: the run failed the evaluation for a reason other than
+    returning the null-space eigenpairs a sigma = 0 query of the pencil literally asks for."""
+    return not run.get("valid") and claimed(run) and bool(set(run.get("outcome") or ["invalid"]) - {"nullspace"})
+
+
 def summarize_solver(runs: list[dict[str, Any]]) -> dict[str, Any]:
     """Verdict and statistics of one solver over the repetitions of a scenario."""
     valid = [bool(r.get("valid")) for r in runs]
@@ -80,8 +103,10 @@ def summarize_solver(runs: list[dict[str, Any]]) -> dict[str, Any]:
     peaks = [r["solver_peak_bytes"] / 2**30 for r in runs if r.get("solver_peak_bytes")]
     out: dict[str, Any] = {
         "reps": len(runs), "valid_runs": sum(valid), "correct": bool(runs) and all(valid),
+        "claimed_runs": sum(claimed(r) for r in runs),
         # wrong results the solver itself reported as a success (only the evaluation catches them)
-        "silent_failures": sum(1 for r in runs if not r.get("valid") and (r.get("report") or {}).get("success") is True),
+        "silent_failures": sum(silent(r) for r in runs),
+        "silent_classes": sorted({o for r in runs if silent(r) for o in r.get("outcome") or ["invalid"]} - {"nullspace"}),
         "verdict": "correct" if runs and all(valid) else ("partial" if any(valid) else "failed"),
         "outcomes": outcomes,
         "time_s": _median([r.get("solver_s") for r in runs]),
@@ -103,8 +128,8 @@ def summarize_solver(runs: list[dict[str, Any]]) -> dict[str, Any]:
         "reasons": sorted({x for r in runs if not r.get("valid") for x in (r.get("why") or [])})[:6],
         "error": next((error_line(r) for r in runs if not r.get("valid") and error_line(r)), None),
     }
-    for key in ("config", "config_source", "config_scope"):
-        val = next((r.get(key) for r in runs if r.get(key)), None)
+    for key in ("config", "config_source", "config_scope", "profile_for_target"):
+        val = next((r.get(key) for r in runs if r.get(key) is not None), None)
         if val is not None:
             out[key] = val
     reps = [r.get("report") or {} for r in runs]
@@ -127,9 +152,17 @@ def summarize_solver(runs: list[dict[str, Any]]) -> dict[str, Any]:
     return out
 
 
+def classified_runs(doc: dict[str, Any]) -> list[dict[str, Any]]:
+    """The raw runs with their failure classes derived from their evaluation (campaign.outcome; the
+    null-space level from the record's norms where the scenario's reference leaves the null space out)."""
+    null_tol = campaign.null_level(doc["scenario"], (doc.get("norms") or {}).get("scale"))
+    return [{**r, "outcome": campaign.outcome(r, r.get("evaluation"), null_tol)} for r in doc["runs"]]
+
+
 def summarize_scenario(doc: dict[str, Any], probe: dict[str, Any] | None) -> dict[str, Any]:
     rec = doc["scenario"]
-    by = {s: [r for r in doc["runs"] if r["solver"] == s] for s in SOLVERS}
+    runs = classified_runs(doc)
+    by = {s: [r for r in runs if r["solver"] == s] for s in SOLVERS}
     solvers = {s: summarize_solver(rs) for s, rs in by.items() if rs}
     hs = solvers.get("hsolve", {})
     speed = {}
@@ -178,6 +211,11 @@ def build_summary(raw_dir: Path = RAW_DIR, tuning_file: Path | None = None) -> d
     for r in rows:
         if r["id"] in tunings:
             r["slepc_tuning"] = tunings[r["id"]]
+            ran, best = r["solvers"].get("slepc-tuned", {}).get("config"), tunings[r["id"]].get("best")
+            if best and ran != best:
+                raise ValueError(f"{r['id']}: slepc-tuned ran '{ran}' but the scenario's tuning chose '{best}' "
+                                 "(re-run the campaign row after `run_all.sh profiles`)")
+        r["tuned_kind"] = tuned_kind(r)
     hosts = sorted({r["conditions"].get("host") for r in rows if r["conditions"].get("host")})
     counts = {s: {"correct": sum(1 for r in rows if r["solvers"].get(s, {}).get("correct")),
                   "scenarios": sum(1 for r in rows if s in r["solvers"])} for s in SOLVERS}
@@ -221,7 +259,7 @@ def failure_text(e: dict[str, Any]) -> str:
         label = OUTCOME_LABELS.get(o, o)
         if o == "missed" and e.get("max_missing"):
             label += f" {e['max_missing']} 个"
-        if o == "spurious" and e.get("max_spurious"):
+        if o in ("spurious", "nullspace") and e.get("max_spurious"):
             label += f" {e['max_spurious']} 个"
         if o == "residual" and e.get("max_backward_error") is not None:
             label += f"（最大 {e['max_backward_error']:.1e}）"
@@ -259,16 +297,37 @@ def scenario_table(summary: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
+def tuned_kind(r: dict[str, Any]) -> str | None:
+    """What the slepc-tuned runs of a row used: "case" (a profile tuned for this case and target),
+    "other-target" (the case's profile tuned at another sigma), "class" (the class profile of its
+    problem type), "default" (no tuned configuration, or one that is the default configuration)."""
+    e = r["solvers"].get("slepc-tuned")
+    if not e:
+        return None
+    scope = e.get("config_scope")
+    if scope == "case":
+        return "other-target" if e.get("profile_for_target") is False else "case"
+    ncores = int(r["conditions"].get("ncores") or 16)
+    if scope == "default" or e.get("config") == default_config(ncores).label():
+        return "default"
+    return "class"
+
+
 def tuned_source(r: dict[str, Any]) -> str:
     """Where the 'tuned' SLEPc configuration of a row comes from, with this campaign's own tuning."""
-    scope = SCOPE_LABELS.get(r["solvers"].get("slepc-tuned", {}).get("config_scope", ""), "")
+    label = TUNED_LABELS.get(r.get("tuned_kind") or "", "")
     tu = r.get("slepc_tuning")
     if not tu:
-        return scope
+        return label
     tried = f"{tu['configurations']} 种配置、{tu['trials']} 次试验"
     if tu.get("best"):
-        return f"{scope}（本次逐例调优：{tried}）"
-    return f"本次逐例调优 {tried}均未通过评测，沿用{scope}"
+        return f"{label}（本次逐例调优：{tried}）"
+    return f"本次逐例调优 {tried}均未通过评测，沿用{label}"
+
+
+def untuned_rows(summary: dict[str, Any]) -> list[dict[str, Any]]:
+    """Rows whose 'tuned' column is not a tuning for the scenario (and that SLEPc supports at all)."""
+    return [r for r in summary["scenarios"] if r.get("tuned_kind") not in (None, "case") and not r.get("slepc_probe")]
 
 
 def speed_table(summary: dict[str, Any]) -> str:
@@ -301,7 +360,12 @@ def failure_details(summary: dict[str, Any]) -> str:
             e = r["solvers"].get(s)
             if not e or e["correct"]:
                 continue
-            msg = "；".join(e["reasons"][:3])
+            msg = f"求解器自报成功 {e['claimed_runs']}/{e['reps']} 次"
+            reasons = [x for x in e["reasons"] if x != CLAIM_REASON]
+            if reasons:
+                msg += "；评测：" + "；".join(reasons)
+            if "nullspace" in e.get("outcomes", {}):
+                msg += "；返回的都是 |λ| ≈ 0 的梯度零空间特征对（σ = 0 最近的就是它们），参考谱不含零空间"
             if e.get("error"):
                 msg += ("；" if msg else "") + f"stderr：`{e['error']}`"
             if r.get("slepc_probe") and s != "hsolve":
@@ -352,6 +416,11 @@ def silent_failures(summary: dict[str, Any], key: str = "title") -> dict[str, tu
     return out
 
 
+def silent_classes(summary: dict[str, Any]) -> set[str]:
+    """Failure classes of the silent failures of every solver and scenario."""
+    return {o for r in summary["scenarios"] for e in r["solvers"].values() for o in e.get("silent_classes", [])}
+
+
 def headline(summary: dict[str, Any]) -> str:
     """The page's findings, every number counted from the summary."""
     rows = summary["scenarios"]
@@ -359,9 +428,12 @@ def headline(summary: dict[str, Any]) -> str:
         return "（尚无数据）"
     c = summary["correct_counts"]
     runs = sum(r["solvers"][s]["reps"] for r in rows for s in SOLVERS if s in r["solvers"])
+    untuned = untuned_rows(summary)
     lines = [f"- {len(rows)} 个困难场景、共 {runs} 次求解运行，全部由独立评测程序 `tools/eval` 判定。"
              f"所有重复都通过评测的场景数：" + "，".join(f"{SOLVER_LABELS[s]} **{c[s]['correct']}/{c[s]['scenarios']}**"
-                                                   for s in SOLVERS) + "。"]
+                                                   for s in SOLVERS) + "。"
+             + (f"「逐例调优」一列中有 {len(untuned)} 个场景没有针对它的有效调优配置，用的是同类问题的配置或默认配置"
+                "（见「说明与局限」）。" if untuned else "")]
     for s in ("slepc-default", "slepc-tuned"):
         failed = [r for r in rows if s in r["solvers"] and not r["solvers"][s]["correct"]]
         if not failed:
@@ -372,14 +444,14 @@ def headline(summary: dict[str, Any]) -> str:
             classes = ["unsupported"] if r.get("slepc_probe") else (list(e.get("outcomes")) or ["invalid"])
             for o in classes:
                 by_class.setdefault(o, []).append(r["title"])
-        order = ("unsupported", "missed", "spurious", "residual", "duplicate", "empty", "error", "unclaimed", "invalid")
         labels = {**OUTCOME_LABELS, "unsupported": "不支持（库报错）"}
         lines.append(f"- {SOLVER_LABELS[s]}未通过 {len(failed)} 个场景：" + "；".join(
-            f"{labels[o]} {len(by_class[o])} 个（{'、'.join(by_class[o])}）" for o in order if o in by_class) + "。")
+            f"{labels[o]} {len(by_class[o])} 个（{'、'.join(by_class[o])}）" for o in CLASS_ORDER if o in by_class) + "。")
     silent = silent_failures(summary)
     if silent:
-        lines.append("- 自称成功、结果却未通过独立评测的运行（只有对照参考谱或完备性计数才能发现的错误）：" + "；".join(
-            f"{SOLVER_LABELS[s]} {n} 次（{'、'.join(titles)}）" for s, (n, titles) in silent.items()) + "。")
+        lines.append("- 自称成功、结果却未通过独立评测的运行（只有对照参考谱或完备性计数才能发现的错误；按字面返回"
+                     "零空间模的不计在内）：" + "；".join(
+                         f"{SOLVER_LABELS[s]} {n} 次（{'、'.join(titles)}）" for s, (n, titles) in silent.items()) + "。")
     for s in ("slepc-tuned", "slepc-default"):
         ratios = [(r["title"], r["speedup_vs"][s]) for r in rows if s in r["speedup_vs"]]
         if ratios:
@@ -419,9 +491,8 @@ def limitations(summary: dict[str, Any]) -> str:
     rows = summary["scenarios"]
     if not rows:
         return "（尚无数据）"
-    untuned = [r["title"] for r in rows if r["solvers"].get("slepc-tuned", {}).get("config_scope") not in (None, "case")
-               and not r.get("slepc_tuning") and not r.get("slepc_probe")]
-    hopeless = [r["title"] for r in rows if r.get("slepc_tuning") and not r["slepc_tuning"].get("best")]
+    untuned = [r for r in untuned_rows(summary) if not r.get("slepc_tuning")]
+    hopeless = [r for r in rows if r.get("slepc_tuning") and not r["slepc_tuning"].get("best")]
     consistency = [r["title"] for r in rows if r["reference"].get("kind") == "solver" and not r["reference"].get("complete")]
     slower = [(r["title"], r["speedup_vs"]["slepc-tuned"], r["solvers"]["hsolve"].get("certificate_share"))
               for r in rows if r["speedup_vs"].get("slepc-tuned", 2.0) < 1.0]
@@ -430,12 +501,28 @@ def limitations(summary: dict[str, Any]) -> str:
              "未测 SLEPc 的其他求解器（如围道积分 CISS、LOBPCG），也未测需要额外输入的用法（例如以离散梯度矩阵作 "
              "`EPSSetDeflationSpace` 收缩零空间）"]
     if untuned:
-        parts.append(f"{len(untuned)} 个场景（{'、'.join(untuned)}）的「逐例调优」用的是同类问题的调优配置，"
-                     "没有专门为它们搜索参数")
+        parts.append(f"{len(untuned)} 个场景（" + "、".join(f"{r['title']}：{TUNED_LABELS[r['tuned_kind']]}"
+                                                         for r in untuned)
+                     + "）的「逐例调优」没有专门为它们搜索参数")
     if hopeless:
-        parts.append(f"{len(hopeless)} 个场景（{'、'.join(hopeless)}）的调优在整个搜索空间（`tools/bench/tune_slepc.py`："
-                     "精度、进程/线程布局、排序、MUMPS 选项、BLR、Krylov 子空间维数）中没有找到通过评测的配置；"
-                     "搜索空间之外的用法（例如提供零空间基作收缩）可能做到")
+        null = [r for r in hopeless if "nullspace" in r["solvers"].get("slepc-tuned", {}).get("outcomes", {})]
+        other = [r for r in hopeless if r not in null]
+        if other:
+            parts.append(f"{len(other)} 个场景（{'、'.join(r['title'] for r in other)}）的逐例调优在调优程序的搜索空间"
+                         "（`tools/bench/tune_slepc.py`：收紧 `eps_tol`、`nev` 加到 k+2 至 3k、`ncv`，进程/线程布局、"
+                         "排序、MUMPS 选项、BLR、Krylov 重启）中没有找到通过评测的配置，该列沿用"
+                         + "、".join(dict.fromkeys(TUNED_LABELS[r['tuned_kind']] for r in other))
+                         + "；搜索空间之外的用法未测")
+        if null:
+            box = _row(summary, "interval-box")
+            interval_ok = box is not None and all(box["solvers"].get(s, {}).get("correct")
+                                                  for s in ("slepc-default", "slepc-tuned"))
+            parts.append(f"{len(null)} 个场景（{'、'.join(r['title'] for r in null)}）按字面是求 σ = 0 最近的 k 个特征对，"
+                         "SLEPc 返回的正是梯度零空间的精确零特征对，任何参数都不会改变这一点：要得到其上的物理谐振，"
+                         "SLEPc 需要额外输入（以离散梯度矩阵作 `EPSSetDeflationSpace` 收缩零空间，或改求一个下端大于 0 "
+                         "的区间" + ("——同一组矩阵的区间查询见「区间内全部特征值」一行，SLEPc 两种用法都正确"
+                                     if interval_ok else "") + "）；hsolve 用 Sylvester 惯性数出零空间维数并排除"
+                         "（`zero_filter_tol`），不需要这些输入")
     if consistency:
         parts.append(f"{len(consistency)} 个场景（{'、'.join(consistency)}）没有完整的参考谱，只用 ARPACK 参考做一致性"
                      "判定，漏掉参考之外的特征值无法被发现")
@@ -533,22 +620,41 @@ def readme_facts(summary: dict[str, Any]) -> str:
            f"- **一句话**：{n} 个困难场景（{groups}）共 {total_runs} 次运行，全部由与求解器无关的评测程序判定："
            f"hsolve {runs['hsolve']['valid']}/{runs['hsolve']['runs']} 次有效；同样 16 核下 SLEPc（Krylov-Schur + 位移反演 + "
            f"MUMPS）按常规用法只有 {c['slepc-default']['correct']}/{n} 个场景每次都正确，逐例调优后为 "
-           f"{c['slepc-tuned']['correct']}/{n}。"]
+           f"{c['slepc-tuned']['correct']}/{n}"
+           + (f"（其中 {len(untuned_rows(summary))} 个场景没有针对它的有效调优配置，见页面「说明与局限」）"
+              if untuned_rows(summary) else "") + "。"]
     cube = _row(summary, "multiplet-cube")
     if cube and "slepc-default" in cube["solvers"] and not cube["solvers"]["slepc-default"]["correct"]:
         h, d, t = (cube["solvers"][s] for s in SOLVERS)
         mult = _joined(sorted(set(cube.get("target_multiplicities") or []) - {1}))
         cert = h.get("certificate") or {}
+        if t["correct"]:
+            tuned = (f"逐例调优后（`{t['config']}`）{t['valid_runs']}/{t['reps']} 次有效，中位时间 {fmt_time(t['time_s'])}"
+                     + (f"，是 hsolve 的 {cube['speedup_vs']['slepc-tuned']:.1f} 倍" if "slepc-tuned" in cube["speedup_vs"]
+                        else ""))
+        else:
+            tuned = f"逐例调优配置 {t['valid_runs']}/{t['reps']} 次有效（{failure_text(t)}）"
         out.append(f"- **具体例子**：PEC 立方腔（n = {cube['n']:,}）求 σ 附近 {cube['target']['k']} 个特征值，目标集含 {mult} "
                    f"重的简并级。SLEPc 常规用法（默认参数，1 进程 × 16 线程）{d['reps']} 次运行每次都返回 {_joined(d['pairs'])} "
-                   f"个特征对，却漏掉其中 {d['max_missing']} 个（{failure_text(d)}）；调优配置 {t['valid_runs']}/{t['reps']} "
-                   f"次有效。hsolve {h['valid_runs']}/{h['reps']} 次全部找到，Sylvester 惯性计数 {_joined(cert.get('count_inertia'))}"
-                   f" 个 = 找到 {_joined(cert.get('count_found'))} 个，中位时间 {fmt_time(h['time_s'])}。")
+                   f"个特征对，却漏掉其中 {d['max_missing']} 个（{failure_text(d)}）；{tuned}。hsolve {h['valid_runs']}/"
+                   f"{h['reps']} 次全部找到，Sylvester 惯性计数 {_joined(cert.get('count_inertia'))} 个 = 找到 "
+                   f"{_joined(cert.get('count_found'))} 个，中位时间 {fmt_time(h['time_s'])}。")
     silent = silent_failures(summary)
     if silent:
+        classes = silent_classes(summary)
+        what = "漏掉了目标集里的特征值" if classes == {"missed"} else \
+            "、".join(OUTCOME_LABELS.get(o, o) for o in CLASS_ORDER if o in classes)
         out.append("- **静默错误**：SLEPc 有 " + "，".join(
             f"{n} 次{SOLVER_LABELS[s].removeprefix('SLEPc ')}运行（{'、'.join(titles)}）" for s, (n, titles) in silent.items())
-            + "报告成功，结果却漏解或混入非物理模，只有对照参考谱才能发现；hsolve 的每次运行都通过独立评测。")
+            + f"报告成功，结果却{what}，只有完备性计数或对照参考谱才能发现；hsolve 的每次运行都通过独立评测。")
+    low = _row(summary, "lowfreq-null-space")
+    if low and any("nullspace" in low["solvers"].get(s, {}).get("outcomes", {}) for s in ("slepc-default", "slepc-tuned")):
+        k, h = low["target"]["k"], low["solvers"]["hsolve"]
+        dim = f" {_joined(h['zero_modes_filtered'])} 维" if h.get("zero_modes_filtered") else ""
+        out.append(f"- **低频（σ = 0）**：要的是 PEC 腔最低的 {k} 个物理谐振。SLEPc 按字面求 σ = 0 最近的 {k} 个特征对，"
+                   f"返回的是梯度零空间（{dim.strip() or '高维'}）的精确零特征对；要排除它们需要额外输入（离散梯度矩阵"
+                   "作收缩空间，或给出区间）。hsolve 用 Sylvester 惯性数出零空间维数并排除（`zero_filter_tol`），"
+                   f"{h['valid_runs']}/{h['reps']} 次返回最低的 {k} 个物理谐振，中位时间 {fmt_time(h['time_s'])}。")
     sp = speed_range(summary, "slepc-tuned")
     if sp:
         k, lo, hi, slower = sp
@@ -592,14 +698,23 @@ def readme_facts_en(summary: dict[str, Any]) -> str:
            f"every hsolve run was valid ({runs['hsolve']['valid']}/{runs['hsolve']['runs']}); SLEPc (Krylov-Schur + "
            f"shift-and-invert + MUMPS) on the same 16 cores was correct in every repetition on "
            f"{c['slepc-default']['correct']}/{n} scenarios with its defaults and on {c['slepc-tuned']['correct']}/{n} "
-           "when tuned per case."]
+           "when tuned per case"
+           + (f" ({len(untuned_rows(summary))} of them have no valid configuration tuned for the scenario)"
+              if untuned_rows(summary) else "") + "."]
     silent = silent_failures(summary, key="short")
     if silent:
         names = {"slepc-default": "default", "slepc-tuned": "tuned"}
+        what = ("missing eigenvalues of the target set" if silent_classes(summary) == {"missed"}
+                else "with a wrong result (" + ", ".join(o for o in CLASS_ORDER if o in silent_classes(summary)) + ")")
         out.append("- **Silent failures**: " + "; ".join(
             f"{n} SLEPc runs ({names.get(s, s)}: {', '.join(titles)})" for s, (n, titles) in silent.items())
-            + " reported success while missing eigenvalues or returning non-physical modes; only a comparison "
-              "with the reference spectrum reveals it.")
+            + f" reported success while {what}; only the completeness count or a reference spectrum reveals it.")
+    low = _row(summary, "lowfreq-null-space")
+    if low and any("nullspace" in low["solvers"].get(s, {}).get("outcomes", {}) for s in ("slepc-default", "slepc-tuned")):
+        out.append(f"- **Low frequency (sigma = 0)**: asked for the {low['target']['k']} eigenpairs nearest 0, SLEPc returns "
+                   "exact zero eigenpairs of the gradient null space, as the query literally asks; excluding them takes "
+                   "extra input (a deflation basis or an interval). hsolve counts the null space by inertia and returns "
+                   "the lowest physical resonances (zero_filter_tol).")
     sp = speed_range(summary, "slepc-tuned", key="short")
     if sp:
         out.append(f"- **Speed**: where both are correct ({sp[0]} scenarios) the ratio of median times (tuned SLEPc / "

@@ -23,12 +23,16 @@ Writes results/showcase/raw/<scenario>.json after every scenario. Run inside the
     python -m tools.showcase.campaign profiles     # (re)write the merged tuned-profile file
 
 Scenarios whose case has no tuned profile get one with `tune` (tools/bench/tune_slepc.py with the
-scenario's target, 16 cores, inside the measurement slot): the profiles go to
-results/showcase/slepc_tuned_showcase.json, a condensed record of each tuning (configurations and
-runs tried, how many were valid) to results/showcase/slepc_tuning.json; `profiles` then merges them.
+scenario's target, 16 cores, inside the measurement slot). Each tuning's full record (every trial:
+configuration, time, verdict and the evaluator's reasons) is committed as
+results/showcase/tuning/<scenario>.json; `profiles` derives the case profiles of those records
+(results/showcase/slepc_tuned_showcase.json) and merges every profile source into the file the
+slepc-tuned runs read; `tuning-summary` condenses the records into results/showcase/slepc_tuning.json.
 
     python3 tools/run/guard.py --exclusive --timeout 2700 -- \\
         python -m tools.showcase.campaign tune --root $HOME/rb-evidence/data --scenario multiplet-cube
+    python -m tools.showcase.campaign profiles
+    python -m tools.showcase.campaign tuning-summary
 """
 from __future__ import annotations
 
@@ -51,15 +55,17 @@ REPO = Path(__file__).resolve().parents[2]
 if str(REPO) not in sys.path:
     sys.path.insert(0, str(REPO))
 from tools import case as cio  # noqa: E402
-from tools.bench import compare, slepc_profile  # noqa: E402
-from tools.bench.slepc_profile import PROFILE_FILE, load_profiles, parse_cpulist  # noqa: E402
+from tools.bench import compare, slepc_profile, tune_slepc  # noqa: E402
+from tools.bench.slepc_profile import PROFILE_FILE, load_profiles, lookup, parse_cpulist  # noqa: E402
 from tools.showcase import scenarios as scn  # noqa: E402
 
 SOLVERS = ("hsolve", "slepc-default", "slepc-tuned")
 HSOLVE_VARIANT = "hsolve-showcase"     # registered in compare.HSOLVE_VARIANTS per scenario
 RAW_DIR = REPO / "results/showcase/raw"
 TUNED_FILE = REPO / "results/showcase/slepc_tuned_profiles.json"
-# The per-case tuning of this campaign (`tune`): the tuner's profile file and a summary of every tuning.
+# The per-case tuning of this campaign (`tune`): the tuner's full record per scenario, the case
+# profiles derived from them and a condensed summary.
+TUNING_DIR = REPO / "results/showcase/tuning"
 SHOWCASE_TUNED = REPO / "results/showcase/slepc_tuned_showcase.json"
 TUNING_SUMMARY = REPO / "results/showcase/slepc_tuning.json"
 TUNE_TAG = "showcase-tune"
@@ -78,7 +84,7 @@ PROFILE_SOURCES = (
     (REPO / "results/cmp-p10-nearest-profiles.json",
      "yee-pec-box-1e6: eps_tol and CNTL(7) tightened to 1e-12 after an accuracy failure (results/p10_nearest.md)"),
     (SHOWCASE_TUNED, "per-case tuning of the showcase scenarios that had no case profile at 16 cores "
-                     "(tools/showcase/campaign.py tune; results/showcase/slepc_tuning.json)", ("case",)),
+                     "(tools/showcase/campaign.py tune; records in results/showcase/tuning/)", ("case",)),
 )
 
 
@@ -104,6 +110,34 @@ def merge_profiles(sources=PROFILE_SOURCES, cores: int = CORES) -> dict[str, Any
     return {"schema_version": 1,
             "note": "written by tools/showcase/campaign.py profiles; read as the slepc-tuned configuration",
             "sources": used, "profiles": sorted(merged.values(), key=_profile_key)}
+
+
+def load_tunings(tuning_dir: Path = TUNING_DIR) -> dict[str, dict[str, Any]]:
+    """scenario id -> the tuner's record (tune.json) of the scenario's tuning."""
+    docs = {p.stem: json.loads(p.read_text()) for p in sorted(Path(tuning_dir).glob("*.json"))}
+    return {sid: d for sid, d in docs.items() if not d.get("in_progress")}
+
+
+def showcase_profiles(tunings: dict[str, dict[str, Any]]) -> dict[str, Any]:
+    """The profile document of the showcase tunings: each record's best configuration as its case's
+    profile (tools/bench/tune_slepc.profile_entry); a record without a valid configuration adds none.
+    Two scenarios tuning the same case would overwrite each other's profile: an error."""
+    entries, owner = [], {}
+    for sid, doc in sorted(tunings.items()):
+        entry = tune_slepc.profile_entry(doc)
+        if entry is None:
+            continue
+        key = (entry["scope"], entry["name"], entry["mode"], int(entry["cores"]))
+        if key in owner:
+            raise ValueError(f"scenarios {owner[key]} and {sid} both tune case {entry['name']} ({entry['mode']}); "
+                             "give one of them a derived case (tools/showcase/scenarios.py)")
+        owner[key] = sid
+        entry["tuned"]["scenario"] = sid
+        entries.append(entry)
+    return {"schema_version": slepc_profile.SCHEMA_VERSION,
+            "note": "case profiles of the showcase tunings (results/showcase/tuning/<scenario>.json), "
+                    "written by tools/showcase/campaign.py profiles",
+            "profiles": sorted(entries, key=_profile_key)}
 
 
 # ------------------------------------------------------------------------------------- runs
@@ -152,22 +186,41 @@ def _evaluation_excerpt(out: Path) -> dict[str, Any] | None:
             "max_subspace_angle": ev["summary"].get("max_subspace_angle")}
 
 
-def outcome(entry: dict[str, Any], ev: dict[str, Any] | None) -> list[str]:
+def null_level(rec: dict[str, Any], scale: float | None) -> float | None:
+    """|lambda| at or below which a returned eigenvalue is a null-space mode, for scenarios whose
+    reference leaves the null space out on purpose (reference "physical": a nearest-sigma = 0 query
+    of the pencil is answered exactly by its zero eigenpairs); None elsewhere. The level is
+    hsolve's zero_filter_tol relative to ||A||/||B|| (DESIGN §3.6-9)."""
+    if rec.get("reference") != "physical" or not scale:
+        return None
+    return scn.ZERO_FILTER_TOL * float(scale)
+
+
+def outcome(entry: dict[str, Any], ev: dict[str, Any] | None, null_tol: float | None = None) -> list[str]:
     """Failure classes of one run ([] = valid): error (no usable result), empty, missed (an expected
     eigenvalue absent, fewer distinct vectors than asked), spurious (an eigenvalue the complete
-    reference does not have, e.g. a null-space mode), residual (backward error above tol),
-    duplicate (the same eigenvector twice), unclaimed (the solver itself reports failure)."""
+    reference does not have), nullspace (the eigenvalues absent from the reference are exact zero
+    eigenpairs of the pencil, |lambda| <= null_tol, returned for a sigma = 0 query whose reference
+    leaves the null space out; the wanted modes they displace are not counted as missed again),
+    residual (backward error above tol), duplicate (the same eigenvector twice), unclaimed (the
+    solver itself reports failure)."""
     if entry.get("valid"):
         return []
     if ev is None:
         return ["error"]
     out = []
+    zeros = 0
+    if null_tol is not None:
+        zeros = sum(abs(x) <= null_tol for x in entry.get("eigenvalues") or [])
+    null = bool(ev["spurious"]) and zeros >= ev["spurious"]
+    missing = len(ev["missing"]) + int(ev["boundary_deficit"] or 0)
     if not entry.get("pairs"):
         out.append("empty")
-    if ev["missing"] or ev["boundary_deficit"] or ev["status"] in ("incomplete", "inconsistent"):
+    if (ev["missing"] or ev["boundary_deficit"] or ev["status"] in ("incomplete", "inconsistent")) \
+            and not (null and missing <= zeros):
         out.append("missed")
     if ev["spurious"]:
-        out.append("spurious")
+        out.append("nullspace" if null else "spurious")
     if ev["rejected_pairs"]:
         out.append("residual")
     if ev["duplicates"]:
@@ -180,8 +233,9 @@ def outcome(entry: dict[str, Any], ev: dict[str, Any] | None) -> list[str]:
 
 
 def use_slepc_env(ref_env: Path | None, ld_path: str | None) -> None:
-    """Point the SLEPc runs at another environment (the complex-scalar build for complex cases,
-    docs/DEPENDENCIES.md); ld_path is exported to the SLEPc processes only, never to hsolve."""
+    """Point the SLEPc runs of this process - the campaign's (tools/bench/compare.py) and the tuner's
+    (tools/bench/tune_slepc.py) - at another environment (the complex-scalar build for complex
+    cases, docs/DEPENDENCIES.md); ld_path is exported to the SLEPc processes only, never to hsolve."""
     if ref_env is None and not ld_path:
         return
     base = slepc_profile.mpiexec_command
@@ -194,9 +248,34 @@ def use_slepc_env(ref_env: Path | None, ld_path: str | None) -> None:
             cmd = ["env", f"LD_LIBRARY_PATH={ld_path}", cmd[0], "-x", "LD_LIBRARY_PATH", *cmd[1:]]
         return cmd
     compare.mpiexec_command = command
+    tune_slepc.mpiexec_command = command
 
 
-def run_solver(solver: str, c: cio.Case, rec: dict[str, Any], out: Path, judge, ns: SimpleNamespace) -> dict[str, Any]:
+def same_target(a: dict[str, Any] | None, b: dict[str, Any] | None) -> bool:
+    """Whether two targets ask the same question: the mode and sigma (nearest; a profile's k-rules
+    serve any k) or the interval bounds."""
+    if not a or not b or a.get("mode", "nearest") != b.get("mode", "nearest"):
+        return False
+    keys = ("sigma",) if a.get("mode", "nearest") == "nearest" else ("lower", "upper")
+    return all(float(a[k]) == float(b[k]) for k in keys)
+
+
+def tuned_profile_info(c: cio.Case, rec: dict[str, Any], profile_file: Path) -> dict[str, Any]:
+    """What the slepc-tuned configuration was tuned for (the lookup compare.slepc_config makes):
+    the profile's target (a case profile with none: the case config's) and whether it is the
+    scenario's own target - a case profile tuned at another sigma of the same matrices is not a
+    tuning for this scenario."""
+    tgt = rec["target"]
+    hit = lookup(load_profiles(profile_file), c.name, c.meta["problem"], tgt.get("mode", "nearest"), CORES,
+                 target=tgt, config_target=c.config.get("target"))
+    if hit is None or hit[1]["scope"] != "case":
+        return {}
+    ptarget = hit[1].get("target") or c.config.get("target")
+    return {"profile_target": ptarget, "profile_for_target": same_target(ptarget, tgt)}
+
+
+def run_solver(solver: str, c: cio.Case, rec: dict[str, Any], out: Path, judge, ns: SimpleNamespace,
+               null_tol: float | None = None) -> dict[str, Any]:
     override = rec["target"] if rec["override"] else None
     if solver == "hsolve":
         compare.HSOLVE_VARIANTS[HSOLVE_VARIANT] = dict(rec["hsolve_config"])
@@ -204,10 +283,12 @@ def run_solver(solver: str, c: cio.Case, rec: dict[str, Any], out: Path, judge, 
     else:
         args = SimpleNamespace(**vars(ns), slepc_profile="default" if solver == "slepc-default" else "best")
         entry = compare.run_once("slepc", c, rec["target"], out, args, override, judge)
+        if solver == "slepc-tuned":
+            entry.update(tuned_profile_info(c, rec, Path(ns.slepc_profile_file)))
     entry["solver"] = solver
     ev = _evaluation_excerpt(out)
     entry["evaluation"] = ev
-    entry["outcome"] = outcome(entry, ev)
+    entry["outcome"] = outcome(entry, ev, null_tol)
     entry["report"] = _report_excerpt(solver, out)
     if not entry.get("valid"):
         guard = out.parent / f"guard-{out.name}"
@@ -297,6 +378,7 @@ def run_scenario(rec: dict[str, Any], args, profile_file: Path) -> dict[str, Any
     norms = evaluate.estimate_norms(c.A, c.B)
     norm_s = time.perf_counter() - t0
     judge = compare.make_judge(c, rec["target"], norms)
+    null_tol = null_level(rec, norms.scale)
     reps = args.reps or int(rec["reps"])
     ns = SimpleNamespace(cores=args.cores, mem_gb=args.mem_gb, timeout=int(rec["timeout_s"]), exclusive=False,
                          root=str(root), keep_vectors=False, slepc_ranks=1, slepc_profile_file=str(profile_file))
@@ -306,7 +388,7 @@ def run_scenario(rec: dict[str, Any], args, profile_file: Path) -> dict[str, Any
         order = SOLVERS[rep % len(SOLVERS):] + SOLVERS[:rep % len(SOLVERS)]
         for pos, s in enumerate(order):
             out = Path(args.runs_dir) / rec["id"] / f"{s}-r{rep}"
-            e = run_solver(s, c, rec, out, judge, ns)
+            e = run_solver(s, c, rec, out, judge, ns, null_tol)
             e.update(rep=rep, position=pos)
             runs.append(e)
             t = e.get("solver_s")
@@ -331,7 +413,8 @@ def run_scenario(rec: dict[str, Any], args, profile_file: Path) -> dict[str, Any
 # ------------------------------------------------------------------------------------- tuning
 
 def tuning_record(sid: str, doc: dict[str, Any]) -> dict[str, Any]:
-    """What a tools/bench/tune_slepc.py run found for a scenario's case (its tune.json, condensed)."""
+    """What a tools/bench/tune_slepc.py run found for a scenario's case (its tune.json, condensed):
+    counts, the best configuration, and every trial's configuration label, phase and verdict."""
     trials = doc.get("trials") or []
     best = doc.get("best")
     return {"scenario": sid, "case": doc["case"], "mode": doc["mode"], "target": doc.get("target"),
@@ -341,42 +424,65 @@ def tuning_record(sid: str, doc: dict[str, Any]) -> dict[str, Any]:
             "default_valid": doc.get("default_valid"), "default_median_s": doc.get("default_median_s"),
             "best": best, "best_median_s": doc.get("best_median_s") if best else None,
             "flaky": bool(doc.get("flaky")),
-            "invalid_reasons": sorted({t["why"] for t in trials if not t.get("valid") and t.get("why")})[:8]}
+            "invalid_reasons": sorted({t["why"] for t in trials if not t.get("valid") and t.get("why")})[:8],
+            "trial_list": [{"id": t.get("id"), "phase": t.get("phase"), "label": t.get("label"),
+                            "valid": bool(t.get("valid")), "solver_s": t.get("solver_s"), "why": t.get("why")}
+                           for t in trials],
+            "record": f"results/showcase/tuning/{sid}.json"}
 
 
-def tune_scenarios(resolved: dict[str, dict[str, Any]], ids: list[str], args) -> None:
+def tuning_summary(tunings: dict[str, dict[str, Any]]) -> dict[str, Any]:
+    return {"schema_version": 1,
+            "note": "written by tools/showcase/campaign.py tuning-summary from results/showcase/tuning/*.json",
+            "tunings": {sid: tuning_record(sid, doc) for sid, doc in sorted(tunings.items())}}
+
+
+def tune_json_path(rec: dict[str, Any]) -> Path:
+    """Where tools/bench/tune_slepc.py writes the record of this scenario's tuning."""
+    mode = rec["target"].get("mode", "nearest")
+    return REPO / "results/raw" / TUNE_TAG / (rec["case"] + ("" if mode == "nearest" else f"@{mode}")) / "tune.json"
+
+
+def tune_scenarios(resolved: dict[str, dict[str, Any]], ids: list[str], args) -> int:
     """Run the SLEPc tuner on each scenario's case (with the scenario's target when it overrides the
-    case's): profiles to SHOWCASE_TUNED, a condensed record of every tuning to TUNING_SUMMARY."""
-    summary = json.loads(TUNING_SUMMARY.read_text()) if TUNING_SUMMARY.exists() else \
-        {"schema_version": 1, "note": "written by tools/showcase/campaign.py tune", "tunings": {}}
+    case's) in this process (use_slepc_env reaches its runs) and keep the full record as
+    TUNING_DIR/<scenario>.json. Profiles come from these records (`profiles`), so tunings on two
+    nodes never write one file. Returns the number of tunings without a record."""
+    failed = 0
+    TUNING_DIR.mkdir(parents=True, exist_ok=True)
     for sid in ids:
         rec = resolved[sid]
-        cmd = [sys.executable, str(REPO / "tools/bench/tune_slepc.py"), "--cores", args.cores,
-               "--mem-gb", str(args.mem_gb), "--root", str(args.root), "--tag", TUNE_TAG, "--write-profiles",
-               "--profiles-file", str(SHOWCASE_TUNED), "--timeout", str(rec["timeout_s"])]
+        argv = [rec["case"], "--cores", args.cores, "--mem-gb", str(args.mem_gb), "--root", str(args.root),
+                "--tag", TUNE_TAG, "--profiles-file", str(TUNED_FILE), "--timeout", str(rec["timeout_s"])]
         if rec["override"]:
-            cmd += ["--target", json.dumps(rec["target"], separators=(",", ":"))]
-        print(f"[showcase tune] {sid}: {' '.join(cmd[1:])}", flush=True)
-        rc = subprocess.run(cmd + [rec["case"]], cwd=REPO).returncode
-        mode = rec["target"].get("mode", "nearest")
-        tune_json = REPO / "results/raw" / TUNE_TAG / (rec["case"] + ("" if mode == "nearest" else f"@{mode}")) / "tune.json"
-        if rc != 0 or not tune_json.exists():
-            print(f"[showcase tune] {sid}: tuner exit {rc}, no tune.json", flush=True)
+            argv += ["--target", json.dumps(rec["target"], separators=(",", ":"))]
+        print(f"[showcase tune] {sid}: tools/bench/tune_slepc.py {' '.join(argv)}", flush=True)
+        path = tune_json_path(rec)
+        path.unlink(missing_ok=True)
+        rc = tune_slepc.main(argv)
+        doc = json.loads(path.read_text()) if path.exists() else None
+        if rc != 0 or doc is None or doc.get("in_progress"):
+            print(f"[showcase tune] {sid}: tuner exit {rc}, no complete tune.json", flush=True)
+            failed += 1
             continue
-        summary["tunings"][sid] = tuning_record(sid, json.loads(tune_json.read_text()))
-        TUNING_SUMMARY.write_text(home_relative(json.dumps(summary, indent=1)) + "\n")
+        (TUNING_DIR / f"{sid}.json").write_text(home_relative(json.dumps(doc, indent=1)) + "\n")
+    return failed
 
 
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="cmd", required=True)
-    pp = sub.add_parser("profiles", help="write the merged tuned SLEPc profiles")
+    pp = sub.add_parser("profiles", help="derive the showcase tunings' case profiles and write the merged "
+                                         "tuned SLEPc profiles")
     pp.add_argument("--out", type=Path, default=TUNED_FILE)
+    sub.add_parser("tuning-summary", help="condense results/showcase/tuning/*.json into slepc_tuning.json")
     tp = sub.add_parser("tune", help="tune SLEPc for scenarios without a case profile (inside an --exclusive guard)")
     tp.add_argument("--root", type=Path, default=scn.DEFAULT_ROOT)
     tp.add_argument("--scenario", nargs="+", required=True)
     tp.add_argument("--cores", default=os.environ.get("HS_MEASURE_CORES", "16-31"))
     tp.add_argument("--mem-gb", type=float, default=30.0, help="guard RSS limit of each trial")
+    tp.add_argument("--slepc-env", type=Path, default=None, help="SLEPc environment (as for run)")
+    tp.add_argument("--slepc-ld-path", default=None, help="LD_LIBRARY_PATH of the SLEPc processes")
     rp = sub.add_parser("run", help="run scenarios (inside an --exclusive guard)")
     rp.add_argument("--root", type=Path, default=scn.DEFAULT_ROOT)
     rp.add_argument("--scenario", nargs="+", required=True)
@@ -391,10 +497,17 @@ def main(argv: list[str] | None = None) -> int:
     rp.add_argument("--slepc-ld-path", default=None, help="LD_LIBRARY_PATH of the SLEPc processes")
     args = ap.parse_args(argv)
     if args.cmd == "profiles":
+        own = showcase_profiles(load_tunings())
+        SHOWCASE_TUNED.write_text(json.dumps(own, indent=1) + "\n")
+        print(f"wrote {SHOWCASE_TUNED.relative_to(REPO)} ({len(own['profiles'])} case profiles)")
         doc = merge_profiles()
         args.out.parent.mkdir(parents=True, exist_ok=True)
         args.out.write_text(json.dumps(doc, indent=1) + "\n")
         print(f"wrote {args.out} ({len(doc['profiles'])} profiles at {CORES} cores)")
+        return 0
+    if args.cmd == "tuning-summary":
+        TUNING_SUMMARY.write_text(json.dumps(tuning_summary(load_tunings()), indent=1) + "\n")
+        print(f"wrote {TUNING_SUMMARY.relative_to(REPO)}")
         return 0
     from tools.eval import common
     common.require_guard("showcase.campaign")
@@ -405,10 +518,9 @@ def main(argv: list[str] | None = None) -> int:
     if missing:
         raise SystemExit(f"scenario(s) {', '.join(missing)} not prepared under {args.root} "
                          "(python -m tools.showcase.scenarios prepare)")
-    if args.cmd == "tune":
-        tune_scenarios(resolved, args.scenario, args)
-        return 0
     use_slepc_env(args.slepc_env, args.slepc_ld_path)
+    if args.cmd == "tune":
+        return 1 if tune_scenarios(resolved, args.scenario, args) else 0
     args.raw_dir.mkdir(parents=True, exist_ok=True)
     for sid in args.scenario:
         doc = run_scenario(resolved[sid], args, args.profiles)

@@ -103,3 +103,35 @@ def test_prepare_physical_case(tmp_path):
     json.dumps(rec2)   # the resolved record is plain JSON
     with pytest.raises(FileExistsError):   # an unrelated directory is never replaced
         scn._symlink(src_root / "cases/yee-tiny", root / "cases/tiny-physical")
+    # A derived case per target: the source's matrices and reference, the resolved target as its
+    # own config target (the SLEPc tuner stores profiles per case); preparing again changes nothing.
+    sc3 = scn.Scenario("t-off", "near-singular", "t", "tiny-sigma-off", "yee-tiny", "why", target="sigma-1e-13-off",
+                       derived=True)
+    rec3 = scn.prepare_one(sc3, root, [src_root])
+    c3 = cio.load_case("tiny-sigma-off", root=root)
+    assert (root / "cases/tiny-sigma-off/A.npz").is_symlink() and (root / "refs/tiny-sigma-off").is_symlink()
+    assert c3.config["target"] == rec3["target"] and rec3["override"]
+    assert rec3["target"]["sigma"] == pytest.approx(rec3["target_info"]["eigenvalue"] * (1 - 1e-13), rel=1e-15)
+    assert c3.meta["derived_from"] == "yee-tiny" and c3.meta["problem"] == "GHEP"
+    assert scn.prepare_one(sc3, root, [src_root])["target"] == rec3["target"]
+    with pytest.raises(ValueError):
+        scn.Scenario("t-bad", "near-singular", "t", "x", "yee-tiny", "why", derived=True)
+
+
+def test_every_source_has_a_recipe_and_data_only_makes_what_is_missing(tmp_path):
+    assert {s.source for s in scn.SCENARIOS if s.source} <= set(scn.SOURCES)
+    for name, src in scn.SOURCES.items():
+        assert src.case[0].startswith("tools.") and name in src.case
+    (tmp_path / "cases/yee-pec-cube-32").mkdir(parents=True)
+    (tmp_path / "cases/yee-pec-cube-32/A.npz").write_bytes(b"")
+    calls = []
+
+    def run(cmd, cwd):
+        calls.append(cmd[2:])
+        return type("Done", (), {"returncode": 1 if "tools.gen.suitesparse" in cmd else 0})()
+    failed = scn.write_sources(tmp_path, ["multiplet-cube", "ss-qa8fk", "waveguide-slab"], run=run)
+    assert failed == ["ss-qa8fk-qa8fm"]                       # the download failed: its reference is not tried
+    root = ["--root", str(tmp_path)]
+    assert calls == [[*scn.SOURCES["wg-halfslab-1e5"].case, *root],      # catalogue order; the cube exists
+                     ["tools.eval.reference", "wg-halfslab-1e5", *root],
+                     ["tools.gen.suitesparse", "ss-qa8fk-qa8fm", *root]]
