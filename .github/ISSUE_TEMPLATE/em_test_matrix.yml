@@ -1,0 +1,75 @@
+name: 贡献电磁测试矩阵
+description: 提交谐振腔、波导、光子晶体、天线等有限元问题的矩阵，或用 hsolve 求解自己问题的验证结果
+title: "[Matrix] "
+labels: ["test-matrix"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        真实工程矩阵是检验求解器最好的材料，谢谢你的贡献。要求见
+        [CONTRIBUTING.md 的「贡献电磁测试矩阵」](https://github.com/seuclkzsd/hsolve/blob/main/CONTRIBUTING.md#贡献电磁测试矩阵)。
+        **不要提交涉密、受出口管制或未经单位许可的模型数据。**
+  - type: textarea
+    id: physics
+    attributes:
+      label: 物理背景
+      description: 器件或结构、离散方法（如一阶 Nédélec 棱元）、材料、工作频率或频段、边界条件、长度与特征值的单位。
+      placeholder: |
+        结构：WR-90 矩形波导中的介质加载段
+        离散：一阶 Nédélec 棱元 + 一阶节点元（Lee-Sun-Cendes 混合公式），λ = -β²
+        频率：10 GHz；边界：PEC；单位：mm，λ 的单位 mm^-2
+    validations:
+      required: true
+  - type: textarea
+    id: matrix
+    attributes:
+      label: 矩阵信息
+      description: 阶数 n、A 与 B 的非零元个数、实对称或复厄密、B 是否正定（不确定可以不填）、生成矩阵的软件与版本。
+    validations:
+      required: true
+  - type: textarea
+    id: files
+    attributes:
+      label: 文件
+      description: |
+        直接附上 `.npz`（`scipy.sparse.save_npz`）或 `.mtx` 文件（压缩后不超过 25 MB），
+        或给出长期存储（如 Zenodo）的链接与每个文件的 SHA-256。
+    validations:
+      required: true
+  - type: textarea
+    id: target
+    attributes:
+      label: 求解目标与参考值
+      description: 关心的 σ 与 k，或区间 [a, b]；已知的参考值及其来源和可信度（解析解、测量、其它求解器、文献）。
+    validations:
+      required: true
+  - type: textarea
+    id: results
+    attributes:
+      label: 已有的求解结果（可选）
+      description: |
+        如果你已经用 hsolve 求解过：命令、`report.json` 的 `success` 与 `certificate` 片段、独立评测
+        （`python -m tools.eval.evaluate`）的结论，以及其它求解器的结果。矩阵不便公开时，也可以只填写本节作为验证报告。
+  - type: dropdown
+    id: license
+    attributes:
+      label: 数据授权
+      options:
+        - CC-BY 4.0（使用时注明来源）
+        - CC0 1.0（放弃权利）
+        - 不公开矩阵，只提交验证结果
+        - 其它（请在下方说明）
+    validations:
+      required: true
+  - type: input
+    id: attribution
+    attributes:
+      label: 署名方式
+      description: 被采纳后写进测例元数据与 CHANGELOG 的署名（个人、单位或项目名）。
+  - type: checkboxes
+    id: consent
+    attributes:
+      label: 确认
+      options:
+        - label: 我有权公开这些数据，它们不涉密、不受出口管制，并同意按上面选择的方式授权
+          required: true

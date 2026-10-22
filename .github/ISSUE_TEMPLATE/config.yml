@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 安全漏洞（私密报告）
+    url: https://github.com/seuclkzsd/hsolve/security/advisories/new
+    about: 请不要在公开 Issue 中披露漏洞，使用 GitHub 的私密漏洞报告。
+  - name: 文档
+    url: https://seuclkzsd.github.io/hsolve/
+    about: 快速开始、用户指南、算法原理与结果诊断。
