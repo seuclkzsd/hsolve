@@ -267,31 +267,31 @@
     "threads": 4,
     "bind": "none",
     "options": {
-     "eps_krylovschur_restart": "0.7",
+     "eps_krylovschur_restart": "0.3",
      "eps_nev": "3k"
     }
    },
    "tuned": {
     "tag": "showcase-tune",
-    "date": "2026-10-23T04:10:01",
+    "date": "2026-10-23T05:02:29",
     "host": "c005",
     "valid": true,
-    "solver_s": 8.2318116,
-    "default_solver_s": 4.5249474,
+    "solver_s": 8.0943548,
+    "default_solver_s": 4.5249495,
     "default_valid": false,
-    "speedup_vs_default": 0.5496903500561164,
-    "reps": 5,
-    "flaky": false,
+    "speedup_vs_default": 0.5590253468997924,
+    "reps": 20,
+    "flaky": true,
     "phases": {
-     "analysis_s": 1.0629,
-     "numeric_s": 0.62567,
-     "solve_s": 5.4921,
-     "solves": 202,
-     "ortho_s": 0.99608,
-     "setup_s": 1.6995,
-     "eps_solve_s": 6.5278,
-     "vectors_s": 0.0015496,
-     "factorizations": 1
+     "analysis_s": 1.06145,
+     "numeric_s": 0.61816,
+     "solve_s": 5.535,
+     "solves": 202.0,
+     "ortho_s": 0.8414999999999999,
+     "setup_s": 1.69095,
+     "eps_solve_s": 6.39905,
+     "vectors_s": 0.00162195,
+     "factorizations": 1.0
     },
     "scenario": "multiplet-cube"
    }

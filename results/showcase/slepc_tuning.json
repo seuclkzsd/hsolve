@@ -23,6 +23,9 @@
    "best": "2x8 eps_ncv=4k eps_nev=k+4 eps_tol=1e-11",
    "best_median_s": 15.789929749999999,
    "flaky": true,
+   "declared_flaky": null,
+   "confirm_reps": 5,
+   "flaky_confirm_reps": 20,
    "invalid_reasons": [
     "1 of 10 pairs have backward error > tol=1e-10",
     "2 of 10 pairs have backward error > tol=1e-10",
@@ -647,6 +650,9 @@
    "best": null,
    "best_median_s": null,
    "flaky": false,
+   "declared_flaky": null,
+   "confirm_reps": 5,
+   "flaky_confirm_reps": null,
    "invalid_reasons": [
     "completeness incomplete: 10 missing, boundary deficit 0, 10 distinct returned; 10 spurious eigenvalue(s) absent from the complete reference",
     "run failed (rc=1, killed=None)"
@@ -978,25 +984,35 @@
    },
    "cores": 16,
    "host": "c005",
-   "date": "2026-10-23T04:10:01",
+   "date": "2026-10-23T05:02:29",
    "tag": "showcase-tune",
-   "trials": 55,
-   "valid_trials": 37,
+   "trials": 110,
+   "valid_trials": 89,
    "configurations": 35,
    "default_valid": false,
-   "default_median_s": 4.5249474,
-   "best": "4x4 eps_krylovschur_restart=0.7 eps_nev=3k",
-   "best_median_s": 8.2318116,
-   "flaky": false,
+   "default_median_s": 4.5249495,
+   "best": "4x4 eps_krylovschur_restart=0.3 eps_nev=3k",
+   "best_median_s": 8.0943548,
+   "flaky": true,
+   "declared_flaky": {
+    "config": "4x4 eps_krylovschur_restart=0.7 eps_nev=3k",
+    "valid_runs": 1,
+    "runs": 3,
+    "record": "results/showcase/raw/multiplet-cube.json",
+    "started": "2026-10-23T04:36:18",
+    "host": "c005"
+   },
+   "confirm_reps": 5,
+   "flaky_confirm_reps": 20,
    "invalid_reasons": [
     "1 of 21 pairs have backward error > tol=1e-10",
     "1 of 21 pairs have backward error > tol=1e-10; completeness incomplete: 6 missing, boundary deficit 0, 21 distinct returned",
-    "10 of 21 pairs have backward error > tol=1e-10; completeness incomplete: 2 missing, boundary deficit 0, 21 distinct returned",
+    "10 of 21 pairs have backward error > tol=1e-10; completeness incomplete: 7 missing, boundary deficit 0, 21 distinct returned",
+    "11 of 21 pairs have backward error > tol=1e-10; completeness incomplete: 7 missing, boundary deficit 0, 21 distinct returned",
     "2 of 21 pairs have backward error > tol=1e-10",
     "2 of 21 pairs have backward error > tol=1e-10; completeness incomplete: 6 missing, boundary deficit 0, 21 distinct returned",
-    "3 of 21 pairs have backward error > tol=1e-10; completeness incomplete: 6 missing, boundary deficit 0, 21 distinct returned",
-    "3 of 21 pairs have backward error > tol=1e-10; completeness incomplete: 7 missing, boundary deficit 0, 21 distinct returned",
-    "4 of 21 pairs have backward error > tol=1e-10; completeness incomplete: 7 missing, boundary deficit 0, 21 distinct returned"
+    "2 of 21 pairs have backward error > tol=1e-10; completeness incomplete: 7 missing, boundary deficit 0, 21 distinct returned",
+    "3 of 21 pairs have backward error > tol=1e-10"
    ],
    "trial_list": [
     {
@@ -1004,23 +1020,23 @@
      "phase": "default",
      "label": "1x16",
      "valid": false,
-     "solver_s": 4.507199000000001,
-     "why": "8 of 21 pairs have backward error > tol=1e-10; completeness incomplete: 7 missing, boundary deficit 0, 21 distinct returned"
+     "solver_s": 4.4850251,
+     "why": "7 of 21 pairs have backward error > tol=1e-10; completeness incomplete: 7 missing, boundary deficit 0, 21 distinct returned"
     },
     {
      "id": 1,
      "phase": "accuracy",
      "label": "1x16 eps_tol=1e-11",
      "valid": false,
-     "solver_s": 4.5209689,
-     "why": "7 of 21 pairs have backward error > tol=1e-10; completeness incomplete: 7 missing, boundary deficit 0, 21 distinct returned"
+     "solver_s": 4.4871189000000005,
+     "why": "6 of 21 pairs have backward error > tol=1e-10; completeness incomplete: 7 missing, boundary deficit 0, 21 distinct returned"
     },
     {
      "id": 2,
      "phase": "accuracy",
      "label": "1x16 eps_nev=k+2",
      "valid": false,
-     "solver_s": 5.103038300000001,
+     "solver_s": 5.0291433,
      "why": "2 of 21 pairs have backward error > tol=1e-10; completeness incomplete: 6 missing, boundary deficit 0, 21 distinct returned"
     },
     {
@@ -1028,15 +1044,15 @@
      "phase": "accuracy",
      "label": "1x16 eps_nev=k+4",
      "valid": false,
-     "solver_s": 6.1141286,
-     "why": "8 of 21 pairs have backward error > tol=1e-10; completeness incomplete: 4 missing, boundary deficit 0, 21 distinct returned"
+     "solver_s": 4.9179512,
+     "why": "7 of 21 pairs have backward error > tol=1e-10; completeness incomplete: 6 missing, boundary deficit 0, 21 distinct returned"
     },
     {
      "id": 4,
      "phase": "accuracy",
      "label": "1x16 eps_ncv=3k",
      "valid": false,
-     "solver_s": 5.0213091,
+     "solver_s": 5.0167244,
      "why": "1 of 21 pairs have backward error > tol=1e-10; completeness incomplete: 6 missing, boundary deficit 0, 21 distinct returned"
     },
     {
@@ -1044,7 +1060,7 @@
      "phase": "accuracy",
      "label": "1x16 eps_nev=k+4 eps_tol=1e-11",
      "valid": false,
-     "solver_s": 5.0591591,
+     "solver_s": 5.0069175,
      "why": "3 of 21 pairs have backward error > tol=1e-10; completeness incomplete: 6 missing, boundary deficit 0, 21 distinct returned"
     },
     {
@@ -1052,15 +1068,15 @@
      "phase": "accuracy",
      "label": "1x16 eps_nev=2k",
      "valid": false,
-     "solver_s": 7.1090082,
-     "why": "10 of 21 pairs have backward error > tol=1e-10; completeness incomplete: 2 missing, boundary deficit 0, 21 distinct returned"
+     "solver_s": 7.1073878,
+     "why": "9 of 21 pairs have backward error > tol=1e-10; completeness incomplete: 2 missing, boundary deficit 0, 21 distinct returned"
     },
     {
      "id": 7,
      "phase": "accuracy",
      "label": "1x16 eps_nev=3k",
      "valid": true,
-     "solver_s": 10.870547700000001,
+     "solver_s": 9.3364401,
      "why": null
     },
     {
@@ -1068,7 +1084,7 @@
      "phase": "layout",
      "label": "1x16/core eps_nev=3k",
      "valid": true,
-     "solver_s": 10.956378199999998,
+     "solver_s": 10.9281213,
      "why": null
     },
     {
@@ -1076,7 +1092,7 @@
      "phase": "layout",
      "label": "2x8 eps_nev=3k",
      "valid": true,
-     "solver_s": 9.2187203,
+     "solver_s": 9.0622689,
      "why": null
     },
     {
@@ -1084,7 +1100,7 @@
      "phase": "layout",
      "label": "2x8/core eps_nev=3k",
      "valid": true,
-     "solver_s": 9.1558527,
+     "solver_s": 9.3699298,
      "why": null
     },
     {
@@ -1092,7 +1108,7 @@
      "phase": "layout",
      "label": "4x4 eps_nev=3k",
      "valid": true,
-     "solver_s": 7.4404688000000005,
+     "solver_s": 7.535738899999999,
      "why": null
     },
     {
@@ -1100,7 +1116,7 @@
      "phase": "layout",
      "label": "4x4/core eps_nev=3k",
      "valid": true,
-     "solver_s": 8.5321405,
+     "solver_s": 8.6254721,
      "why": null
     },
     {
@@ -1108,7 +1124,7 @@
      "phase": "layout",
      "label": "8x2 eps_nev=3k",
      "valid": true,
-     "solver_s": 8.699094899999999,
+     "solver_s": 9.0106127,
      "why": null
     },
     {
@@ -1116,7 +1132,7 @@
      "phase": "layout",
      "label": "8x2/core eps_nev=3k",
      "valid": true,
-     "solver_s": 8.961394899999998,
+     "solver_s": 8.8478288,
      "why": null
     },
     {
@@ -1124,7 +1140,7 @@
      "phase": "layout",
      "label": "16x1 eps_nev=3k",
      "valid": true,
-     "solver_s": 8.469683799999999,
+     "solver_s": 8.9025823,
      "why": null
     },
     {
@@ -1132,31 +1148,31 @@
      "phase": "layout",
      "label": "16x1/core eps_nev=3k",
      "valid": true,
-     "solver_s": 8.7287989,
+     "solver_s": 8.8540515,
      "why": null
     },
     {
      "id": 17,
      "phase": "ordering",
      "label": "4x4 eps_nev=3k st_mat_mumps_icntl_7=0",
-     "valid": true,
-     "solver_s": 17.120329,
-     "why": null
+     "valid": false,
+     "solver_s": 16.9578939,
+     "why": "2 of 21 pairs have backward error > tol=1e-10"
     },
     {
      "id": 18,
      "phase": "ordering",
      "label": "4x4 eps_nev=3k st_mat_mumps_icntl_7=2",
-     "valid": false,
-     "solver_s": 13.8064114,
-     "why": "2 of 21 pairs have backward error > tol=1e-10"
+     "valid": true,
+     "solver_s": 13.7856696,
+     "why": null
     },
     {
      "id": 19,
      "phase": "ordering",
      "label": "4x4 eps_nev=3k st_mat_mumps_icntl_7=3",
      "valid": true,
-     "solver_s": 8.5234784,
+     "solver_s": 7.971265699999999,
      "why": null
     },
     {
@@ -1164,7 +1180,7 @@
      "phase": "ordering",
      "label": "4x4 eps_nev=3k st_mat_mumps_icntl_7=4",
      "valid": false,
-     "solver_s": 1.4927,
+     "solver_s": 1.4738,
      "why": "run failed (rc=1, killed=None)"
     },
     {
@@ -1172,7 +1188,7 @@
      "phase": "ordering",
      "label": "4x4 eps_nev=3k st_mat_mumps_icntl_7=5",
      "valid": true,
-     "solver_s": 8.597168100000001,
+     "solver_s": 8.9589323,
      "why": null
     },
     {
@@ -1180,7 +1196,7 @@
      "phase": "ordering",
      "label": "4x4 eps_nev=3k st_mat_mumps_icntl_7=6",
      "valid": true,
-     "solver_s": 16.9559163,
+     "solver_s": 17.1192063,
      "why": null
     },
     {
@@ -1188,15 +1204,15 @@
      "phase": "ordering",
      "label": "4x4 eps_nev=3k st_mat_mumps_icntl_28=2 st_mat_mumps_icntl_29=1",
      "valid": false,
-     "solver_s": 15.0625567,
-     "why": "1 of 21 pairs have backward error > tol=1e-10"
+     "solver_s": 7.7646,
+     "why": "run failed (rc=1, killed=None)"
     },
     {
      "id": 24,
      "phase": "ordering",
      "label": "4x4 eps_nev=3k st_mat_mumps_icntl_28=2 st_mat_mumps_icntl_29=2",
      "valid": true,
-     "solver_s": 8.6275286,
+     "solver_s": 8.5250105,
      "why": null
     },
     {
@@ -1204,7 +1220,7 @@
      "phase": "icntl_48",
      "label": "4x4 eps_nev=3k st_mat_mumps_icntl_48=0",
      "valid": true,
-     "solver_s": 9.140013100000001,
+     "solver_s": 9.2939693,
      "why": null
     },
     {
@@ -1212,7 +1228,7 @@
      "phase": "icntl_58",
      "label": "4x4 eps_nev=3k st_mat_mumps_icntl_58=1",
      "valid": true,
-     "solver_s": 8.7188192,
+     "solver_s": 8.7590667,
      "why": null
     },
     {
@@ -1220,7 +1236,7 @@
      "phase": "icntl_13",
      "label": "4x4 eps_nev=3k st_mat_mumps_icntl_13=1",
      "valid": true,
-     "solver_s": 7.6354047,
+     "solver_s": 9.116012,
      "why": null
     },
     {
@@ -1228,7 +1244,7 @@
      "phase": "icntl_8",
      "label": "4x4 eps_nev=3k st_mat_mumps_icntl_8=0",
      "valid": true,
-     "solver_s": 8.5143395,
+     "solver_s": 8.738234199999999,
      "why": null
     },
     {
@@ -1236,7 +1252,7 @@
      "phase": "blr",
      "label": "4x4 eps_nev=3k st_mat_mumps_cntl_7=1e-12 st_mat_mumps_icntl_35=2",
      "valid": true,
-     "solver_s": 8.0616731,
+     "solver_s": 7.9301204,
      "why": null
     },
     {
@@ -1244,23 +1260,23 @@
      "phase": "blr",
      "label": "4x4 eps_nev=3k st_mat_mumps_cntl_7=1e-10 st_mat_mumps_icntl_35=2",
      "valid": false,
-     "solver_s": 6.8638555,
-     "why": "7 of 21 pairs have backward error > tol=1e-10"
+     "solver_s": 7.9372894,
+     "why": "8 of 21 pairs have backward error > tol=1e-10"
     },
     {
      "id": 31,
      "phase": "ncv",
      "label": "4x4 eps_ncv=4k eps_nev=3k",
      "valid": false,
-     "solver_s": 7.9726245,
-     "why": "8 of 21 pairs have backward error > tol=1e-10"
+     "solver_s": 7.5334203,
+     "why": "7 of 21 pairs have backward error > tol=1e-10"
     },
     {
      "id": 32,
      "phase": "restart",
      "label": "4x4 eps_krylovschur_restart=0.3 eps_nev=3k",
      "valid": true,
-     "solver_s": 8.232461800000001,
+     "solver_s": 8.2050783,
      "why": null
     },
     {
@@ -1268,7 +1284,7 @@
      "phase": "restart",
      "label": "4x4 eps_krylovschur_restart=0.7 eps_nev=3k",
      "valid": true,
-     "solver_s": 7.581889199999999,
+     "solver_s": 8.418027899999998,
      "why": null
     },
     {
@@ -1276,167 +1292,607 @@
      "phase": "prune",
      "label": "4x4",
      "valid": false,
-     "solver_s": 3.8889261,
-     "why": "4 of 21 pairs have backward error > tol=1e-10; completeness incomplete: 7 missing, boundary deficit 0, 21 distinct returned"
+     "solver_s": 3.8445294,
+     "why": "3 of 21 pairs have backward error > tol=1e-10; completeness incomplete: 7 missing, boundary deficit 0, 21 distinct returned"
     },
     {
      "id": 35,
      "phase": "confirm0",
      "label": "1x16",
      "valid": false,
-     "solver_s": 4.5249474,
-     "why": "3 of 21 pairs have backward error > tol=1e-10; completeness incomplete: 7 missing, boundary deficit 0, 21 distinct returned"
+     "solver_s": 4.5178129,
+     "why": "11 of 21 pairs have backward error > tol=1e-10; completeness incomplete: 7 missing, boundary deficit 0, 21 distinct returned"
     },
     {
      "id": 36,
      "phase": "confirm0",
      "label": "4x4 eps_nev=3k",
      "valid": true,
-     "solver_s": 8.5818628,
+     "solver_s": 8.5919462,
      "why": null
     },
     {
      "id": 37,
      "phase": "confirm0",
-     "label": "4x4 eps_krylovschur_restart=0.7 eps_nev=3k",
+     "label": "4x4 eps_nev=3k st_mat_mumps_cntl_7=1e-12 st_mat_mumps_icntl_35=2",
      "valid": true,
-     "solver_s": 7.5207938,
+     "solver_s": 8.0847248,
      "why": null
     },
     {
      "id": 38,
      "phase": "confirm0",
-     "label": "4x4 eps_nev=3k st_mat_mumps_icntl_13=1",
-     "valid": true,
-     "solver_s": 8.8940512,
-     "why": null
+     "label": "4x4 eps_nev=3k st_mat_mumps_icntl_7=3",
+     "valid": false,
+     "solver_s": 7.6872482,
+     "why": "6 of 21 pairs have backward error > tol=1e-10"
     },
     {
      "id": 39,
-     "phase": "confirm1",
-     "label": "4x4 eps_nev=3k",
+     "phase": "confirm0",
+     "label": "4x4 eps_krylovschur_restart=0.3 eps_nev=3k",
      "valid": true,
-     "solver_s": 8.668337300000001,
+     "solver_s": 8.20203,
      "why": null
     },
     {
      "id": 40,
-     "phase": "confirm1",
+     "phase": "confirm0",
      "label": "4x4 eps_krylovschur_restart=0.7 eps_nev=3k",
-     "valid": true,
-     "solver_s": 7.661128999999999,
-     "why": null
+     "valid": false,
+     "solver_s": 7.338223599999999,
+     "why": "3 of 21 pairs have backward error > tol=1e-10"
     },
     {
      "id": 41,
      "phase": "confirm1",
-     "label": "4x4 eps_nev=3k st_mat_mumps_icntl_13=1",
+     "label": "4x4 eps_nev=3k",
      "valid": true,
-     "solver_s": 8.8325057,
+     "solver_s": 8.4953454,
      "why": null
     },
     {
      "id": 42,
      "phase": "confirm1",
-     "label": "1x16",
-     "valid": false,
-     "solver_s": 4.5379381,
-     "why": "8 of 21 pairs have backward error > tol=1e-10; completeness incomplete: 7 missing, boundary deficit 0, 21 distinct returned"
+     "label": "4x4 eps_nev=3k st_mat_mumps_cntl_7=1e-12 st_mat_mumps_icntl_35=2",
+     "valid": true,
+     "solver_s": 8.0904321,
+     "why": null
     },
     {
      "id": 43,
-     "phase": "confirm2",
-     "label": "4x4 eps_krylovschur_restart=0.7 eps_nev=3k",
+     "phase": "confirm1",
+     "label": "4x4 eps_nev=3k st_mat_mumps_icntl_7=3",
      "valid": true,
-     "solver_s": 8.279449600000001,
+     "solver_s": 8.0232896,
      "why": null
     },
     {
      "id": 44,
-     "phase": "confirm2",
-     "label": "4x4 eps_nev=3k st_mat_mumps_icntl_13=1",
+     "phase": "confirm1",
+     "label": "4x4 eps_krylovschur_restart=0.3 eps_nev=3k",
      "valid": true,
-     "solver_s": 7.6251619,
+     "solver_s": 8.0372407,
      "why": null
     },
     {
      "id": 45,
-     "phase": "confirm2",
-     "label": "1x16",
-     "valid": false,
-     "solver_s": 4.5057384,
-     "why": "5 of 21 pairs have backward error > tol=1e-10; completeness incomplete: 7 missing, boundary deficit 0, 21 distinct returned"
-    },
-    {
-     "id": 46,
-     "phase": "confirm2",
-     "label": "4x4 eps_nev=3k",
+     "phase": "confirm1",
+     "label": "4x4 eps_krylovschur_restart=0.7 eps_nev=3k",
      "valid": true,
-     "solver_s": 7.537874200000001,
+     "solver_s": 8.347153700000002,
      "why": null
     },
     {
+     "id": 46,
+     "phase": "confirm1",
+     "label": "1x16",
+     "valid": false,
+     "solver_s": 4.486821,
+     "why": "5 of 21 pairs have backward error > tol=1e-10; completeness incomplete: 7 missing, boundary deficit 0, 21 distinct returned"
+    },
+    {
      "id": 47,
-     "phase": "confirm3",
-     "label": "4x4 eps_nev=3k st_mat_mumps_icntl_13=1",
+     "phase": "confirm2",
+     "label": "4x4 eps_nev=3k st_mat_mumps_cntl_7=1e-12 st_mat_mumps_icntl_35=2",
      "valid": true,
-     "solver_s": 8.9365868,
+     "solver_s": 8.017830799999999,
      "why": null
     },
     {
      "id": 48,
-     "phase": "confirm3",
-     "label": "1x16",
-     "valid": false,
-     "solver_s": 4.503731299999999,
-     "why": "5 of 21 pairs have backward error > tol=1e-10; completeness incomplete: 7 missing, boundary deficit 0, 21 distinct returned"
+     "phase": "confirm2",
+     "label": "4x4 eps_nev=3k st_mat_mumps_icntl_7=3",
+     "valid": true,
+     "solver_s": 8.069564100000001,
+     "why": null
     },
     {
      "id": 49,
-     "phase": "confirm3",
-     "label": "4x4 eps_nev=3k",
+     "phase": "confirm2",
+     "label": "4x4 eps_krylovschur_restart=0.3 eps_nev=3k",
      "valid": true,
-     "solver_s": 8.616211999999999,
+     "solver_s": 8.0792852,
      "why": null
     },
     {
      "id": 50,
-     "phase": "confirm3",
+     "phase": "confirm2",
      "label": "4x4 eps_krylovschur_restart=0.7 eps_nev=3k",
      "valid": true,
-     "solver_s": 8.284742900000001,
+     "solver_s": 8.2228823,
      "why": null
     },
     {
      "id": 51,
-     "phase": "confirm4",
+     "phase": "confirm2",
      "label": "1x16",
      "valid": false,
-     "solver_s": 4.525228599999999,
-     "why": "7 of 21 pairs have backward error > tol=1e-10; completeness incomplete: 7 missing, boundary deficit 0, 21 distinct returned"
+     "solver_s": 4.5249495,
+     "why": "2 of 21 pairs have backward error > tol=1e-10; completeness incomplete: 7 missing, boundary deficit 0, 21 distinct returned"
     },
     {
      "id": 52,
-     "phase": "confirm4",
+     "phase": "confirm2",
      "label": "4x4 eps_nev=3k",
      "valid": true,
-     "solver_s": 8.902320300000001,
+     "solver_s": 8.633094799999999,
      "why": null
     },
     {
      "id": 53,
-     "phase": "confirm4",
-     "label": "4x4 eps_krylovschur_restart=0.7 eps_nev=3k",
+     "phase": "confirm3",
+     "label": "4x4 eps_nev=3k st_mat_mumps_icntl_7=3",
      "valid": true,
-     "solver_s": 8.2318116,
+     "solver_s": 8.2122002,
      "why": null
     },
     {
      "id": 54,
-     "phase": "confirm4",
-     "label": "4x4 eps_nev=3k st_mat_mumps_icntl_13=1",
+     "phase": "confirm3",
+     "label": "4x4 eps_krylovschur_restart=0.3 eps_nev=3k",
      "valid": true,
-     "solver_s": 9.1857928,
+     "solver_s": 8.161381800000001,
+     "why": null
+    },
+    {
+     "id": 55,
+     "phase": "confirm3",
+     "label": "4x4 eps_krylovschur_restart=0.7 eps_nev=3k",
+     "valid": true,
+     "solver_s": 7.5695325,
+     "why": null
+    },
+    {
+     "id": 56,
+     "phase": "confirm3",
+     "label": "1x16",
+     "valid": false,
+     "solver_s": 4.534096,
+     "why": "3 of 21 pairs have backward error > tol=1e-10; completeness incomplete: 7 missing, boundary deficit 0, 21 distinct returned"
+    },
+    {
+     "id": 57,
+     "phase": "confirm3",
+     "label": "4x4 eps_nev=3k",
+     "valid": true,
+     "solver_s": 8.6699981,
+     "why": null
+    },
+    {
+     "id": 58,
+     "phase": "confirm3",
+     "label": "4x4 eps_nev=3k st_mat_mumps_cntl_7=1e-12 st_mat_mumps_icntl_35=2",
+     "valid": true,
+     "solver_s": 7.9607487,
+     "why": null
+    },
+    {
+     "id": 59,
+     "phase": "confirm4",
+     "label": "4x4 eps_krylovschur_restart=0.3 eps_nev=3k",
+     "valid": true,
+     "solver_s": 8.091632,
+     "why": null
+    },
+    {
+     "id": 60,
+     "phase": "confirm4",
+     "label": "4x4 eps_krylovschur_restart=0.7 eps_nev=3k",
+     "valid": true,
+     "solver_s": 8.2554478,
+     "why": null
+    },
+    {
+     "id": 61,
+     "phase": "confirm4",
+     "label": "1x16",
+     "valid": false,
+     "solver_s": 4.530415100000001,
+     "why": "10 of 21 pairs have backward error > tol=1e-10; completeness incomplete: 7 missing, boundary deficit 0, 21 distinct returned"
+    },
+    {
+     "id": 62,
+     "phase": "confirm4",
+     "label": "4x4 eps_nev=3k",
+     "valid": true,
+     "solver_s": 8.8973141,
+     "why": null
+    },
+    {
+     "id": 63,
+     "phase": "confirm4",
+     "label": "4x4 eps_nev=3k st_mat_mumps_cntl_7=1e-12 st_mat_mumps_icntl_35=2",
+     "valid": true,
+     "solver_s": 8.216309,
+     "why": null
+    },
+    {
+     "id": 64,
+     "phase": "confirm4",
+     "label": "4x4 eps_nev=3k st_mat_mumps_icntl_7=3",
+     "valid": true,
+     "solver_s": 7.360384,
+     "why": null
+    },
+    {
+     "id": 65,
+     "phase": "confirm5",
+     "label": "4x4 eps_krylovschur_restart=0.3 eps_nev=3k",
+     "valid": true,
+     "solver_s": 7.9803615,
+     "why": null
+    },
+    {
+     "id": 66,
+     "phase": "confirm5",
+     "label": "4x4 eps_nev=3k",
+     "valid": true,
+     "solver_s": 8.6528619,
+     "why": null
+    },
+    {
+     "id": 67,
+     "phase": "confirm5",
+     "label": "4x4 eps_nev=3k st_mat_mumps_cntl_7=1e-12 st_mat_mumps_icntl_35=2",
+     "valid": true,
+     "solver_s": 8.1400232,
+     "why": null
+    },
+    {
+     "id": 68,
+     "phase": "confirm6",
+     "label": "4x4 eps_nev=3k",
+     "valid": true,
+     "solver_s": 8.742633099999999,
+     "why": null
+    },
+    {
+     "id": 69,
+     "phase": "confirm6",
+     "label": "4x4 eps_nev=3k st_mat_mumps_cntl_7=1e-12 st_mat_mumps_icntl_35=2",
+     "valid": true,
+     "solver_s": 7.919451899999999,
+     "why": null
+    },
+    {
+     "id": 70,
+     "phase": "confirm6",
+     "label": "4x4 eps_krylovschur_restart=0.3 eps_nev=3k",
+     "valid": true,
+     "solver_s": 8.1331123,
+     "why": null
+    },
+    {
+     "id": 71,
+     "phase": "confirm7",
+     "label": "4x4 eps_nev=3k st_mat_mumps_cntl_7=1e-12 st_mat_mumps_icntl_35=2",
+     "valid": true,
+     "solver_s": 8.2219128,
+     "why": null
+    },
+    {
+     "id": 72,
+     "phase": "confirm7",
+     "label": "4x4 eps_krylovschur_restart=0.3 eps_nev=3k",
+     "valid": true,
+     "solver_s": 7.7980913,
+     "why": null
+    },
+    {
+     "id": 73,
+     "phase": "confirm7",
+     "label": "4x4 eps_nev=3k",
+     "valid": true,
+     "solver_s": 8.623322900000002,
+     "why": null
+    },
+    {
+     "id": 74,
+     "phase": "confirm8",
+     "label": "4x4 eps_krylovschur_restart=0.3 eps_nev=3k",
+     "valid": true,
+     "solver_s": 8.2659094,
+     "why": null
+    },
+    {
+     "id": 75,
+     "phase": "confirm8",
+     "label": "4x4 eps_nev=3k",
+     "valid": true,
+     "solver_s": 8.7996445,
+     "why": null
+    },
+    {
+     "id": 76,
+     "phase": "confirm8",
+     "label": "4x4 eps_nev=3k st_mat_mumps_cntl_7=1e-12 st_mat_mumps_icntl_35=2",
+     "valid": true,
+     "solver_s": 8.1167368,
+     "why": null
+    },
+    {
+     "id": 77,
+     "phase": "confirm9",
+     "label": "4x4 eps_nev=3k",
+     "valid": true,
+     "solver_s": 8.8055831,
+     "why": null
+    },
+    {
+     "id": 78,
+     "phase": "confirm9",
+     "label": "4x4 eps_nev=3k st_mat_mumps_cntl_7=1e-12 st_mat_mumps_icntl_35=2",
+     "valid": true,
+     "solver_s": 8.010758000000001,
+     "why": null
+    },
+    {
+     "id": 79,
+     "phase": "confirm9",
+     "label": "4x4 eps_krylovschur_restart=0.3 eps_nev=3k",
+     "valid": true,
+     "solver_s": 8.1072927,
+     "why": null
+    },
+    {
+     "id": 80,
+     "phase": "confirm10",
+     "label": "4x4 eps_nev=3k st_mat_mumps_cntl_7=1e-12 st_mat_mumps_icntl_35=2",
+     "valid": true,
+     "solver_s": 8.295583399999998,
+     "why": null
+    },
+    {
+     "id": 81,
+     "phase": "confirm10",
+     "label": "4x4 eps_krylovschur_restart=0.3 eps_nev=3k",
+     "valid": true,
+     "solver_s": 8.138288399999999,
+     "why": null
+    },
+    {
+     "id": 82,
+     "phase": "confirm10",
+     "label": "4x4 eps_nev=3k",
+     "valid": true,
+     "solver_s": 8.6221072,
+     "why": null
+    },
+    {
+     "id": 83,
+     "phase": "confirm11",
+     "label": "4x4 eps_krylovschur_restart=0.3 eps_nev=3k",
+     "valid": true,
+     "solver_s": 8.1739251,
+     "why": null
+    },
+    {
+     "id": 84,
+     "phase": "confirm11",
+     "label": "4x4 eps_nev=3k",
+     "valid": true,
+     "solver_s": 8.6463242,
+     "why": null
+    },
+    {
+     "id": 85,
+     "phase": "confirm11",
+     "label": "4x4 eps_nev=3k st_mat_mumps_cntl_7=1e-12 st_mat_mumps_icntl_35=2",
+     "valid": true,
+     "solver_s": 8.0982214,
+     "why": null
+    },
+    {
+     "id": 86,
+     "phase": "confirm12",
+     "label": "4x4 eps_nev=3k",
+     "valid": true,
+     "solver_s": 8.7366263,
+     "why": null
+    },
+    {
+     "id": 87,
+     "phase": "confirm12",
+     "label": "4x4 eps_nev=3k st_mat_mumps_cntl_7=1e-12 st_mat_mumps_icntl_35=2",
+     "valid": false,
+     "solver_s": 6.558934600000001,
+     "why": "1 of 21 pairs have backward error > tol=1e-10"
+    },
+    {
+     "id": 88,
+     "phase": "confirm12",
+     "label": "4x4 eps_krylovschur_restart=0.3 eps_nev=3k",
+     "valid": true,
+     "solver_s": 8.042735,
+     "why": null
+    },
+    {
+     "id": 89,
+     "phase": "confirm13",
+     "label": "4x4 eps_nev=3k st_mat_mumps_cntl_7=1e-12 st_mat_mumps_icntl_35=2",
+     "valid": true,
+     "solver_s": 8.1105094,
+     "why": null
+    },
+    {
+     "id": 90,
+     "phase": "confirm13",
+     "label": "4x4 eps_krylovschur_restart=0.3 eps_nev=3k",
+     "valid": true,
+     "solver_s": 8.1739888,
+     "why": null
+    },
+    {
+     "id": 91,
+     "phase": "confirm13",
+     "label": "4x4 eps_nev=3k",
+     "valid": true,
+     "solver_s": 8.6485104,
+     "why": null
+    },
+    {
+     "id": 92,
+     "phase": "confirm14",
+     "label": "4x4 eps_krylovschur_restart=0.3 eps_nev=3k",
+     "valid": true,
+     "solver_s": 7.9081188000000004,
+     "why": null
+    },
+    {
+     "id": 93,
+     "phase": "confirm14",
+     "label": "4x4 eps_nev=3k",
+     "valid": true,
+     "solver_s": 8.573568999999999,
+     "why": null
+    },
+    {
+     "id": 94,
+     "phase": "confirm14",
+     "label": "4x4 eps_nev=3k st_mat_mumps_cntl_7=1e-12 st_mat_mumps_icntl_35=2",
+     "valid": true,
+     "solver_s": 7.9503813,
+     "why": null
+    },
+    {
+     "id": 95,
+     "phase": "confirm15",
+     "label": "4x4 eps_nev=3k",
+     "valid": true,
+     "solver_s": 8.5274621,
+     "why": null
+    },
+    {
+     "id": 96,
+     "phase": "confirm15",
+     "label": "4x4 eps_nev=3k st_mat_mumps_cntl_7=1e-12 st_mat_mumps_icntl_35=2",
+     "valid": true,
+     "solver_s": 7.9448311,
+     "why": null
+    },
+    {
+     "id": 97,
+     "phase": "confirm15",
+     "label": "4x4 eps_krylovschur_restart=0.3 eps_nev=3k",
+     "valid": true,
+     "solver_s": 7.9803266,
+     "why": null
+    },
+    {
+     "id": 98,
+     "phase": "confirm16",
+     "label": "4x4 eps_nev=3k st_mat_mumps_cntl_7=1e-12 st_mat_mumps_icntl_35=2",
+     "valid": true,
+     "solver_s": 8.1509714,
+     "why": null
+    },
+    {
+     "id": 99,
+     "phase": "confirm16",
+     "label": "4x4 eps_krylovschur_restart=0.3 eps_nev=3k",
+     "valid": true,
+     "solver_s": 8.2393156,
+     "why": null
+    },
+    {
+     "id": 100,
+     "phase": "confirm16",
+     "label": "4x4 eps_nev=3k",
+     "valid": true,
+     "solver_s": 8.567468499999999,
+     "why": null
+    },
+    {
+     "id": 101,
+     "phase": "confirm17",
+     "label": "4x4 eps_krylovschur_restart=0.3 eps_nev=3k",
+     "valid": true,
+     "solver_s": 7.794727499999999,
+     "why": null
+    },
+    {
+     "id": 102,
+     "phase": "confirm17",
+     "label": "4x4 eps_nev=3k",
+     "valid": true,
+     "solver_s": 8.5594307,
+     "why": null
+    },
+    {
+     "id": 103,
+     "phase": "confirm17",
+     "label": "4x4 eps_nev=3k st_mat_mumps_cntl_7=1e-12 st_mat_mumps_icntl_35=2",
+     "valid": true,
+     "solver_s": 8.063941900000001,
+     "why": null
+    },
+    {
+     "id": 104,
+     "phase": "confirm18",
+     "label": "4x4 eps_nev=3k",
+     "valid": true,
+     "solver_s": 8.5860758,
+     "why": null
+    },
+    {
+     "id": 105,
+     "phase": "confirm18",
+     "label": "4x4 eps_nev=3k st_mat_mumps_cntl_7=1e-12 st_mat_mumps_icntl_35=2",
+     "valid": true,
+     "solver_s": 8.0854145,
+     "why": null
+    },
+    {
+     "id": 106,
+     "phase": "confirm18",
+     "label": "4x4 eps_krylovschur_restart=0.3 eps_nev=3k",
+     "valid": true,
+     "solver_s": 8.097077599999999,
+     "why": null
+    },
+    {
+     "id": 107,
+     "phase": "confirm19",
+     "label": "4x4 eps_nev=3k st_mat_mumps_cntl_7=1e-12 st_mat_mumps_icntl_35=2",
+     "valid": true,
+     "solver_s": 8.16554,
+     "why": null
+    },
+    {
+     "id": 108,
+     "phase": "confirm19",
+     "label": "4x4 eps_krylovschur_restart=0.3 eps_nev=3k",
+     "valid": true,
+     "solver_s": 7.977850800000001,
+     "why": null
+    },
+    {
+     "id": 109,
+     "phase": "confirm19",
+     "label": "4x4 eps_nev=3k",
+     "valid": true,
+     "solver_s": 8.7616871,
      "why": null
     }
    ],
@@ -1463,6 +1919,9 @@
    "best": null,
    "best_median_s": null,
    "flaky": false,
+   "declared_flaky": null,
+   "confirm_reps": 5,
+   "flaky_confirm_reps": null,
    "invalid_reasons": [
     "4 of 10 pairs have backward error > tol=1e-10; completeness incomplete: 1 missing, boundary deficit 0, 10 distinct returned",
     "9 of 10 pairs have backward error > tol=1e-10",
@@ -1805,6 +2264,9 @@
    "best": null,
    "best_median_s": null,
    "flaky": false,
+   "declared_flaky": null,
+   "confirm_reps": 5,
+   "flaky_confirm_reps": null,
    "invalid_reasons": [
     "4 of 10 pairs have backward error > tol=1e-10; completeness incomplete: 1 missing, boundary deficit 0, 10 distinct returned",
     "9 of 10 pairs have backward error > tol=1e-10",
@@ -2147,6 +2609,9 @@
    "best": "4x4 eps_nev=2k st_mat_mumps_cntl_7=1e-10 st_mat_mumps_icntl_28=2 st_mat_mumps_icntl_29=2 st_mat_mumps_icntl_35=2",
    "best_median_s": 2.1258647699999997,
    "flaky": false,
+   "declared_flaky": null,
+   "confirm_reps": 5,
+   "flaky_confirm_reps": null,
    "invalid_reasons": [
     "3 of 10 pairs have backward error > tol=1e-10",
     "5 of 10 pairs have backward error > tol=1e-10"
@@ -2680,6 +3145,9 @@
    "best": "8x2 eps_ncv=2k eps_purify=0 st_mat_mumps_cntl_7=1e-10 st_mat_mumps_icntl_35=2 st_mat_mumps_icntl_7=4",
    "best_median_s": 2.79777653,
    "flaky": false,
+   "declared_flaky": null,
+   "confirm_reps": 5,
+   "flaky_confirm_reps": null,
    "invalid_reasons": [
     "completeness inconsistent: 2 missing, boundary deficit 0, 10 distinct returned"
    ],
@@ -3212,6 +3680,9 @@
    "best": "4x4/core eps_purify=0 st_mat_mumps_icntl_13=1 st_mat_mumps_icntl_7=0",
    "best_median_s": 0.30539251,
    "flaky": false,
+   "declared_flaky": null,
+   "confirm_reps": 5,
+   "flaky_confirm_reps": null,
    "invalid_reasons": [
     "completeness inconsistent: 1 missing, boundary deficit 0, 10 distinct returned",
     "completeness inconsistent: 2 missing, boundary deficit 0, 10 distinct returned"
@@ -3745,6 +4216,9 @@
    "best": "8x2/core eps_krylovschur_restart=0.7 eps_purify=0 eps_tol=1e-11 st_mat_mumps_icntl_7=0",
    "best_median_s": 0.8721232,
    "flaky": false,
+   "declared_flaky": null,
+   "confirm_reps": 5,
+   "flaky_confirm_reps": null,
    "invalid_reasons": [
     "1 of 28 pairs have backward error > tol=1e-10; completeness inconsistent: 1 missing, boundary deficit 0, 28 distinct returned",
     "2 of 28 pairs have backward error > tol=1e-10",
@@ -4335,6 +4809,9 @@
    "best": "8x2/core eps_krylovschur_restart=0.7 st_mat_mumps_icntl_8=0",
    "best_median_s": 0.741642,
    "flaky": false,
+   "declared_flaky": null,
+   "confirm_reps": 5,
+   "flaky_confirm_reps": null,
    "invalid_reasons": [],
    "trial_list": [
     {
