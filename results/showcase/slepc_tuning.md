@@ -1,25 +1,32 @@
 # SLEPc per-case tuning of the showcase scenarios
 
 Written by `tools/showcase/run_all.sh tuning-report` (`tools/bench/tune_slepc.py --report`) from the
-tunings of `run_all.sh tunes` (16 cores of one socket, measurement slot); condensed records in
-`slepc_tuning.json`, the resulting profiles in `slepc_tuned_showcase.json`.
+tuning records `results/showcase/tuning/<scenario>.json` (every trial: configuration, solver time,
+verdict of the independent evaluation; 16 cores of one socket, measurement slot). Condensed in
+`slepc_tuning.json`; the profiles derived from them in `slepc_tuned_showcase.json`.
 
 | case | type | target | P | default (s) | best (s) | speedup | best configuration | analysis | numeric (#) | solves (#/s) | ortho | valid |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
-| sc-pec-box-1e5-physical | GHEP | k=10 | 16 | 6.000 | - | - | no valid configuration | | | | | NO |
-| ss-2cubes_sphere | HEP | k=10 | 16 | 2.708 (invalid) | 3.308 | 0.82x | `1x16 eps_ncv=4k` | 1.209 | 0.479 (1) | 40 / 1.544 | 0.041 | yes |
+| sc-bloch-1e5 | HEP | k=10 | 16 | 13.376 (invalid) | 15.790 | 0.85x | `2x8 eps_ncv=4k eps_nev=k+4 eps_tol=1e-11` | 1.113 | 7.754 (1) | 55 / 6.687 | 0.164 | yes |
+| sc-pec-box-1e5-physical | GHEP | k=10 | 16 | 6.008 | - | - | no valid configuration | | | | | NO |
+| yee-pec-cube-32 | HEP | k=21 | 16 | 4.525 (invalid) | 8.232 | 0.55x | `4x4 eps_krylovschur_restart=0.7 eps_nev=3k` | 1.063 | 0.626 (1) | 202 / 5.492 | 0.996 | yes |
+| sc-pec-box-1e5-sigma-1e-13 | GHEP | k=10 | 16 | 3.544 | - | - | no valid configuration | | | | | NO |
+| sc-pec-box-1e5-sigma-on | GHEP | k=10 | 16 | 3.534 | - | - | no valid configuration | | | | | NO |
+| ss-2cubes_sphere | HEP | k=10 | 16 | 2.720 (invalid) | 2.126 | 1.28x | `4x4 eps_nev=2k st_mat_mumps_cntl_7=1e-10 st_mat_mumps_icntl_28=2 st_mat_mumps_icntl_29=2 st_mat_mumps_icntl_35=2` | 0.694 | 0.622 (1) | 40 / 0.759 | 0.036 | yes |
 | ss-tem152078 | GHEP | k=10 | 16 | 6.106 | 2.798 | 2.18x | `8x2 eps_ncv=2k eps_purify=0 st_mat_mumps_cntl_7=1e-10 st_mat_mumps_icntl_35=2 st_mat_mumps_icntl_7=4` | 1.066 | 0.778 (1) | 21 / 0.746 | 0.110 | yes |
 | ss-tem27623 | GHEP | k=10 | 16 | 0.675 | 0.305 | 2.21x | `4x4/core eps_purify=0 st_mat_mumps_icntl_13=1 st_mat_mumps_icntl_7=0` | 0.035 | 0.102 (1) | 26 / 0.137 | 0.015 | yes |
+| wg-halfslab-1e5 | GHIEP | k=28 | 16 | 2.122 (invalid) | 0.872 | 2.43x | `8x2/core eps_krylovschur_restart=0.7 eps_purify=0 eps_tol=1e-11 st_mat_mumps_icntl_7=0` | 0.082 | 0.080 (1) | 68 / 0.433 | 0.232 | yes |
 | syn-zero-cluster-real-1e5 | HEP | k=21 | 16 | 1.084 | 0.742 | 1.46x | `8x2/core eps_krylovschur_restart=0.7 st_mat_mumps_icntl_8=0` | 0.158 | 0.070 (1) | 80 / 0.400 | 0.104 | yes |
-| wg-halfslab-1e5 | GHIEP | k=28 | 16 | 2.089 (invalid) | 0.873 | 2.39x | `8x2/core eps_krylovschur_restart=0.7 eps_purify=0 eps_tol=1e-11 st_mat_mumps_icntl_7=0` | 0.082 | 0.079 (1) | 68 / 0.433 | 0.232 | yes |
-| yee-pec-cube-32 | HEP | k=21 | 16 | 4.515 | - | - | no valid configuration | | | | | NO |
 
 Confirmation runs (interleaved; median [min-max] solver time, s):
 
-- **sc-pec-box-1e5-physical** (5 reps): `1x16` 6.000 [5.992-6.011] (5 runs) INVALID (completeness incomplete: 10 missing, boundary deficit 0, 10 distinct returned; 10 spurious eigenvalue(s) absent from the)
-- **ss-2cubes_sphere** (5 reps): `1x16` 2.708 [2.700-2.730] (5 runs) INVALID (5 of 10 pairs have backward error > tol=1e-10); `1x16 eps_ncv=4k` 3.308 [3.289-3.340] (5 runs); `1x16 eps_krylovschur_restart=0.3 eps_ncv=4k` 3.338 [3.314-3.351] (5 runs); `1x16 eps_krylovschur_restart=0.7 eps_ncv=4k` 3.315 [3.312-3.341] (5 runs)
+- **sc-bloch-1e5** (5 reps, randomly failing: 2 configuration(s) valid in some runs only): `1x16` 13.376 [13.295-13.525] (5 runs) INVALID (4 of 10 pairs have backward error > tol=1e-10; 5 of 10 pairs have backward error > tol=1e-10); `2x8 eps_nev=k+4 eps_tol=1e-11` 15.009 [14.814-15.648] (5 runs) INVALID (1 of 10 pairs have backward error > tol=1e-10); `2x8 eps_nev=k+4 eps_tol=1e-11 st_mat_mumps_icntl_7=3` 14.295 [14.215-14.651] (5 runs) INVALID (1 of 10 pairs have backward error > tol=1e-10); `2x8 eps_ncv=4k eps_nev=k+4 eps_tol=1e-11` 15.790 [14.804-22.342] (20 runs)
+- **sc-pec-box-1e5-physical** (5 reps): `1x16` 6.008 [5.972-6.022] (5 runs) INVALID (completeness incomplete: 10 missing, boundary deficit 0, 10 distinct returned; 10 spurious eigenvalue(s) absent from the)
+- **yee-pec-cube-32** (5 reps): `1x16` 4.525 [4.504-4.538] (5 runs) INVALID (3 of 21 pairs have backward error > tol=1e-10; completeness incomplete: 7 missing, boundary deficit 0, 21 distinct retur); `4x4 eps_nev=3k` 8.616 [7.538-8.902] (5 runs); `4x4 eps_krylovschur_restart=0.7 eps_nev=3k` 8.232 [7.521-8.285] (5 runs); `4x4 eps_nev=3k st_mat_mumps_icntl_13=1` 8.894 [7.625-9.186] (5 runs)
+- **sc-pec-box-1e5-sigma-1e-13** (5 reps): `1x16` 3.544 [3.528-3.554] (5 runs) INVALID (9 of 10 pairs have backward error > tol=1e-10; completeness incomplete: 1 missing, boundary deficit 0, 10 distinct retur)
+- **sc-pec-box-1e5-sigma-on** (5 reps): `1x16` 3.534 [3.507-3.679] (5 runs) INVALID (9 of 10 pairs have backward error > tol=1e-10; completeness incomplete: 1 missing, boundary deficit 0, 10 distinct retur)
+- **ss-2cubes_sphere** (5 reps): `1x16` 2.720 [2.702-2.728] (5 runs) INVALID (5 of 10 pairs have backward error > tol=1e-10); `4x4 eps_nev=2k st_mat_mumps_cntl_7=1e-10 st_mat_mumps_icntl_28=2 st_mat_mumps_icntl_29=2 st_mat_mumps_icntl_35=2` 2.126 [2.035-2.136] (5 runs); `4x4 eps_krylovschur_restart=0.3 eps_nev=2k st_mat_mumps_cntl_7=1e-10 st_mat_mumps_icntl_28=2 st_mat_mumps_icntl_29=2 st_mat_mumps_icntl_35=2` 2.117 [2.059-2.176] (5 runs); `4x4 eps_nev=2k st_mat_mumps_cntl_7=1e-12 st_mat_mumps_icntl_28=2 st_mat_mumps_icntl_29=2 st_mat_mumps_icntl_35=2` 2.160 [2.152-2.170] (5 runs)
 - **ss-tem152078** (5 reps): `1x16` 6.106 [6.092-6.157] (5 runs); `8x2 eps_ncv=2k eps_purify=0 st_mat_mumps_cntl_7=1e-10 st_mat_mumps_icntl_35=2 st_mat_mumps_icntl_7=4` 2.798 [2.790-2.806] (5 runs); `8x2 eps_ncv=2k eps_purify=0 st_mat_mumps_icntl_7=4` 2.919 [2.906-2.951] (5 runs); `8x2 eps_purify=0 st_mat_mumps_cntl_7=1e-10 st_mat_mumps_icntl_35=2 st_mat_mumps_icntl_7=4` 3.020 [3.013-3.042] (5 runs)
 - **ss-tem27623** (5 reps): `1x16` 0.675 [0.665-0.681] (5 runs); `4x4/core eps_purify=0 st_mat_mumps_icntl_13=1 st_mat_mumps_icntl_7=0` 0.305 [0.285-0.311] (5 runs); `4x4/core eps_purify=0 st_mat_mumps_icntl_13=1 st_mat_mumps_icntl_7=0 st_mat_mumps_icntl_8=0` 0.299 [0.289-0.314] (5 runs); `4x4/core eps_purify=0 st_mat_mumps_icntl_7=0 st_mat_mumps_icntl_8=0` 0.313 [0.304-0.318] (5 runs)
+- **wg-halfslab-1e5** (5 reps): `1x16` 2.122 [2.111-2.166] (5 runs) INVALID (2 of 28 pairs have backward error > tol=1e-10); `8x2/core eps_krylovschur_restart=0.7 eps_purify=0 eps_tol=1e-11 st_mat_mumps_icntl_7=0` 0.872 [0.871-0.880] (5 runs); `8x2/core eps_purify=0 eps_tol=1e-11 st_mat_mumps_icntl_7=0` 0.940 [0.933-0.955] (5 runs); `8x2/core eps_krylovschur_restart=0.7 eps_tol=1e-11 st_mat_mumps_icntl_7=0` 1.073 [1.067-1.077] (5 runs)
 - **syn-zero-cluster-real-1e5** (5 reps): `1x16` 1.084 [1.048-1.109] (5 runs); `8x2/core eps_krylovschur_restart=0.7 st_mat_mumps_icntl_8=0` 0.742 [0.741-0.744] (5 runs); `8x2/core eps_krylovschur_restart=0.7` 0.771 [0.755-0.774] (5 runs); `8x2/core st_mat_mumps_icntl_8=0` 0.797 [0.793-0.798] (5 runs)
-- **wg-halfslab-1e5** (5 reps): `1x16` 2.089 [2.074-2.134] (5 runs) INVALID (2 of 28 pairs have backward error > tol=1e-10); `8x2/core eps_krylovschur_restart=0.7 eps_purify=0 eps_tol=1e-11 st_mat_mumps_icntl_7=0` 0.873 [0.871-0.881] (5 runs); `8x2/core eps_purify=0 eps_tol=1e-11 st_mat_mumps_icntl_7=0` 0.938 [0.933-0.944] (5 runs); `8x2/core eps_krylovschur_restart=0.7 eps_tol=1e-11 st_mat_mumps_icntl_7=0` 1.072 [1.069-1.078] (5 runs)
-- **yee-pec-cube-32** (5 reps): `1x16` 4.515 [4.497-4.526] (5 runs) INVALID (4 of 21 pairs have backward error > tol=1e-10; completeness incomplete: 7 missing, boundary deficit 0, 21 distinct retur)

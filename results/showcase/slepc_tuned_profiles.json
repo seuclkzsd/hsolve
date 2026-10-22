@@ -24,8 +24,8 @@
   },
   {
    "file": "results/showcase/slepc_tuned_showcase.json",
-   "why": "per-case tuning of the showcase scenarios that had no case profile at 16 cores (tools/showcase/campaign.py tune; results/showcase/slepc_tuning.json)",
-   "profiles": 5
+   "why": "per-case tuning of the showcase scenarios that had no case profile at 16 cores (tools/showcase/campaign.py tune; records in results/showcase/tuning/)",
+   "profiles": 7
   }
  ],
  "profiles": [
@@ -73,40 +73,87 @@
   },
   {
    "scope": "case",
+   "name": "sc-bloch-1e5",
+   "mode": "nearest",
+   "cores": 16,
+   "target": null,
+   "config": {
+    "ranks": 2,
+    "threads": 8,
+    "bind": "none",
+    "options": {
+     "eps_ncv": "4k",
+     "eps_nev": "k+4",
+     "eps_tol": "1e-11"
+    }
+   },
+   "tuned": {
+    "tag": "showcase-tune",
+    "date": "2026-10-23T04:24:10",
+    "host": "gpu02",
+    "valid": true,
+    "solver_s": 15.789929749999999,
+    "default_solver_s": 13.3763004,
+    "default_valid": false,
+    "speedup_vs_default": 0.8471412230317238,
+    "reps": 20,
+    "flaky": true,
+    "phases": {
+     "analysis_s": 1.11335,
+     "numeric_s": 7.7536,
+     "solve_s": 6.687049999999999,
+     "solves": 55.0,
+     "ortho_s": 0.164335,
+     "setup_s": 8.8886,
+     "eps_solve_s": 6.87595,
+     "vectors_s": 0.0034848500000000003,
+     "factorizations": 1.0
+    },
+    "scenario": "bloch-1e5"
+   },
+   "source": "results/showcase/slepc_tuned_showcase.json"
+  },
+  {
+   "scope": "case",
    "name": "ss-2cubes_sphere",
    "mode": "nearest",
    "cores": 16,
    "target": null,
    "config": {
-    "ranks": 1,
-    "threads": 16,
+    "ranks": 4,
+    "threads": 4,
     "bind": "none",
     "options": {
-     "eps_ncv": "4k"
+     "eps_nev": "2k",
+     "st_mat_mumps_cntl_7": "1e-10",
+     "st_mat_mumps_icntl_28": "2",
+     "st_mat_mumps_icntl_29": "2",
+     "st_mat_mumps_icntl_35": "2"
     }
    },
    "tuned": {
     "tag": "showcase-tune",
-    "date": "2026-10-23T01:44:18",
+    "date": "2026-10-23T04:29:46",
     "host": "c005",
     "valid": true,
-    "solver_s": 3.3084617,
-    "default_solver_s": 2.7081777,
+    "solver_s": 2.1258647699999997,
+    "default_solver_s": 2.7204305,
     "default_valid": false,
-    "speedup_vs_default": 0.8185609946761662,
+    "speedup_vs_default": 1.2796818209654983,
     "reps": 5,
     "flaky": false,
     "phases": {
-     "analysis_s": 1.2093,
-     "numeric_s": 0.47926,
-     "solve_s": 1.5445,
+     "analysis_s": 0.69359,
+     "numeric_s": 0.6223,
+     "solve_s": 0.75878,
      "solves": 40,
-     "ortho_s": 0.040607,
-     "setup_s": 1.7045,
-     "eps_solve_s": 1.6015,
-     "vectors_s": 0.0024319,
+     "ortho_s": 0.03631,
+     "setup_s": 1.325,
+     "eps_solve_s": 0.80005,
+     "vectors_s": 0.00081477,
      "factorizations": 1
-    }
+    },
+    "scenario": "ss-2cubes-sphere"
    },
    "source": "results/showcase/slepc_tuned_showcase.json"
   },
@@ -169,7 +216,8 @@
      "eps_solve_s": 0.90386,
      "vectors_s": 0.00081692,
      "factorizations": 1
-    }
+    },
+    "scenario": "ss-tem152078"
    },
    "source": "results/showcase/slepc_tuned_showcase.json"
   },
@@ -210,7 +258,8 @@
      "eps_solve_s": 0.15713,
      "vectors_s": 0.00026251,
      "factorizations": 1
-    }
+    },
+    "scenario": "ss-tem27623"
    },
    "source": "results/showcase/slepc_tuned_showcase.json"
   },
@@ -287,7 +336,8 @@
      "eps_solve_s": 0.51006,
      "vectors_s": 0.0010312,
      "factorizations": 1
-    }
+    },
+    "scenario": "zero-cluster"
    },
    "source": "results/showcase/slepc_tuned_showcase.json"
   },
@@ -310,26 +360,27 @@
    },
    "tuned": {
     "tag": "showcase-tune",
-    "date": "2026-10-23T01:52:15",
+    "date": "2026-10-23T04:34:41",
     "host": "c005",
     "valid": true,
-    "solver_s": 0.8728693,
-    "default_solver_s": 2.08888,
+    "solver_s": 0.8721232,
+    "default_solver_s": 2.1221099999999997,
     "default_valid": false,
-    "speedup_vs_default": 2.393118878164234,
+    "speedup_vs_default": 2.4332686024176398,
     "reps": 5,
     "flaky": false,
     "phases": {
-     "analysis_s": 0.082179,
-     "numeric_s": 0.079161,
-     "solve_s": 0.43274,
+     "analysis_s": 0.082357,
+     "numeric_s": 0.079815,
+     "solve_s": 0.4329,
      "solves": 68,
-     "ortho_s": 0.23193,
-     "setup_s": 0.18201,
-     "eps_solve_s": 0.68894,
-     "vectors_s": 0.0031093,
+     "ortho_s": 0.23167,
+     "setup_s": 0.18204,
+     "eps_solve_s": 0.68816,
+     "vectors_s": 0.0030632,
      "factorizations": 1
-    }
+    },
+    "scenario": "waveguide-slab"
    },
    "source": "results/showcase/slepc_tuned_showcase.json"
   },
@@ -508,6 +559,51 @@
     }
    },
    "source": "results/cmp-p10-nearest-profiles.json"
+  },
+  {
+   "scope": "case",
+   "name": "yee-pec-cube-32",
+   "mode": "nearest",
+   "cores": 16,
+   "target": {
+    "mode": "nearest",
+    "sigma": 478.3019632647284,
+    "k": 21
+   },
+   "config": {
+    "ranks": 4,
+    "threads": 4,
+    "bind": "none",
+    "options": {
+     "eps_krylovschur_restart": "0.7",
+     "eps_nev": "3k"
+    }
+   },
+   "tuned": {
+    "tag": "showcase-tune",
+    "date": "2026-10-23T04:10:01",
+    "host": "c005",
+    "valid": true,
+    "solver_s": 8.2318116,
+    "default_solver_s": 4.5249474,
+    "default_valid": false,
+    "speedup_vs_default": 0.5496903500561164,
+    "reps": 5,
+    "flaky": false,
+    "phases": {
+     "analysis_s": 1.0629,
+     "numeric_s": 0.62567,
+     "solve_s": 5.4921,
+     "solves": 202,
+     "ortho_s": 0.99608,
+     "setup_s": 1.6995,
+     "eps_solve_s": 6.5278,
+     "vectors_s": 0.0015496,
+     "factorizations": 1
+    },
+    "scenario": "multiplet-cube"
+   },
+   "source": "results/showcase/slepc_tuned_showcase.json"
   },
   {
    "scope": "class",
