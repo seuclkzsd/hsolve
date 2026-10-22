@@ -2,6 +2,7 @@
 #pragma once
 
 #include <chrono>
+#include <cstddef>
 #include <cstdint>
 #include <limits>
 #include <string>
@@ -92,6 +93,25 @@ struct MemoryProbe {
 ///               decision does not depend on what other processes hold at the moment).
 /// Unreadable or malformed sources set no limit (their detail says why). Never throws.
 MemoryLimits detect_memory_limits(const MemoryProbe& probe = {});
+
+/// SHA-256 (FIPS 180-4) of a byte stream, for recording inputs by content instead of by path
+/// (SolverConfig::secure, docs/FORMATS.md §5). update() any number of times, then hex() once.
+class Sha256 {
+ public:
+  Sha256();
+  void update(const void* data, std::size_t size);
+  /// Lower-case hex digest (64 characters); the object must not be updated afterwards.
+  std::string hex();
+
+ private:
+  void block(const unsigned char* p);
+  std::uint32_t h_[8];
+  unsigned char buf_[64];
+  std::size_t used_ = 0;
+  std::uint64_t total_ = 0;
+};
+/// SHA-256 of a whole file (read in 1 MiB chunks); throws hs::Error(Io) when it cannot be read.
+std::string file_sha256(const std::string& path);
 
 /// Library version string, e.g. "0.1.0".
 const char* version();
