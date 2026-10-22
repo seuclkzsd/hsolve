@@ -164,7 +164,8 @@ data/refs/<name>/ref.json        {"kind","note","count","complete","window"}
   "disabled by configuration"）。代价：返回向量上各一次 A、B 乘积与 |A|、|B| 乘积、簇内 Gram 矩阵，一般 B 另有每列一次
   Jacobi 预条件 CG（B = I 与对角 B 不需要），计入 `time_verify_s`；实测见 `results/subspace_bound.md`。
 - `secure`（数据保护，§5）：true 时命令行的报告与事件日志不含任何文件路径（输入改记形状、nnz、dtype 与输入文件字节的
-  SHA-256），命令行创建的全部文件（结果、报告、日志、MUMPS 外存文件）权限为 0600、目录 0700。求解本身不变。
+  SHA-256，内存上限的来源只记文件名），命令行创建的全部文件（结果、报告、日志、MUMPS 外存文件）权限为 0600、目录 0700。
+  计算与结果不变。
 - 当前限制：B 不定（GHIEP）只支持 `mode = nearest`（其余抛 Unsupported）；`method = lanczos`
   （免分解）抛 Unsupported。
 
@@ -273,7 +274,8 @@ seconds}, slices[...], zero_cluster_dim, zero_modes_filtered, success, warnings[
   `limit_source` 为探测到的最小上限（无则 −1 / ""，配置数值时也探测）；`measure` 为预算所计的量
   （`resident` = RSS；`address_space` = VmSize，预算来自 RLIMIT_AS 时；`data` = VmData，来自 RLIMIT_DATA
   时），`reserved_gb` 为该量下已预留未使用的部分（resident 时 0；见 §2 `memory_budget_gb`）；`limits`
-  按上述顺序列出每个来源（`gib` 为 null 表示该来源不设限，`detail` 说明读自何处或为何不设限）。因子是否
+  按上述顺序列出每个来源（`gib` 为 null 表示该来源不设限，`detail` 说明读自何处或为何不设限；`secure` 时只留文件名，
+  §5）。因子是否
   走外存见 `factor_options.out_of_core`；内存内分解因内存失败后改走外存的次数见
   `factor_stats.ooc_switches`（`factor_options.ooc_on_memory_error` 为真时）；最后一次分解给 MUMPS 的
   工作区预留（ICNTL(23)，MB；cap 或更少，无 cap 时 0）见 `factor_stats.workspace_reserved_mb`。
@@ -391,7 +393,9 @@ fail。每个测例的矩阵与范数只读 / 估计一次；无可比参考且�
 - `report.json` 与 `--log` 事件日志不含任何文件路径：日志的 `start` 事件只记版本与 `"secure": true`，`input` 事件与
   `report.json` 的 `input` 对象按内容记录输入：`{"A": {"shape": [n, n], "nnz", "dtype": "float64" | "complex128",
   "format", "sha256"}, "B": {...} | null}`，`sha256` 为输入文件全部字节的 SHA-256（`hs::file_sha256`，FIPS 180-4）。
-  报告本来就不含输入路径（非 secure 模式下只有日志的 `start` 事件记录 `A`、`B`、`out` 路径）。
+  报告本来就不含输入路径（非 secure 模式下只有日志的 `start` 事件记录 `A`、`B`、`out` 路径）；内存上限的来源说明
+  `memory.limits[].detail`（§3）在 secure 模式下只保留读取上限的文件名（如 `memory.max`、`meminfo`），去掉目录——
+  cgroup 路径含用户、作业或容器编号（`hs::strip_paths`，求解器按 `SolverConfig::secure` 处理，Python 接口同样适用）。
 - 进程设 umask 077：命令行创建的结果文件、`report.json`、日志（含 `hsolve-mpi` helper 的 `<log>.rank<r>`）与 MUMPS
   外存文件权限为 0600，新建目录为 0700；已存在的同名结果文件与日志先删除再创建（截断写入会保留旧权限），写完再显式设为
   0600。已存在的输出目录本身的权限不改。

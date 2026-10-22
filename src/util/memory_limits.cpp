@@ -1,6 +1,7 @@
 // detect_memory_limits (include/hsolve/util.hpp): the memory limits of this process from the
 // memory cgroup, the caller's declaration (HSOLVE_MEMORY_LIMIT_GB), the resource limits and the
 // machine's MemTotal. Input of the automatic memory budget (hs::resolve_memory_budget, solver.hpp).
+// strip_paths: the sources' details without file system paths, for secure-mode reports.
 #include <sys/resource.h>
 
 #include <cerrno>
@@ -242,6 +243,28 @@ MemoryLimits detect_memory_limits(const MemoryProbe& probe) {
     }
   }
   return m;
+}
+
+std::string strip_paths(const std::string& text) {
+  const auto space = [](char ch) { return ch == ' ' || ch == '\t' || ch == '\n' || ch == '\r'; };
+  std::string out;
+  out.reserve(text.size());
+  for (std::size_t i = 0; i < text.size();) {
+    if (space(text[i])) {
+      out += text[i++];
+      continue;
+    }
+    std::size_t end = i;
+    while (end < text.size() && !space(text[end])) ++end;
+    std::string word = text.substr(i, end - i);
+    if (word.find('/') != std::string::npos) {
+      while (!word.empty() && word.back() == '/') word.pop_back();
+      word = word.empty() ? "(path)" : word.substr(word.find_last_of('/') + 1);
+    }
+    out += word;
+    i = end;
+  }
+  return out;
 }
 
 }  // namespace hs

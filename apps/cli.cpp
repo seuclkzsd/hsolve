@@ -10,8 +10,9 @@
 //
 // --secure (or "secure": true in config.json; docs/FORMATS.md §5): the report and the event log
 // carry no file system paths - report.json records the inputs by shape, nnz, dtype and SHA-256 of
-// their bytes - and every file this process creates (results, report, log, MUMPS out-of-core
-// files) is created with mode 0600 (umask 077; result files that exist are replaced).
+// their bytes, and the solve keeps only the file names of where the memory limits were read - and
+// every file this process creates (results, report, log, MUMPS out-of-core files) is created with
+// mode 0600 (umask 077; result files that exist are replaced).
 //
 // Exit status: 0 = all pairs accepted (and certificate passed), 1 = finished but not successful,
 // 2 = error (message on stderr).

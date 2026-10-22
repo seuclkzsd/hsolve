@@ -56,6 +56,22 @@ def _mode(p: Path) -> int:
     return stat.S_IMODE(p.stat().st_mode)
 
 
+def _strings(doc) -> list[str]:
+    """Every string value of a JSON document, recursively."""
+    if isinstance(doc, str):
+        return [doc]
+    if isinstance(doc, dict):
+        doc = list(doc.values())
+    if isinstance(doc, list):
+        return [s for v in doc for s in _strings(v)]
+    return []
+
+
+def _assert_no_paths(doc, where: str) -> None:
+    for s in _strings(doc):
+        assert not s.startswith("/") and "/proc/" not in s and "/sys/" not in s, f"{where}: {s!r}"
+
+
 @needs_exe
 def test_secure_mode_records_inputs_by_content_and_writes_private_files(case, tmp_path):
     out = tmp_path / "out"
@@ -71,6 +87,12 @@ def test_secure_mode_records_inputs_by_content_and_writes_private_files(case, tm
     for text in (report_text, log_text):
         assert "private-case-dir" not in text and str(tmp_path) not in text
     report = json.loads(report_text)
+    # No file system path at all: the memory limits keep only the names of the files they were
+    # read from (without --secure, MemTotal's detail is /proc/meminfo).
+    _assert_no_paths(report, "report.json")
+    for line in log_text.splitlines():
+        _assert_no_paths(json.loads(line), "log")
+    assert any(lim["name"] == "mem_total" and lim["detail"] == "meminfo" for lim in report["memory"]["limits"])
     for name, path in (("A", case / "A.npz"), ("B", case / "B.npz")):
         rec = report["input"][name]
         assert rec["sha256"] == hashlib.sha256(path.read_bytes()).hexdigest()
@@ -98,6 +120,7 @@ def test_without_secure_the_report_has_no_input_record(case, tmp_path):
     _run("--A", str(case / "A.npz"), "--config", str(case / "config.json"), "--out", str(out), "-q")
     report = json.loads((out / "report.json").read_text())
     assert "input" not in report
+    assert any(lim["name"] == "mem_total" and lim["detail"] == "/proc/meminfo" for lim in report["memory"]["limits"])
     assert "private-case-dir" not in json.dumps(report)  # the report never carried paths
 
 

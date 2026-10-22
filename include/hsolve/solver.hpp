@@ -216,8 +216,10 @@ struct SolverConfig {
   /// factorizations of B's pattern); Off - not computed (report.subspace.note says so).
   Toggle subspace_bound = Toggle::Auto;
   /// Data protection (docs/FORMATS.md §5): the report and the event log carry no file system
-  /// paths (the command line records the inputs by shape, nnz, dtype and SHA-256 instead, and
-  /// creates its output and log files with mode 0600). The solve itself is unchanged.
+  /// paths - the solve reduces where a memory limit was read (report.memory.limits[].detail) to
+  /// the file's name (strip_paths, util.hpp); the command line records the inputs by shape, nnz,
+  /// dtype and SHA-256 instead of their paths and creates its output and log files with mode
+  /// 0600. The computation and its results are unchanged.
   bool secure = false;
   double zero_filter_tol = -1.0;  ///< < 0 disables; else |lambda| <= zero_filter_tol*scale is a
                                   ///< (non-physical) zero mode, avoided by shift placement (§3.6)

@@ -94,6 +94,13 @@ struct MemoryProbe {
 /// Unreadable or malformed sources set no limit (their detail says why). Never throws.
 MemoryLimits detect_memory_limits(const MemoryProbe& probe = {});
 
+/// `text` without file system paths, for reports in secure mode (SolverConfig::secure): every
+/// whitespace-separated word that contains a '/' is replaced by its last path component
+/// ("/sys/fs/cgroup/<slice>/memory.max" -> "memory.max", "no /proc/meminfo" -> "no meminfo"), so
+/// that no directory name (user, job or container ids) remains; a word that is only slashes
+/// becomes "(path)". The other characters, whitespace included, are kept.
+std::string strip_paths(const std::string& text);
+
 /// SHA-256 (FIPS 180-4) of a byte stream, for recording inputs by content instead of by path
 /// (SolverConfig::secure, docs/FORMATS.md §5). update() any number of times, then hex() once.
 class Sha256 {

@@ -568,6 +568,10 @@ Solution<T> driver::solve_with_helpers(const CsrMatrix<T>& a_in, const CsrMatrix
   cfg.memory_budget_gb = mb.gb;
   rep.memory = MemoryReport{mb.gb,     mb.source,  mb.limit_gb,    mb.limit_source,
                             mb.limits, mb.measure, mb.reserved_gb};
+  // Secure mode: where a limit was read (a cgroup's path names the user, job or container) is
+  // reduced to the file's name; the report carries no file system paths (docs/FORMATS.md §5).
+  if (cfg_in.secure)
+    for (MemoryLimitSource& l : rep.memory.limits) l.detail = strip_paths(l.detail);
   event(c, "memory_budget", {{"budget_gb", mb.gb}, {"source", mb.source}, {"limit_gb", mb.limit_gb},
                              {"limit_source", mb.limit_source}, {"measure", to_string(mb.measure)},
                              {"reserved_gb", mb.reserved_gb}});

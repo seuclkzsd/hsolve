@@ -3,7 +3,8 @@
 // (resolve_memory_budget) in the measure of its limit (resident memory, or the address space under
 // RLIMIT_AS), its configuration ("auto" / 0 / GiB) and report, that a solve under a real RLIMIT_AS
 // succeeds, and that a budget too small for in-core factors gives a valid out-of-core run - also
-// when the in-core attempt itself fails for memory (FactorOptions::ooc_on_memory_error).
+// when the in-core attempt itself fails for memory (FactorOptions::ooc_on_memory_error). In secure
+// mode (SolverConfig::secure) the report keeps the limits' file names but no paths (strip_paths).
 #include <gtest/gtest.h>
 
 #include <sys/mman.h>
@@ -178,6 +179,28 @@ TEST(UtilMemoryLimits, MeasuresOfThisProcess) {
   EXPECT_STREQ(hs::to_string(hs::MemoryMeasure::Data), "data");
 }
 
+// Secure-mode reports (SolverConfig::secure): a detail keeps only the name of the file it was read
+// from, so that no directory - a cgroup path names the user, the job or the container - remains.
+TEST(UtilMemoryLimits, StripPathsKeepsOnlyFileNames) {
+  EXPECT_EQ(hs::strip_paths("/sys/fs/cgroup/memory/slurm/uid_1000/job_42/memory.limit_in_bytes"),
+            "memory.limit_in_bytes");
+  EXPECT_EQ(hs::strip_paths("/sys/fs/cgroup/memory/slurm/uid_1000/memory.stat hierarchical_memory_limit"),
+            "memory.stat hierarchical_memory_limit");
+  EXPECT_EQ(hs::strip_paths("no /proc/self/cgroup"), "no cgroup");
+  EXPECT_EQ(hs::strip_paths("malformed MemTotal in /proc/meminfo"), "malformed MemTotal in meminfo");
+  EXPECT_EQ(hs::strip_paths("getrlimit"), "getrlimit");
+  EXPECT_EQ(hs::strip_paths("HSOLVE_MEMORY_LIMIT_GB=3"), "HSOLVE_MEMORY_LIMIT_GB=3");
+  EXPECT_EQ(hs::strip_paths("a/ /  dir/"), "a (path)  dir");
+  EXPECT_EQ(hs::strip_paths(""), "");
+  FakeRoot r;
+  r.write("proc/self/cgroup", "0::/user.slice/user-1000.slice/job-42\n");
+  r.write("sys/fs/cgroup/user.slice/user-1000.slice/job-42/memory.max", "8589934592\n");
+  const auto m = hs::detect_memory_limits(r.probe());
+  EXPECT_NE(source(m, "cgroup").detail.find("user-1000.slice/job-42/"), std::string::npos);
+  EXPECT_EQ(hs::strip_paths(source(m, "cgroup").detail), "memory.max");
+  for (const auto& s : m.sources) EXPECT_EQ(hs::strip_paths(s.detail).find('/'), std::string::npos) << s.detail;
+}
+
 TEST(UtilMemoryLimits, ThisProcessHasAtLeastItsMachine) {
   const auto m = hs::detect_memory_limits();
   EXPECT_GT(source(m, "mem_total").gib, 0.0);
@@ -328,6 +351,45 @@ TEST(DriverMemoryBudget, TheSolveReportsItsBudgetAndWhereItCameFrom) {
   const auto sol = hs::solve(a, nullptr, cfg);
   EXPECT_EQ(sol.report.memory.source, "config");
   EXPECT_DOUBLE_EQ(sol.report.memory.budget_gb, 2.5);
+}
+
+/// Every string value of a JSON document (recursively), for checks of what a report reveals.
+void collect_strings(const nlohmann::json& j, std::vector<std::string>& out) {
+  if (j.is_string()) {
+    out.push_back(j.get<std::string>());
+  } else if (j.is_structured()) {
+    for (const auto& v : j) collect_strings(v, out);
+  }
+}
+
+// Secure mode: the report names no file. Without it the memory limits say where they were read
+// (MemTotal from /proc/meminfo on every Linux machine - which makes the check below meaningful).
+TEST(DriverMemoryBudget, SecureModeReportsNoFileSystemPaths) {
+  const auto a = hs::test::laplacian_2d<double>(12, 13);
+  auto cfg = nearest(1.0, 3);
+  const auto plain = hs::solve(a, nullptr, cfg);
+  ASSERT_TRUE(plain.report.success);
+  EXPECT_TRUE(std::any_of(plain.report.memory.limits.begin(), plain.report.memory.limits.end(),
+                          [](const hs::MemoryLimitSource& l) { return l.detail.find('/') != std::string::npos; }));
+  cfg.secure = true;
+  const auto sol = hs::solve(a, nullptr, cfg);
+  ASSERT_TRUE(sol.report.success);
+  ASSERT_EQ(sol.report.memory.limits.size(), plain.report.memory.limits.size());
+  for (std::size_t i = 0; i < sol.report.memory.limits.size(); ++i) {
+    const auto& l = sol.report.memory.limits[i];
+    EXPECT_EQ(l.name, plain.report.memory.limits[i].name);
+    EXPECT_EQ(l.gib, plain.report.memory.limits[i].gib);
+    EXPECT_EQ(l.detail.find('/'), std::string::npos) << l.detail;
+  }
+  std::vector<std::string> strings;
+  collect_strings(nlohmann::json::parse(sol.report.to_json()), strings);
+  for (const auto& s : strings) {
+    EXPECT_FALSE(!s.empty() && s.front() == '/') << s;
+    EXPECT_EQ(s.find("/proc/"), std::string::npos) << s;
+    EXPECT_EQ(s.find("/sys/"), std::string::npos) << s;
+  }
+  ASSERT_EQ(sol.eigenvalues.size(), plain.eigenvalues.size());  // the computation is unchanged
+  for (std::size_t i = 0; i < sol.eigenvalues.size(); ++i) EXPECT_NEAR(sol.eigenvalues[i], plain.eigenvalues[i], 1e-9);
 }
 
 // ------------------------------------------------------------------------------ out of core
