@@ -285,6 +285,19 @@ def fig_certificate(doc: dict[str, Any]):
 
 # ----------------------------------------------------------------------------------- scaling
 
+def spread(values: list[float], gap: float) -> list[float]:
+    """Label positions near `values` (same order) at least `gap` apart: sorted ascending, each pushed
+    up past its lower neighbour, then the block shifted down to stay centred on the values."""
+    order = np.argsort(values)
+    pos = np.asarray(values, dtype=float)[order]
+    for i in range(1, pos.size):
+        pos[i] = max(pos[i], pos[i - 1] + gap)
+    pos -= max(0.0, (pos.mean() - np.mean(values)))
+    out = np.empty_like(pos)
+    out[order] = pos
+    return out.tolist()
+
+
 def fig_scaling(path: Path = SCALING_JSON):
     plt = _plt()
     doc = json.loads(path.read_text())
@@ -297,12 +310,17 @@ def fig_scaling(path: Path = SCALING_JSON):
     for ax, (title, names) in zip(axes, panels):
         ts = np.array([1, 2, 4, 8, 16])
         ax.plot(ts, ts, color=AXIS, lw=1.0, zorder=1)
-        ax.text(5.6, 6.3, "ideal", color=MUTED, fontsize=10, rotation=0)
+        ax.text(4.6, 5.6, "linear", color=MUTED, fontsize=10, ha="right")
+        ends = []
         for k, name in enumerate(names):
             rows = {r["threads"]: r for r in cases[name]["variants"][0]["rows"]}
             y = np.array([rows[t]["speedup_vs_fastest"] for t in ts])
             ax.plot(ts, y, "-o", color=series_colors[k], lw=2, ms=7, mec=SURFACE, mew=1.5, label=name, zorder=3)
-            ax.text(17.5, y[-1], f"{y[-1]:.2f}×", va="center", fontsize=10.5, color=INK)
+            ends.append(y[-1])
+        for y_end, y_text in zip(ends, spread(ends, 0.32)):   # end labels kept apart, with leader lines
+            ax.annotate(f"{y_end:.2f}×", xy=(16, y_end), xytext=(19.5, y_text), va="center", fontsize=10.5,
+                        color=INK, arrowprops={"arrowstyle": "-", "color": AXIS, "lw": 0.8, "shrinkA": 0,
+                                               "shrinkB": 5})
         ax.set_xscale("log", base=2)
         ax.set_xticks(ts)
         ax.set_xticklabels([str(t) for t in ts])
@@ -336,7 +354,8 @@ def fig_cavity_modes(phys_dir: Path = PHYS_DIR, count: int = 6):
     fig, axes = plt.subplots(rows, cols, figsize=(3.4 * cols, 3.9 * rows), squeeze=False)
     for ax, label in zip(axes.ravel(), labels):
         img = data[label]
-        ax.imshow(img.T, origin="lower", extent=(0, a, 0, d), cmap=field_cmap(), vmin=0, vmax=1)
+        ax.imshow(img.T, origin="lower", extent=(0, a, 0, d), cmap=field_cmap(), vmin=0, vmax=1,
+                  interpolation="bilinear")
         ax.set_title(f"{label}   {freq[label]:.3f} GHz", fontsize=12)
         ax.set_xticks([0, a])
         ax.set_xticklabels(["0", f"{a:g}"])
@@ -349,9 +368,10 @@ def fig_cavity_modes(phys_dir: Path = PHYS_DIR, count: int = 6):
             s.set_color(AXIS)
     for ax in axes.ravel()[len(labels):]:
         ax.axis("off")
-    fig.suptitle(f"PEC cavity {doc['dims_mm'][0]} × {doc['dims_mm'][1]} × {doc['dims_mm'][2]} mm: |E| on the "
-                 f"mid-plane y = b/2 (hsolve eigenvectors, n = {doc['n']:,})", fontsize=12.5, x=0.02, ha="left")
     fig.tight_layout()
+    fig.suptitle(f"PEC cavity {doc['dims_mm'][0]} × {doc['dims_mm'][1]} × {doc['dims_mm'][2]} mm: |E| on the "
+                 f"mid-plane y = b/2 (hsolve eigenvectors, n = {doc['n']:,})", fontsize=12.5, x=0.01, y=1.02,
+                 ha="left")
     return fig
 
 
@@ -363,19 +383,35 @@ def fig_waveguide_modes(phys_dir: Path = PHYS_DIR):
     beta = {}
     for m in doc["modes"]:
         beta.setdefault(m["label"], m["beta_hsolve"])
-    fig, axes = plt.subplots(1, len(labels), figsize=(3.2 * len(labels), 3.7), squeeze=False)
+    fig, axes = plt.subplots(1, len(labels), figsize=(3.2 * len(labels), 3.9), squeeze=False)
     for ax, label in zip(axes[0], labels):
-        ax.imshow(data[label], origin="lower", extent=(0, 10, 0, 10), cmap=field_cmap(), vmin=0, vmax=1)
+        waveguide_panel(ax, data, label)
         ax.set_title(f"{label}\nβ = {beta[label]:.5f} rad/mm", fontsize=11.5)
-        ax.set_xticks([])
-        ax.set_yticks([])
-        for s in ax.spines.values():
-            s.set_visible(True)
-            s.set_color(AXIS)
-    fig.suptitle(f"Square waveguide 10 × 10 mm at {doc['freq_ghz']:g} GHz: |E_t| of propagating modes "
-                 f"(hsolve, n = {doc['n']:,}, B indefinite)", fontsize=12.5, x=0.02, ha="left")
     fig.tight_layout()
+    fig.suptitle(f"Square waveguide 10 × 10 mm at {doc['freq_ghz']:g} GHz: |E_t| (colour) and direction (arrows) "
+                 f"of propagating modes, hsolve eigenvectors (n = {doc['n']:,}, B indefinite)", fontsize=12.5,
+                 x=0.01, y=1.04, ha="left")
     return fig
+
+
+def waveguide_panel(ax, data, label: str, side: float = 10.0) -> None:
+    """|E_t| image of one mode with its field direction as arrows (when sampled)."""
+    ax.imshow(data[label], origin="lower", extent=(0, side, 0, side), cmap=field_cmap(), vmin=0, vmax=1,
+              interpolation="bilinear")
+    if f"{label}::ex" in data:
+        ex, ey = data[f"{label}::ex"], data[f"{label}::ey"]
+        q = ex.shape[0]
+        c = (np.arange(q) + 0.5) * side / q
+        gx, gy = np.meshgrid(c, c)
+        ax.quiver(gx, gy, ex, ey, color=SURFACE, edgecolor=INK, linewidth=0.3, angles="xy", scale_units="xy",
+                  scale=1.0 / (0.85 * side / q), width=0.006, headwidth=4, headlength=4.5, headaxislength=4)
+    ax.set_xlim(0, side)
+    ax.set_ylim(0, side)
+    ax.set_xticks([])
+    ax.set_yticks([])
+    for s in ax.spines.values():
+        s.set_visible(True)
+        s.set_color(AXIS)
 
 
 def fig_waveguide_errors(phys_dir: Path = PHYS_DIR):
@@ -384,17 +420,17 @@ def fig_waveguide_errors(phys_dir: Path = PHYS_DIR):
     plt = _plt()
     docs = json.loads((phys_dir / "waveguide.json").read_text())["cases"]
     fig, ax = plt.subplots(figsize=(11.5, 4.6))
-    styles = ((COLORS["slepc-default"], "o"), (COLORS["slepc-tuned"], "s"))
+    # Colour = kind of error (mesh: neutral ink, solver: hsolve's colour); marker = mesh size.
     labels = [m["label"] for m in sorted(docs[0]["modes"], key=lambda m: m["lambda_continuous"])]
     x = np.arange(len(labels))
-    for (color, marker), d in zip(styles, docs):
-        modes = sorted(d["modes"], key=lambda m: m["lambda_continuous"])
-        ax.plot(x, [m["discretization_rel_error_beta"] for m in modes], marker, color=color, ms=8, mec=SURFACE,
-                mew=1.2, label=f"discretization error, n = {d['n']:,} (h = {d['h_max_mm']:.3f} mm)")
     for d, mk in zip(docs, ("o", "s")):
         modes = sorted(d["modes"], key=lambda m: m["lambda_continuous"])
-        ax.plot(x, [max(m["solver_rel_error"], 1e-17) for m in modes], mk, color=COLORS["hsolve"], ms=7,
-                mec=SURFACE, mew=1.2, label=f"hsolve vs exact discrete eigenvalue, n = {d['n']:,}")
+        ax.plot(x, [m["discretization_rel_error_beta"] for m in modes], mk, color=INK2, ms=8, mec=SURFACE,
+                mew=1.2, label=f"mesh error |β_h − β| / β, n = {d['n']:,} (h = {d['h_max_mm']:.3f} mm)")
+    for d, mk in zip(docs, ("o", "s")):
+        modes = sorted(d["modes"], key=lambda m: m["lambda_continuous"])
+        ax.plot(x, [max(m["solver_rel_error"], 1e-17) for m in modes], mk, color=COLORS["hsolve"], ms=8,
+                mec=SURFACE, mew=1.2, label=f"hsolve error |λ − λ_h| / |λ_h|, n = {d['n']:,}")
     ax.set_yscale("log")
     ax.set_xticks(x)
     ax.set_xticklabels(labels, rotation=55, ha="right", fontsize=9.5)
@@ -414,28 +450,32 @@ def fig_hero(summary: dict[str, Any], phys_dir: Path = PHYS_DIR):
     from matplotlib.gridspec import GridSpec
     fig = plt.figure(figsize=(13, 5.2))
     gs = GridSpec(2, 4, figure=fig, width_ratios=[1, 1, 1, 2.3], wspace=0.25, hspace=0.42)
-    pics = []
+    pics = []   # (draw(ax), title)
     if (phys_dir / "cavity_modes.npz").exists():
         cav = json.loads((phys_dir / "cavity.json").read_text())
         cdata = np.load(phys_dir / "cavity_modes.npz")
         freq = {m["label"]: m["f_hsolve_ghz"] for m in cav["modes"]}
         a, _, d = cav["dims_mm"]
+
+        def cavity_panel(ax, label=None):
+            ax.imshow(cdata[label].T, origin="lower", extent=(0, a, 0, d), cmap=field_cmap(), vmin=0, vmax=1,
+                      interpolation="bilinear")
+            ax.set_xticks([])
+            ax.set_yticks([])
+            for s in ax.spines.values():
+                s.set_visible(True)
+                s.set_color(AXIS)
         for label in cav["field_slice"]["modes"][:3]:
-            pics.append((cdata[label].T, (0, a, 0, d), f"cavity {label}\n{freq[label]:.3f} GHz"))
+            pics.append((lambda ax, lbl=label: cavity_panel(ax, lbl), f"cavity {label}, {freq[label]:.3f} GHz"))
     if (phys_dir / "waveguide_modes.npz").exists():
         wdoc = json.loads((phys_dir / "waveguide.json").read_text())["cases"][0]
         wdata = np.load(phys_dir / "waveguide_modes.npz")
         for label in wdoc["field_pictures"]["modes"][:3]:
-            pics.append((wdata[label], (0, 10, 0, 10), f"waveguide {label}"))
-    for k, (img, ext, title) in enumerate(pics[:6]):
+            pics.append((lambda ax, lbl=label: waveguide_panel(ax, wdata, lbl), f"waveguide {label}"))
+    for k, (draw, title) in enumerate(pics[:6]):
         ax = fig.add_subplot(gs[k // 3, k % 3])
-        ax.imshow(img, origin="lower", extent=ext, cmap=field_cmap(), vmin=0, vmax=1, aspect="auto")
+        draw(ax)
         ax.set_title(title, fontsize=10.5)
-        ax.set_xticks([])
-        ax.set_yticks([])
-        for s in ax.spines.values():
-            s.set_visible(True)
-            s.set_color(AXIS)
     ax = fig.add_subplot(gs[:, 3])
     counts = summary["correct_counts"]
     total = max(c["scenarios"] for c in counts.values())

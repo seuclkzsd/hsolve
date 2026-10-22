@@ -43,6 +43,15 @@ def test_scaling_figure_from_committed_data(tmp_path):
     assert paths[0].read_bytes()[:8] == b"\x89PNG\r\n\x1a\n"
 
 
+def test_spread_keeps_labels_apart_and_in_order():
+    vals = [2.71, 2.65, 2.25]
+    pos = figures.spread(vals, 0.3)
+    assert sorted(range(3), key=lambda i: pos[i]) == sorted(range(3), key=lambda i: vals[i])
+    s = sorted(pos)
+    assert all(b - a >= 0.3 - 1e-12 for a, b in zip(s, s[1:]))
+    assert figures.spread([1.0, 5.0], 0.3) == [1.0, 5.0]       # already apart: unchanged
+
+
 def test_field_colormap_is_one_hue_light_to_dark():
     cmap = figures.field_cmap()
     lum = [np.dot(cmap(x)[:3], [0.2126, 0.7152, 0.0722]) for x in np.linspace(0, 1, 11)]

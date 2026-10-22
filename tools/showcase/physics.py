@@ -49,8 +49,9 @@ CAVITY_K_MIN = 10
 WAVEGUIDES = ("wg-square-1e5", "wg-square-1e6")
 # Field pictures of the 1e5 guide; a joined label is a degenerate pair (the picture is one vector of
 # its eigenspace, any combination of the two being a mode).
-WAVEGUIDE_PICTURES = ("TE01/TE10", "TE11", "TM11", "TE12/TE21")
+WAVEGUIDE_PICTURES = ("TE01/TE10", "TE11", "TM11", "TE22")
 FIELD_PIXELS = 160
+QUIVER = 14                                  # direction arrows of E_t: a QUIVER x QUIVER grid
 
 
 def freq_ghz(lam: np.ndarray | float) -> np.ndarray | float:
@@ -263,11 +264,16 @@ def waveguide(root: Path, name: str, work: Path, threads: int, with_fields: bool
                 continue
             et = wref.centroid_fields(rb, res.eigenvectors[:, r["index"]])
             mag = np.sqrt((np.abs(et) ** 2).sum(axis=1))
-            img = wref.sample_on_grid(rb, mag / np.nanmax(mag), FIELD_PIXELS, FIELD_PIXELS)
-            fields[r["label"]] = img
+            scale = np.nanmax(mag)
+            fields[r["label"]] = wref.sample_on_grid(rb, mag / scale, FIELD_PIXELS, FIELD_PIXELS)
+            # Direction of the (real) transverse field on a coarse grid, same normalization.
+            fields[r["label"] + "::ex"] = wref.sample_on_grid(rb, np.real(et[:, 0]) / scale, QUIVER, QUIVER)
+            fields[r["label"] + "::ey"] = wref.sample_on_grid(rb, np.real(et[:, 1]) / scale, QUIVER, QUIVER)
             pictured.append(r["label"])
         doc["field_pictures"] = {"quantity": "|E_t| (transverse field) at triangle centroids, sampled on a "
-                                             f"{FIELD_PIXELS}x{FIELD_PIXELS} pixel grid", "modes": pictured}
+                                             f"{FIELD_PIXELS}x{FIELD_PIXELS} pixel grid; E_t components "
+                                             f"('<label>::ex', '::ey') on a {QUIVER}x{QUIVER} grid",
+                                 "modes": pictured}
     return doc, fields
 
 
