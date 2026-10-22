@@ -6,12 +6,14 @@
 #include <algorithm>
 #include <cmath>
 #include <fstream>
+#include <limits>
 #include <numeric>
 #include <string>
 #include <vector>
 
 #include <nlohmann/json.hpp>
 
+#include "driver/internal.hpp"
 #include "hsolve/error.hpp"
 #include "hsolve/log.hpp"
 #include "hsolve/solver.hpp"
@@ -217,6 +219,10 @@ TEST(DriverSlicing, EigenvaluesOnTheIntervalEndsAreIncluded) {
 TEST(DriverSlicing, ZeroBandIsCutOutOfTheInterval) {
   // 40 exact zero eigenvalues (a null space) inside the interval: with zero_filter_tol the band
   // |lambda| <= tol*scale is excluded by inertia counts at its edges, never computed.
+  // The upper end 0.5 is an eigenvalue: the matrix's copy of it lies 1e-15 below 0.5 in an
+  // -march=native build and 5.6e-16 above it in an x86-64 baseline build; null-pivot detection
+  // flags neither, so the count at 0.5 takes it while the computed value may lie just outside -
+  // the global certificate must count it as the end's count does (assign_to_windows).
   std::vector<double> lam(40, 0.0);
   for (int i = 1; i <= 150; ++i) {
     lam.push_back(0.01 * i);
@@ -618,6 +624,72 @@ TEST(DriverTargets, IndefiniteBSupportsNearestOnly) {
       EXPECT_EQ(e.code(), hs::Error::Code::Unsupported);
     }
   }
+}
+
+// ------------------------------------------------- global certificate: pairs on window ends
+
+// Pairs of one window [-0.5, 0.5] (scale 2: resolution 2e-9 at both ends) and of a partial one.
+std::vector<index_t> tally(const std::vector<double>& lambda, index_t required, std::vector<index_t>& found,
+                           std::vector<char> excluded = {}) {
+  if (excluded.empty()) excluded.assign(lambda.size(), 0);
+  const std::vector<hs::driver::WindowTally> w{{-0.5, 0.5, required, false}};
+  return hs::driver::assign_to_windows(lambda, excluded, w, 2.0, found);
+}
+
+TEST(DriverWindowTally, EndResolutionIsRelativeToTheScaleAndZeroForOpenEnds) {
+  EXPECT_DOUBLE_EQ(hs::driver::end_resolution(2.0, 0.5), 2e-9);
+  EXPECT_DOUBLE_EQ(hs::driver::end_resolution(2.0, -8.0), 8e-9);
+  EXPECT_EQ(hs::driver::end_resolution(2.0, std::numeric_limits<double>::infinity()), 0.0);
+  EXPECT_EQ(hs::driver::end_resolution(2.0, -std::numeric_limits<double>::infinity()), 0.0);
+}
+
+TEST(DriverWindowTally, APairJustOutsideAnEndCountsWhenTheCountTookIt) {
+  // The count at 0.5 took an eigenvalue whose computed value is 0.5 + 5.6e-16 (ZeroBandIsCut...).
+  std::vector<index_t> found;
+  auto in = tally({-0.2, 0.1, 0.5 + 5.6e-16, 0.9}, 3, found);
+  EXPECT_EQ(in, (std::vector<index_t>{0, 1, 2}));
+  EXPECT_EQ(found, (std::vector<index_t>{3}));
+  in = tally({-0.5 - 1e-12, -0.2, 0.1}, 3, found);  // the lower end likewise
+  EXPECT_EQ(in, (std::vector<index_t>{0, 1, 2}));
+}
+
+TEST(DriverWindowTally, APairJustInsideAnEndIsDroppedWhenTheCountLeftItOut) {
+  std::vector<index_t> found;
+  auto in = tally({-0.2, 0.5 - 4e-16, 0.1}, 2, found);
+  EXPECT_EQ(in, (std::vector<index_t>{0, 2}));
+  EXPECT_EQ(found, (std::vector<index_t>{2}));
+}
+
+TEST(DriverWindowTally, PairsBeyondTheResolutionNeverMove) {
+  // A missing eigenvalue is not made up by a pair 1e-6 outside, nor an extra one hidden when it
+  // lies 1e-6 inside: the certificate fails.
+  std::vector<index_t> found;
+  auto in = tally({-0.2, 0.1, 0.5 + 1e-6}, 3, found);
+  EXPECT_EQ(in, (std::vector<index_t>{0, 1}));
+  EXPECT_EQ(found, (std::vector<index_t>{2}));
+  in = tally({-0.2, 0.1, 0.5 - 1e-6}, 2, found);
+  EXPECT_EQ(in, (std::vector<index_t>{0, 1, 2}));
+  EXPECT_EQ(found, (std::vector<index_t>{3}));
+}
+
+TEST(DriverWindowTally, NearestToTheEndFirstAndOnlyAsManyAsTheCountAsks) {
+  std::vector<index_t> found;
+  auto in = tally({0.0, 0.5 + 9e-10, -0.5 - 3e-10, 0.5 + 1e-10}, 2, found);
+  EXPECT_EQ(in, (std::vector<index_t>{0, 3}));
+  in = tally({0.5 - 9e-10, 0.0, 0.5 - 1e-10, -0.5 + 5e-10}, 2, found);
+  EXPECT_EQ(in, (std::vector<index_t>{0, 1}));  // drops 1e-10, then 5e-10 from the end
+}
+
+TEST(DriverWindowTally, ZeroBandPairsAndPartialClusters) {
+  std::vector<index_t> found;
+  // A pair in the zero band never proves a window by lying inside it ...
+  auto in = tally({-0.2, 1e-9, 0.1}, 2, found, {0, 1, 0});
+  EXPECT_EQ(in, (std::vector<index_t>{0, 2}));
+  // ... and a partial cluster keeps its first `required` copies, no end rule.
+  const std::vector<hs::driver::WindowTally> w{{0.9, 1.1, 2, true}, {1.5, 2.5, 1, false}};
+  in = hs::driver::assign_to_windows({1.0, 1.0, 1.0, 1.1 + 1e-12, 2.0}, std::vector<char>(5, 0), w, 2.0, found);
+  EXPECT_EQ(in, (std::vector<index_t>{0, 1, 4}));
+  EXPECT_EQ(found, (std::vector<index_t>{2, 1}));
 }
 
 }  // namespace
