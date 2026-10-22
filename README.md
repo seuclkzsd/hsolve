@@ -140,7 +140,7 @@ hsolve 自动识别 B 不定并排除零空间，返回的正是 18 个传播模
   author  = {seuclkzsd},
   title   = {hsolve: a certified shift-invert eigensolver for large sparse Hermitian (indefinite) eigenproblems from electromagnetic simulation},
   year    = {2026},
-  version = {1.0.0},
+  version = {{{TODO:release version = CMakeLists.txt project(VERSION) = CHANGELOG}}},
   url     = {https://github.com/seuclkzsd/hsolve},
   license = {Apache-2.0}
 }
