@@ -1,0 +1,273 @@
+{
+ "case": "phys-cavity-wr90",
+ "dims_mm": [
+  22.86,
+  10.16,
+  30.0
+ ],
+ "cells": [
+  46,
+  20,
+  60
+ ],
+ "n": 155966,
+ "null_space": 50445,
+ "h_mm": [
+  0.4969565217391304,
+  0.508,
+  0.5
+ ],
+ "target": {
+  "mode": "nearest",
+  "sigma": 0.0,
+  "k": 10
+ },
+ "hsolve_config": {
+  "method": "shift_invert_lanczos",
+  "zero_filter_tol": 1e-08
+ },
+ "zero_modes_filtered": 50445,
+ "certificate": {
+  "count_found": 24,
+  "count_inertia": 24,
+  "endpoint_moves": 0,
+  "failure_probability": 0.0,
+  "lower": -0.24763664520731077,
+  "method": "exact",
+  "note": "zero band (-4.72329e-07, 4.72329e-07) excluded: 50445 eigenvalue(s) by inertia",
+  "passed": true,
+  "performed": true,
+  "rigorous": true,
+  "seconds": 29.283766095999997,
+  "solves": 0,
+  "statement": "double-precision Sylvester counts at every window end and slice cut: 24 eigenvalue(s) required, 24 distinct found pair(s): every required eigenvalue is found",
+  "upper": 0.24763664520731077
+ },
+ "candidate_source": "iterative",
+ "success": true,
+ "evaluation": {
+  "verdict": "pass",
+  "reasons": [],
+  "completeness": "complete",
+  "certified": true,
+  "expected": 10,
+  "found": 10,
+  "max_backward_error": 1.844987070948583e-12,
+  "max_eig_scaled_error": 3.951067358835992e-17
+ },
+ "modes": [
+  {
+   "index": 0,
+   "label": "TE101",
+   "mnp": [
+    1,
+    0,
+    1
+   ],
+   "polarizations": 1,
+   "copy": 1,
+   "lambda_hsolve": 0.029842699990177822,
+   "lambda_discrete": 0.029842699990178738,
+   "lambda_analytic": 0.029852544911733038,
+   "f_hsolve_ghz": 8.242517749914345,
+   "f_discrete_ghz": 8.242517749914473,
+   "f_analytic_ghz": 8.243877215534543,
+   "solver_rel_error": 3.069206189846056e-14,
+   "discretization_rel_error_f": 0.00016490609752262676
+  },
+  {
+   "index": 1,
+   "label": "TE102",
+   "mnp": [
+    1,
+    0,
+    2
+   ],
+   "polarizations": 1,
+   "copy": 1,
+   "lambda_hsolve": 0.06270381508058212,
+   "lambda_discrete": 0.06270381508058304,
+   "lambda_analytic": 0.06275122624869756,
+   "f_hsolve_ghz": 11.947796509497879,
+   "f_discrete_ghz": 11.947796509497962,
+   "f_analytic_ghz": 11.95231259796799,
+   "solver_rel_error": 1.4607308887643484e-14,
+   "discretization_rel_error_f": 0.000377842232037686
+  },
+  {
+   "index": 2,
+   "label": "TE201",
+   "mnp": [
+    2,
+    0,
+    1
+   ],
+   "polarizations": 1,
+   "copy": 1,
+   "lambda_hsolve": 0.08639161156003285,
+   "lambda_discrete": 0.08639161156003365,
+   "lambda_analytic": 0.08651149830996763,
+   "f_hsolve_ghz": 14.024152391180499,
+   "f_discrete_ghz": 14.024152391180563,
+   "f_analytic_ghz": 14.03387976592729,
+   "solver_rel_error": 9.317012130210168e-15,
+   "discretization_rel_error_f": 0.0006931351065401516
+  },
+  {
+   "index": 3,
+   "label": "TE011",
+   "mnp": [
+    0,
+    1,
+    1
+   ],
+   "polarizations": 1,
+   "copy": 1,
+   "lambda_hsolve": 0.10637927318219498,
+   "lambda_discrete": 0.10637927318219406,
+   "lambda_analytic": 0.10657821097184239,
+   "f_hsolve_ghz": 15.56214092998264,
+   "f_discrete_ghz": 15.56214092998257,
+   "f_analytic_ghz": 15.576685360413224,
+   "solver_rel_error": 8.610079463008257e-15,
+   "discretization_rel_error_f": 0.0009337307709647309
+  },
+  {
+   "index": 4,
+   "label": "TM110",
+   "mnp": [
+    1,
+    1,
+    0
+   ],
+   "polarizations": 1,
+   "copy": 1,
+   "lambda_hsolve": 0.11429452924555292,
+   "lambda_discrete": 0.11429452924555479,
+   "lambda_analytic": 0.1144983016589324,
+   "f_hsolve_ghz": 16.130712700628035,
+   "f_discrete_ghz": 16.130712700628166,
+   "f_analytic_ghz": 16.14508578790973,
+   "solver_rel_error": 1.6391872528122923e-14,
+   "discretization_rel_error_f": 0.0008902453334949572
+  },
+  {
+   "index": 5,
+   "label": "TE103",
+   "mnp": [
+    1,
+    0,
+    3
+   ],
+   "polarizations": 1,
+   "copy": 1,
+   "lambda_hsolve": 0.11737225326566705,
+   "lambda_discrete": 0.11737225326566791,
+   "lambda_analytic": 0.1175823618103051,
+   "f_hsolve_ghz": 16.346453959816273,
+   "f_discrete_ghz": 16.346453959816333,
+   "f_analytic_ghz": 16.361078344578505,
+   "solver_rel_error": 7.330717611230994e-15,
+   "discretization_rel_error_f": 0.0008938521321253795
+  },
+  {
+   "index": 6,
+   "label": "TE202",
+   "mnp": [
+    2,
+    0,
+    2
+   ],
+   "polarizations": 1,
+   "copy": 1,
+   "lambda_hsolve": 0.11925272665043694,
+   "lambda_discrete": 0.11925272665043796,
+   "lambda_analytic": 0.11941017964693215,
+   "f_hsolve_ghz": 16.476880556275507,
+   "f_discrete_ghz": 16.476880556275578,
+   "f_analytic_ghz": 16.487754431069085,
+   "solver_rel_error": 8.495223031168611e-15,
+   "discretization_rel_error_f": 0.0006595121754734932
+  },
+  {
+   "index": 7,
+   "label": "TE111/TM111",
+   "mnp": [
+    1,
+    1,
+    1
+   ],
+   "polarizations": 2,
+   "copy": 1,
+   "lambda_hsolve": 0.12525825120896197,
+   "lambda_discrete": 0.1252582512089638,
+   "lambda_analytic": 0.1254645287712539,
+   "f_hsolve_ghz": 16.88666961559461,
+   "f_discrete_ghz": 16.886669615594734,
+   "f_analytic_ghz": 16.90056853276075,
+   "solver_rel_error": 1.4624729093299165e-14,
+   "discretization_rel_error_f": 0.0008223934679519729
+  },
+  {
+   "index": 8,
+   "label": "TE111/TM111",
+   "mnp": [
+    1,
+    1,
+    1
+   ],
+   "polarizations": 2,
+   "copy": 2,
+   "lambda_hsolve": 0.12525825120896422,
+   "lambda_discrete": 0.1252582512089638,
+   "lambda_analytic": 0.1254645287712539,
+   "f_hsolve_ghz": 16.886669615594762,
+   "f_discrete_ghz": 16.886669615594734,
+   "f_analytic_ghz": 16.90056853276075,
+   "solver_rel_error": 3.3238020666589012e-15,
+   "discretization_rel_error_f": 0.0008223934679519729
+  },
+  {
+   "index": 9,
+   "label": "TE012",
+   "mnp": [
+    0,
+    1,
+    2
+   ],
+   "polarizations": 1,
+   "copy": 1,
+   "lambda_hsolve": 0.1392403882725992,
+   "lambda_discrete": 0.13924038827259835,
+   "lambda_analytic": 0.13947689230880692,
+   "f_hsolve_ghz": 17.804240306717872,
+   "f_discrete_ghz": 17.80424030671782,
+   "f_analytic_ghz": 17.81935441344738,
+   "solver_rel_error": 6.179405664971291e-15,
+   "discretization_rel_error_f": 0.0008481848656735385
+  }
+ ],
+ "field_slice": {
+  "plane": "y = b/2 (cell layer 10 of 20)",
+  "axes": [
+   "x (a)",
+   "z (d)"
+  ],
+  "modes": [
+   "TE101",
+   "TE102",
+   "TE201",
+   "TE011",
+   "TM110",
+   "TE103"
+  ]
+ },
+ "conditions": {
+  "hsolve_binary": "build/release/hsolve",
+  "threads": 8,
+  "git_commit": "9f6f373cff77fa6d2f96e223eac963f304157501",
+  "host": "c005",
+  "date": "2026-10-22T22:08:39",
+  "note": "accuracy runs in the build/test lane; times are not measurements"
+ }
+}
