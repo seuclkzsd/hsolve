@@ -77,16 +77,61 @@ std::vector<double> inverse_diagonal(const CsrMatrix<T>& b) {
   return inv;
 }
 
-/// Upper bounds q_j >= r_j^H B^{-1} r_j for the p columns of r (n x p, ld n), B HPD. For any z,
-/// with s = r - B z:  r^H B^{-1} r = Re z^H (2 r - B z) + s^H B^{-1} s,  s^H B^{-1} s <= ||s||^2 /
-/// lambda_min(B). z comes from Jacobi-preconditioned CG (it only makes s small; the identity holds
-/// for any z); b_min is the lower bound (or estimate) of lambda_min(B). The evaluation's rounding
-/// is bounded a priori.
+/// out[i] = sum_j |m_ij| |v_j|: the componentwise envelope of m v (the rounding error of a computed
+/// m v is at most gamma_{len+1} out[i] in row i).
 template <class T>
-void cg_b_inverse_quadratic(const CsrMatrix<T>& b, const std::vector<double>& inv_diag, const RowStats& sb,
-                            const T* r, index_t n, index_t p, double b_min, const SubspaceOptions& opt,
-                            double* q) {
+void abs_product(const CsrMatrix<T>& m, const T* v, double* out) {
+#pragma omp parallel for schedule(static)
+  for (index_t i = 0; i < m.nrows; ++i) {
+    double s = 0.0;
+    for (index_t p = m.rowptr[i]; p < m.rowptr[i + 1]; ++p) s += std::abs(m.values[p]) * std::abs(v[m.colind[p]]);
+    out[i] = s;
+  }
+}
+
+/// How B^{-1}-norms are bounded: B = I (identity), a diagonal B (exact weights 1 / b_ii), or a
+/// general HPD B through lower bounds of lambda_min(B) (b_min) and of lambda_min(S),
+/// S = D^{-1/2} B D^{-1/2} (scaled; 0 = none).
+struct BInverseWeights {
+  bool identity = true;
+  bool diagonal = false;
+  const std::vector<double>* inv_diag = nullptr;
+  double b_min = 1.0;
+  double scaled = 0.0;
+};
+
+/// An upper bound of sqrt(v^H B^{-1} v) for every v with |v_i| <= c_i (c >= 0): ||c||_2 (B = I),
+/// sqrt(sum c_i^2 / b_ii) (diagonal B), else the smaller of ||c||_2 / sqrt(lambda_min(B)) and
+/// ||D^{-1/2} c||_2 / sqrt(lambda_min(S)), since v^H B^{-1} v = (D^{-1/2} v)^H S^{-1} (D^{-1/2} v).
+/// The rounding of the sums is included.
+double envelope_b_inverse_norm(const double* c, index_t n, const BInverseWeights& w) {
+  double plain = 0.0, weighted = 0.0;
+  const double* inv = !w.identity && (w.diagonal || w.scaled > 0.0) ? w.inv_diag->data() : nullptr;
+#pragma omp parallel for reduction(+ : plain, weighted) schedule(static)
+  for (index_t i = 0; i < n; ++i) {
+    const double c2 = c[i] * c[i];
+    plain += c2;
+    if (inv) weighted += c2 * inv[i];
+  }
+  const double slack = 1.0 + gamma_of(static_cast<double>(n) + 4.0);
+  if (w.identity) return std::sqrt(plain) * slack;
+  if (w.diagonal) return std::sqrt(weighted) * slack;
+  double bound = std::sqrt(plain / w.b_min);
+  if (w.scaled > 0.0) bound = std::min(bound, std::sqrt(weighted / w.scaled));
+  return bound * slack;
+}
+
+/// Upper bounds q_j >= r_j^H B^{-1} r_j for the p columns of r (n x p, ld n), B HPD. For any z,
+/// with s = r - B z:  r^H B^{-1} r = Re z^H (2 r - B z) + s^H B^{-1} s, where s^H B^{-1} s is bounded
+/// by envelope_b_inverse_norm (lower bounds, or estimates, of lambda_min(B) and lambda_min(S)).
+/// z comes from Jacobi-preconditioned CG (it only makes s small; the identity holds for any z). The
+/// evaluation's rounding is bounded a priori, componentwise for the products with B.
+template <class T>
+void cg_b_inverse_quadratic(const CsrMatrix<T>& b, const BInverseWeights& wts, const RowStats& sb, const T* r,
+                            index_t n, index_t p, const SubspaceOptions& opt, double* q) {
+  const std::vector<double>& inv_diag = *wts.inv_diag;
   DenseMatrix<T> z(n, p), s(n, p), h(n, p), dir(n, p), bd(n, p);
+  std::vector<double> envelope(static_cast<std::size_t>(n));
   std::vector<double> rnorm(static_cast<std::size_t>(p)), rho(static_cast<std::size_t>(p));
   std::vector<double> quad(static_cast<std::size_t>(p), 0.0);  // r^H z_k = sum_i alpha_i rho_i
   std::vector<char> done(static_cast<std::size_t>(p), 0);
@@ -122,14 +167,17 @@ void cg_b_inverse_quadratic(const CsrMatrix<T>& b, const std::vector<double>& in
       quad[js] += alpha * rho[js];
       linalg::axpy(n, T(alpha), dir.col(j), z.col(j));
       const double snorm = linalg::axpy_norm2(n, T(-alpha), bd.col(j), s.col(j));
-      // Enough once the remainder bound ||s||^2 / lambda_min(B) is a negligible share of
-      // r^H B^{-1} r (approached from below by CG's r^H z_k), or s is at rounding level.
-      if (snorm * snorm <= kRemainderShare * quad[js] * b_min || snorm <= opt.cg_tol * rnorm[js]) {
+      precondition(j);
+      const double rho_next = real_part(linalg::dot(n, s.col(j), h.col(j)));  // ||D^{-1/2} s||^2
+      // Enough once the remainder's estimate, s^H B^{-1} s <= min(||s||^2 / lambda_min(B),
+      // ||D^{-1/2} s||^2 / lambda_min(S)), is a negligible share of r^H B^{-1} r (approached from
+      // below by CG's r^H z_k), or s is at rounding level.
+      double remainder = snorm * snorm / wts.b_min;
+      if (wts.scaled > 0.0) remainder = std::min(remainder, rho_next / wts.scaled);
+      if (remainder <= kRemainderShare * quad[js] || snorm <= opt.cg_tol * rnorm[js]) {
         done[js] = 1;
         continue;
       }
-      precondition(j);
-      const double rho_next = real_part(linalg::dot(n, s.col(j), h.col(j)));
       const double beta = rho_next / rho[js];
       rho[js] = rho_next;
       T* dj = dir.col(j);
@@ -142,6 +190,7 @@ void cg_b_inverse_quadratic(const CsrMatrix<T>& b, const std::vector<double>& in
   spmm(b, z.data(), n, bd.data(), n, p);
   const double g_n = gamma_of(static_cast<double>(n) + 2.0);
   const double g_b = gamma_of(static_cast<double>(sb.max_nnz) + 1.0);
+  double* env = envelope.data();
   for (index_t j = 0; j < p; ++j) {
     const T* rj = r + j * n;
     const T* zj = z.col(j);
@@ -149,23 +198,29 @@ void cg_b_inverse_quadratic(const CsrMatrix<T>& b, const std::vector<double>& in
     T* sj = s.col(j);
 #pragma omp parallel for schedule(static)
     for (index_t i = 0; i < n; ++i) sj[i] = rj[i] - wj[i];
-    const double zn = linalg::norm2(n, zj), wn = linalg::norm2(n, wj), sn = linalg::norm2(n, sj);
+    const double zn = linalg::norm2(n, zj), wn = linalg::norm2(n, wj);
     const double rn = rnorm[static_cast<std::size_t>(j)];
     const double main = 2.0 * real_part(linalg::dot(n, zj, rj)) - real_part(linalg::dot(n, zj, wj));
-    // |fl(main) - z^H (2 r - B z)| <= gamma_n ||z|| (2 ||r|| + ||w||) + ||z|| ||w - B z||, and
-    // ||w - B z|| <= gamma_m || |B| |z| || <= gamma_m sum|B| ||z||.
-    const double main_err = g_n * zn * (2.0 * rn + wn) + g_b * sb.abs_sum * zn * zn;
-    const double s_true = sn * (1.0 + g_n) + g_b * sb.abs_sum * zn;
-    q[j] = std::max(0.0, main + main_err) + s_true * s_true / b_min;
+    // w = fl(B z) is within g_b |B| |z| of B z componentwise, so
+    // |fl(main) - z^H (2 r - B z)| <= gamma_n ||z|| (2 ||r|| + ||w||) + g_b ||z|| || |B| |z| ||, and
+    // the exact r - B z is at most |s_i| (1 + 2u) + g_b (|B| |z|)_i in modulus.
+    abs_product(b, zj, env);
+    const double abs_bz = linalg::norm2(n, env) * (1.0 + g_n);
+    const double main_err = g_n * zn * (2.0 * rn + wn) + g_b * zn * abs_bz;
+#pragma omp parallel for schedule(static)
+    for (index_t i = 0; i < n; ++i) env[i] = std::abs(sj[i]) * (1.0 + 2.0 * kRoundoff) + g_b * env[i];
+    const double remainder = envelope_b_inverse_norm(env, n, wts);
+    q[j] = std::max(0.0, main + main_err) + remainder * remainder;
   }
 }
 
-/// eps >= ||X_c^H B X_c - I||_2 for the columns `cols` (column(j): the j-th vector, n entries) (Frobenius norm of the computed
-/// defect plus the a-priori bound of the Gram entries' rounding: |g_ij - fl(g_ij)| <=
-/// gamma_{n+m} ||x_i|| sum|B| ||x_j||). Blocks of at most `width` columns.
+/// eps >= ||X_c^H B X_c - I||_2 for the columns `cols` (column(j): the j-th vector, n entries): the
+/// Frobenius norm of the computed defect plus the a-priori bound of the Gram entries' rounding,
+/// |g_ij - fl(g_ij)| <= gamma_{n+m} ||x_i|| || |B| |x_j| || (abs_b[j] >= || |B| |x_j| ||, the
+/// vector's norm for B = I). Blocks of at most `width` columns.
 template <class T, class Column>
 double gram_defect(const CsrMatrix<T>* b, const RowStats& sb, index_t n, const Column& column,
-                   const std::vector<index_t>& cols, index_t width) {
+                   const std::vector<index_t>& cols, const std::vector<double>& abs_b, index_t width) {
   const auto m = static_cast<index_t>(cols.size());
   const index_t w = std::max<index_t>(1, std::min(width, m));
   DenseMatrix<T> xi(n, w), xj(n, w), bxj(n, w), g(w, w);
@@ -176,10 +231,12 @@ double gram_defect(const CsrMatrix<T>* b, const RowStats& sb, index_t n, const C
       std::copy(src, src + n, dst.col(c));
     }
   };
-  double defect2 = 0.0, norms2 = 0.0;
+  double defect2 = 0.0, norms2 = 0.0, abs2 = 0.0;
   for (index_t c : cols) {
     const double v = linalg::norm2(n, column(c));
+    const double a = abs_b[static_cast<std::size_t>(c)];
     norms2 += v * v;
+    abs2 += a * a;
   }
   for (index_t j0 = 0; j0 < m; j0 += w) {
     const index_t pj = std::min(w, m - j0);
@@ -205,8 +262,9 @@ double gram_defect(const CsrMatrix<T>* b, const RowStats& sb, index_t n, const C
         }
     }
   }
-  const double computed = std::sqrt(defect2) * (1.0 + gamma_of(static_cast<double>(m * m) + 2.0));
-  return computed + gamma_of(static_cast<double>(n + sb.max_nnz) + 2.0) * sb.abs_sum * norms2;
+  const double slack = 1.0 + gamma_of(static_cast<double>(m * m + n) + 2.0);
+  const double rounding = gamma_of(static_cast<double>(n + sb.max_nnz) + 2.0) * std::sqrt(norms2 * abs2);
+  return (std::sqrt(defect2) + rounding) * slack;
 }
 
 /// One group of pairs (indices into the returned pairs, then the unreturned ones) with its Kahan
@@ -222,9 +280,10 @@ struct Group {
 }  // namespace
 
 template <class T>
-double gershgorin_lambda_min(const CsrMatrix<T>& b) {
+GershgorinBounds gershgorin_bounds(const CsrMatrix<T>& b) {
   const index_t n = b.nrows;
-  if (n == 0) return 0.0;
+  GershgorinBounds out;
+  if (n == 0) return out;
   std::vector<double> diag(static_cast<std::size_t>(n), 0.0);
 #pragma omp parallel for schedule(static)
   for (index_t i = 0; i < n; ++i)
@@ -248,36 +307,57 @@ double gershgorin_lambda_min(const CsrMatrix<T>& b) {
     scaled = std::min(scaled, 1.0 - off_scaled * (1.0 + g));
     dmin = std::min(dmin, d);
   }
-  if (!(dmin > 0.0)) return 0.0;
-  // Jacobi scaling W = diag(b)^{-1/2}: x^H B x = y^H (W B W) y with y = W^{-1} x and
-  // ||y||^2 >= min_i b_ii ||x||^2, so lambda_min(B) >= lambda_min(W B W) min_i b_ii.
-  const double from_scaled = scaled > 0.0 ? scaled * dmin : 0.0;
-  return std::max(std::max(plain, from_scaled), 0.0) * (1.0 - 4.0 * kRoundoff);
+  out.min_diagonal = dmin;
+  if (!(dmin > 0.0)) return out;
+  out.plain = plain * (1.0 - 4.0 * kRoundoff);
+  out.scaled = scaled * (1.0 - 4.0 * kRoundoff);
+  return out;
+}
+
+template <class T>
+double gershgorin_lambda_min(const CsrMatrix<T>& b) {
+  const GershgorinBounds g = gershgorin_bounds(b);
+  // Jacobi scaling D^{-1/2}: x^H B x = y^H S y with y = D^{1/2} x and ||y||^2 >= min_i b_ii ||x||^2,
+  // so lambda_min(B) >= lambda_min(S) min_i b_ii.
+  const double from_scaled = g.scaled > 0.0 ? g.scaled * g.min_diagonal * (1.0 - 4.0 * kRoundoff) : 0.0;
+  return std::max(std::max(g.plain, from_scaled), 0.0);
 }
 
 template <class T>
 std::vector<double> residual_b_inverse_norms(const CsrMatrix<T>& a, const CsrMatrix<T>* b,
                                              const std::vector<double>& lambda, const DenseMatrix<T>& x,
-                                             const SubspaceOptions& opt) {
+                                             const SubspaceOptions& opt, std::vector<double>* abs_b_norms) {
   const index_t n = x.rows(), m = x.cols();
   std::vector<double> rho(static_cast<std::size_t>(m), 0.0);
+  if (abs_b_norms) abs_b_norms->assign(static_cast<std::size_t>(m), 0.0);
   if (m == 0) return rho;
   const RowStats sa = row_stats(a);
   const RowStats sb = b ? row_stats(*b) : RowStats{};
   const bool cg = b != nullptr && !opt.b_diagonal;
   const double per_column = (cg ? 7.0 : 2.0) * static_cast<double>(n) * sizeof(T);
-  // Half the memory left: the rest stays free for the allocator's and the libraries' own use.
-  const double fit = std::floor(0.5 * opt.memory_bytes / per_column);
+  // Two (CG: three) n-vectors of envelopes, then half the memory left for the column chunks: the
+  // rest stays free for the allocator's and the libraries' own use.
+  const double fixed = (cg ? 3.0 : 2.0) * static_cast<double>(n) * sizeof(double);
+  const double fit = std::floor((0.5 * opt.memory_bytes - fixed) / per_column);
   if (!(fit >= 1.0))
-    HS_THROW(OutOfMemoryBudget, "subspace bound: one column's workspace (" << per_column / 1e6 << " MB) exceeds the "
+    HS_THROW(OutOfMemoryBudget, "subspace bound: one column's workspace (" << (per_column + fixed) / 1e6
+                                                                          << " MB) exceeds the "
                                                                           << opt.memory_bytes / 1e6 << " MB left");
   const index_t w = std::min<index_t>({m, kChunkColumns, static_cast<index_t>(std::min(fit, 1e9))});
   const std::vector<double> inv_diag = b ? inverse_diagonal(*b) : std::vector<double>{};
-  const double b_min = b ? opt.b_min.value : 1.0;
+  BInverseWeights wts;
+  if (b) {
+    wts.identity = false;
+    wts.diagonal = opt.b_diagonal;
+    wts.inv_diag = &inv_diag;
+    wts.b_min = opt.b_min.value;
+    wts.scaled = opt.b_min.scaled;
+  }
   const double g_res = gamma_of(static_cast<double>(std::max(sa.max_nnz, sb.max_nnz)) + 4.0);
   const double g_n = gamma_of(static_cast<double>(n) + 4.0);
   DenseMatrix<T> ax(n, w), res(n, w);
-  std::vector<double> q(static_cast<std::size_t>(w));
+  std::vector<double> q(static_cast<std::size_t>(w)), env_a(static_cast<std::size_t>(n)),
+      env_b(static_cast<std::size_t>(n));
   for (index_t j0 = 0; j0 < m; j0 += w) {
     const index_t p = std::min(w, m - j0);
     spmm(a, x.col(j0), n, ax.data(), n, p);
@@ -292,13 +372,28 @@ std::vector<double> residual_b_inverse_norms(const CsrMatrix<T>& a, const CsrMat
 #pragma omp parallel for schedule(static)
       for (index_t i = 0; i < n; ++i) rj[i] = axj[i] - l * rj[i];
     }
-    if (cg) cg_b_inverse_quadratic(*b, inv_diag, sb, res.data(), n, p, b_min, opt, q.data());
+    if (cg) cg_b_inverse_quadratic(*b, wts, sb, res.data(), n, p, opt, q.data());
     for (index_t j = 0; j < p; ++j) {
       const auto jj = static_cast<std::size_t>(j0 + j);
       const T* rj = res.col(j);
-      // The residual's own rounding: |r - fl(r)| <= gamma_{m+4} (|A| |x| + |lambda| |B| |x|).
-      const double delta =
-          g_res * (sa.abs_sum + std::abs(lambda[jj]) * sb.abs_sum) * linalg::norm2(n, x.col(j0 + j)) * (1.0 + g_n);
+      const T* xj = x.col(j0 + j);
+      // The residual's own rounding, componentwise: |r - fl(r)| <= gamma_{m+4} (|A| |x| + |lambda| |B| |x|)
+      // (the envelope's evaluation adds at most gamma_{m+1} relative, covered by the factor 1 + g_res).
+      abs_product(a, xj, env_a.data());
+      if (b) {
+        abs_product(*b, xj, env_b.data());
+      } else {
+#pragma omp parallel for schedule(static)
+        for (index_t i = 0; i < n; ++i) env_b[static_cast<std::size_t>(i)] = std::abs(xj[i]);
+      }
+      if (abs_b_norms) (*abs_b_norms)[jj] = linalg::norm2(n, env_b.data()) * (1.0 + g_res) * (1.0 + g_n);
+      const double scale = g_res * (1.0 + g_res), al = std::abs(lambda[jj]);
+#pragma omp parallel for schedule(static)
+      for (index_t i = 0; i < n; ++i) {
+        const auto ii = static_cast<std::size_t>(i);
+        env_a[ii] = scale * (env_a[ii] + al * env_b[ii]);
+      }
+      const double rounding = envelope_b_inverse_norm(env_a.data(), n, wts);
       double norm = 0.0;
       if (!b) {
         norm = linalg::norm2(n, rj) * (1.0 + g_n);
@@ -310,7 +405,7 @@ std::vector<double> residual_b_inverse_norms(const CsrMatrix<T>& a, const CsrMat
       } else {
         norm = std::sqrt(q[static_cast<std::size_t>(j)]) * (1.0 + g_n);
       }
-      rho[jj] = norm + delta / std::sqrt(b_min);
+      rho[jj] = norm + rounding;
       if (!std::isfinite(rho[jj])) rho[jj] = kInfinity;
     }
   }
@@ -341,10 +436,13 @@ SubspaceReport subspace_bounds(const CsrMatrix<T>& a, const CsrMatrix<T>* b, con
   // Pair j < m is returned pair j, pair m + i the unreturned pair i.
   std::vector<double> lambda = returned;
   lambda.insert(lambda.end(), unreturned.begin(), unreturned.end());
-  std::vector<double> rho = residual_b_inverse_norms(a, b, returned, x, opt);
+  std::vector<double> abs_b;  // || |B| |x_j| || per pair (the Gram rounding)
+  std::vector<double> rho = residual_b_inverse_norms(a, b, returned, x, opt, &abs_b);
   if (e > 0) {
-    const std::vector<double> rho_extra = residual_b_inverse_norms(a, b, unreturned, extra, opt);
+    std::vector<double> abs_b_extra;
+    const std::vector<double> rho_extra = residual_b_inverse_norms(a, b, unreturned, extra, opt, &abs_b_extra);
     rho.insert(rho.end(), rho_extra.begin(), rho_extra.end());
+    abs_b.insert(abs_b.end(), abs_b_extra.begin(), abs_b_extra.end());
   }
   const auto column = [&](index_t j) { return j < m ? x.col(j) : extra.col(j - m); };
   const RowStats sb = b ? row_stats(*b) : RowStats{};
@@ -385,7 +483,7 @@ SubspaceReport subspace_bounds(const CsrMatrix<T>& a, const CsrMatrix<T>* b, con
       g.hi = std::max(g.hi, lambda[static_cast<std::size_t>(j)]);
     }
     g.residual = std::sqrt(r2);
-    g.eps = gram_defect(b, sb, n, column, g.pairs, gram_width);
+    g.eps = gram_defect(b, sb, n, column, g.pairs, abs_b, gram_width);
     if (!(g.eps < kMaxOrthogonalityDefect)) {
       g.eta = kInfinity;
       return;
@@ -520,19 +618,23 @@ BMinBound b_min_bound(Ctx& c, const CsrMatrix<T>& b, bool diagonal) {
     r.value = dmin;
     r.proven = dmin > 0.0 && std::isfinite(dmin);
     r.source = "diagonal";
+    r.scaled = 1.0;  // S = I
     return r;
   }
-  const double g = gershgorin_lambda_min(b);
-  if (g > 0.0) {
-    r.value = g;
+  // lambda_min(S) >= lower (norms.hpp: S = D^{-1/2} B D^{-1/2}) gives lambda_min(B) >= lower min_i b_ii;
+  // the factor 1 - 8u covers the rounding of the scaled entries the proofs work with.
+  const auto scaled_of = [](double lower) { return lower * (1.0 - 8.0 * kRoundoff); };
+  const double from_solve = c.b_scaled_lower > 0.0 && dmin > 0.0 ? scaled_of(c.b_scaled_lower) : 0.0;
+  const GershgorinBounds g = gershgorin_bounds(b);
+  if (g.plain > 0.0 || g.scaled > 0.0) {
+    r.scaled = std::max(std::max(g.scaled, from_solve), 0.0);
+    r.value = std::max(g.plain, r.scaled * dmin * (1.0 - 4.0 * kRoundoff));
     r.source = "gershgorin";
     return r;
   }
-  // lambda_min(W B W) >= lower with w_i = fl(1 / sqrt(b_ii)) (norms.hpp): x^H B x = y^H (W B W) y
-  // with y = W^{-1} x and ||y||^2 >= min_i b_ii (1 - 4u) ||x||^2 (the rounding of w_i).
-  const auto from_scaled = [&](double lower) { return lower * dmin * (1.0 - 8.0 * kRoundoff); };
-  if (c.b_scaled_lower > 0.0 && dmin > 0.0) {
-    r.value = from_scaled(c.b_scaled_lower);
+  if (from_solve > 0.0) {
+    r.scaled = from_solve;
+    r.value = from_solve * dmin * (1.0 - 4.0 * kRoundoff);
     r.source = "incomplete_cholesky";
     return r;
   }
@@ -547,13 +649,15 @@ BMinBound b_min_bound(Ctx& c, const CsrMatrix<T>& b, bool diagonal) {
                               {"theta_min", proof.theta_min}, {"seconds", proof.seconds},
                               {"budget_s", po.max_seconds}});
   if (proof.proven && dmin > 0.0) {
-    r.value = from_scaled(proof.lower_bound);
+    r.scaled = scaled_of(proof.lower_bound);
+    r.value = r.scaled * dmin * (1.0 - 4.0 * kRoundoff);
     r.source = "incomplete_cholesky";
     return r;
   }
-  // Not proven: half the Lanczos estimate (from inside) of lambda_min of the Jacobi-scaled B times
-  // its smallest diagonal entry, or half that of B itself.
-  double estimate = proof.theta_min > 0.0 && dmin > 0.0 ? 0.5 * proof.theta_min * dmin : 0.0;
+  // Not proven: half the Lanczos estimate (from inside) of lambda_min of S, times its smallest
+  // diagonal entry for B, or half that of B itself.
+  r.scaled = proof.theta_min > 0.0 && dmin > 0.0 ? 0.5 * proof.theta_min : 0.0;
+  double estimate = r.scaled * dmin;
   if (!(estimate > 0.0)) estimate = 0.5 * estimate_norm2(b, 30, c.cfg.seed).ritz_min;
   r.value = estimate > 0.0 ? estimate : std::numeric_limits<double>::min();
   r.proven = false;
@@ -624,7 +728,8 @@ void attach_subspace_bound(Ctx& c, const CsrMatrix<T>& a, const CsrMatrix<T>* b,
                                              const SubspaceOptions&, std::vector<double>&);                      \
   template std::vector<double> residual_b_inverse_norms<T>(const CsrMatrix<T>&, const CsrMatrix<T>*,               \
                                                            const std::vector<double>&, const DenseMatrix<T>&,     \
-                                                           const SubspaceOptions&);                               \
+                                                           const SubspaceOptions&, std::vector<double>*);         \
+  template GershgorinBounds gershgorin_bounds<T>(const CsrMatrix<T>&);                                 \
   template double gershgorin_lambda_min<T>(const CsrMatrix<T>&);                                       \
   template void attach_subspace_bound<T>(Ctx&, const CsrMatrix<T>&, const CsrMatrix<T>*, const Solution<T>&);
 HS_FOR_EACH_SCALAR(HS_INSTANTIATE_SUBSPACE)

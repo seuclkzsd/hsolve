@@ -355,6 +355,52 @@ TYPED_TEST(SubspaceBoundCore, ResidualNormsBoundTheBInverseNorm) {
   }
 }
 
+// A badly scaled pencil (E A E, E B E with E = diag(10^-k), k uniform in [0, 4]) has the same
+// eigenvalues and the eigenvectors E^{-1} V, entries up to 1e4, while lambda_min(B) drops to ~1e-9.
+// Rounding terms bounded through max row sums times ||x||, and B^{-1}-norms through lambda_min(B)
+// alone, grow with the scaling; the componentwise rounding envelope and the Jacobi-weighted
+// B^{-1}-norms (lambda_min of D^{-1/2} B D^{-1/2}, unchanged by E) keep the bound within three
+// orders of magnitude of the true angle.
+TYPED_TEST(SubspaceBoundCore, BadlyScaledBKeepsTheBoundTight) {
+  using T = TypeParam;
+  auto e = exact_problem<T>(spectrum(), BKind::General, 41);
+  const index_t n = e.v.rows();
+  std::mt19937_64 g(5);
+  std::uniform_real_distribution<double> decades(0.0, 4.0);
+  std::vector<double> s(static_cast<std::size_t>(n));
+  for (double& v : s) v = std::pow(10.0, -decades(g));
+  const auto rescale = [&](hs::CsrMatrix<T>& m) {
+    for (index_t i = 0; i < m.nrows; ++i)
+      for (index_t p = m.rowptr[i]; p < m.rowptr[i + 1]; ++p)
+        m.values[p] *= s[static_cast<std::size_t>(i)] * s[static_cast<std::size_t>(m.colind[p])];
+  };
+  rescale(e.a);
+  rescale(e.b);
+  for (index_t j = 0; j < n; ++j)
+    for (index_t i = 0; i < n; ++i) {
+      e.v(i, j) /= s[static_cast<std::size_t>(i)];  // V -> E^{-1} V
+      e.w(i, j) *= s[static_cast<std::size_t>(j)];  // W -> W E (B = (W E)^H (W E))
+    }
+  DenseMatrix<T> x;
+  std::vector<double> theta;
+  perturbed_pairs(e, exact_in(e.lambda, 0.0, 2.6), 1e-9, 13, x, theta);
+  auto opt = options(e, BKind::General);
+  DenseMatrix<T> sd = hs::test::to_dense(e.b);
+  std::vector<double> d(static_cast<std::size_t>(n));
+  for (index_t i = 0; i < n; ++i) d[static_cast<std::size_t>(i)] = std::real(sd(i, i));
+  for (index_t j = 0; j < n; ++j)
+    for (index_t i = 0; i < n; ++i)
+      sd(i, j) /= std::sqrt(d[static_cast<std::size_t>(i)] * d[static_cast<std::size_t>(j)]);
+  const auto ws = hs::test::dense_eigenvalues(hs::test::from_dense(sd), static_cast<const hs::CsrMatrix<T>*>(nullptr));
+  opt.b_min.scaled = ws.front() * (1.0 - 1e-8);
+  EXPECT_LT(opt.b_min.value, 1e-7);
+  std::vector<double> per_pair;
+  const auto rep = hs::driver::subspace_bounds(e.a, &e.b, theta, x, {}, DenseMatrix<T>{}, {{0.0, 2.6, 6}}, opt,
+                                               per_pair);
+  ASSERT_EQ(rep.groups.size(), 3u) << rep.note;
+  expect_bounds(e, x, rep, 3.0);
+}
+
 TEST(SubspaceBoundGershgorin, ProvesOnlyWhatHolds) {
   // Diagonally dominant: positive and below the true lambda_min.
   const auto b = hs::test::random_hpd<double>(60, 0.05, 4);
@@ -362,6 +408,11 @@ TEST(SubspaceBoundGershgorin, ProvesOnlyWhatHolds) {
   const auto wb = hs::test::dense_eigenvalues(b, static_cast<const hs::CsrMatrix<double>*>(nullptr));
   EXPECT_GT(g, 0.0);
   EXPECT_LE(g, wb.front());
+  // The Jacobi-scaled bound: lambda_min(S) >= scaled, and lambda_min(B) >= lambda_min(S) min b_ii.
+  const auto gb = hs::driver::gershgorin_bounds(b);
+  EXPECT_GT(gb.scaled, 0.0);
+  EXPECT_LE(gb.scaled * gb.min_diagonal, wb.front());
+  EXPECT_LE(gb.plain, wb.front());
   // The 1-D Laplacian (eigenvalues down to ~1e-3, not strictly dominant): no proof.
   EXPECT_EQ(hs::driver::gershgorin_lambda_min(hs::test::laplacian_1d<double>(50)), 0.0);
 }

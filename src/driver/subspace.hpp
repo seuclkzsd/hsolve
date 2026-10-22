@@ -23,7 +23,10 @@
 // window's whole spectral subspace (delta: distance to the window ends).
 // Rounding: residuals, Gram entries and B^{-1}-norms are computed in floating point; each carries
 // an a-priori bound of its rounding error (Higham, Accuracy and Stability, §3.1; factor 2 of slack
-// for complex arithmetic), so the bounds hold for the exact quantities.
+// for complex arithmetic), so the bounds hold for the exact quantities. The products with A and B
+// are bounded componentwise (gamma |A| |x|, gamma |B| |x|: one more product with |A|, |B| and |x|),
+// and a B^{-1}-norm by the smaller of ||v|| / sqrt(lambda_min(B)) and the Jacobi-weighted
+// ||D^{-1/2} v|| / sqrt(lambda_min(D^{-1/2} B D^{-1/2})), so a badly scaled B does not inflate them.
 #pragma once
 
 #include <limits>
@@ -54,6 +57,10 @@ struct BMinBound {
   double value = 1.0;
   bool proven = true;
   std::string source = "identity";  ///< "identity", "diagonal", "gershgorin", "incomplete_cholesky", "estimate"
+  /// The same for the Jacobi-scaled S = D^{-1/2} B D^{-1/2}, D = diag(B) (0: none). B^{-1}-norms
+  /// are bounded by both, v^H B^{-1} v <= min(||v||^2 / value, ||D^{-1/2} v||^2 / scaled): the
+  /// second is far smaller for a badly scaled B (value = scaled * min_i b_ii at best).
+  double scaled = 0.0;
 };
 
 struct SubspaceOptions {
@@ -83,15 +90,28 @@ SubspaceReport subspace_bounds(const CsrMatrix<T>& a, const CsrMatrix<T>* b, con
                                const SubspaceOptions& opt, std::vector<double>& per_pair);
 
 /// rho_j >= ||B^{-1/2} (A x_j - lambda_j B x_j)||_2 for every column (exact residual: the rounding
-/// of its evaluation and of the B^{-1}-norm is included). Exposed for tests.
+/// of its evaluation, bounded componentwise by gamma (|A| |x_j| + |lambda_j| |B| |x_j|), and of the
+/// B^{-1}-norm is included). abs_b_norms (optional) receives upper bounds of || |B| |x_j| ||_2
+/// (B = I: ||x_j||_2) for the rounding of the Gram matrices. Exposed for tests.
 template <class T>
 std::vector<double> residual_b_inverse_norms(const CsrMatrix<T>& a, const CsrMatrix<T>* b,
                                              const std::vector<double>& lambda, const DenseMatrix<T>& x,
-                                             const SubspaceOptions& opt);
+                                             const SubspaceOptions& opt,
+                                             std::vector<double>* abs_b_norms = nullptr);
 
-/// A rigorous Gershgorin lower bound of lambda_min(b) - the larger of the plain one and the one of
-/// the Jacobi-scaled diag(b)^{-1/2} b diag(b)^{-1/2} times min b_ii - with the rounding of its row
-/// sums bounded; <= 0 when Gershgorin proves nothing. O(nnz(b)).
+/// Rigorous Gershgorin lower bounds of lambda_min(b) (plain) and of lambda_min of the Jacobi-scaled
+/// diag(b)^{-1/2} b diag(b)^{-1/2} (scaled), the rounding of the row sums bounded; a value <= 0
+/// proves nothing. min_diagonal = min_i b_ii. O(nnz(b)).
+struct GershgorinBounds {
+  double plain = 0.0;
+  double scaled = 0.0;
+  double min_diagonal = 0.0;
+};
+template <class T>
+GershgorinBounds gershgorin_bounds(const CsrMatrix<T>& b);
+
+/// The larger of the two Gershgorin bounds as a bound of lambda_min(b) (scaled * min b_ii for the
+/// scaled one), 0 when Gershgorin proves nothing.
 template <class T>
 double gershgorin_lambda_min(const CsrMatrix<T>& b);
 
