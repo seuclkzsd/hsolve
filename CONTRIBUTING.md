@@ -110,13 +110,19 @@ factor: reuse the analysis for the certificate counts and drop the factors in be
 ### 矩阵生成器
 
 1. 在 `tools/gen/<family>.py` 中实现，产出经 `tools/case.py` 写盘，随机数一律固定种子；
-2. 把预设登记到该文件的预设表，复用公共命令行 `run_presets`，使 `python -m tools.gen.<family> --list` 列出它们；
+2. 命令行有两种，按生成器的用途选一种：
+   - **预设型**（测例集里的固定测例）：把预设登记到该文件的 `PRESETS` 表，`main` 调用公共命令行
+     `run_presets`（`tools/gen/synthetic.py`），于是 `python -m tools.gen.<family> --list` 列出预设、
+     `python -m tools.gen.<family> <预设名>` 生成测例。范例是 `tools/gen/yee.py`；
+   - **参数型**（同一物理模型扫描尺寸、频率、网格）：用自己的 argparse 命令行，参数带物理单位，测例名由 `--name`
+     给出，没有 `--list`。范例是 `tools/gen/waveguide.py`（`--a`、`--b`、`--freq`、`--target-n` 等）；
 3. `meta.json` 写清物理背景（结构、材料、频率、边界条件、单位）、问题类型（`HEP` / `GHEP` / `GHIEP`）与场景标签
    （`tools/case.py` 的 `SCENARIOS`）；能算出参考谱时（解析、离散精确或稠密求解）同时写参考解；
 4. 在 `tests/py/test_gen_<family>.py` 中检查小规模实例的结构与参考值。
 
-波导生成器 `tools/gen/waveguide.py` 是完整的范例：Lee–Sun–Cendes 棱元-节点元混合公式，模块文档写明了离散问题
-的结构与参考值的误差界。
+两个范例的模块文档都写明了离散格式与参考值：`tools/gen/yee.py` 是 Yee 网格（有限积分法）的 curl-curl 问题，给出
+离散精确谱并在 `tests/py/test_gen_yee.py` 中与稠密求解对照；`tools/gen/waveguide.py` 是 Lee–Sun–Cendes 棱元-节点元
+混合公式的波导问题，写明了离散问题的结构与连续模型参考值的误差界。
 
 ### 基准与测量程序
 
