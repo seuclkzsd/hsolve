@@ -1,0 +1,300 @@
+{
+ "schema_version": 1,
+ "note": "case profiles of the showcase tunings (results/showcase/tuning/<scenario>.json), written by tools/showcase/campaign.py profiles",
+ "profiles": [
+  {
+   "scope": "case",
+   "name": "sc-bloch-1e5",
+   "mode": "nearest",
+   "cores": 16,
+   "target": null,
+   "config": {
+    "ranks": 2,
+    "threads": 8,
+    "bind": "none",
+    "options": {
+     "eps_ncv": "4k",
+     "eps_nev": "k+4",
+     "eps_tol": "1e-11"
+    }
+   },
+   "tuned": {
+    "tag": "showcase-tune",
+    "date": "2026-10-23T04:24:10",
+    "host": "gpu02",
+    "valid": true,
+    "solver_s": 15.789929749999999,
+    "default_solver_s": 13.3763004,
+    "default_valid": false,
+    "speedup_vs_default": 0.8471412230317238,
+    "reps": 20,
+    "flaky": true,
+    "phases": {
+     "analysis_s": 1.11335,
+     "numeric_s": 7.7536,
+     "solve_s": 6.687049999999999,
+     "solves": 55.0,
+     "ortho_s": 0.164335,
+     "setup_s": 8.8886,
+     "eps_solve_s": 6.87595,
+     "vectors_s": 0.0034848500000000003,
+     "factorizations": 1.0
+    },
+    "scenario": "bloch-1e5"
+   }
+  },
+  {
+   "scope": "case",
+   "name": "ss-2cubes_sphere",
+   "mode": "nearest",
+   "cores": 16,
+   "target": null,
+   "config": {
+    "ranks": 4,
+    "threads": 4,
+    "bind": "none",
+    "options": {
+     "eps_nev": "2k",
+     "st_mat_mumps_cntl_7": "1e-10",
+     "st_mat_mumps_icntl_28": "2",
+     "st_mat_mumps_icntl_29": "2",
+     "st_mat_mumps_icntl_35": "2"
+    }
+   },
+   "tuned": {
+    "tag": "showcase-tune",
+    "date": "2026-10-23T04:29:46",
+    "host": "c005",
+    "valid": true,
+    "solver_s": 2.1258647699999997,
+    "default_solver_s": 2.7204305,
+    "default_valid": false,
+    "speedup_vs_default": 1.2796818209654983,
+    "reps": 5,
+    "flaky": false,
+    "phases": {
+     "analysis_s": 0.69359,
+     "numeric_s": 0.6223,
+     "solve_s": 0.75878,
+     "solves": 40,
+     "ortho_s": 0.03631,
+     "setup_s": 1.325,
+     "eps_solve_s": 0.80005,
+     "vectors_s": 0.00081477,
+     "factorizations": 1
+    },
+    "scenario": "ss-2cubes-sphere"
+   }
+  },
+  {
+   "scope": "case",
+   "name": "ss-tem152078",
+   "mode": "nearest",
+   "cores": 16,
+   "target": null,
+   "config": {
+    "ranks": 8,
+    "threads": 2,
+    "bind": "none",
+    "options": {
+     "eps_ncv": "2k",
+     "eps_purify": "0",
+     "st_mat_mumps_cntl_7": "1e-10",
+     "st_mat_mumps_icntl_35": "2",
+     "st_mat_mumps_icntl_7": "4"
+    }
+   },
+   "tuned": {
+    "tag": "showcase-tune",
+    "date": "2026-10-23T02:03:54",
+    "host": "c005",
+    "valid": true,
+    "solver_s": 2.79777653,
+    "default_solver_s": 6.1062,
+    "default_valid": true,
+    "speedup_vs_default": 2.182518844705585,
+    "reps": 5,
+    "flaky": false,
+    "phases": {
+     "analysis_s": 1.0657,
+     "numeric_s": 0.77756,
+     "solve_s": 0.74616,
+     "solves": 21,
+     "ortho_s": 0.10952,
+     "setup_s": 1.8925,
+     "eps_solve_s": 0.90386,
+     "vectors_s": 0.00081692,
+     "factorizations": 1
+    },
+    "scenario": "ss-tem152078"
+   }
+  },
+  {
+   "scope": "case",
+   "name": "ss-tem27623",
+   "mode": "nearest",
+   "cores": 16,
+   "target": null,
+   "config": {
+    "ranks": 4,
+    "threads": 4,
+    "bind": "core",
+    "options": {
+     "eps_purify": "0",
+     "st_mat_mumps_icntl_13": "1",
+     "st_mat_mumps_icntl_7": "0"
+    }
+   },
+   "tuned": {
+    "tag": "showcase-tune",
+    "date": "2026-10-23T01:55:12",
+    "host": "c005",
+    "valid": true,
+    "solver_s": 0.30539251,
+    "default_solver_s": 0.67485,
+    "default_valid": true,
+    "speedup_vs_default": 2.2097791461879663,
+    "reps": 5,
+    "flaky": false,
+    "phases": {
+     "analysis_s": 0.035195,
+     "numeric_s": 0.10205,
+     "solve_s": 0.13708,
+     "solves": 26,
+     "ortho_s": 0.014894,
+     "setup_s": 0.148,
+     "eps_solve_s": 0.15713,
+     "vectors_s": 0.00026251,
+     "factorizations": 1
+    },
+    "scenario": "ss-tem27623"
+   }
+  },
+  {
+   "scope": "case",
+   "name": "syn-zero-cluster-real-1e5",
+   "mode": "nearest",
+   "cores": 16,
+   "target": null,
+   "config": {
+    "ranks": 8,
+    "threads": 2,
+    "bind": "core",
+    "options": {
+     "eps_krylovschur_restart": "0.7",
+     "st_mat_mumps_icntl_8": "0"
+    }
+   },
+   "tuned": {
+    "tag": "showcase-tune",
+    "date": "2026-10-23T01:47:32",
+    "host": "c005",
+    "valid": true,
+    "solver_s": 0.741642,
+    "default_solver_s": 1.0835503000000002,
+    "default_valid": true,
+    "speedup_vs_default": 1.4610152876994562,
+    "reps": 5,
+    "flaky": false,
+    "phases": {
+     "analysis_s": 0.15812,
+     "numeric_s": 0.0695,
+     "solve_s": 0.4004,
+     "solves": 80,
+     "ortho_s": 0.10361,
+     "setup_s": 0.23053,
+     "eps_solve_s": 0.51006,
+     "vectors_s": 0.0010312,
+     "factorizations": 1
+    },
+    "scenario": "zero-cluster"
+   }
+  },
+  {
+   "scope": "case",
+   "name": "wg-halfslab-1e5",
+   "mode": "nearest",
+   "cores": 16,
+   "target": null,
+   "config": {
+    "ranks": 8,
+    "threads": 2,
+    "bind": "core",
+    "options": {
+     "eps_krylovschur_restart": "0.7",
+     "eps_purify": "0",
+     "eps_tol": "1e-11",
+     "st_mat_mumps_icntl_7": "0"
+    }
+   },
+   "tuned": {
+    "tag": "showcase-tune",
+    "date": "2026-10-23T04:34:41",
+    "host": "c005",
+    "valid": true,
+    "solver_s": 0.8721232,
+    "default_solver_s": 2.1221099999999997,
+    "default_valid": false,
+    "speedup_vs_default": 2.4332686024176398,
+    "reps": 5,
+    "flaky": false,
+    "phases": {
+     "analysis_s": 0.082357,
+     "numeric_s": 0.079815,
+     "solve_s": 0.4329,
+     "solves": 68,
+     "ortho_s": 0.23167,
+     "setup_s": 0.18204,
+     "eps_solve_s": 0.68816,
+     "vectors_s": 0.0030632,
+     "factorizations": 1
+    },
+    "scenario": "waveguide-slab"
+   }
+  },
+  {
+   "scope": "case",
+   "name": "yee-pec-cube-32",
+   "mode": "nearest",
+   "cores": 16,
+   "target": {
+    "mode": "nearest",
+    "sigma": 478.3019632647284,
+    "k": 21
+   },
+   "config": {
+    "ranks": 4,
+    "threads": 4,
+    "bind": "none",
+    "options": {
+     "eps_krylovschur_restart": "0.3",
+     "eps_nev": "3k"
+    }
+   },
+   "tuned": {
+    "tag": "showcase-tune",
+    "date": "2026-10-23T05:02:29",
+    "host": "c005",
+    "valid": true,
+    "solver_s": 8.0943548,
+    "default_solver_s": 4.5249495,
+    "default_valid": false,
+    "speedup_vs_default": 0.5590253468997924,
+    "reps": 20,
+    "flaky": true,
+    "phases": {
+     "analysis_s": 1.06145,
+     "numeric_s": 0.61816,
+     "solve_s": 5.535,
+     "solves": 202.0,
+     "ortho_s": 0.8414999999999999,
+     "setup_s": 1.69095,
+     "eps_solve_s": 6.39905,
+     "vectors_s": 0.00162195,
+     "factorizations": 1.0
+    },
+    "scenario": "multiplet-cube"
+   }
+  }
+ ]
+}

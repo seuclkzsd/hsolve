@@ -1,0 +1,762 @@
+{
+ "schema_version": 1,
+ "scenario": {
+  "id": "bloch-interval",
+  "group": "bloch",
+  "title": "Bloch 周期单元：区间内全部特征值（复厄密）",
+  "case": "yee-bloch-1e4",
+  "source": "yee-bloch-1e4",
+  "why": "复厄密问题的谱切片需要复厄密分解的惯性",
+  "target": {
+   "mode": "interval",
+   "lower": 34.47805199848732,
+   "upper": 137.53029469876827
+  },
+  "hsolve": {},
+  "reference": "source",
+  "derived": false,
+  "reps": 3,
+  "timeout_s": 900,
+  "group_label": "复厄密（Bloch 周期）",
+  "target_info": {
+   "count": 40
+  },
+  "override": true,
+  "hsolve_config": {
+   "method": "shift_invert_lanczos"
+  },
+  "n": 10080,
+  "problem": "HEP",
+  "dtype": "complex128",
+  "nnz_a": 131040,
+  "nnz_b": 0,
+  "source_path": "~/os2026/data/cases/yee-bloch-1e4",
+  "reference_info": {
+   "schema_version": 1,
+   "kind": "discrete-exact",
+   "note": "discrete Yee/FIT spectrum: sum_d (2/h_d sin(theta_d))^2 with TE/TM multiplicities and the gradient null space; exact up to assembly rounding",
+   "count": 10080,
+   "complete": true,
+   "window": null
+  }
+ },
+ "started": "2026-10-23T01:31:18",
+ "finished": "2026-10-23T01:31:37",
+ "conditions": {
+  "host": "gpu02",
+  "cpu": "Intel(R) Xeon(R) Silver 4314 CPU @ 2.40GHz",
+  "os": "Linux-3.10.0-1160.el7.x86_64-x86_64-with-glibc2.17",
+  "python": "3.11.17",
+  "git_commit": "fac61d895e7f47b02e2d3316e90bd7ee7899df56",
+  "source_commit": "b9aadc47b09db34f9b72870ee912d7d1e8715c50",
+  "hsolve_binary": "build/release/hsolve",
+  "hsolve_md5": "8d69a98bc60e327e479a591ef93742c0",
+  "cores": "16-31",
+  "ncores": 16,
+  "mem_gb": 32.0,
+  "reps": 3,
+  "slepc_version": null,
+  "slepc_env": "/tmp/os2026-p28/ref-complex",
+  "tuned_profiles": "results/showcase/slepc_tuned_profiles.json"
+ },
+ "norms": {
+  "norm2_a": 3351.288918022695,
+  "norm2_b": 1.0,
+  "scale": 3351.288918022695,
+  "method": [
+   "eigsh",
+   "identity"
+  ],
+  "seconds": 0.06574933603405952
+ },
+ "reference": {
+  "kind": "discrete-exact",
+  "complete": true,
+  "window": null,
+  "eigenvalues": [
+   28.900826918418595,
+   28.900826918418595,
+   40.05527707855604,
+   40.05527707855604,
+   51.97040127472269,
+   51.97040127472269,
+   56.20782686864592,
+   56.20782686864592,
+   58.98012466124412,
+   58.98012466124412,
+   67.42657370208909,
+   67.42657370208909,
+   68.1338281317955,
+   68.1338281317955,
+   83.57912349217897,
+   83.57912349217897,
+   86.35142128477717,
+   86.35142128477717,
+   90.49614805839317,
+   90.49614805839317,
+   94.73357365231641,
+   94.73357365231641,
+   95.50512475532854,
+   95.50512475532854,
+   106.64869784848307,
+   106.64869784848307,
+   106.65957491546598,
+   106.65957491546598,
+   109.42099564108126,
+   109.42099564108126,
+   113.65842123500448,
+   113.65842123500448,
+   118.57469911163264,
+   118.57469911163264,
+   122.10487027584946,
+   122.10487027584946,
+   125.58442249815407,
+   125.58442249815407,
+   129.9172593558105,
+   129.9172593558105,
+   134.03087153899904,
+   134.03087153899904,
+   141.02971785853754,
+   141.02971785853754,
+   145.17444463215355,
+   145.17444463215355
+  ],
+  "truncated": false,
+  "levels": [
+   [
+    28.900826918418595,
+    2
+   ],
+   [
+    40.05527707855604,
+    2
+   ],
+   [
+    51.97040127472269,
+    2
+   ],
+   [
+    56.20782686864592,
+    2
+   ],
+   [
+    58.98012466124412,
+    2
+   ],
+   [
+    67.42657370208909,
+    2
+   ],
+   [
+    68.1338281317955,
+    2
+   ],
+   [
+    83.57912349217897,
+    2
+   ],
+   [
+    86.35142128477717,
+    2
+   ],
+   [
+    90.49614805839317,
+    2
+   ],
+   [
+    94.73357365231641,
+    2
+   ],
+   [
+    95.50512475532854,
+    2
+   ],
+   [
+    106.64869784848307,
+    2
+   ],
+   [
+    106.65957491546598,
+    2
+   ],
+   [
+    109.42099564108126,
+    2
+   ],
+   [
+    113.65842123500448,
+    2
+   ],
+   [
+    118.57469911163264,
+    2
+   ],
+   [
+    122.10487027584946,
+    2
+   ],
+   [
+    125.58442249815407,
+    2
+   ],
+   [
+    129.9172593558105,
+    2
+   ],
+   [
+    134.03087153899904,
+    2
+   ],
+   [
+    141.02971785853754,
+    2
+   ],
+   [
+    145.17444463215355,
+    2
+   ]
+  ]
+ },
+ "runs": [
+  {
+   "solver": "hsolve",
+   "wall_s": 1.408,
+   "peak_rss_gib": 0.334,
+   "rc": 0,
+   "killed": null,
+   "claimed_success": true,
+   "success": true,
+   "solver_max_eta": 8.66998897088931e-12,
+   "max_eta": 8.661072383754285e-12,
+   "pairs": 40,
+   "eigenvalues": [
+    40.05527707855593,
+    40.05527707855606,
+    51.970401274722754,
+    51.970401274722896,
+    56.20782686864595,
+    56.20782686864614,
+    58.98012466124405,
+    58.98012466124409,
+    67.42657370208902,
+    67.42657370208904,
+    68.13382813179534,
+    68.13382813179561,
+    83.57912349217878,
+    83.57912349217914,
+    86.35142128477705,
+    86.35142128477712,
+    90.4961480583932,
+    90.49614805839327,
+    94.73357365231635,
+    94.73357365231651,
+    95.50512475532835,
+    95.5051247553286,
+    106.64869784848318,
+    106.64869784848341,
+    106.65957491546588,
+    106.65957491546602,
+    109.42099564108123,
+    109.42099564108136,
+    113.65842123500454,
+    113.65842123500467,
+    118.57469911163254,
+    118.5746991116328,
+    122.10487027584945,
+    122.10487027584969,
+    125.58442249815397,
+    125.58442249815417,
+    129.91725935581047,
+    129.91725935581067,
+    134.03087153899892,
+    134.03087153899918
+   ],
+   "solver_peak_bytes": 358658048,
+   "verdict": "pass",
+   "eval_reasons": [],
+   "completeness": "complete",
+   "certified": true,
+   "valid": true,
+   "why": [],
+   "solver_s": 1.269980348,
+   "solver_s_scope": "report time_total_s",
+   "phases": {
+    "analysis_s": 0.092271231,
+    "numeric_s": 0.572295227,
+    "factorizations": 3,
+    "solves": 136,
+    "solve_s": 0.3605817310000002,
+    "ortho_s": null,
+    "iterate_s": 0.4619538189999999,
+    "verify_s": 0.03646806200000002
+   },
+   "evaluation": {
+    "verdict": "pass",
+    "reasons": [],
+    "status": "complete",
+    "certified": true,
+    "expected": [
+     40,
+     40
+    ],
+    "found": 40,
+    "missing": [],
+    "boundary_deficit": 0,
+    "spurious": 0,
+    "unmatched": 0,
+    "distinct_returned": 40,
+    "duplicates": 0,
+    "rejected_pairs": 0,
+    "max_backward_error": 8.661072383754285e-12,
+    "max_eig_scaled_error": 9.863119322900878e-17,
+    "max_subspace_angle": null
+   },
+   "outcome": [],
+   "report": {
+    "version": "0.1.0",
+    "method": "shift_invert_lanczos",
+    "candidate_source": "iterative",
+    "problem": "standard",
+    "sigma_used": 86.0041733486278,
+    "block_size": 4,
+    "zero_cluster_dim": -1,
+    "zero_modes_filtered": 0,
+    "time_total_s": 1.269980348,
+    "time_certificate_s": 0.314658233,
+    "warnings": [],
+    "certificate": {
+     "count_found": 40,
+     "count_inertia": 40,
+     "endpoint_moves": 0,
+     "failure_probability": 0.0,
+     "lower": 34.47805199848732,
+     "method": "exact",
+     "note": "",
+     "passed": true,
+     "performed": true,
+     "rigorous": true,
+     "seconds": 0.314658233,
+     "solves": 0,
+     "statement": "double-precision Sylvester counts at every window end and slice cut: 40 eigenvalue(s) required, 40 distinct found pair(s): every required eigenvalue is found",
+     "upper": 137.53029469876827
+    },
+    "slices": 1,
+    "factorizations": 3
+   },
+   "rep": 0,
+   "position": 0
+  },
+  {
+   "solver": "slepc-default",
+   "config": "1x16",
+   "config_source": "default",
+   "config_scope": "default",
+   "wall_s": 2.122,
+   "peak_rss_gib": 0.092,
+   "rc": 1,
+   "killed": null,
+   "error": "6827}\", \"-log_view\", \":~/rb-evidence/runs/bloch-interval/log_view-slepc-default-r0.txt\"], \"returncode\": 1, \"killed\": null, \"wall_s\": 2.122, \"peak_rss_gib\": 0.092, \"peak_sampled_gib\": 0.092, \"cpu_s\": 1.025, \"cores\": \"16-31\", \"threads\": 16, \"mem_limit_gib\": 32.0, \"exclusive\": true}\n",
+   "success": false,
+   "valid": false,
+   "why": [
+    "run failed (rc=1, killed=None)",
+    "no report.json"
+   ],
+   "evaluation": null,
+   "outcome": [
+    "error"
+   ],
+   "report": {},
+   "stderr_tail": "baseline_slepc: complex MUMPS LU does not provide inertia for spectrum slicing\n[guard] {\"cmd\": [\"env\", \"LD_LIBRARY_PATH=/tmp/os2026-p28/ref-complex/lib\", \"/tmp/os2026-p28/ref-complex/bin/mpiexec\", \"-x\", \"LD_LIBRARY_PATH\", \"-n\", \"1\", \"--bind-to\", \"none\", \"-x\", \"OMP_NUM_THREADS=16\", \"-x\", \"OPENBLAS_NUM_THREADS=16\", \"/tmp/os2026-p28/ref-complex/bin/python\", \"~/os2026-wt/rb-evidence/tools/bench/baseline_slepc.py\", \"--case\", \"yee-bloch-1e4\", \"--out\", \"~/rb-evidence/runs/bloch-interval/slepc-default-r0\", \"--root\", \"~/rb-evidence/data\", \"--target\", \"{\\\"mode\\\":\\\"interval\\\",\\\"lower\\\":34.47805199848732,\\\"upper\\\":137.53029469876827}\", \"-log_view\", \":~/rb-evidence/runs/bloch-interval/log_view-slepc-default-r0.txt\"], \"returncode\": 1, \"killed\": null, \"wall_s\": 2.122, \"peak_rss_gib\": 0.092, \"peak_sampled_gib\": 0.092, \"cpu_s\": 1.025, \"cores\": \"16-31\", \"threads\": 16, \"mem_limit_gib\": 32.0, \"exclusive\": true}\n",
+   "stdout_tail": "",
+   "rep": 0,
+   "position": 1
+  },
+  {
+   "solver": "slepc-tuned",
+   "config": "1x16",
+   "config_source": "default (no tuned profile)",
+   "config_scope": "default",
+   "wall_s": 2.412,
+   "peak_rss_gib": 0.085,
+   "rc": 1,
+   "killed": null,
+   "error": "876827}\", \"-log_view\", \":~/rb-evidence/runs/bloch-interval/log_view-slepc-tuned-r0.txt\"], \"returncode\": 1, \"killed\": null, \"wall_s\": 2.412, \"peak_rss_gib\": 0.085, \"peak_sampled_gib\": 0.084, \"cpu_s\": 1.335, \"cores\": \"16-31\", \"threads\": 16, \"mem_limit_gib\": 32.0, \"exclusive\": true}\n",
+   "success": false,
+   "valid": false,
+   "why": [
+    "run failed (rc=1, killed=None)",
+    "no report.json"
+   ],
+   "evaluation": null,
+   "outcome": [
+    "error"
+   ],
+   "report": {},
+   "stderr_tail": "baseline_slepc: complex MUMPS LU does not provide inertia for spectrum slicing\n[guard] {\"cmd\": [\"env\", \"LD_LIBRARY_PATH=/tmp/os2026-p28/ref-complex/lib\", \"/tmp/os2026-p28/ref-complex/bin/mpiexec\", \"-x\", \"LD_LIBRARY_PATH\", \"-n\", \"1\", \"--bind-to\", \"none\", \"-x\", \"OMP_NUM_THREADS=16\", \"-x\", \"OPENBLAS_NUM_THREADS=16\", \"/tmp/os2026-p28/ref-complex/bin/python\", \"~/os2026-wt/rb-evidence/tools/bench/baseline_slepc.py\", \"--case\", \"yee-bloch-1e4\", \"--out\", \"~/rb-evidence/runs/bloch-interval/slepc-tuned-r0\", \"--root\", \"~/rb-evidence/data\", \"--target\", \"{\\\"mode\\\":\\\"interval\\\",\\\"lower\\\":34.47805199848732,\\\"upper\\\":137.53029469876827}\", \"-log_view\", \":~/rb-evidence/runs/bloch-interval/log_view-slepc-tuned-r0.txt\"], \"returncode\": 1, \"killed\": null, \"wall_s\": 2.412, \"peak_rss_gib\": 0.085, \"peak_sampled_gib\": 0.084, \"cpu_s\": 1.335, \"cores\": \"16-31\", \"threads\": 16, \"mem_limit_gib\": 32.0, \"exclusive\": true}\n",
+   "stdout_tail": "",
+   "rep": 0,
+   "position": 2
+  },
+  {
+   "solver": "slepc-default",
+   "config": "1x16",
+   "config_source": "default",
+   "config_scope": "default",
+   "wall_s": 2.409,
+   "peak_rss_gib": 0.089,
+   "rc": 1,
+   "killed": null,
+   "error": "6827}\", \"-log_view\", \":~/rb-evidence/runs/bloch-interval/log_view-slepc-default-r1.txt\"], \"returncode\": 1, \"killed\": null, \"wall_s\": 2.409, \"peak_rss_gib\": 0.089, \"peak_sampled_gib\": 0.089, \"cpu_s\": 1.312, \"cores\": \"16-31\", \"threads\": 16, \"mem_limit_gib\": 32.0, \"exclusive\": true}\n",
+   "success": false,
+   "valid": false,
+   "why": [
+    "run failed (rc=1, killed=None)",
+    "no report.json"
+   ],
+   "evaluation": null,
+   "outcome": [
+    "error"
+   ],
+   "report": {},
+   "stderr_tail": "baseline_slepc: complex MUMPS LU does not provide inertia for spectrum slicing\n[guard] {\"cmd\": [\"env\", \"LD_LIBRARY_PATH=/tmp/os2026-p28/ref-complex/lib\", \"/tmp/os2026-p28/ref-complex/bin/mpiexec\", \"-x\", \"LD_LIBRARY_PATH\", \"-n\", \"1\", \"--bind-to\", \"none\", \"-x\", \"OMP_NUM_THREADS=16\", \"-x\", \"OPENBLAS_NUM_THREADS=16\", \"/tmp/os2026-p28/ref-complex/bin/python\", \"~/os2026-wt/rb-evidence/tools/bench/baseline_slepc.py\", \"--case\", \"yee-bloch-1e4\", \"--out\", \"~/rb-evidence/runs/bloch-interval/slepc-default-r1\", \"--root\", \"~/rb-evidence/data\", \"--target\", \"{\\\"mode\\\":\\\"interval\\\",\\\"lower\\\":34.47805199848732,\\\"upper\\\":137.53029469876827}\", \"-log_view\", \":~/rb-evidence/runs/bloch-interval/log_view-slepc-default-r1.txt\"], \"returncode\": 1, \"killed\": null, \"wall_s\": 2.409, \"peak_rss_gib\": 0.089, \"peak_sampled_gib\": 0.089, \"cpu_s\": 1.312, \"cores\": \"16-31\", \"threads\": 16, \"mem_limit_gib\": 32.0, \"exclusive\": true}\n",
+   "stdout_tail": "",
+   "rep": 1,
+   "position": 0
+  },
+  {
+   "solver": "slepc-tuned",
+   "config": "1x16",
+   "config_source": "default (no tuned profile)",
+   "config_scope": "default",
+   "wall_s": 2.325,
+   "peak_rss_gib": 0.092,
+   "rc": 1,
+   "killed": null,
+   "error": "876827}\", \"-log_view\", \":~/rb-evidence/runs/bloch-interval/log_view-slepc-tuned-r1.txt\"], \"returncode\": 1, \"killed\": null, \"wall_s\": 2.325, \"peak_rss_gib\": 0.092, \"peak_sampled_gib\": 0.092, \"cpu_s\": 1.228, \"cores\": \"16-31\", \"threads\": 16, \"mem_limit_gib\": 32.0, \"exclusive\": true}\n",
+   "success": false,
+   "valid": false,
+   "why": [
+    "run failed (rc=1, killed=None)",
+    "no report.json"
+   ],
+   "evaluation": null,
+   "outcome": [
+    "error"
+   ],
+   "report": {},
+   "stderr_tail": "baseline_slepc: complex MUMPS LU does not provide inertia for spectrum slicing\n[guard] {\"cmd\": [\"env\", \"LD_LIBRARY_PATH=/tmp/os2026-p28/ref-complex/lib\", \"/tmp/os2026-p28/ref-complex/bin/mpiexec\", \"-x\", \"LD_LIBRARY_PATH\", \"-n\", \"1\", \"--bind-to\", \"none\", \"-x\", \"OMP_NUM_THREADS=16\", \"-x\", \"OPENBLAS_NUM_THREADS=16\", \"/tmp/os2026-p28/ref-complex/bin/python\", \"~/os2026-wt/rb-evidence/tools/bench/baseline_slepc.py\", \"--case\", \"yee-bloch-1e4\", \"--out\", \"~/rb-evidence/runs/bloch-interval/slepc-tuned-r1\", \"--root\", \"~/rb-evidence/data\", \"--target\", \"{\\\"mode\\\":\\\"interval\\\",\\\"lower\\\":34.47805199848732,\\\"upper\\\":137.53029469876827}\", \"-log_view\", \":~/rb-evidence/runs/bloch-interval/log_view-slepc-tuned-r1.txt\"], \"returncode\": 1, \"killed\": null, \"wall_s\": 2.325, \"peak_rss_gib\": 0.092, \"peak_sampled_gib\": 0.092, \"cpu_s\": 1.228, \"cores\": \"16-31\", \"threads\": 16, \"mem_limit_gib\": 32.0, \"exclusive\": true}\n",
+   "stdout_tail": "",
+   "rep": 1,
+   "position": 1
+  },
+  {
+   "solver": "hsolve",
+   "wall_s": 1.322,
+   "peak_rss_gib": 0.333,
+   "rc": 0,
+   "killed": null,
+   "claimed_success": true,
+   "success": true,
+   "solver_max_eta": 6.721714957797314e-12,
+   "max_eta": 6.7148021660466836e-12,
+   "pairs": 40,
+   "eigenvalues": [
+    40.05527707855591,
+    40.05527707855603,
+    51.970401274722654,
+    51.970401274722825,
+    56.207826868645945,
+    56.207826868646215,
+    58.98012466124402,
+    58.980124661244126,
+    67.42657370208896,
+    67.42657370208906,
+    68.13382813179543,
+    68.13382813179562,
+    83.57912349217898,
+    83.57912349217925,
+    86.35142128477712,
+    86.35142128477716,
+    90.49614805839317,
+    90.49614805839326,
+    94.73357365231647,
+    94.73357365231672,
+    95.50512475532841,
+    95.50512475532861,
+    106.64869784848317,
+    106.64869784848335,
+    106.6595749154659,
+    106.65957491546611,
+    109.42099564108125,
+    109.42099564108133,
+    113.65842123500451,
+    113.6584212350048,
+    118.5746991116327,
+    118.57469911163297,
+    122.10487027584962,
+    122.10487027584969,
+    125.58442249815393,
+    125.58442249815415,
+    129.9172593558105,
+    129.91725935581078,
+    134.03087153899892,
+    134.03087153899915
+   ],
+   "solver_peak_bytes": 357421056,
+   "verdict": "pass",
+   "eval_reasons": [],
+   "completeness": "complete",
+   "certified": true,
+   "valid": true,
+   "why": [],
+   "solver_s": 1.197051626,
+   "solver_s_scope": "report time_total_s",
+   "phases": {
+    "analysis_s": 0.147658097,
+    "numeric_s": 0.47518026999999996,
+    "factorizations": 3,
+    "solves": 136,
+    "solve_s": 0.37257569600000007,
+    "ortho_s": null,
+    "iterate_s": 0.4843266610000001,
+    "verify_s": 0.03618442099999991
+   },
+   "evaluation": {
+    "verdict": "pass",
+    "reasons": [],
+    "status": "complete",
+    "certified": true,
+    "expected": [
+     40,
+     40
+    ],
+    "found": 40,
+    "missing": [],
+    "boundary_deficit": 0,
+    "spurious": 0,
+    "unmatched": 0,
+    "distinct_returned": 40,
+    "duplicates": 0,
+    "rejected_pairs": 0,
+    "max_backward_error": 6.7148021660466836e-12,
+    "max_eig_scaled_error": 9.419668739591067e-17,
+    "max_subspace_angle": null
+   },
+   "outcome": [],
+   "report": {
+    "version": "0.1.0",
+    "method": "shift_invert_lanczos",
+    "candidate_source": "iterative",
+    "problem": "standard",
+    "sigma_used": 86.0041733486278,
+    "block_size": 4,
+    "zero_cluster_dim": -1,
+    "zero_modes_filtered": 0,
+    "time_total_s": 1.197051626,
+    "time_certificate_s": 0.317077748,
+    "warnings": [],
+    "certificate": {
+     "count_found": 40,
+     "count_inertia": 40,
+     "endpoint_moves": 0,
+     "failure_probability": 0.0,
+     "lower": 34.47805199848732,
+     "method": "exact",
+     "note": "",
+     "passed": true,
+     "performed": true,
+     "rigorous": true,
+     "seconds": 0.317077748,
+     "solves": 0,
+     "statement": "double-precision Sylvester counts at every window end and slice cut: 40 eigenvalue(s) required, 40 distinct found pair(s): every required eigenvalue is found",
+     "upper": 137.53029469876827
+    },
+    "slices": 1,
+    "factorizations": 3
+   },
+   "rep": 1,
+   "position": 2
+  },
+  {
+   "solver": "slepc-tuned",
+   "config": "1x16",
+   "config_source": "default (no tuned profile)",
+   "config_scope": "default",
+   "wall_s": 2.171,
+   "peak_rss_gib": 0.092,
+   "rc": 1,
+   "killed": null,
+   "error": "876827}\", \"-log_view\", \":~/rb-evidence/runs/bloch-interval/log_view-slepc-tuned-r2.txt\"], \"returncode\": 1, \"killed\": null, \"wall_s\": 2.171, \"peak_rss_gib\": 0.092, \"peak_sampled_gib\": 0.092, \"cpu_s\": 1.025, \"cores\": \"16-31\", \"threads\": 16, \"mem_limit_gib\": 32.0, \"exclusive\": true}\n",
+   "success": false,
+   "valid": false,
+   "why": [
+    "run failed (rc=1, killed=None)",
+    "no report.json"
+   ],
+   "evaluation": null,
+   "outcome": [
+    "error"
+   ],
+   "report": {},
+   "stderr_tail": "baseline_slepc: complex MUMPS LU does not provide inertia for spectrum slicing\n[guard] {\"cmd\": [\"env\", \"LD_LIBRARY_PATH=/tmp/os2026-p28/ref-complex/lib\", \"/tmp/os2026-p28/ref-complex/bin/mpiexec\", \"-x\", \"LD_LIBRARY_PATH\", \"-n\", \"1\", \"--bind-to\", \"none\", \"-x\", \"OMP_NUM_THREADS=16\", \"-x\", \"OPENBLAS_NUM_THREADS=16\", \"/tmp/os2026-p28/ref-complex/bin/python\", \"~/os2026-wt/rb-evidence/tools/bench/baseline_slepc.py\", \"--case\", \"yee-bloch-1e4\", \"--out\", \"~/rb-evidence/runs/bloch-interval/slepc-tuned-r2\", \"--root\", \"~/rb-evidence/data\", \"--target\", \"{\\\"mode\\\":\\\"interval\\\",\\\"lower\\\":34.47805199848732,\\\"upper\\\":137.53029469876827}\", \"-log_view\", \":~/rb-evidence/runs/bloch-interval/log_view-slepc-tuned-r2.txt\"], \"returncode\": 1, \"killed\": null, \"wall_s\": 2.171, \"peak_rss_gib\": 0.092, \"peak_sampled_gib\": 0.092, \"cpu_s\": 1.025, \"cores\": \"16-31\", \"threads\": 16, \"mem_limit_gib\": 32.0, \"exclusive\": true}\n",
+   "stdout_tail": "",
+   "rep": 2,
+   "position": 0
+  },
+  {
+   "solver": "hsolve",
+   "wall_s": 1.269,
+   "peak_rss_gib": 0.333,
+   "rc": 0,
+   "killed": null,
+   "claimed_success": true,
+   "success": true,
+   "solver_max_eta": 9.195220858897568e-12,
+   "max_eta": 9.185764218467515e-12,
+   "pairs": 40,
+   "eigenvalues": [
+    40.05527707855597,
+    40.05527707855606,
+    51.9704012747227,
+    51.97040127472288,
+    56.207826868645974,
+    56.2078268686462,
+    58.98012466124403,
+    58.98012466124411,
+    67.426573702089,
+    67.42657370208909,
+    68.13382813179534,
+    68.13382813179564,
+    83.57912349217898,
+    83.57912349217924,
+    86.35142128477713,
+    86.35142128477719,
+    90.49614805839309,
+    90.49614805839323,
+    94.73357365231664,
+    94.73357365231675,
+    95.50512475532835,
+    95.50512475532858,
+    106.648697848483,
+    106.64869784848324,
+    106.65957491546588,
+    106.659574915466,
+    109.42099564108126,
+    109.42099564108135,
+    113.65842123500458,
+    113.65842123500482,
+    118.57469911163258,
+    118.5746991116327,
+    122.10487027584963,
+    122.10487027584969,
+    125.5844224981541,
+    125.58442249815418,
+    129.91725935581047,
+    129.91725935581064,
+    134.0308715389988,
+    134.0308715389991
+   ],
+   "solver_peak_bytes": 357257216,
+   "verdict": "pass",
+   "eval_reasons": [],
+   "completeness": "complete",
+   "certified": true,
+   "valid": true,
+   "why": [],
+   "solver_s": 1.186808678,
+   "solver_s_scope": "report time_total_s",
+   "phases": {
+    "analysis_s": 0.146177905,
+    "numeric_s": 0.47627622000000003,
+    "factorizations": 3,
+    "solves": 136,
+    "solve_s": 0.362753978,
+    "ortho_s": null,
+    "iterate_s": 0.46407088800000007,
+    "verify_s": 0.036141145999999846
+   },
+   "evaluation": {
+    "verdict": "pass",
+    "reasons": [],
+    "status": "complete",
+    "certified": true,
+    "expected": [
+     40,
+     40
+    ],
+    "found": 40,
+    "missing": [],
+    "boundary_deficit": 0,
+    "spurious": 0,
+    "unmatched": 0,
+    "distinct_returned": 40,
+    "duplicates": 0,
+    "rejected_pairs": 0,
+    "max_backward_error": 9.185764218467515e-12,
+    "max_eig_scaled_error": 9.897222493143639e-17,
+    "max_subspace_angle": null
+   },
+   "outcome": [],
+   "report": {
+    "version": "0.1.0",
+    "method": "shift_invert_lanczos",
+    "candidate_source": "iterative",
+    "problem": "standard",
+    "sigma_used": 86.0041733486278,
+    "block_size": 4,
+    "zero_cluster_dim": -1,
+    "zero_modes_filtered": 0,
+    "time_total_s": 1.186808678,
+    "time_certificate_s": 0.31909249100000003,
+    "warnings": [],
+    "certificate": {
+     "count_found": 40,
+     "count_inertia": 40,
+     "endpoint_moves": 0,
+     "failure_probability": 0.0,
+     "lower": 34.47805199848732,
+     "method": "exact",
+     "note": "",
+     "passed": true,
+     "performed": true,
+     "rigorous": true,
+     "seconds": 0.31909249100000003,
+     "solves": 0,
+     "statement": "double-precision Sylvester counts at every window end and slice cut: 40 eigenvalue(s) required, 40 distinct found pair(s): every required eigenvalue is found",
+     "upper": 137.53029469876827
+    },
+    "slices": 1,
+    "factorizations": 3
+   },
+   "rep": 2,
+   "position": 1
+  },
+  {
+   "solver": "slepc-default",
+   "config": "1x16",
+   "config_source": "default",
+   "config_scope": "default",
+   "wall_s": 2.172,
+   "peak_rss_gib": 0.094,
+   "rc": 1,
+   "killed": null,
+   "error": "6827}\", \"-log_view\", \":~/rb-evidence/runs/bloch-interval/log_view-slepc-default-r2.txt\"], \"returncode\": 1, \"killed\": null, \"wall_s\": 2.172, \"peak_rss_gib\": 0.094, \"peak_sampled_gib\": 0.094, \"cpu_s\": 1.019, \"cores\": \"16-31\", \"threads\": 16, \"mem_limit_gib\": 32.0, \"exclusive\": true}\n",
+   "success": false,
+   "valid": false,
+   "why": [
+    "run failed (rc=1, killed=None)",
+    "no report.json"
+   ],
+   "evaluation": null,
+   "outcome": [
+    "error"
+   ],
+   "report": {},
+   "stderr_tail": "baseline_slepc: complex MUMPS LU does not provide inertia for spectrum slicing\n[guard] {\"cmd\": [\"env\", \"LD_LIBRARY_PATH=/tmp/os2026-p28/ref-complex/lib\", \"/tmp/os2026-p28/ref-complex/bin/mpiexec\", \"-x\", \"LD_LIBRARY_PATH\", \"-n\", \"1\", \"--bind-to\", \"none\", \"-x\", \"OMP_NUM_THREADS=16\", \"-x\", \"OPENBLAS_NUM_THREADS=16\", \"/tmp/os2026-p28/ref-complex/bin/python\", \"~/os2026-wt/rb-evidence/tools/bench/baseline_slepc.py\", \"--case\", \"yee-bloch-1e4\", \"--out\", \"~/rb-evidence/runs/bloch-interval/slepc-default-r2\", \"--root\", \"~/rb-evidence/data\", \"--target\", \"{\\\"mode\\\":\\\"interval\\\",\\\"lower\\\":34.47805199848732,\\\"upper\\\":137.53029469876827}\", \"-log_view\", \":~/rb-evidence/runs/bloch-interval/log_view-slepc-default-r2.txt\"], \"returncode\": 1, \"killed\": null, \"wall_s\": 2.172, \"peak_rss_gib\": 0.094, \"peak_sampled_gib\": 0.094, \"cpu_s\": 1.019, \"cores\": \"16-31\", \"threads\": 16, \"mem_limit_gib\": 32.0, \"exclusive\": true}\n",
+   "stdout_tail": "",
+   "rep": 2,
+   "position": 2
+  }
+ ]
+}

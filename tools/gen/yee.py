@@ -360,6 +360,7 @@ def _presets() -> dict[str, Callable[[Path], Path]]:
     box1e4 = YeeGrid((20, 16, 12), (1.0, 0.7, 0.45))
     cube32 = YeeGrid((32, 32, 32))
     box1e5 = YeeGrid((44, 34, 26), (1.0, 0.75, 0.55))
+    box1e6 = YeeGrid((92, 71, 54), (1.0, 0.75, 0.55))      # n = 1027733 (results/p7_membudget.md)
     bloch1e4 = YeeGrid((16, 15, 14), (1.0, 0.9, 0.8), "bloch", k_generic)
     crystal1e4 = YeeGrid((15, 15, 15), (1.0, 1.0, 1.0), "bloch", k_crystal)
     return {
@@ -367,6 +368,7 @@ def _presets() -> dict[str, Callable[[Path], Path]]:
         "yee-pec-box-1e4": lambda root: make_homogeneous_case("yee-pec-box-1e4", box1e4, "generalized", root),
         "yee-pec-cube-32": lambda root: make_homogeneous_case("yee-pec-cube-32", cube32, "standard", root),
         "yee-pec-box-1e5": lambda root: make_homogeneous_case("yee-pec-box-1e5", box1e5, "generalized", root),
+        "yee-pec-box-1e6": lambda root: make_homogeneous_case("yee-pec-box-1e6", box1e6, "generalized", root),
         "yee-bloch-1e4": lambda root: make_homogeneous_case("yee-bloch-1e4", bloch1e4, "standard", root),
         "yee-photonic-spheres-1e4": lambda root: make_photonic_case(
             "yee-photonic-spheres-1e4", crystal1e4, "generalized", "spheres", 0.25, 13.0, root),

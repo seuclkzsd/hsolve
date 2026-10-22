@@ -1,0 +1,2504 @@
+{
+ "case": "sc-pec-box-1e5-physical",
+ "problem": "GHEP",
+ "mode": "nearest",
+ "target": {
+  "mode": "nearest",
+  "sigma": 0.0,
+  "k": 10
+ },
+ "target_override": null,
+ "cores": "16-31",
+ "ncores": 16,
+ "tol": 1e-10,
+ "n": 109744,
+ "tag": "showcase-tune",
+ "date": "2026-10-23T04:24:07",
+ "host": "c005",
+ "screen_reps": 1,
+ "confirm_reps": 5,
+ "flaky_confirm_reps": 20,
+ "flaky": false,
+ "random_failures": [],
+ "margin": 0.03,
+ "default": "1x16",
+ "decisions": [
+  {
+   "group": "default",
+   "incumbent": "1x16",
+   "time": null,
+   "valid": false
+  },
+  {
+   "group": "accuracy",
+   "candidates": [
+    "1x16 eps_tol=1e-11",
+    "1x16 eps_nev=k+2",
+    "1x16 eps_nev=k+4",
+    "1x16 eps_ncv=3k",
+    "1x16 eps_nev=k+4 eps_tol=1e-11",
+    "1x16 eps_nev=2k",
+    "1x16 eps_nev=3k"
+   ],
+   "incumbent": "1x16",
+   "time": null,
+   "valid": false,
+   "moved": false
+  },
+  {
+   "group": "layout",
+   "candidates": [
+    "1x16/core",
+    "2x8",
+    "2x8/core",
+    "4x4",
+    "4x4/core",
+    "8x2",
+    "8x2/core",
+    "16x1",
+    "16x1/core"
+   ],
+   "incumbent": "1x16",
+   "time": null,
+   "valid": false,
+   "moved": false
+  },
+  {
+   "group": "ordering",
+   "candidates": [
+    "1x16 st_mat_mumps_icntl_7=0",
+    "1x16 st_mat_mumps_icntl_7=2",
+    "1x16 st_mat_mumps_icntl_7=3",
+    "1x16 st_mat_mumps_icntl_7=4",
+    "1x16 st_mat_mumps_icntl_7=5",
+    "1x16 st_mat_mumps_icntl_7=6"
+   ],
+   "incumbent": "1x16",
+   "time": null,
+   "valid": false,
+   "moved": false
+  },
+  {
+   "group": "layout2",
+   "candidates": [
+    "1x16/core",
+    "2x8",
+    "2x8/core",
+    "4x4",
+    "4x4/core",
+    "8x2",
+    "8x2/core",
+    "16x1",
+    "16x1/core"
+   ],
+   "incumbent": "1x16",
+   "time": null,
+   "valid": false,
+   "moved": false
+  },
+  {
+   "group": "icntl_48",
+   "candidates": [
+    "1x16 st_mat_mumps_icntl_48=0"
+   ],
+   "incumbent": "1x16",
+   "time": null,
+   "valid": false,
+   "moved": false
+  },
+  {
+   "group": "icntl_58",
+   "candidates": [
+    "1x16 st_mat_mumps_icntl_58=1"
+   ],
+   "incumbent": "1x16",
+   "time": null,
+   "valid": false,
+   "moved": false
+  },
+  {
+   "group": "icntl_8",
+   "candidates": [
+    "1x16 st_mat_mumps_icntl_8=0"
+   ],
+   "incumbent": "1x16",
+   "time": null,
+   "valid": false,
+   "moved": false
+  },
+  {
+   "group": "blr",
+   "candidates": [
+    "1x16 st_mat_mumps_cntl_7=1e-12 st_mat_mumps_icntl_35=2",
+    "1x16 st_mat_mumps_cntl_7=1e-10 st_mat_mumps_icntl_35=2"
+   ],
+   "incumbent": "1x16",
+   "time": null,
+   "valid": false,
+   "moved": false
+  },
+  {
+   "group": "ncv",
+   "candidates": [
+    "1x16 eps_ncv=k+8",
+    "1x16 eps_ncv=2k",
+    "1x16 eps_ncv=3k",
+    "1x16 eps_ncv=4k"
+   ],
+   "incumbent": "1x16",
+   "time": null,
+   "valid": false,
+   "moved": false
+  },
+  {
+   "group": "restart",
+   "candidates": [
+    "1x16 eps_krylovschur_restart=0.3",
+    "1x16 eps_krylovschur_restart=0.7"
+   ],
+   "incumbent": "1x16",
+   "time": null,
+   "valid": false,
+   "moved": false
+  },
+  {
+   "group": "purify",
+   "candidates": [
+    "1x16 eps_purify=0"
+   ],
+   "incumbent": "1x16",
+   "time": null,
+   "valid": false,
+   "moved": false
+  }
+ ],
+ "confirmation": {
+  "configs": {
+   "1x16": {
+    "config": {
+     "ranks": 1,
+     "threads": 16,
+     "bind": "none",
+     "options": {}
+    },
+    "valid": false,
+    "n": 5,
+    "invalid_reasons": [
+     "completeness incomplete: 10 missing, boundary deficit 0, 10 distinct returned; 10 spurious eigenvalue(s) absent from the complete reference"
+    ],
+    "median_s": 6.00832,
+    "min_s": 5.97241,
+    "max_s": 6.02169,
+    "times_s": [
+     5.97241,
+     6.00168,
+     6.02169,
+     6.00929,
+     6.00832
+    ],
+    "phases": {
+     "analysis_s": 1.2382,
+     "numeric_s": 0.56424,
+     "solve_s": 4.0497499999999995,
+     "solves": 88,
+     "ortho_s": 0.098927,
+     "setup_s": 1.808,
+     "eps_solve_s": 3.6757,
+     "vectors_s": 0.51449,
+     "factorizations": 1
+    },
+    "median_wall_s": 8.195,
+    "peak_rss_bytes": 905129984,
+    "max_eta": 1.188810663336574e-16,
+    "trial_ids": [
+     34,
+     35,
+     36,
+     37,
+     38
+    ],
+    "runs_total": 6
+   }
+  },
+  "best": null,
+  "default": "1x16",
+  "start": null,
+  "extended": []
+ },
+ "trials": [
+  {
+   "id": 0,
+   "phase": "default",
+   "label": "1x16",
+   "config": {
+    "ranks": 1,
+    "threads": 16,
+    "bind": "none",
+    "options": {}
+   },
+   "guard": {
+    "returncode": 0,
+    "killed": null,
+    "wall_s": 8.232,
+    "peak_rss_gib": 0.843
+   },
+   "report": {
+    "time_setup_s": 1.8188813030719757,
+    "time_solve_s": 4.227776050567627,
+    "time_eps_solve_s": 3.7107659056782722,
+    "time_vectors_s": 0.5170101448893547,
+    "time_load_s": 0.08798762410879135,
+    "nconv": 11,
+    "iterations": 6,
+    "peak_rss_bytes": 887767040,
+    "unused_options": [],
+    "success": true,
+    "mpi_ranks": 1
+   },
+   "phases": {
+    "analysis_s": 1.2374,
+    "analyses": 1,
+    "numeric_s": 0.57567,
+    "factorizations": 1,
+    "solve_s": 4.0813500000000005,
+    "solves": 88,
+    "ortho_s": 0.099746,
+    "setup_s": 1.8189,
+    "eps_solve_s": 3.7108,
+    "vectors_s": 0.51701,
+    "solver_s": 6.04671,
+    "staged": true,
+    "ranks": 1,
+    "omp_threads": 16
+   },
+   "eval": {
+    "verdict": "fail",
+    "reasons": [
+     "completeness incomplete: 10 missing, boundary deficit 0, 10 distinct returned",
+     "10 spurious eigenvalue(s) absent from the complete reference"
+    ],
+    "max_eta": 1.1924235358989194e-16,
+    "completeness": "incomplete",
+    "pairs": 10
+   },
+   "valid": false,
+   "why": "completeness incomplete: 10 missing, boundary deficit 0, 10 distinct returned; 10 spurious eigenvalue(s) absent from the complete reference",
+   "solver_s": 6.04671
+  },
+  {
+   "id": 1,
+   "phase": "accuracy",
+   "label": "1x16 eps_tol=1e-11",
+   "config": {
+    "ranks": 1,
+    "threads": 16,
+    "bind": "none",
+    "options": {
+     "eps_tol": "1e-11"
+    }
+   },
+   "guard": {
+    "returncode": 0,
+    "killed": null,
+    "wall_s": 8.144,
+    "peak_rss_gib": 0.87
+   },
+   "report": {
+    "time_setup_s": 1.7955571115016937,
+    "time_solve_s": 4.192727029323578,
+    "time_eps_solve_s": 3.726795181632042,
+    "time_vectors_s": 0.46593184769153595,
+    "time_load_s": 0.07992620766162872,
+    "nconv": 10,
+    "iterations": 6,
+    "peak_rss_bytes": 908296192,
+    "unused_options": [],
+    "success": true,
+    "mpi_ranks": 1
+   },
+   "phases": {
+    "analysis_s": 1.2375,
+    "analyses": 1,
+    "numeric_s": 0.5523,
+    "factorizations": 1,
+    "solve_s": 4.04471,
+    "solves": 88,
+    "ortho_s": 0.10074,
+    "setup_s": 1.7956,
+    "eps_solve_s": 3.7268,
+    "vectors_s": 0.46594,
+    "solver_s": 5.98834,
+    "staged": true,
+    "ranks": 1,
+    "omp_threads": 16
+   },
+   "eval": {
+    "verdict": "fail",
+    "reasons": [
+     "completeness incomplete: 10 missing, boundary deficit 0, 10 distinct returned",
+     "10 spurious eigenvalue(s) absent from the complete reference"
+    ],
+    "max_eta": 1.1766770827491396e-16,
+    "completeness": "incomplete",
+    "pairs": 10
+   },
+   "valid": false,
+   "why": "completeness incomplete: 10 missing, boundary deficit 0, 10 distinct returned; 10 spurious eigenvalue(s) absent from the complete reference",
+   "solver_s": 5.98834
+  },
+  {
+   "id": 2,
+   "phase": "accuracy",
+   "label": "1x16 eps_nev=k+2",
+   "config": {
+    "ranks": 1,
+    "threads": 16,
+    "bind": "none",
+    "options": {
+     "eps_nev": "k+2"
+    }
+   },
+   "guard": {
+    "returncode": 0,
+    "killed": null,
+    "wall_s": 8.428,
+    "peak_rss_gib": 0.878
+   },
+   "report": {
+    "time_setup_s": 1.78889948874712,
+    "time_solve_s": 4.449090234935284,
+    "time_eps_solve_s": 3.8870380595326424,
+    "time_vectors_s": 0.5620521754026413,
+    "time_load_s": 0.0853012353181839,
+    "nconv": 12,
+    "iterations": 6,
+    "peak_rss_bytes": 925421568,
+    "unused_options": [],
+    "success": true,
+    "mpi_ranks": 1
+   },
+   "phases": {
+    "analysis_s": 1.2329,
+    "analyses": 1,
+    "numeric_s": 0.55004,
+    "factorizations": 1,
+    "solve_s": 4.29281,
+    "solves": 93,
+    "ortho_s": 0.10742,
+    "setup_s": 1.7889,
+    "eps_solve_s": 3.887,
+    "vectors_s": 0.56206,
+    "solver_s": 6.23796,
+    "staged": true,
+    "ranks": 1,
+    "omp_threads": 16
+   },
+   "eval": {
+    "verdict": "fail",
+    "reasons": [
+     "completeness incomplete: 10 missing, boundary deficit 0, 10 distinct returned",
+     "10 spurious eigenvalue(s) absent from the complete reference"
+    ],
+    "max_eta": 1.1786557724899855e-16,
+    "completeness": "incomplete",
+    "pairs": 10
+   },
+   "valid": false,
+   "why": "completeness incomplete: 10 missing, boundary deficit 0, 10 distinct returned; 10 spurious eigenvalue(s) absent from the complete reference",
+   "solver_s": 6.23796
+  },
+  {
+   "id": 3,
+   "phase": "accuracy",
+   "label": "1x16 eps_nev=k+4",
+   "config": {
+    "ranks": 1,
+    "threads": 16,
+    "bind": "none",
+    "options": {
+     "eps_nev": "k+4"
+    }
+   },
+   "guard": {
+    "returncode": 0,
+    "killed": null,
+    "wall_s": 8.754,
+    "peak_rss_gib": 0.885
+   },
+   "report": {
+    "time_setup_s": 1.8096258118748665,
+    "time_solve_s": 4.685567624866962,
+    "time_eps_solve_s": 4.033243380486965,
+    "time_vectors_s": 0.6523242443799973,
+    "time_load_s": 0.09151080995798111,
+    "nconv": 14,
+    "iterations": 6,
+    "peak_rss_bytes": 923979776,
+    "unused_options": [],
+    "success": true,
+    "mpi_ranks": 1
+   },
+   "phases": {
+    "analysis_s": 1.2386,
+    "analyses": 1,
+    "numeric_s": 0.56489,
+    "factorizations": 1,
+    "solve_s": 4.51347,
+    "solves": 98,
+    "ortho_s": 0.11956,
+    "setup_s": 1.8096,
+    "eps_solve_s": 4.0333,
+    "vectors_s": 0.65233,
+    "solver_s": 6.49523,
+    "staged": true,
+    "ranks": 1,
+    "omp_threads": 16
+   },
+   "eval": {
+    "verdict": "fail",
+    "reasons": [
+     "completeness incomplete: 10 missing, boundary deficit 0, 10 distinct returned",
+     "10 spurious eigenvalue(s) absent from the complete reference"
+    ],
+    "max_eta": 1.1903618465184675e-16,
+    "completeness": "incomplete",
+    "pairs": 10
+   },
+   "valid": false,
+   "why": "completeness incomplete: 10 missing, boundary deficit 0, 10 distinct returned; 10 spurious eigenvalue(s) absent from the complete reference",
+   "solver_s": 6.49523
+  },
+  {
+   "id": 4,
+   "phase": "accuracy",
+   "label": "1x16 eps_ncv=3k",
+   "config": {
+    "ranks": 1,
+    "threads": 16,
+    "bind": "none",
+    "options": {
+     "eps_ncv": "3k"
+    }
+   },
+   "guard": {
+    "returncode": 0,
+    "killed": null,
+    "wall_s": 7.793,
+    "peak_rss_gib": 0.879
+   },
+   "report": {
+    "time_setup_s": 1.793518915772438,
+    "time_solve_s": 3.818392038345337,
+    "time_eps_solve_s": 3.3059471547603607,
+    "time_vectors_s": 0.5124448835849762,
+    "time_load_s": 0.07965502887964249,
+    "nconv": 11,
+    "iterations": 4,
+    "peak_rss_bytes": 918159360,
+    "unused_options": [],
+    "success": true,
+    "mpi_ranks": 1
+   },
+   "phases": {
+    "analysis_s": 1.2323,
+    "analyses": 1,
+    "numeric_s": 0.55473,
+    "factorizations": 1,
+    "solve_s": 3.6786,
+    "solves": 80,
+    "ortho_s": 0.095939,
+    "setup_s": 1.7935,
+    "eps_solve_s": 3.306,
+    "vectors_s": 0.51245,
+    "solver_s": 5.61195,
+    "staged": true,
+    "ranks": 1,
+    "omp_threads": 16
+   },
+   "eval": {
+    "verdict": "fail",
+    "reasons": [
+     "completeness incomplete: 10 missing, boundary deficit 0, 10 distinct returned",
+     "10 spurious eigenvalue(s) absent from the complete reference"
+    ],
+    "max_eta": 1.1835089182757368e-16,
+    "completeness": "incomplete",
+    "pairs": 10
+   },
+   "valid": false,
+   "why": "completeness incomplete: 10 missing, boundary deficit 0, 10 distinct returned; 10 spurious eigenvalue(s) absent from the complete reference",
+   "solver_s": 5.61195
+  },
+  {
+   "id": 5,
+   "phase": "accuracy",
+   "label": "1x16 eps_nev=k+4 eps_tol=1e-11",
+   "config": {
+    "ranks": 1,
+    "threads": 16,
+    "bind": "none",
+    "options": {
+     "eps_nev": "k+4",
+     "eps_tol": "1e-11"
+    }
+   },
+   "guard": {
+    "returncode": 0,
+    "killed": null,
+    "wall_s": 8.75,
+    "peak_rss_gib": 0.849
+   },
+   "report": {
+    "time_setup_s": 1.8063727542757988,
+    "time_solve_s": 4.7125895246863365,
+    "time_eps_solve_s": 4.0688949674367905,
+    "time_vectors_s": 0.643694557249546,
+    "time_load_s": 0.11480927467346191,
+    "nconv": 14,
+    "iterations": 6,
+    "peak_rss_bytes": 886145024,
+    "unused_options": [],
+    "success": true,
+    "mpi_ranks": 1
+   },
+   "phases": {
+    "analysis_s": 1.2342,
+    "analyses": 1,
+    "numeric_s": 0.56483,
+    "factorizations": 1,
+    "solve_s": 4.54067,
+    "solves": 100,
+    "ortho_s": 0.12005,
+    "setup_s": 1.8064,
+    "eps_solve_s": 4.0689,
+    "vectors_s": 0.6437,
+    "solver_s": 6.519,
+    "staged": true,
+    "ranks": 1,
+    "omp_threads": 16
+   },
+   "eval": {
+    "verdict": "fail",
+    "reasons": [
+     "completeness incomplete: 10 missing, boundary deficit 0, 10 distinct returned",
+     "10 spurious eigenvalue(s) absent from the complete reference"
+    ],
+    "max_eta": 1.1755680185407383e-16,
+    "completeness": "incomplete",
+    "pairs": 10
+   },
+   "valid": false,
+   "why": "completeness incomplete: 10 missing, boundary deficit 0, 10 distinct returned; 10 spurious eigenvalue(s) absent from the complete reference",
+   "solver_s": 6.519
+  },
+  {
+   "id": 6,
+   "phase": "accuracy",
+   "label": "1x16 eps_nev=2k",
+   "config": {
+    "ranks": 1,
+    "threads": 16,
+    "bind": "none",
+    "options": {
+     "eps_nev": "2k"
+    }
+   },
+   "guard": {
+    "returncode": 0,
+    "killed": null,
+    "wall_s": 9.701,
+    "peak_rss_gib": 0.856
+   },
+   "report": {
+    "time_setup_s": 1.8231143802404404,
+    "time_solve_s": 5.701373882591724,
+    "time_eps_solve_s": 4.733964674174786,
+    "time_vectors_s": 0.9674092084169388,
+    "time_load_s": 0.08046295493841171,
+    "nconv": 21,
+    "iterations": 5,
+    "peak_rss_bytes": 892653568,
+    "unused_options": [],
+    "success": true,
+    "mpi_ranks": 1
+   },
+   "phases": {
+    "analysis_s": 1.2515,
+    "analyses": 1,
+    "numeric_s": 0.56381,
+    "factorizations": 1,
+    "solve_s": 5.46617,
+    "solves": 120,
+    "ortho_s": 0.17145,
+    "setup_s": 1.8231,
+    "eps_solve_s": 4.734,
+    "vectors_s": 0.96741,
+    "solver_s": 7.52451,
+    "staged": true,
+    "ranks": 1,
+    "omp_threads": 16
+   },
+   "eval": {
+    "verdict": "fail",
+    "reasons": [
+     "completeness incomplete: 10 missing, boundary deficit 0, 10 distinct returned",
+     "10 spurious eigenvalue(s) absent from the complete reference"
+    ],
+    "max_eta": 1.1775765651116583e-16,
+    "completeness": "incomplete",
+    "pairs": 10
+   },
+   "valid": false,
+   "why": "completeness incomplete: 10 missing, boundary deficit 0, 10 distinct returned; 10 spurious eigenvalue(s) absent from the complete reference",
+   "solver_s": 7.52451
+  },
+  {
+   "id": 7,
+   "phase": "accuracy",
+   "label": "1x16 eps_nev=3k",
+   "config": {
+    "ranks": 1,
+    "threads": 16,
+    "bind": "none",
+    "options": {
+     "eps_nev": "3k"
+    }
+   },
+   "guard": {
+    "returncode": 0,
+    "killed": null,
+    "wall_s": 11.359,
+    "peak_rss_gib": 0.883
+   },
+   "report": {
+    "time_setup_s": 1.819763332605362,
+    "time_solve_s": 7.39639176428318,
+    "time_eps_solve_s": 5.92029994726181,
+    "time_vectors_s": 1.47609181702137,
+    "time_load_s": 0.0984199121594429,
+    "nconv": 32,
+    "iterations": 4,
+    "peak_rss_bytes": 921845760,
+    "unused_options": [],
+    "success": true,
+    "mpi_ranks": 1
+   },
+   "phases": {
+    "analysis_s": 1.2388,
+    "analyses": 1,
+    "numeric_s": 0.56997,
+    "factorizations": 1,
+    "solve_s": 6.9939,
+    "solves": 153,
+    "ortho_s": 0.31654,
+    "setup_s": 1.8198,
+    "eps_solve_s": 5.9203,
+    "vectors_s": 1.4761,
+    "solver_s": 9.2162,
+    "staged": true,
+    "ranks": 1,
+    "omp_threads": 16
+   },
+   "eval": {
+    "verdict": "fail",
+    "reasons": [
+     "completeness incomplete: 10 missing, boundary deficit 0, 10 distinct returned",
+     "10 spurious eigenvalue(s) absent from the complete reference"
+    ],
+    "max_eta": 1.1897515581669818e-16,
+    "completeness": "incomplete",
+    "pairs": 10
+   },
+   "valid": false,
+   "why": "completeness incomplete: 10 missing, boundary deficit 0, 10 distinct returned; 10 spurious eigenvalue(s) absent from the complete reference",
+   "solver_s": 9.2162
+  },
+  {
+   "id": 8,
+   "phase": "layout",
+   "label": "1x16/core",
+   "config": {
+    "ranks": 1,
+    "threads": 16,
+    "bind": "core",
+    "options": {}
+   },
+   "guard": {
+    "returncode": 0,
+    "killed": null,
+    "wall_s": 8.194,
+    "peak_rss_gib": 0.87
+   },
+   "report": {
+    "time_setup_s": 1.7838645949959755,
+    "time_solve_s": 4.201326668262482,
+    "time_eps_solve_s": 3.686751589179039,
+    "time_vectors_s": 0.5145750790834427,
+    "time_load_s": 0.08683209121227264,
+    "nconv": 11,
+    "iterations": 6,
+    "peak_rss_bytes": 908587008,
+    "unused_options": [],
+    "success": true,
+    "mpi_ranks": 1
+   },
+   "phases": {
+    "analysis_s": 1.2339,
+    "analyses": 1,
+    "numeric_s": 0.54415,
+    "factorizations": 1,
+    "solve_s": 4.05717,
+    "solves": 88,
+    "ortho_s": 0.097964,
+    "setup_s": 1.7839,
+    "eps_solve_s": 3.6868,
+    "vectors_s": 0.51458,
+    "solver_s": 5.9852799999999995,
+    "staged": true,
+    "ranks": 1,
+    "omp_threads": 16
+   },
+   "eval": {
+    "verdict": "fail",
+    "reasons": [
+     "completeness incomplete: 10 missing, boundary deficit 0, 10 distinct returned",
+     "10 spurious eigenvalue(s) absent from the complete reference"
+    ],
+    "max_eta": 1.1939198519945033e-16,
+    "completeness": "incomplete",
+    "pairs": 10
+   },
+   "valid": false,
+   "why": "completeness incomplete: 10 missing, boundary deficit 0, 10 distinct returned; 10 spurious eigenvalue(s) absent from the complete reference",
+   "solver_s": 5.9852799999999995
+  },
+  {
+   "id": 9,
+   "phase": "layout",
+   "label": "2x8",
+   "config": {
+    "ranks": 2,
+    "threads": 8,
+    "bind": "none",
+    "options": {}
+   },
+   "guard": {
+    "returncode": 0,
+    "killed": null,
+    "wall_s": 12.916,
+    "peak_rss_gib": 1.096
+   },
+   "report": {
+    "time_setup_s": 2.0696824714541435,
+    "time_solve_s": 8.597697980701923,
+    "time_eps_solve_s": 8.066077999770641,
+    "time_vectors_s": 0.531619980931282,
+    "time_load_s": 0.1311018243432045,
+    "nconv": 14,
+    "iterations": 18,
+    "peak_rss_bytes": 1150554112,
+    "unused_options": [],
+    "success": true,
+    "mpi_ranks": 2
+   },
+   "phases": {
+    "analysis_s": 1.2565,
+    "analyses": 1,
+    "numeric_s": 0.8094,
+    "factorizations": 1,
+    "solve_s": 8.31938,
+    "solves": 221,
+    "ortho_s": 0.21834,
+    "setup_s": 2.0697,
+    "eps_solve_s": 8.0661,
+    "vectors_s": 0.53163,
+    "solver_s": 10.66743,
+    "staged": true,
+    "ranks": 2,
+    "omp_threads": 8
+   },
+   "eval": {
+    "verdict": "fail",
+    "reasons": [
+     "completeness incomplete: 10 missing, boundary deficit 0, 10 distinct returned",
+     "10 spurious eigenvalue(s) absent from the complete reference"
+    ],
+    "max_eta": 1.0793407054031077e-16,
+    "completeness": "incomplete",
+    "pairs": 10
+   },
+   "valid": false,
+   "why": "completeness incomplete: 10 missing, boundary deficit 0, 10 distinct returned; 10 spurious eigenvalue(s) absent from the complete reference",
+   "solver_s": 10.66743
+  },
+  {
+   "id": 10,
+   "phase": "layout",
+   "label": "2x8/core",
+   "config": {
+    "ranks": 2,
+    "threads": 8,
+    "bind": "core",
+    "options": {}
+   },
+   "guard": {
+    "returncode": 0,
+    "killed": null,
+    "wall_s": 11.315,
+    "peak_rss_gib": 1.103
+   },
+   "report": {
+    "time_setup_s": 2.069890893995762,
+    "time_solve_s": 6.975065477192402,
+    "time_eps_solve_s": 6.438735939562321,
+    "time_vectors_s": 0.5363295376300812,
+    "time_load_s": 0.11886484920978546,
+    "nconv": 14,
+    "iterations": 14,
+    "peak_rss_bytes": 1158041600,
+    "unused_options": [],
+    "success": true,
+    "mpi_ranks": 2
+   },
+   "phases": {
+    "analysis_s": 1.263,
+    "analyses": 1,
+    "numeric_s": 0.8031,
+    "factorizations": 1,
+    "solve_s": 6.75516,
+    "solves": 178,
+    "ortho_s": 0.16947,
+    "setup_s": 2.0699,
+    "eps_solve_s": 6.4387,
+    "vectors_s": 0.53634,
+    "solver_s": 9.04494,
+    "staged": true,
+    "ranks": 2,
+    "omp_threads": 8
+   },
+   "eval": {
+    "verdict": "fail",
+    "reasons": [
+     "completeness incomplete: 10 missing, boundary deficit 0, 10 distinct returned",
+     "10 spurious eigenvalue(s) absent from the complete reference"
+    ],
+    "max_eta": 1.0827477174896939e-16,
+    "completeness": "incomplete",
+    "pairs": 10
+   },
+   "valid": false,
+   "why": "completeness incomplete: 10 missing, boundary deficit 0, 10 distinct returned; 10 spurious eigenvalue(s) absent from the complete reference",
+   "solver_s": 9.04494
+  },
+  {
+   "id": 11,
+   "phase": "layout",
+   "label": "4x4",
+   "config": {
+    "ranks": 4,
+    "threads": 4,
+    "bind": "none",
+    "options": {}
+   },
+   "guard": {
+    "returncode": 0,
+    "killed": null,
+    "wall_s": 11.791,
+    "peak_rss_gib": 1.342
+   },
+   "report": {
+    "time_setup_s": 2.381454698741436,
+    "time_solve_s": 7.179149881005287,
+    "time_eps_solve_s": 6.664739966392517,
+    "time_vectors_s": 0.5144099146127701,
+    "time_load_s": 0.10612472146749496,
+    "nconv": 15,
+    "iterations": 16,
+    "peak_rss_bytes": 1423908864,
+    "unused_options": [],
+    "success": true,
+    "mpi_ranks": 4
+   },
+   "phases": {
+    "analysis_s": 1.2779,
+    "analyses": 1,
+    "numeric_s": 1.1009,
+    "factorizations": 1,
+    "solve_s": 6.950740000000001,
+    "solves": 202,
+    "ortho_s": 0.19563,
+    "setup_s": 2.3815,
+    "eps_solve_s": 6.6648,
+    "vectors_s": 0.51441,
+    "solver_s": 9.560709999999998,
+    "staged": true,
+    "ranks": 4,
+    "omp_threads": 4
+   },
+   "eval": {
+    "verdict": "fail",
+    "reasons": [
+     "completeness incomplete: 10 missing, boundary deficit 0, 10 distinct returned",
+     "10 spurious eigenvalue(s) absent from the complete reference"
+    ],
+    "max_eta": 1.093076700370635e-16,
+    "completeness": "incomplete",
+    "pairs": 10
+   },
+   "valid": false,
+   "why": "completeness incomplete: 10 missing, boundary deficit 0, 10 distinct returned; 10 spurious eigenvalue(s) absent from the complete reference",
+   "solver_s": 9.560709999999998
+  },
+  {
+   "id": 12,
+   "phase": "layout",
+   "label": "4x4/core",
+   "config": {
+    "ranks": 4,
+    "threads": 4,
+    "bind": "core",
+    "options": {}
+   },
+   "guard": {
+    "returncode": 0,
+    "killed": null,
+    "wall_s": 11.64,
+    "peak_rss_gib": 1.345
+   },
+   "report": {
+    "time_setup_s": 2.387098141014576,
+    "time_solve_s": 7.003522105515003,
+    "time_eps_solve_s": 6.660353675484657,
+    "time_vectors_s": 0.3431684300303459,
+    "time_load_s": 0.12360116094350815,
+    "nconv": 10,
+    "iterations": 17,
+    "peak_rss_bytes": 1426624512,
+    "unused_options": [],
+    "success": true,
+    "mpi_ranks": 4
+   },
+   "phases": {
+    "analysis_s": 1.2816,
+    "analyses": 1,
+    "numeric_s": 1.1029,
+    "factorizations": 1,
+    "solve_s": 6.7762199999999995,
+    "solves": 198,
+    "ortho_s": 0.1964,
+    "setup_s": 2.3871,
+    "eps_solve_s": 6.6604,
+    "vectors_s": 0.34318,
+    "solver_s": 9.39068,
+    "staged": true,
+    "ranks": 4,
+    "omp_threads": 4
+   },
+   "eval": {
+    "verdict": "fail",
+    "reasons": [
+     "completeness incomplete: 10 missing, boundary deficit 0, 10 distinct returned",
+     "10 spurious eigenvalue(s) absent from the complete reference"
+    ],
+    "max_eta": 1.10774741054085e-16,
+    "completeness": "incomplete",
+    "pairs": 10
+   },
+   "valid": false,
+   "why": "completeness incomplete: 10 missing, boundary deficit 0, 10 distinct returned; 10 spurious eigenvalue(s) absent from the complete reference",
+   "solver_s": 9.39068
+  },
+  {
+   "id": 13,
+   "phase": "layout",
+   "label": "8x2",
+   "config": {
+    "ranks": 8,
+    "threads": 2,
+    "bind": "none",
+    "options": {}
+   },
+   "guard": {
+    "returncode": 1,
+    "killed": null,
+    "wall_s": 4.236,
+    "peak_rss_gib": 1.926
+   },
+   "report": null,
+   "phases": {
+    "analysis_s": 1.2808,
+    "analyses": 1,
+    "numeric_s": 0.0,
+    "factorizations": 1,
+    "solve_s": 0,
+    "solves": 0,
+    "ortho_s": 0,
+    "setup_s": 2.0316,
+    "eps_solve_s": 0,
+    "vectors_s": 0.0,
+    "solver_s": 2.0316,
+    "staged": false,
+    "ranks": 8,
+    "omp_threads": 2
+   },
+   "eval": null,
+   "valid": false,
+   "why": "run failed (rc=1, killed=None)",
+   "solver_s": 2.0316
+  },
+  {
+   "id": 14,
+   "phase": "layout",
+   "label": "8x2/core",
+   "config": {
+    "ranks": 8,
+    "threads": 2,
+    "bind": "core",
+    "options": {}
+   },
+   "guard": {
+    "returncode": 1,
+    "killed": null,
+    "wall_s": 4.403,
+    "peak_rss_gib": 1.984
+   },
+   "report": null,
+   "phases": {
+    "analysis_s": 1.2852,
+    "analyses": 1,
+    "numeric_s": 0.0,
+    "factorizations": 1,
+    "solve_s": 0,
+    "solves": 0,
+    "ortho_s": 0,
+    "setup_s": 2.2449,
+    "eps_solve_s": 0,
+    "vectors_s": 0.0,
+    "solver_s": 2.2449,
+    "staged": false,
+    "ranks": 8,
+    "omp_threads": 2
+   },
+   "eval": null,
+   "valid": false,
+   "why": "run failed (rc=1, killed=None)",
+   "solver_s": 2.2449
+  },
+  {
+   "id": 15,
+   "phase": "layout",
+   "label": "16x1",
+   "config": {
+    "ranks": 16,
+    "threads": 1,
+    "bind": "none",
+    "options": {}
+   },
+   "guard": {
+    "returncode": 1,
+    "killed": null,
+    "wall_s": 4.217,
+    "peak_rss_gib": 2.622
+   },
+   "report": null,
+   "phases": {
+    "analysis_s": 1.3109,
+    "analyses": 1,
+    "numeric_s": 0.0,
+    "factorizations": 1,
+    "solve_s": 0,
+    "solves": 0,
+    "ortho_s": 0,
+    "setup_s": 1.9893,
+    "eps_solve_s": 0,
+    "vectors_s": 0.0,
+    "solver_s": 1.9893,
+    "staged": false,
+    "ranks": 16,
+    "omp_threads": 1
+   },
+   "eval": null,
+   "valid": false,
+   "why": "run failed (rc=1, killed=None)",
+   "solver_s": 1.9893
+  },
+  {
+   "id": 16,
+   "phase": "layout",
+   "label": "16x1/core",
+   "config": {
+    "ranks": 16,
+    "threads": 1,
+    "bind": "core",
+    "options": {}
+   },
+   "guard": {
+    "returncode": 1,
+    "killed": null,
+    "wall_s": 4.233,
+    "peak_rss_gib": 2.71
+   },
+   "report": null,
+   "phases": {
+    "analysis_s": 1.3042,
+    "analyses": 1,
+    "numeric_s": 0.0,
+    "factorizations": 1,
+    "solve_s": 0,
+    "solves": 0,
+    "ortho_s": 0,
+    "setup_s": 2.0674,
+    "eps_solve_s": 0,
+    "vectors_s": 0.0,
+    "solver_s": 2.0674,
+    "staged": false,
+    "ranks": 16,
+    "omp_threads": 1
+   },
+   "eval": null,
+   "valid": false,
+   "why": "run failed (rc=1, killed=None)",
+   "solver_s": 2.0674
+  },
+  {
+   "id": 17,
+   "phase": "ordering",
+   "label": "1x16 st_mat_mumps_icntl_7=0",
+   "config": {
+    "ranks": 1,
+    "threads": 16,
+    "bind": "none",
+    "options": {
+     "st_mat_mumps_icntl_7": "0"
+    }
+   },
+   "guard": {
+    "returncode": 0,
+    "killed": null,
+    "wall_s": 11.481,
+    "peak_rss_gib": 1.969
+   },
+   "report": {
+    "time_setup_s": 2.199224218726158,
+    "time_solve_s": 7.021576955914497,
+    "time_eps_solve_s": 6.106399744749069,
+    "time_vectors_s": 0.9151772111654282,
+    "time_load_s": 0.15986373275518417,
+    "nconv": 10,
+    "iterations": 5,
+    "peak_rss_bytes": 2088456192,
+    "unused_options": [],
+    "success": true,
+    "mpi_ranks": 1
+   },
+   "phases": {
+    "analysis_s": 0.10673,
+    "analyses": 1,
+    "numeric_s": 2.0855,
+    "factorizations": 1,
+    "solve_s": 6.89907,
+    "solves": 76,
+    "ortho_s": 0.082525,
+    "setup_s": 2.1992,
+    "eps_solve_s": 6.1064,
+    "vectors_s": 0.91518,
+    "solver_s": 9.22078,
+    "staged": true,
+    "ranks": 1,
+    "omp_threads": 16
+   },
+   "eval": {
+    "verdict": "fail",
+    "reasons": [
+     "completeness incomplete: 10 missing, boundary deficit 0, 10 distinct returned",
+     "10 spurious eigenvalue(s) absent from the complete reference"
+    ],
+    "max_eta": 1.1951523244044173e-16,
+    "completeness": "incomplete",
+    "pairs": 10
+   },
+   "valid": false,
+   "why": "completeness incomplete: 10 missing, boundary deficit 0, 10 distinct returned; 10 spurious eigenvalue(s) absent from the complete reference",
+   "solver_s": 9.22078
+  },
+  {
+   "id": 18,
+   "phase": "ordering",
+   "label": "1x16 st_mat_mumps_icntl_7=2",
+   "config": {
+    "ranks": 1,
+    "threads": 16,
+    "bind": "none",
+    "options": {
+     "st_mat_mumps_icntl_7": "2"
+    }
+   },
+   "guard": {
+    "returncode": 0,
+    "killed": null,
+    "wall_s": 9.299,
+    "peak_rss_gib": 1.312
+   },
+   "report": {
+    "time_setup_s": 1.2282605692744255,
+    "time_solve_s": 5.925246082246304,
+    "time_eps_solve_s": 5.230060592293739,
+    "time_vectors_s": 0.6951854899525642,
+    "time_load_s": 0.0999288409948349,
+    "nconv": 10,
+    "iterations": 6,
+    "peak_rss_bytes": 1380945920,
+    "unused_options": [],
+    "success": true,
+    "mpi_ranks": 1
+   },
+   "phases": {
+    "analysis_s": 0.11456,
+    "analyses": 1,
+    "numeric_s": 1.108,
+    "factorizations": 1,
+    "solve_s": 5.78687,
+    "solves": 84,
+    "ortho_s": 0.09475,
+    "setup_s": 1.2283,
+    "eps_solve_s": 5.2301,
+    "vectors_s": 0.69519,
+    "solver_s": 7.15359,
+    "staged": true,
+    "ranks": 1,
+    "omp_threads": 16
+   },
+   "eval": {
+    "verdict": "fail",
+    "reasons": [
+     "completeness incomplete: 10 missing, boundary deficit 0, 10 distinct returned",
+     "10 spurious eigenvalue(s) absent from the complete reference"
+    ],
+    "max_eta": 1.185224863604919e-16,
+    "completeness": "incomplete",
+    "pairs": 10
+   },
+   "valid": false,
+   "why": "completeness incomplete: 10 missing, boundary deficit 0, 10 distinct returned; 10 spurious eigenvalue(s) absent from the complete reference",
+   "solver_s": 7.15359
+  },
+  {
+   "id": 19,
+   "phase": "ordering",
+   "label": "1x16 st_mat_mumps_icntl_7=3",
+   "config": {
+    "ranks": 1,
+    "threads": 16,
+    "bind": "none",
+    "options": {
+     "st_mat_mumps_icntl_7": "3"
+    }
+   },
+   "guard": {
+    "returncode": 0,
+    "killed": null,
+    "wall_s": 6.692,
+    "peak_rss_gib": 0.873
+   },
+   "report": {
+    "time_setup_s": 1.294223167002201,
+    "time_solve_s": 3.127013638615608,
+    "time_eps_solve_s": 2.6760194525122643,
+    "time_vectors_s": 0.45099418610334396,
+    "time_load_s": 0.1140308603644371,
+    "nconv": 10,
+    "iterations": 4,
+    "peak_rss_bytes": 911597568,
+    "unused_options": [],
+    "success": true,
+    "mpi_ranks": 1
+   },
+   "phases": {
+    "analysis_s": 0.78793,
+    "analyses": 1,
+    "numeric_s": 0.50014,
+    "factorizations": 1,
+    "solve_s": 3.01592,
+    "solves": 68,
+    "ortho_s": 0.075048,
+    "setup_s": 1.2942,
+    "eps_solve_s": 2.676,
+    "vectors_s": 0.451,
+    "solver_s": 4.4212,
+    "staged": true,
+    "ranks": 1,
+    "omp_threads": 16
+   },
+   "eval": {
+    "verdict": "fail",
+    "reasons": [
+     "completeness incomplete: 10 missing, boundary deficit 0, 10 distinct returned",
+     "10 spurious eigenvalue(s) absent from the complete reference"
+    ],
+    "max_eta": 1.2053741085945753e-16,
+    "completeness": "incomplete",
+    "pairs": 10
+   },
+   "valid": false,
+   "why": "completeness incomplete: 10 missing, boundary deficit 0, 10 distinct returned; 10 spurious eigenvalue(s) absent from the complete reference",
+   "solver_s": 4.4212
+  },
+  {
+   "id": 20,
+   "phase": "ordering",
+   "label": "1x16 st_mat_mumps_icntl_7=4",
+   "config": {
+    "ranks": 1,
+    "threads": 16,
+    "bind": "none",
+    "options": {
+     "st_mat_mumps_icntl_7": "4"
+    }
+   },
+   "guard": {
+    "returncode": 0,
+    "killed": null,
+    "wall_s": 8.232,
+    "peak_rss_gib": 1.056
+   },
+   "report": {
+    "time_setup_s": 1.5204121842980385,
+    "time_solve_s": 4.474110573530197,
+    "time_eps_solve_s": 3.892829954624176,
+    "time_vectors_s": 0.5812806189060211,
+    "time_load_s": 0.10948359221220016,
+    "nconv": 10,
+    "iterations": 5,
+    "peak_rss_bytes": 1116676096,
+    "unused_options": [],
+    "success": true,
+    "mpi_ranks": 1
+   },
+   "phases": {
+    "analysis_s": 0.69324,
+    "analyses": 1,
+    "numeric_s": 0.82148,
+    "factorizations": 1,
+    "solve_s": 4.35117,
+    "solves": 76,
+    "ortho_s": 0.083057,
+    "setup_s": 1.5204,
+    "eps_solve_s": 3.8928,
+    "vectors_s": 0.58129,
+    "solver_s": 5.99449,
+    "staged": true,
+    "ranks": 1,
+    "omp_threads": 16
+   },
+   "eval": {
+    "verdict": "fail",
+    "reasons": [
+     "completeness incomplete: 10 missing, boundary deficit 0, 10 distinct returned",
+     "10 spurious eigenvalue(s) absent from the complete reference"
+    ],
+    "max_eta": 1.2289315242943273e-16,
+    "completeness": "incomplete",
+    "pairs": 10
+   },
+   "valid": false,
+   "why": "completeness incomplete: 10 missing, boundary deficit 0, 10 distinct returned; 10 spurious eigenvalue(s) absent from the complete reference",
+   "solver_s": 5.99449
+  },
+  {
+   "id": 21,
+   "phase": "ordering",
+   "label": "1x16 st_mat_mumps_icntl_7=5",
+   "config": {
+    "ranks": 1,
+    "threads": 16,
+    "bind": "none",
+    "options": {
+     "st_mat_mumps_icntl_7": "5"
+    }
+   },
+   "guard": {
+    "returncode": 0,
+    "killed": null,
+    "wall_s": 8.23,
+    "peak_rss_gib": 0.865
+   },
+   "report": {
+    "time_setup_s": 1.8035631403326988,
+    "time_solve_s": 4.196115717291832,
+    "time_eps_solve_s": 3.6834626123309135,
+    "time_vectors_s": 0.5126531049609184,
+    "time_load_s": 0.10852919518947601,
+    "nconv": 11,
+    "iterations": 6,
+    "peak_rss_bytes": 902647808,
+    "unused_options": [],
+    "success": true,
+    "mpi_ranks": 1
+   },
+   "phases": {
+    "analysis_s": 1.2335,
+    "analyses": 1,
+    "numeric_s": 0.56445,
+    "factorizations": 1,
+    "solve_s": 4.05141,
+    "solves": 88,
+    "ortho_s": 0.098478,
+    "setup_s": 1.8036,
+    "eps_solve_s": 3.6835,
+    "vectors_s": 0.51266,
+    "solver_s": 5.99976,
+    "staged": true,
+    "ranks": 1,
+    "omp_threads": 16
+   },
+   "eval": {
+    "verdict": "fail",
+    "reasons": [
+     "completeness incomplete: 10 missing, boundary deficit 0, 10 distinct returned",
+     "10 spurious eigenvalue(s) absent from the complete reference"
+    ],
+    "max_eta": 1.1745525462303148e-16,
+    "completeness": "incomplete",
+    "pairs": 10
+   },
+   "valid": false,
+   "why": "completeness incomplete: 10 missing, boundary deficit 0, 10 distinct returned; 10 spurious eigenvalue(s) absent from the complete reference",
+   "solver_s": 5.99976
+  },
+  {
+   "id": 22,
+   "phase": "ordering",
+   "label": "1x16 st_mat_mumps_icntl_7=6",
+   "config": {
+    "ranks": 1,
+    "threads": 16,
+    "bind": "none",
+    "options": {
+     "st_mat_mumps_icntl_7": "6"
+    }
+   },
+   "guard": {
+    "returncode": 0,
+    "killed": null,
+    "wall_s": 11.414,
+    "peak_rss_gib": 1.97
+   },
+   "report": {
+    "time_setup_s": 2.1899153888225555,
+    "time_solve_s": 7.066336132586002,
+    "time_eps_solve_s": 6.148090302944183,
+    "time_vectors_s": 0.918245829641819,
+    "time_load_s": 0.09202198684215546,
+    "nconv": 10,
+    "iterations": 5,
+    "peak_rss_bytes": 2088923136,
+    "unused_options": [],
+    "success": true,
+    "mpi_ranks": 1
+   },
+   "phases": {
+    "analysis_s": 0.085785,
+    "analyses": 1,
+    "numeric_s": 2.0984,
+    "factorizations": 1,
+    "solve_s": 6.94031,
+    "solves": 76,
+    "ortho_s": 0.085284,
+    "setup_s": 2.1899,
+    "eps_solve_s": 6.1481,
+    "vectors_s": 0.91825,
+    "solver_s": 9.256250000000001,
+    "staged": true,
+    "ranks": 1,
+    "omp_threads": 16
+   },
+   "eval": {
+    "verdict": "fail",
+    "reasons": [
+     "completeness incomplete: 10 missing, boundary deficit 0, 10 distinct returned",
+     "10 spurious eigenvalue(s) absent from the complete reference"
+    ],
+    "max_eta": 1.196021799364699e-16,
+    "completeness": "incomplete",
+    "pairs": 10
+   },
+   "valid": false,
+   "why": "completeness incomplete: 10 missing, boundary deficit 0, 10 distinct returned; 10 spurious eigenvalue(s) absent from the complete reference",
+   "solver_s": 9.256250000000001
+  },
+  {
+   "id": 23,
+   "phase": "icntl_48",
+   "label": "1x16 st_mat_mumps_icntl_48=0",
+   "config": {
+    "ranks": 1,
+    "threads": 16,
+    "bind": "none",
+    "options": {
+     "st_mat_mumps_icntl_48": "0"
+    }
+   },
+   "guard": {
+    "returncode": 0,
+    "killed": null,
+    "wall_s": 10.998,
+    "peak_rss_gib": 0.707
+   },
+   "report": {
+    "time_setup_s": 2.138635464012623,
+    "time_solve_s": 6.623991496860981,
+    "time_eps_solve_s": 5.776637867093086,
+    "time_vectors_s": 0.8473536297678947,
+    "time_load_s": 0.09085401147603989,
+    "nconv": 11,
+    "iterations": 6,
+    "peak_rss_bytes": 733200384,
+    "unused_options": [],
+    "success": true,
+    "mpi_ranks": 1
+   },
+   "phases": {
+    "analysis_s": 1.2338,
+    "analyses": 1,
+    "numeric_s": 0.89911,
+    "factorizations": 1,
+    "solve_s": 6.49237,
+    "solves": 85,
+    "ortho_s": 0.087772,
+    "setup_s": 2.1387,
+    "eps_solve_s": 5.7766,
+    "vectors_s": 0.84736,
+    "solver_s": 8.76266,
+    "staged": true,
+    "ranks": 1,
+    "omp_threads": 16
+   },
+   "eval": {
+    "verdict": "fail",
+    "reasons": [
+     "completeness incomplete: 10 missing, boundary deficit 0, 10 distinct returned",
+     "10 spurious eigenvalue(s) absent from the complete reference"
+    ],
+    "max_eta": 1.1728939368557333e-16,
+    "completeness": "incomplete",
+    "pairs": 10
+   },
+   "valid": false,
+   "why": "completeness incomplete: 10 missing, boundary deficit 0, 10 distinct returned; 10 spurious eigenvalue(s) absent from the complete reference",
+   "solver_s": 8.76266
+  },
+  {
+   "id": 24,
+   "phase": "icntl_58",
+   "label": "1x16 st_mat_mumps_icntl_58=1",
+   "config": {
+    "ranks": 1,
+    "threads": 16,
+    "bind": "none",
+    "options": {
+     "st_mat_mumps_icntl_58": "1"
+    }
+   },
+   "guard": {
+    "returncode": 0,
+    "killed": null,
+    "wall_s": 8.356,
+    "peak_rss_gib": 0.866
+   },
+   "report": {
+    "time_setup_s": 1.9593990296125412,
+    "time_solve_s": 4.154161788523197,
+    "time_eps_solve_s": 3.6393046900629997,
+    "time_vectors_s": 0.5148570984601974,
+    "time_load_s": 0.08113514631986618,
+    "nconv": 11,
+    "iterations": 6,
+    "peak_rss_bytes": 904089600,
+    "unused_options": [],
+    "success": true,
+    "mpi_ranks": 1
+   },
+   "phases": {
+    "analysis_s": 1.3843,
+    "analyses": 1,
+    "numeric_s": 0.5693,
+    "factorizations": 1,
+    "solve_s": 4.01202,
+    "solves": 87,
+    "ortho_s": 0.096711,
+    "setup_s": 1.9594,
+    "eps_solve_s": 3.6393,
+    "vectors_s": 0.51486,
+    "solver_s": 6.11356,
+    "staged": true,
+    "ranks": 1,
+    "omp_threads": 16
+   },
+   "eval": {
+    "verdict": "fail",
+    "reasons": [
+     "completeness incomplete: 10 missing, boundary deficit 0, 10 distinct returned",
+     "10 spurious eigenvalue(s) absent from the complete reference"
+    ],
+    "max_eta": 1.1667954054268218e-16,
+    "completeness": "incomplete",
+    "pairs": 10
+   },
+   "valid": false,
+   "why": "completeness incomplete: 10 missing, boundary deficit 0, 10 distinct returned; 10 spurious eigenvalue(s) absent from the complete reference",
+   "solver_s": 6.11356
+  },
+  {
+   "id": 25,
+   "phase": "icntl_8",
+   "label": "1x16 st_mat_mumps_icntl_8=0",
+   "config": {
+    "ranks": 1,
+    "threads": 16,
+    "bind": "none",
+    "options": {
+     "st_mat_mumps_icntl_8": "0"
+    }
+   },
+   "guard": {
+    "returncode": 0,
+    "killed": null,
+    "wall_s": 7.796,
+    "peak_rss_gib": 0.871
+   },
+   "report": {
+    "time_setup_s": 1.7991698160767555,
+    "time_solve_s": 3.7158933952450752,
+    "time_eps_solve_s": 3.249655805528164,
+    "time_vectors_s": 0.4662375897169113,
+    "time_load_s": 0.10878334194421768,
+    "nconv": 10,
+    "iterations": 5,
+    "peak_rss_bytes": 906772480,
+    "unused_options": [],
+    "success": true,
+    "mpi_ranks": 1
+   },
+   "phases": {
+    "analysis_s": 1.2321,
+    "analyses": 1,
+    "numeric_s": 0.56137,
+    "factorizations": 1,
+    "solve_s": 3.59192,
+    "solves": 78,
+    "ortho_s": 0.082891,
+    "setup_s": 1.7992,
+    "eps_solve_s": 3.2497,
+    "vectors_s": 0.46624,
+    "solver_s": 5.51514,
+    "staged": true,
+    "ranks": 1,
+    "omp_threads": 16
+   },
+   "eval": {
+    "verdict": "fail",
+    "reasons": [
+     "completeness incomplete: 10 missing, boundary deficit 0, 10 distinct returned",
+     "10 spurious eigenvalue(s) absent from the complete reference"
+    ],
+    "max_eta": 1.116682222469034e-16,
+    "completeness": "incomplete",
+    "pairs": 10
+   },
+   "valid": false,
+   "why": "completeness incomplete: 10 missing, boundary deficit 0, 10 distinct returned; 10 spurious eigenvalue(s) absent from the complete reference",
+   "solver_s": 5.51514
+  },
+  {
+   "id": 26,
+   "phase": "blr",
+   "label": "1x16 st_mat_mumps_cntl_7=1e-12 st_mat_mumps_icntl_35=2",
+   "config": {
+    "ranks": 1,
+    "threads": 16,
+    "bind": "none",
+    "options": {
+     "st_mat_mumps_cntl_7": "1e-12",
+     "st_mat_mumps_icntl_35": "2"
+    }
+   },
+   "guard": {
+    "returncode": 0,
+    "killed": null,
+    "wall_s": 7.751,
+    "peak_rss_gib": 0.905
+   },
+   "report": {
+    "time_setup_s": 2.826246500015259,
+    "time_solve_s": 2.6754692271351814,
+    "time_eps_solve_s": 2.3361715003848076,
+    "time_vectors_s": 0.33929772675037384,
+    "time_load_s": 0.08629913628101349,
+    "nconv": 10,
+    "iterations": 5,
+    "peak_rss_bytes": 963022848,
+    "unused_options": [],
+    "success": true,
+    "mpi_ranks": 1
+   },
+   "phases": {
+    "analysis_s": 1.2926,
+    "analyses": 1,
+    "numeric_s": 1.5279,
+    "factorizations": 1,
+    "solve_s": 2.54856,
+    "solves": 77,
+    "ortho_s": 0.086483,
+    "setup_s": 2.8263,
+    "eps_solve_s": 2.3362,
+    "vectors_s": 0.3393,
+    "solver_s": 5.501799999999999,
+    "staged": true,
+    "ranks": 1,
+    "omp_threads": 16
+   },
+   "eval": {
+    "verdict": "fail",
+    "reasons": [
+     "completeness incomplete: 10 missing, boundary deficit 0, 10 distinct returned",
+     "10 spurious eigenvalue(s) absent from the complete reference"
+    ],
+    "max_eta": 1.2946739902429824e-15,
+    "completeness": "incomplete",
+    "pairs": 10
+   },
+   "valid": false,
+   "why": "completeness incomplete: 10 missing, boundary deficit 0, 10 distinct returned; 10 spurious eigenvalue(s) absent from the complete reference",
+   "solver_s": 5.501799999999999
+  },
+  {
+   "id": 27,
+   "phase": "blr",
+   "label": "1x16 st_mat_mumps_cntl_7=1e-10 st_mat_mumps_icntl_35=2",
+   "config": {
+    "ranks": 1,
+    "threads": 16,
+    "bind": "none",
+    "options": {
+     "st_mat_mumps_cntl_7": "1e-10",
+     "st_mat_mumps_icntl_35": "2"
+    }
+   },
+   "guard": {
+    "returncode": 0,
+    "killed": null,
+    "wall_s": 9.303,
+    "peak_rss_gib": 1.027
+   },
+   "report": {
+    "time_setup_s": 4.232852056622505,
+    "time_solve_s": 2.8892964497208595,
+    "time_eps_solve_s": 2.5337513610720634,
+    "time_vectors_s": 0.3555450886487961,
+    "time_load_s": 0.0953698381781578,
+    "nconv": 10,
+    "iterations": 5,
+    "peak_rss_bytes": 1094156288,
+    "unused_options": [],
+    "success": true,
+    "mpi_ranks": 1
+   },
+   "phases": {
+    "analysis_s": 1.2929,
+    "analyses": 1,
+    "numeric_s": 2.9342,
+    "factorizations": 1,
+    "solve_s": 2.76411,
+    "solves": 79,
+    "ortho_s": 0.084363,
+    "setup_s": 4.2329,
+    "eps_solve_s": 2.5338,
+    "vectors_s": 0.35555,
+    "solver_s": 7.12225,
+    "staged": true,
+    "ranks": 1,
+    "omp_threads": 16
+   },
+   "eval": {
+    "verdict": "fail",
+    "reasons": [
+     "completeness incomplete: 10 missing, boundary deficit 0, 10 distinct returned",
+     "10 spurious eigenvalue(s) absent from the complete reference"
+    ],
+    "max_eta": 4.821448348240348e-13,
+    "completeness": "incomplete",
+    "pairs": 10
+   },
+   "valid": false,
+   "why": "completeness incomplete: 10 missing, boundary deficit 0, 10 distinct returned; 10 spurious eigenvalue(s) absent from the complete reference",
+   "solver_s": 7.12225
+  },
+  {
+   "id": 28,
+   "phase": "ncv",
+   "label": "1x16 eps_ncv=k+8",
+   "config": {
+    "ranks": 1,
+    "threads": 16,
+    "bind": "none",
+    "options": {
+     "eps_ncv": "k+8"
+    }
+   },
+   "guard": {
+    "returncode": 0,
+    "killed": null,
+    "wall_s": 10.207,
+    "peak_rss_gib": 0.864
+   },
+   "report": {
+    "time_setup_s": 1.795162171125412,
+    "time_solve_s": 6.153901852667332,
+    "time_eps_solve_s": 5.687819771468639,
+    "time_vectors_s": 0.4660820811986923,
+    "time_load_s": 0.08983385562896729,
+    "nconv": 10,
+    "iterations": 17,
+    "peak_rss_bytes": 901341184,
+    "unused_options": [],
+    "success": true,
+    "mpi_ranks": 1
+   },
+   "phases": {
+    "analysis_s": 1.2323,
+    "analyses": 1,
+    "numeric_s": 0.55808,
+    "factorizations": 1,
+    "solve_s": 5.96352,
+    "solves": 130,
+    "ortho_s": 0.12757,
+    "setup_s": 1.7952,
+    "eps_solve_s": 5.6878,
+    "vectors_s": 0.46609,
+    "solver_s": 7.949090000000001,
+    "staged": true,
+    "ranks": 1,
+    "omp_threads": 16
+   },
+   "eval": {
+    "verdict": "fail",
+    "reasons": [
+     "completeness incomplete: 10 missing, boundary deficit 0, 10 distinct returned",
+     "10 spurious eigenvalue(s) absent from the complete reference"
+    ],
+    "max_eta": 1.1715710937994874e-16,
+    "completeness": "incomplete",
+    "pairs": 10
+   },
+   "valid": false,
+   "why": "completeness incomplete: 10 missing, boundary deficit 0, 10 distinct returned; 10 spurious eigenvalue(s) absent from the complete reference",
+   "solver_s": 7.949090000000001
+  },
+  {
+   "id": 29,
+   "phase": "ncv",
+   "label": "1x16 eps_ncv=2k",
+   "config": {
+    "ranks": 1,
+    "threads": 16,
+    "bind": "none",
+    "options": {
+     "eps_ncv": "2k"
+    }
+   },
+   "guard": {
+    "returncode": 0,
+    "killed": null,
+    "wall_s": 8.996,
+    "peak_rss_gib": 0.848
+   },
+   "report": {
+    "time_setup_s": 1.8045117631554604,
+    "time_solve_s": 4.92475563287735,
+    "time_eps_solve_s": 4.464280940592289,
+    "time_vectors_s": 0.4604746922850609,
+    "time_load_s": 0.11315298825502396,
+    "nconv": 10,
+    "iterations": 11,
+    "peak_rss_bytes": 885026816,
+    "unused_options": [],
+    "success": true,
+    "mpi_ranks": 1
+   },
+   "phases": {
+    "analysis_s": 1.2337,
+    "analyses": 1,
+    "numeric_s": 0.56525,
+    "factorizations": 1,
+    "solve_s": 4.76581,
+    "solves": 105,
+    "ortho_s": 0.10717,
+    "setup_s": 1.8045,
+    "eps_solve_s": 4.4643,
+    "vectors_s": 0.46048,
+    "solver_s": 6.729279999999999,
+    "staged": true,
+    "ranks": 1,
+    "omp_threads": 16
+   },
+   "eval": {
+    "verdict": "fail",
+    "reasons": [
+     "completeness incomplete: 10 missing, boundary deficit 0, 10 distinct returned",
+     "10 spurious eigenvalue(s) absent from the complete reference"
+    ],
+    "max_eta": 1.1813270973244366e-16,
+    "completeness": "incomplete",
+    "pairs": 10
+   },
+   "valid": false,
+   "why": "completeness incomplete: 10 missing, boundary deficit 0, 10 distinct returned; 10 spurious eigenvalue(s) absent from the complete reference",
+   "solver_s": 6.729279999999999
+  },
+  {
+   "id": 30,
+   "phase": "ncv",
+   "label": "1x16 eps_ncv=4k",
+   "config": {
+    "ranks": 1,
+    "threads": 16,
+    "bind": "none",
+    "options": {
+     "eps_ncv": "4k"
+    }
+   },
+   "guard": {
+    "returncode": 0,
+    "killed": null,
+    "wall_s": 7.392,
+    "peak_rss_gib": 0.882
+   },
+   "report": {
+    "time_setup_s": 1.8198447227478027,
+    "time_solve_s": 3.3877663239836693,
+    "time_eps_solve_s": 2.8761011362075806,
+    "time_vectors_s": 0.5116651877760887,
+    "time_load_s": 0.08038684725761414,
+    "nconv": 11,
+    "iterations": 2,
+    "peak_rss_bytes": 921587712,
+    "unused_options": [],
+    "success": true,
+    "mpi_ranks": 1
+   },
+   "phases": {
+    "analysis_s": 1.2455,
+    "analyses": 1,
+    "numeric_s": 0.56619,
+    "factorizations": 1,
+    "solve_s": 3.25789,
+    "solves": 71,
+    "ortho_s": 0.093378,
+    "setup_s": 1.8199,
+    "eps_solve_s": 2.8761,
+    "vectors_s": 0.51167,
+    "solver_s": 5.207669999999999,
+    "staged": true,
+    "ranks": 1,
+    "omp_threads": 16
+   },
+   "eval": {
+    "verdict": "fail",
+    "reasons": [
+     "completeness incomplete: 10 missing, boundary deficit 0, 10 distinct returned",
+     "10 spurious eigenvalue(s) absent from the complete reference"
+    ],
+    "max_eta": 1.1875843580386496e-16,
+    "completeness": "incomplete",
+    "pairs": 10
+   },
+   "valid": false,
+   "why": "completeness incomplete: 10 missing, boundary deficit 0, 10 distinct returned; 10 spurious eigenvalue(s) absent from the complete reference",
+   "solver_s": 5.207669999999999
+  },
+  {
+   "id": 31,
+   "phase": "restart",
+   "label": "1x16 eps_krylovschur_restart=0.3",
+   "config": {
+    "ranks": 1,
+    "threads": 16,
+    "bind": "none",
+    "options": {
+     "eps_krylovschur_restart": "0.3"
+    }
+   },
+   "guard": {
+    "returncode": 0,
+    "killed": null,
+    "wall_s": 10.201,
+    "peak_rss_gib": 0.859
+   },
+   "report": {
+    "time_setup_s": 1.803637720644474,
+    "time_solve_s": 6.252879947423935,
+    "time_eps_solve_s": 5.74226152151823,
+    "time_vectors_s": 0.5106184259057045,
+    "time_load_s": 0.08078671991825104,
+    "nconv": 11,
+    "iterations": 8,
+    "peak_rss_bytes": 904290304,
+    "unused_options": [],
+    "success": true,
+    "mpi_ranks": 1
+   },
+   "phases": {
+    "analysis_s": 1.2357,
+    "analyses": 1,
+    "numeric_s": 0.56225,
+    "factorizations": 1,
+    "solve_s": 6.04736,
+    "solves": 132,
+    "ortho_s": 0.14872,
+    "setup_s": 1.8037,
+    "eps_solve_s": 5.7423,
+    "vectors_s": 0.51062,
+    "solver_s": 8.05662,
+    "staged": true,
+    "ranks": 1,
+    "omp_threads": 16
+   },
+   "eval": {
+    "verdict": "fail",
+    "reasons": [
+     "completeness incomplete: 10 missing, boundary deficit 0, 10 distinct returned",
+     "10 spurious eigenvalue(s) absent from the complete reference"
+    ],
+    "max_eta": 1.1883512207863144e-16,
+    "completeness": "incomplete",
+    "pairs": 10
+   },
+   "valid": false,
+   "why": "completeness incomplete: 10 missing, boundary deficit 0, 10 distinct returned; 10 spurious eigenvalue(s) absent from the complete reference",
+   "solver_s": 8.05662
+  },
+  {
+   "id": 32,
+   "phase": "restart",
+   "label": "1x16 eps_krylovschur_restart=0.7",
+   "config": {
+    "ranks": 1,
+    "threads": 16,
+    "bind": "none",
+    "options": {
+     "eps_krylovschur_restart": "0.7"
+    }
+   },
+   "guard": {
+    "returncode": 0,
+    "killed": null,
+    "wall_s": 7.626,
+    "peak_rss_gib": 0.854
+   },
+   "report": {
+    "time_setup_s": 1.8109141886234283,
+    "time_solve_s": 3.6358356177806854,
+    "time_eps_solve_s": 3.1693276092410088,
+    "time_vectors_s": 0.46650800853967667,
+    "time_load_s": 0.09080357849597931,
+    "nconv": 10,
+    "iterations": 7,
+    "peak_rss_bytes": 899727360,
+    "unused_options": [],
+    "success": true,
+    "mpi_ranks": 1
+   },
+   "phases": {
+    "analysis_s": 1.2335,
+    "analyses": 1,
+    "numeric_s": 0.57175,
+    "factorizations": 1,
+    "solve_s": 3.50234,
+    "solves": 76,
+    "ortho_s": 0.085842,
+    "setup_s": 1.8109,
+    "eps_solve_s": 3.1693,
+    "vectors_s": 0.46651,
+    "solver_s": 5.4467099999999995,
+    "staged": true,
+    "ranks": 1,
+    "omp_threads": 16
+   },
+   "eval": {
+    "verdict": "fail",
+    "reasons": [
+     "completeness incomplete: 10 missing, boundary deficit 0, 10 distinct returned",
+     "10 spurious eigenvalue(s) absent from the complete reference"
+    ],
+    "max_eta": 1.1868886111445074e-16,
+    "completeness": "incomplete",
+    "pairs": 10
+   },
+   "valid": false,
+   "why": "completeness incomplete: 10 missing, boundary deficit 0, 10 distinct returned; 10 spurious eigenvalue(s) absent from the complete reference",
+   "solver_s": 5.4467099999999995
+  },
+  {
+   "id": 33,
+   "phase": "purify",
+   "label": "1x16 eps_purify=0",
+   "config": {
+    "ranks": 1,
+    "threads": 16,
+    "bind": "none",
+    "options": {
+     "eps_purify": "0"
+    }
+   },
+   "guard": {
+    "returncode": 0,
+    "killed": null,
+    "wall_s": 7.691,
+    "peak_rss_gib": 0.856
+   },
+   "report": {
+    "time_setup_s": 1.8302303478121758,
+    "time_solve_s": 3.6515661254525185,
+    "time_eps_solve_s": 3.64896247535944,
+    "time_vectors_s": 0.0026036500930786133,
+    "time_load_s": 0.0895824059844017,
+    "nconv": 11,
+    "iterations": 6,
+    "peak_rss_bytes": 892841984,
+    "unused_options": [],
+    "success": true,
+    "mpi_ranks": 1
+   },
+   "phases": {
+    "analysis_s": 1.2606,
+    "analyses": 1,
+    "numeric_s": 0.56394,
+    "factorizations": 1,
+    "solve_s": 3.5143,
+    "solves": 77,
+    "ortho_s": 0.098108,
+    "setup_s": 1.8302,
+    "eps_solve_s": 3.649,
+    "vectors_s": 0.0026053,
+    "solver_s": 5.4818053,
+    "staged": true,
+    "ranks": 1,
+    "omp_threads": 16
+   },
+   "eval": {
+    "verdict": "fail",
+    "reasons": [
+     "completeness incomplete: 10 missing, boundary deficit 0, 10 distinct returned",
+     "10 spurious eigenvalue(s) absent from the complete reference"
+    ],
+    "max_eta": 2.853416314983556e-16,
+    "completeness": "incomplete",
+    "pairs": 10
+   },
+   "valid": false,
+   "why": "completeness incomplete: 10 missing, boundary deficit 0, 10 distinct returned; 10 spurious eigenvalue(s) absent from the complete reference",
+   "solver_s": 5.4818053
+  },
+  {
+   "id": 34,
+   "phase": "confirm0",
+   "label": "1x16",
+   "config": {
+    "ranks": 1,
+    "threads": 16,
+    "bind": "none",
+    "options": {}
+   },
+   "guard": {
+    "returncode": 0,
+    "killed": null,
+    "wall_s": 8.154,
+    "peak_rss_gib": 0.842
+   },
+   "report": {
+    "time_setup_s": 1.7855518460273743,
+    "time_solve_s": 4.186756558716297,
+    "time_eps_solve_s": 3.6755501478910446,
+    "time_vectors_s": 0.5112064108252525,
+    "time_load_s": 0.07971145957708359,
+    "nconv": 11,
+    "iterations": 6,
+    "peak_rss_bytes": 878100480,
+    "unused_options": [],
+    "success": true,
+    "mpi_ranks": 1
+   },
+   "phases": {
+    "analysis_s": 1.236,
+    "analyses": 1,
+    "numeric_s": 0.54389,
+    "factorizations": 1,
+    "solve_s": 4.0418,
+    "solves": 88,
+    "ortho_s": 0.098822,
+    "setup_s": 1.7856,
+    "eps_solve_s": 3.6756,
+    "vectors_s": 0.51121,
+    "solver_s": 5.97241,
+    "staged": true,
+    "ranks": 1,
+    "omp_threads": 16
+   },
+   "eval": {
+    "verdict": "fail",
+    "reasons": [
+     "completeness incomplete: 10 missing, boundary deficit 0, 10 distinct returned",
+     "10 spurious eigenvalue(s) absent from the complete reference"
+    ],
+    "max_eta": 1.1831136191171144e-16,
+    "completeness": "incomplete",
+    "pairs": 10
+   },
+   "valid": false,
+   "why": "completeness incomplete: 10 missing, boundary deficit 0, 10 distinct returned; 10 spurious eigenvalue(s) absent from the complete reference",
+   "solver_s": 5.97241
+  },
+  {
+   "id": 35,
+   "phase": "confirm1",
+   "label": "1x16",
+   "config": {
+    "ranks": 1,
+    "threads": 16,
+    "bind": "none",
+    "options": {}
+   },
+   "guard": {
+    "returncode": 0,
+    "killed": null,
+    "wall_s": 8.193,
+    "peak_rss_gib": 0.863
+   },
+   "report": {
+    "time_setup_s": 1.813942700624466,
+    "time_solve_s": 4.187649063766003,
+    "time_eps_solve_s": 3.6752757728099823,
+    "time_vectors_s": 0.5123732909560204,
+    "time_load_s": 0.1024361103773117,
+    "nconv": 11,
+    "iterations": 6,
+    "peak_rss_bytes": 900308992,
+    "unused_options": [],
+    "success": true,
+    "mpi_ranks": 1
+   },
+   "phases": {
+    "analysis_s": 1.2415,
+    "analyses": 1,
+    "numeric_s": 0.56674,
+    "factorizations": 1,
+    "solve_s": 4.04212,
+    "solves": 88,
+    "ortho_s": 0.099423,
+    "setup_s": 1.814,
+    "eps_solve_s": 3.6753,
+    "vectors_s": 0.51238,
+    "solver_s": 6.00168,
+    "staged": true,
+    "ranks": 1,
+    "omp_threads": 16
+   },
+   "eval": {
+    "verdict": "fail",
+    "reasons": [
+     "completeness incomplete: 10 missing, boundary deficit 0, 10 distinct returned",
+     "10 spurious eigenvalue(s) absent from the complete reference"
+    ],
+    "max_eta": 1.1738224404601314e-16,
+    "completeness": "incomplete",
+    "pairs": 10
+   },
+   "valid": false,
+   "why": "completeness incomplete: 10 missing, boundary deficit 0, 10 distinct returned; 10 spurious eigenvalue(s) absent from the complete reference",
+   "solver_s": 6.00168
+  },
+  {
+   "id": 36,
+   "phase": "confirm2",
+   "label": "1x16",
+   "config": {
+    "ranks": 1,
+    "threads": 16,
+    "bind": "none",
+    "options": {}
+   },
+   "guard": {
+    "returncode": 0,
+    "killed": null,
+    "wall_s": 8.347,
+    "peak_rss_gib": 0.867
+   },
+   "report": {
+    "time_setup_s": 1.8032989278435707,
+    "time_solve_s": 4.218419469892979,
+    "time_eps_solve_s": 3.7023373544216156,
+    "time_vectors_s": 0.5160821154713631,
+    "time_load_s": 0.11149094253778458,
+    "nconv": 11,
+    "iterations": 6,
+    "peak_rss_bytes": 905129984,
+    "unused_options": [],
+    "success": true,
+    "mpi_ranks": 1
+   },
+   "phases": {
+    "analysis_s": 1.2331,
+    "analyses": 1,
+    "numeric_s": 0.56424,
+    "factorizations": 1,
+    "solve_s": 4.07209,
+    "solves": 88,
+    "ortho_s": 0.099507,
+    "setup_s": 1.8033,
+    "eps_solve_s": 3.7023,
+    "vectors_s": 0.51609,
+    "solver_s": 6.02169,
+    "staged": true,
+    "ranks": 1,
+    "omp_threads": 16
+   },
+   "eval": {
+    "verdict": "fail",
+    "reasons": [
+     "completeness incomplete: 10 missing, boundary deficit 0, 10 distinct returned",
+     "10 spurious eigenvalue(s) absent from the complete reference"
+    ],
+    "max_eta": 1.1768727704942552e-16,
+    "completeness": "incomplete",
+    "pairs": 10
+   },
+   "valid": false,
+   "why": "completeness incomplete: 10 missing, boundary deficit 0, 10 distinct returned; 10 spurious eigenvalue(s) absent from the complete reference",
+   "solver_s": 6.02169
+  },
+  {
+   "id": 37,
+   "phase": "confirm3",
+   "label": "1x16",
+   "config": {
+    "ranks": 1,
+    "threads": 16,
+    "bind": "none",
+    "options": {}
+   },
+   "guard": {
+    "returncode": 0,
+    "killed": null,
+    "wall_s": 8.355,
+    "peak_rss_gib": 0.86
+   },
+   "report": {
+    "time_setup_s": 1.8079526349902153,
+    "time_solve_s": 4.201312080025673,
+    "time_eps_solve_s": 3.6868248134851456,
+    "time_vectors_s": 0.5144872665405273,
+    "time_load_s": 0.140162393450737,
+    "nconv": 11,
+    "iterations": 6,
+    "peak_rss_bytes": 897146880,
+    "unused_options": [],
+    "success": true,
+    "mpi_ranks": 1
+   },
+   "phases": {
+    "analysis_s": 1.2385,
+    "analyses": 1,
+    "numeric_s": 0.56261,
+    "factorizations": 1,
+    "solve_s": 4.0557,
+    "solves": 88,
+    "ortho_s": 0.098927,
+    "setup_s": 1.808,
+    "eps_solve_s": 3.6868,
+    "vectors_s": 0.51449,
+    "solver_s": 6.00929,
+    "staged": true,
+    "ranks": 1,
+    "omp_threads": 16
+   },
+   "eval": {
+    "verdict": "fail",
+    "reasons": [
+     "completeness incomplete: 10 missing, boundary deficit 0, 10 distinct returned",
+     "10 spurious eigenvalue(s) absent from the complete reference"
+    ],
+    "max_eta": 1.1743548421276865e-16,
+    "completeness": "incomplete",
+    "pairs": 10
+   },
+   "valid": false,
+   "why": "completeness incomplete: 10 missing, boundary deficit 0, 10 distinct returned; 10 spurious eigenvalue(s) absent from the complete reference",
+   "solver_s": 6.00929
+  },
+  {
+   "id": 38,
+   "phase": "confirm4",
+   "label": "1x16",
+   "config": {
+    "ranks": 1,
+    "threads": 16,
+    "bind": "none",
+    "options": {}
+   },
+   "guard": {
+    "returncode": 0,
+    "killed": null,
+    "wall_s": 8.195,
+    "peak_rss_gib": 0.845
+   },
+   "report": {
+    "time_setup_s": 1.8147249519824982,
+    "time_solve_s": 4.193565785884857,
+    "time_eps_solve_s": 3.6756521314382553,
+    "time_vectors_s": 0.5179136544466019,
+    "time_load_s": 0.0798131674528122,
+    "nconv": 11,
+    "iterations": 6,
+    "peak_rss_bytes": 879267840,
+    "unused_options": [],
+    "success": true,
+    "mpi_ranks": 1
+   },
+   "phases": {
+    "analysis_s": 1.2382,
+    "analyses": 1,
+    "numeric_s": 0.57047,
+    "factorizations": 1,
+    "solve_s": 4.0497499999999995,
+    "solves": 88,
+    "ortho_s": 0.09771,
+    "setup_s": 1.8147,
+    "eps_solve_s": 3.6757,
+    "vectors_s": 0.51792,
+    "solver_s": 6.00832,
+    "staged": true,
+    "ranks": 1,
+    "omp_threads": 16
+   },
+   "eval": {
+    "verdict": "fail",
+    "reasons": [
+     "completeness incomplete: 10 missing, boundary deficit 0, 10 distinct returned",
+     "10 spurious eigenvalue(s) absent from the complete reference"
+    ],
+    "max_eta": 1.188810663336574e-16,
+    "completeness": "incomplete",
+    "pairs": 10
+   },
+   "valid": false,
+   "why": "completeness incomplete: 10 missing, boundary deficit 0, 10 distinct returned; 10 spurious eigenvalue(s) absent from the complete reference",
+   "solver_s": 6.00832
+  }
+ ],
+ "best": null,
+ "best_config": null,
+ "default_median_s": 6.00832,
+ "default_valid": false,
+ "best_median_s": null,
+ "speedup_vs_default": null
+}
