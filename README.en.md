@@ -30,7 +30,7 @@ that can be checked.
 | Problem classes | HEP, GHEP and GHIEP (indefinite B, waveguides); real symmetric and complex Hermitian; k nearest to σ, all in an interval, algebraic extremes | [Scope](docs/SOLUTION.md#12-求解边界能处理--不能处理) |
 | Independent checking | An independent evaluator recomputes backward errors, eigenvalue errors and subspace angles from the original matrices and checks completeness against reference spectra. {{TODO:rb-evidence number of cases, passes, largest backward error}} | [Evaluation](docs/guide/evaluation.md) |
 | Parallelism | OpenMP threads; one process per socket on multi-socket machines (`hsolve-mpi`); optional cuBLAS offload; without MPI or GPU the default single-process CPU path runs, and with them the certificate's conditions and guarantees are unchanged | [Parallel scheme](docs/PARALLEL.md) |
-| Open governance | Apache-2.0; all dependencies open source and listed; CI; releases with SHA256SUMS; contribution, governance and security policies | [NOTICE](NOTICE) · [CONTRIBUTING](CONTRIBUTING.md) · [GOVERNANCE](GOVERNANCE.md) |
+| Open governance | Apache-2.0; building and the default run depend only on open-source components, each one listed (optional GPU offload loads the user's installed CUDA libraries at run time, NVIDIA license, not distributed); CI; releases with SHA256SUMS; contribution, governance and security policies | [NOTICE](NOTICE) · [CONTRIBUTING](CONTRIBUTING.md) · [GOVERNANCE](GOVERNANCE.md) |
 
 Test conditions: {{TODO:rb-evidence hardware, cores, memory cap, version and commit, repetitions and statistic}}.
 Raw data and the scripts that generate the tables: {{TODO:rb-evidence results path}}.

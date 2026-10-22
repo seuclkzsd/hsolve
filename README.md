@@ -24,7 +24,7 @@
 | 问题覆盖 | HEP、GHEP、GHIEP（B 不定的波导）；实对称与复厄密；σ 附近最近 k 个、区间内全部、代数两端 | [求解边界](docs/SOLUTION.md#12-求解边界能处理--不能处理) |
 | 正确性复核 | 独立评测器由原矩阵重算后向误差、特征值误差与子空间夹角，并按参考谱检查漏解与虚报；{{TODO:rb-evidence 测例数、通过数、最大后向误差}} | [评测方法](docs/guide/evaluation.md) |
 | 并行 | OpenMP 多线程；多 socket 机器上每 socket 一个进程（`hsolve-mpi`）；可选的 cuBLAS 卸载；没有 MPI 与 GPU 时走默认的单进程 CPU 路径，开启时证书的条件与保证不变 | [并行方案](docs/PARALLEL.md) |
-| 开源治理 | Apache-2.0；依赖全部开源并逐项登记；CI、带 SHA256SUMS 的 Release；贡献、治理与安全策略 | [NOTICE](NOTICE) · [CONTRIBUTING](CONTRIBUTING.md) · [GOVERNANCE](GOVERNANCE.md) |
+| 开源治理 | Apache-2.0；构建与默认运行只依赖开源组件，逐项登记（可选的 GPU 卸载在运行时加载用户已安装的 CUDA 库，NVIDIA 许可，不随包分发）；CI、带 SHA256SUMS 的 Release；贡献、治理与安全策略 | [NOTICE](NOTICE) · [CONTRIBUTING](CONTRIBUTING.md) · [GOVERNANCE](GOVERNANCE.md) |
 
 测试条件：{{TODO:rb-evidence 的硬件、核数、内存上限、版本与提交、重复次数与统计量}}。原始数据与生成表格的脚本：
 {{TODO:rb-evidence 的 results 路径}}。
