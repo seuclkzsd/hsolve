@@ -13,7 +13,7 @@
 #             (plus hsolve_avx2: the portable executable with the AVX-512 code paths masked, i.e.
 #             as on a CPU with AVX2 but without AVX-512 - HS_KERNELS_NO_AVX512, HS_BLAS_NO_AVX512,
 #             OPENBLAS_CORETYPE=Haswell) and records versions and checksums in $AB/binaries.txt
-#     run     tools/bench/ab_cases.py run, 5 interleaved repetitions (ABBA order), 16 threads:
+#     run     tools/bench/ab_cases.py run: interleaved repetitions (ABBA order, AB_REPS), 16 threads,
 #             native vs portable -> $AB/ab-<host>, portable vs avx2 -> $AB/ab-<host>-avx2
 #             (inside the measurement slot: guard.py --exclusive)
 #     evaluate tools/eval/sweep.py on both run directories (residuals, completeness, verdicts)
@@ -22,13 +22,15 @@
 #             raw-ab-<host>.tar.gz / raw-ab-<host>-avx2.tar.gz here
 #     retable the tables again from the committed raw-*.tar.gz (no solver run needed)
 # $AB defaults to $HOME/hsolve-ab/portable-vs-native; HS_DATA_ROOT (default data/) holds the cases;
-# AB_HOST (default: this host) names the node whose runs evaluate, table and pack use.
+# AB_HOST (default: this host) names the node whose runs evaluate, table and pack use; AB_REPS
+# (default 0,1,...,9) the repetition indices of `run` (runs already recorded are skipped).
 set -euo pipefail
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 root="$(cd "$here/../.." && pwd)"
 cd "$root"
 AB="${AB:-$HOME/hsolve-ab/portable-vs-native}"
 host="${AB_HOST:-$(hostname -s)}"
+reps="${AB_REPS:-0,1,2,3,4,5,6,7,8,9}"
 cases=(yee-pec-box-1e5 syn-mem27-46 wg-square-1e5 cav2d-rect-pert-1e5 ss-qa8fk-qa8fm syn-near-singular-complex-1e5)
 lane=(python3 tools/run/guard.py --skip-busy-check --mem-gb 12 --timeout 3600 --)
 
@@ -63,9 +65,9 @@ EOF
     run)
       [ "${HS_SLOT_HELD:-}" ] || echo "reproduce.sh: not inside the measurement slot - these times are no measurements" >&2
       python3 tools/bench/ab_cases.py run --bin native="$AB/bin/hsolve_native" --bin portable="$AB/bin/hsolve_portable" \
-          --reps 0,1,2,3,4 --threads 16 --run-dir "$AB/ab-$host" "${cases[@]}"
+          --reps "$reps" --threads 16 --run-dir "$AB/ab-$host" "${cases[@]}"
       python3 tools/bench/ab_cases.py run --bin portable="$AB/bin/hsolve_portable" --bin avx2="$AB/bin/hsolve_avx2" \
-          --reps 0,1,2,3,4 --threads 16 --run-dir "$AB/ab-$host-avx2" "${cases[@]}" ;;
+          --reps "$reps" --threads 16 --run-dir "$AB/ab-$host-avx2" "${cases[@]}" ;;
     evaluate)
       for d in "$AB/ab-$host" "$AB/ab-$host-avx2"; do
         "${lane[@]}" python3 -m tools.eval.sweep "$d" --out "$d/eval.md"
