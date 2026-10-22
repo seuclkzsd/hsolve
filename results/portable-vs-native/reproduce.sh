@@ -22,7 +22,7 @@
 #             raw-ab-<host>.tar.gz / raw-ab-<host>-avx2.tar.gz here
 #     retable the tables again from the committed raw-*.tar.gz (no solver run needed)
 # $AB defaults to $HOME/hsolve-ab/portable-vs-native; HS_DATA_ROOT (default data/) holds the cases;
-# AB_HOST (default: this host) names the node whose runs eval / table / pack use.
+# AB_HOST (default: this host) names the node whose runs evaluate, table and pack use.
 set -euo pipefail
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 root="$(cd "$here/../.." && pwd)"

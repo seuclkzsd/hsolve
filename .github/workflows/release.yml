@@ -72,7 +72,7 @@ jobs:
         run: tools/dev/ci.sh deps
 
       - name: Build and test (as the CI does)
-        run: tools/dev/ci.sh build portability ctest pytest examples demo
+        run: tools/dev/ci.sh build portability ctest ctest-avx2 pytest examples demo
 
       - name: Package
         env:

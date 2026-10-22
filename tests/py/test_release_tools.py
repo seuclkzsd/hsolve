@@ -158,7 +158,7 @@ def test_workflow_actions_are_pinned_to_exact_versions():
 def test_ci_workflow_runs_exactly_the_steps_of_ci_sh():
     text = (ROOT / "tools" / "dev" / "ci.sh").read_text()
     known = set(re.search(r"^all=\(([^)]*)\)", text, re.M).group(1).split())
-    used = {s for line in re.findall(r"tools/dev/ci\.sh ([a-z ]+)$", (WORKFLOWS / "ci.yml").read_text(), re.M)
+    used = {s for line in re.findall(r"tools/dev/ci\.sh ([a-z0-9 -]+)$", (WORKFLOWS / "ci.yml").read_text(), re.M)
             for s in line.split()}
     assert used == known, f"ci.yml runs {sorted(used)}, ci.sh has {sorted(known)}"
 

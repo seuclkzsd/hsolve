@@ -10,6 +10,9 @@
 #     build        the release preset (portable x86-64) with -Werror: no compiler warning passes
 #     portability  tools/release/check_isa.py: no AVX-class instruction outside the CPUID dispatch
 #     ctest        the C++ tests (ctest --preset release); CI_CTEST_EXCLUDE: a regex of tests to skip
+#     ctest-avx2   the C++ tests again as on a CPU with AVX2 but without AVX-512: hsolve's dispatched
+#                  kernels and OpenBLAS take their AVX2 paths (HS_KERNELS_NO_AVX512, HS_BLAS_NO_AVX512,
+#                  OPENBLAS_CORETYPE=Haswell); skipped on a CPU without AVX2
 #     pytest       the Python tests (tests/py)
 #     examples     examples/SHA256SUMS: the committed example files are intact
 #     demo         scripts/demo.sh --quick: two examples solved and checked independently by
@@ -29,9 +32,11 @@ cd "$root"
 source env/activate.sh
 jobs="${HS_JOBS:-4}"
 guard=(python3 tools/run/guard.py --skip-busy-check --mem-gb "${HS_TEST_MEM_GB:-8}" --timeout 3600 --)
-all=(deps build portability ctest pytest examples demo package)
+all=(deps build portability ctest ctest-avx2 pytest examples demo package)
 steps=("$@")
 [ ${#steps[@]} -gt 0 ] || steps=("${all[@]}")
+ctest_args=(--preset release --no-tests=error -j "$jobs")
+[ -z "${CI_CTEST_EXCLUDE:-}" ] || ctest_args+=(-E "$CI_CTEST_EXCLUDE")
 
 step() {
   local name="$1" t0=$SECONDS
@@ -47,10 +52,14 @@ for s in "${steps[@]}"; do
     deps) step deps "${guard[@]}" tools/dev/mumps_cache.sh ensure ;;
     build) step build env HS_CMAKE_ARGS="-DHSOLVE_WERROR=ON ${HS_CMAKE_ARGS:-}" tools/dev/build.sh release ;;
     portability) step portability python3 tools/release/check_isa.py build/release ;;
-    ctest)
-      args=(--preset release --no-tests=error -j "$jobs")
-      [ -z "${CI_CTEST_EXCLUDE:-}" ] || args+=(-E "$CI_CTEST_EXCLUDE")
-      step ctest "${guard[@]}" ctest "${args[@]}" ;;
+    ctest) step ctest "${guard[@]}" ctest "${ctest_args[@]}" ;;
+    ctest-avx2)
+      if grep -qw avx2 /proc/cpuinfo; then
+        step ctest-avx2 env HS_KERNELS_NO_AVX512=1 HS_BLAS_NO_AVX512=1 OPENBLAS_CORETYPE=Haswell \
+            "${guard[@]}" ctest "${ctest_args[@]}"
+      else
+        echo "ci: ctest-avx2 skipped - this CPU has no AVX2"
+      fi ;;
     pytest) step pytest "${guard[@]}" python3 -m pytest -q tests/py ;;
     examples) step examples bash -c 'cd examples && sha256sum -c --quiet SHA256SUMS' ;;
     demo) step demo "${guard[@]}" scripts/demo.sh --quick --threads 2 --out build/ci-demo ;;

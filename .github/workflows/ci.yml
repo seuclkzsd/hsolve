@@ -82,6 +82,9 @@ jobs:
       - name: C++ tests (ctest)
         run: tools/dev/ci.sh ctest
 
+      - name: C++ tests as on an AVX2 CPU without AVX-512
+        run: tools/dev/ci.sh ctest-avx2
+
       - name: Python tests (pytest)
         run: tools/dev/ci.sh pytest
 
