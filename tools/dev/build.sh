@@ -4,7 +4,7 @@
 #
 # MUMPS (every preset links it; the Python module too) - HS_MUMPS selects which:
 #   source (default)  MUMPS 5.8.2 built from the repository's tarball (third_party/mumps/) with
-#                     patches/mumps-5.8.2-l0-blocking.patch, cached by tools/dev/mumps_cache.sh
+#                     the L0-blocking, pivot-extrema and local-scatter patches, cached by tools/dev/mumps_cache.sh
 #                     (first build ~1.5 min, then reused); hsolve then gives MUMPS the P9 block sizes
 #                     by default (HS_MUMPS_BLOCKING=mumps restores MUMPS' own at run time)
 #   env               the environment's conda-forge mumps-seq (the pre-P9 build: MUMPS' block sizes)

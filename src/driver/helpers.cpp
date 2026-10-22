@@ -83,8 +83,8 @@ bool concurrent_counts(Ctx& c, CountSource<T>& counts, double& a, double& b, dou
   // Worth it? The leader's pair takes ~2 counts of kCounterCountShare x its main factorization;
   // on the helpers both at once take one count at kHelperCountSlowdown of the leader's speed after
   // their preparation (helper_preparation_s): they pay when (2 - kHelperCountSlowdown) counts
-  // outweigh it (cav2d-rect-pert-1e5: a 0.035 s factorization against ~0.18 s of preparation).
-  const double prep = helper_preparation_s(mumps_input_size(counts.pencil()), fac.estimate(), 2);
+  // outweigh it. Each helper analyses its counter directly on the leader's pivot order.
+  const double prep = helper_preparation_s(mumps_input_size(counts.pencil()), fac.estimate(), 1);
   if (hp.options().helper_counts == Toggle::Auto && factorize_s > 0 &&
       (2.0 - kHelperCountSlowdown) * kCounterCountShare * factorize_s < prep) {
     note(c, "certificate counts on the leader: too cheap for the helpers (main factorization " + fmt(factorize_s) +
@@ -114,7 +114,7 @@ bool concurrent_counts(Ctx& c, CountSource<T>& counts, double& a, double& b, dou
   }
   {
     PhaseScope phase(c.clock, Phase::Certificate);
-    hp.prepare(c);  // the helpers get the problem now and analyse their counters (the leader waits)
+    hp.prepare(c, 2);  // only the selected pair gets the problem and analyses counters (leader waits)
   }
   const double est = hp.count_estimate_mb();
   if (!(est > 0) || !hp.usable(h[0]) || !hp.usable(h[1])) {
@@ -186,6 +186,15 @@ CountReply count_on_helper(Ctx& c, InertiaCounter<T>& counter, const CountTask& 
   CountReply r;
   r.s = t.s;
   if (fault(c.cfg, kFaultHelperTasks)) throw_injected_fault(c.cfg, kFaultHelperTasks, "count on a helper process");
+  // The leader already left the count-memory safety margin before dividing the task budgets.
+  // Its share is a working-memory cap, including workspace retained across endpoint retries.
+  double allowance = std::max(0.0, budget_left(c)) / 1e6;
+  if (t.cap_mb > 0) allowance = std::min(allowance, t.cap_mb);
+  const double need = std::max(counter.estimate().incore_mb, counter.stats().max_mb_used);
+  if (!(allowance > 0.0) || need > allowance)
+    HS_THROW(OutOfMemoryBudget, "helper count needs " << need << " MB, but its task allows " << allowance << " MB");
+  // Delayed pivots can exceed the estimate: enforce the granted share in MUMPS too.
+  counter.set_max_memory_mb(allowance);
   const index_t moves = c.rep.certificate.endpoint_moves;
   bool off = false;
   r.nu = count_below(

@@ -30,6 +30,15 @@
 //     build/release/bench_blocktune_sweep [--data DIR] [--p 1,2,4,8,16] [--apply-p 3,6,12,32]
 //     [--ncv1 0] [--extra 4] [--min-ncv 0] [--keep 0.5] [--fast 1] [--reps 3] [--apply-reps 5]
 //     [--ordering auto|N] [--tol 1e-11] CASE...
+// P10: --block-ncv 0,32,48 also varies the requested block basis; --original-tol 1e-10
+// enables the driver's original-pencil stopping test. --probe-tol overrides its initial
+// sqrt(--tol) trigger for screening; --probe-decay 0.1,0.5,1 varies how far a failed probe
+// lowers that trigger. --original-margin scales the original residual acceptance threshold
+// (default 0.5, as in the driver; only (0,1] is allowed). This bench omits the certificate: every candidate must
+// still pass an end-to-end comparison with tools/eval before it is adopted.
+// --start-filter none,a,inverse,purified: experimental initial blocks, with construction time
+// included in total_s; a uses A*random, inverse applies the shift-invert operator once.
+// purified uses random + sigma*Op(random), i.e. (A-sigma B)^-1 A random.
 // DIR defaults to $HS_DATA_ROOT or ./data; CASE is a directory name under DIR/cases.
 // The calibration of src/eigen/block_rule.cpp used --p 1,2,4,8,16 --apply-p 3,6,12,32 --fast 0,1
 // --reps 3 on 17 cases and --p 1,2,4,8 --apply-p 3,6,12,16 --fast 1 --reps 3 on 14 more
@@ -49,6 +58,7 @@
 #include <vector>
 
 #include "driver/internal.hpp"
+#include "driver/projection.hpp"
 #include "eigen/block_lanczos.hpp"
 #include "eigen/block_rule.hpp"
 #include "eigen/lanczos_detail.hpp"
@@ -73,6 +83,7 @@ struct Args {
   std::vector<index_t> p = {1, 2, 4, 8, 16};
   std::vector<index_t> apply_p;
   std::vector<index_t> ncv1 = {0};
+  std::vector<index_t> block_ncv = {0};
   std::vector<index_t> extra = {4};
   std::vector<index_t> min_ncv = {0};
   std::vector<double> keep = {0.5};
@@ -81,6 +92,11 @@ struct Args {
   int apply_reps = 5;
   int ordering = -1;  // -1 = the driver's adaptive choice
   double tol = 1e-11;
+  double original_tol = 0.0;
+  double original_margin = 0.5;
+  std::vector<std::string> start_filters = {"none"};
+  double probe_tol = 0.0;
+  std::vector<double> probe_decay = {0.1};
   std::vector<std::string> cases;
 };
 
@@ -117,6 +133,8 @@ Args parse_args(int argc, char** argv) {
       a.apply_p = parse_list<index_t>(value());
     } else if (s == "--ncv1") {
       a.ncv1 = parse_list<index_t>(value());
+    } else if (s == "--block-ncv") {
+      a.block_ncv = parse_list<index_t>(value());
     } else if (s == "--extra") {
       a.extra = parse_list<index_t>(value());
     } else if (s == "--min-ncv") {
@@ -134,11 +152,33 @@ Args parse_args(int argc, char** argv) {
       a.ordering = v == "auto" ? -1 : std::stoi(v);
     } else if (s == "--tol") {
       a.tol = std::stod(value());
+    } else if (s == "--original-tol") {
+      a.original_tol = std::stod(value());
+    } else if (s == "--original-margin") {
+      a.original_margin = std::stod(value());
+      if (!(a.original_margin > 0.0 && a.original_margin <= 1.0))
+        throw std::runtime_error("--original-margin must be in (0,1]");
+    } else if (s == "--start-filter") {
+      a.start_filters.clear();
+      std::stringstream filters(value());
+      std::string filter;
+      while (std::getline(filters, filter, ',')) {
+        if (filter != "none" && filter != "a" && filter != "inverse" && filter != "purified")
+          throw std::runtime_error("--start-filter entries must be none, a, inverse or purified");
+        a.start_filters.push_back(filter);
+      }
+      if (a.start_filters.empty()) throw std::runtime_error("empty --start-filter");
+    } else if (s == "--probe-tol") {
+      a.probe_tol = std::stod(value());
+    } else if (s == "--probe-decay") {
+      a.probe_decay = parse_list<double>(value());
     } else {
       a.cases.push_back(s);
     }
   }
   if (a.cases.empty()) throw std::runtime_error("no case given");
+  for (double d : a.probe_decay)
+    if (!(d > 0.0 && d <= 1.0)) throw std::runtime_error("probe decay must be in (0, 1]");
   return a;
 }
 
@@ -176,8 +216,10 @@ double max_relative_residual(const CsrMatrix<T>& a, const CsrMatrix<T>* b, const
 /// One solver configuration of the sweep.
 struct Config {
   index_t p = 1;
-  index_t ncv = 0;  // p = 1: requested ncv (0 = auto); p > 1: always auto
+  index_t ncv = 0;  // requested ncv (0 = auto)
   hs::eigen_detail::BlockTuning tuning;
+  double probe_decay = 0.1;
+  std::string start_filter = "none";
   std::string name() const {
     std::ostringstream os;
     if (p == 1) {
@@ -185,7 +227,10 @@ struct Config {
     } else {
       os << "p" << p << "-e" << tuning.extra_blocks << "-m" << tuning.min_auto_ncv << "-k"
          << tuning.keep_fraction << "-f" << (tuning.fast_ortho ? 1 : 0);
+      if (ncv) os << "-ncv" << ncv;
     }
+    if (probe_decay != 0.1) os << "-decay" << probe_decay;
+    if (start_filter != "none") os << "-start-" << start_filter;
     return os.str();
   }
 };
@@ -201,20 +246,32 @@ std::vector<Config> make_configs(const Args& args) {
       }
       continue;
     }
-    for (index_t e : args.extra)
-      for (index_t m : args.min_ncv)
-        for (double k : args.keep)
-          for (index_t f : args.fast) {
-            Config c;
-            c.p = p;
-            c.tuning.extra_blocks = e;
-            c.tuning.min_auto_ncv = m;
-            c.tuning.keep_fraction = k;
-            c.tuning.fast_ortho = f != 0;
-            out.push_back(c);
-          }
+    for (index_t ncv : args.block_ncv)
+      for (index_t e : args.extra)
+        for (index_t m : args.min_ncv)
+          for (double k : args.keep)
+            for (index_t f : args.fast) {
+              Config c;
+              c.p = p;
+              c.ncv = ncv;
+              c.tuning.extra_blocks = e;
+              c.tuning.min_auto_ncv = m;
+              c.tuning.keep_fraction = k;
+              c.tuning.fast_ortho = f != 0;
+              out.push_back(c);
+            }
   }
-  return out;
+  std::vector<Config> probes;
+  for (const auto& c : out) {
+    for (double decay : args.probe_decay) {
+      for (const auto& filter : args.start_filters) {
+        probes.push_back(c);
+        probes.back().probe_decay = decay;
+        probes.back().start_filter = filter;
+      }
+    }
+  }
+  return probes;
 }
 
 template <class T>
@@ -262,12 +319,27 @@ void run_case(const Args& args, const std::string& name, hs::LoadedMatrix&& la,
   const CsrMatrix<T>* b = b_store ? &*b_store : nullptr;
   const index_t n = a.nrows;
   hs::ShiftedPencil<T> pencil(a, b);
+  double sigma = sigma0;
+  const double n2a = args.original_tol > 0.0 ? hs::driver::estimate_norm2(a, 30, 2026).norm2 : 0.0;
+  const double n2b = args.original_tol > 0.0 && b ? hs::driver::estimate_norm2(*b, 30, 2026).norm2 : 1.0;
+  auto backward_error = [&](const DenseMatrix<T>& x, const std::vector<double>& theta) {
+    DenseMatrix<T> ax, bx;
+    hs::driver::apply_block(&a, x, ax);
+    hs::driver::apply_block(b, x, bx);
+    double worst = 0.0;
+#pragma omp parallel for reduction(max : worst) schedule(static)
+    for (index_t j = 0; j < x.cols(); ++j) {
+      const double lambda = theta[j] != 0.0 ? sigma + 1.0 / theta[j] : INFINITY;
+      const double eta = hs::driver::pair_metrics(ax.col(j), bx.col(j), x.col(j), n, lambda, n2a, n2b).backward_error;
+      worst = std::max(worst, std::isfinite(lambda) && std::isfinite(eta) ? eta : INFINITY);
+    }
+    return worst;
+  };
 
   json head = {{"record", "case"}, {"case", name},           {"n", n},
                {"nnz_a", a.nnz()}, {"nnz_b", b ? b->nnz() : 0}, {"complex", hs::is_complex_v<T>},
                {"k", k},           {"threads", hs::max_threads()}};
   auto fac = analyse<T>(args, pencil, sigma0, k, head);
-  double sigma = sigma0;
   hs::Timer t_fa;
   bool ok = fac->factorize(1.0, -sigma);
   for (int r = 0; !ok && r < 3; ++r) {  // the driver's rule: nudge the shift off an eigenvalue
@@ -336,11 +408,49 @@ void run_case(const Args& args, const std::string& name, hs::LoadedMatrix&& la,
       hs::eigen_detail::LanczosTimings tm;
       const double s0 = fac->stats().solve_s;
       const index_t calls0 = fac->stats().solves;
+      DenseMatrix<T> initial;
+      double initial_s = 0;
+      if (c.start_filter != "none") {
+        hs::Timer start_timer;
+        DenseMatrix<T> random(n, c.p);
+        initial.resize(n, c.p);
+        for (index_t j = 0; j < c.p; ++j) hs::linalg::fill_random(random.col(j), n, ko.seed, j);
+        if (c.start_filter == "a") {
+          hs::driver::apply_block(&a, random, initial);
+        } else {
+          op.apply(random.data(), n, initial.data(), n, c.p);
+          if (c.start_filter == "purified") {
+#pragma omp parallel for schedule(static)
+            for (index_t j = 0; j < c.p; ++j) {
+              hs::linalg::scal(n, T(sigma), initial.col(j));
+              hs::linalg::axpy(n, T(1), random.col(j), initial.col(j));
+            }
+          }
+        }
+        ko.initial = &initial;
+        initial_s = start_timer.seconds();
+      }
+      hs::eigen_detail::OriginalResidualTest<T> original;
+      original.probe_tol = args.probe_tol > 0.0 ? args.probe_tol : std::sqrt(args.tol);
+      int probes = 0;
+      json probe_history = json::array();
+      const index_t applies0 = op.applications();
+      original.accept = [&](const DenseMatrix<T>& x, const std::vector<double>& theta) {
+        ++probes;
+        const double eta = backward_error(x, theta);
+        const bool accepted = eta <= args.original_margin * args.original_tol;
+        probe_history.push_back({{"op_applies", op.applications() - applies0},
+                                 {"probe_tol", original.probe_tol},
+                                 {"max_backward_error", eta}, {"accepted", accepted}});
+        if (!accepted) original.probe_tol *= c.probe_decay;
+        return accepted;
+      };
       const auto r =
           c.p == 1 ? hs::eigen_detail::lanczos_krylov_schur_timed<T>(
                          op, bop.get(), hs::Which::LargestMagnitude, ko, tm)
                    : hs::eigen_detail::block_lanczos_krylov_schur_timed<T>(
-                         op, bop.get(), hs::Which::LargestMagnitude, ko, tm, c.tuning);
+                         op, bop.get(), hs::Which::LargestMagnitude, ko, tm, c.tuning, nullptr,
+                         args.original_tol > 0.0 ? &original : nullptr);
       const double solve_s = fac->stats().solve_s - s0;
       std::vector<double> lambda;
       for (double th : r.theta) lambda.push_back(sigma + 1.0 / th);
@@ -373,13 +483,24 @@ void run_case(const Args& args, const std::string& name, hs::LoadedMatrix&& la,
                   {"restarts", r.restarts},
                   {"op_applies", r.op_applies},
                   {"solve_calls", fac->stats().solves - calls0},
-                  {"total_s", tm.total},
+                  {"total_s", tm.total + initial_s},
+                  {"start_filter", c.start_filter},
+                  {"start_filter_s", initial_s},
+                  {"start_op_applies", c.start_filter == "inverse" || c.start_filter == "purified" ? c.p : 0},
                   {"op_s", tm.op},
                   {"solve_s", solve_s},
                   {"orth_s", tm.orthogonalization},
                   {"rr_s", tm.rayleigh_ritz},
                   {"restart_s", tm.restart},
                   {"max_rel_residual", res},
+                  {"eigenvalues", lambda},
+                  {"original_tol", args.original_tol},
+                  {"original_margin", args.original_margin},
+                  {"initial_probe_tol", args.probe_tol > 0.0 ? args.probe_tol : std::sqrt(args.tol)},
+                  {"probe_decay", c.probe_decay},
+                  {"original_probes", probes},
+                  {"original_probe_history", probe_history},
+                  {"max_backward_error", args.original_tol > 0.0 ? backward_error(r.vectors, r.theta) : 0.0},
                   {"max_rel_diff_to_first", diff},
                   {"distinct_values", distinct},
                   {"history", hist},

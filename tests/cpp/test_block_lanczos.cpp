@@ -574,4 +574,46 @@ TEST(KrylovSchurGeneralBlock, BlockSizeBelowOneIsRejected) {
   EXPECT_TRUE(hs::krylov_schur_general<double>(op, hs::Which::LargestMagnitude, opt).converged);
 }
 
+TYPED_TEST(LanczosBlockOrthoTyped, OriginalResidualAcceptanceAndRejection) {
+  using T = TypeParam;
+  constexpr index_t n = 180;
+  std::vector<double> diagonal(n);
+  for (index_t i = 0; i < n; ++i) diagonal[i] = 1.0 / (0.5 + static_cast<double>(i));
+  hs::test::DiagonalOperator<T> op(std::vector<T>(diagonal.begin(), diagonal.end()));
+  hs::KrylovSchurOptions<T> opt;
+  opt.nev = 6;
+  opt.block_size = 2;
+  opt.tol = 1e-13;
+  hs::eigen_detail::LanczosTimings timing;
+  const auto baseline = hs::lanczos_krylov_schur<T>(op, nullptr, hs::Which::LargestMagnitude, opt);
+  ASSERT_TRUE(baseline.converged);
+  hs::eigen_detail::OriginalResidualTest<T> test;
+  test.probe_tol = 1e-3;
+  int probes = 0;
+  test.accept = [&](const DenseMatrix<T>&, const std::vector<double>&) { ++probes; return false; };
+  const auto rejected = hs::eigen_detail::block_lanczos_krylov_schur_timed<T>(
+      op, nullptr, hs::Which::LargestMagnitude, opt, timing, {}, nullptr, &test);
+  EXPECT_GT(probes, 0);
+  EXPECT_EQ(rejected.op_applies, baseline.op_applies);
+  EXPECT_EQ(rejected.theta, baseline.theta);
+  EXPECT_EQ(rejected.estimate, baseline.estimate);
+  test.accept = [&](const DenseMatrix<T>& x, const std::vector<double>& theta) {
+    for (index_t j = 0; j < x.cols(); ++j) {
+      double r2 = 0.0, x2 = 0.0;
+      for (index_t i = 0; i < n; ++i) {
+        r2 += std::norm((diagonal[i] - theta[j]) * x(i, j));
+        x2 += std::norm(x(i, j));
+      }
+      if (!(std::sqrt(r2 / x2) <= 1e-7)) return false;
+    }
+    return true;
+  };
+  const auto accepted = hs::eigen_detail::block_lanczos_krylov_schur_timed<T>(
+      op, nullptr, hs::Which::LargestMagnitude, opt, timing, {}, nullptr, &test);
+  ASSERT_TRUE(accepted.converged);
+  EXPECT_LT(accepted.op_applies, baseline.op_applies);
+  EXPECT_TRUE(test.accept(accepted.vectors, accepted.theta));
+  for (index_t j = 0; j < opt.nev; ++j) EXPECT_NEAR(accepted.theta[j], diagonal[j], 1e-7);
+}
+
 }  // namespace

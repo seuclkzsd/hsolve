@@ -6,6 +6,7 @@
 
 #include <algorithm>
 #include <chrono>
+#include <cstdlib>
 #include <thread>
 
 #include "hsolve/error.hpp"
@@ -78,6 +79,11 @@ bool init(int* argc, char*** argv) {
 }
 
 void finalize() { MPI_Finalize(); }
+
+[[noreturn]] void abort(int code) {
+  MPI_Abort(MPI_COMM_WORLD, code);
+  std::abort();  // MPI implementations need not declare MPI_Abort noreturn.
+}
 
 int world_size() {
   int size = 0;

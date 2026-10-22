@@ -106,12 +106,14 @@ double hermitian_defect(const CsrMatrix<T>& a);
 // rows of X are reused too rarely for the copy to pay off (fewer than 2 entries per column of A on
 // average for p <= 4, fewer than 8 for wider blocks: e.g. a diagonal B), and every path computes
 // a single vector with the Reference row loop.
+// Auto spmm with exactly two real columns and at least 32768 rows uses two fixed accumulators
+// reading X directly, without an interleaved copy or scratch. Explicit paths retain their kernels.
 
 /// Instruction-set path of the sparse kernels.
 enum class KernelPath {
   Auto,       ///< Avx512 when the CPU and OS support AVX-512F (checked at run time), else
               ///< Portable; with AVX-512, chunks of fewer than 8 doubles per row (real p < 8,
-              ///< complex p < 4) still run Portable, which is faster there
+              ///< complex p < 4) still run Portable; real p == 2 spmm with >= 32768 rows reads X directly
   Reference,  ///< the P1 loops (strided spmm, 8 vectors per pass): for tests and benchmarks
   Portable,   ///< interleaved kernels in plain C++ (vector extension at the build ISA's width)
   Avx512,     ///< AVX-512F intrinsics; Unsupported (hs::Error) where AVX-512F is unavailable

@@ -60,7 +60,7 @@ void expect_same(std::vector<double> got, const std::vector<double>& want, doubl
 
 template <class T>
 void expect_valid(const hs::Solution<T>& sol) {
-  EXPECT_TRUE(sol.report.success);
+  EXPECT_TRUE(sol.report.success) << sol.report.to_json();
   for (const auto& p : sol.report.pairs) EXPECT_LE(p.backward_error, 1e-10);
   if (sol.report.certificate.performed) {
     EXPECT_TRUE(sol.report.certificate.passed);
@@ -445,7 +445,15 @@ TEST(DriverAutoPrecision, AutoTakesSingleFactorsWhenOnlyTheyFitInCore) {
   const double sigma = w[j] + 0.3 * (w[j + 1] - w[j]);  // not mid-way: equidistant multiplets would tie
   hs::ShiftedPencil<double> pencil(a, nullptr);
   const Estimates e = estimates(pencil, sigma);
-  auto cfg = nearest(sigma, 8, hs::FactorPrecision::Auto);
+  // Include the whole boundary multiplet. Splitting it made the certificate request a
+  // deflated rerun whose additional resident basis sometimes exhausted this deliberately
+  // tight budget; that tests rescue memory, not whether the single factors are usable.
+  std::vector<double> distances;
+  for (double x : w) distances.push_back(std::abs(x - sigma));
+  std::sort(distances.begin(), distances.end());
+  std::size_t k = 8;
+  while (k < distances.size() && distances[k] - distances[k - 1] < 1e-8) ++k;
+  auto cfg = nearest(sigma, static_cast<index_t>(k), hs::FactorPrecision::Auto);
   cfg.ordering = 0;
   cfg.memory_budget_gb = 8.0;
   const auto big = hs::solve(a, nullptr, cfg);
@@ -467,8 +475,8 @@ TEST(DriverAutoPrecision, AutoTakesSingleFactorsWhenOnlyTheyFitInCore) {
   EXPECT_EQ(small.report.precision.requested, hs::FactorPrecision::Auto);
   EXPECT_EQ(small.report.precision.used, hs::FactorPrecision::Single) << small.report.precision.decision;
   EXPECT_FALSE(small.report.factor_options.out_of_core);
-  EXPECT_FALSE(small.report.precision.fallback) << small.report.precision.fallback_reason;
-  expect_same(small.eigenvalues, nearest_of(w, sigma, 8), 1e-9);
+  EXPECT_FALSE(small.report.precision.fallback) << small.report.to_json();
+  expect_same(small.eigenvalues, nearest_of(w, sigma, k), 1e-9);
 }
 
 // Auto takes single factors, whose attempt then fails (sigma 1e-8 ||K|| from an eigenvalue:

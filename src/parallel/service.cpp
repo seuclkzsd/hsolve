@@ -5,6 +5,7 @@
 // as an error reply (the leader then does the work itself). Drop / End free the problem and all
 // built on it at once (the leader takes the work back or the solve ended), and return the freed
 // heap to the system, so that the resident memory the helper reports falls to its idle level.
+#include <algorithm>
 #include <memory>
 #include <new>
 #include <string>
@@ -86,7 +87,10 @@ class ProblemOf final : public Problem {
     cfg_.memory_budget_gb = static_cast<double>(current_rss_bytes()) / 1073741824.0 + t.budget_gb;
     driver::Ctx c{cfg_, log_, rep_, clock_};
     c.held = held_;
-    driver::CountReply r = driver::count_on_helper<T>(c, count_instance(), t);
+    driver::CountTask limited = t;
+    if (fopts_.max_memory_mb > 0)
+      limited.cap_mb = limited.cap_mb > 0 ? std::min(limited.cap_mb, fopts_.max_memory_mb) : fopts_.max_memory_mb;
+    driver::CountReply r = driver::count_on_helper<T>(c, count_instance(), limited);
     held_ = c.held;
     return r;
   }
@@ -109,15 +113,11 @@ class ProblemOf final : public Problem {
   }
 
  private:
-  // An InertiaCounter on the main object (its pivot order: the leader's, rebuilt by MUMPS like the
-  // leader's own counter's). The counter keeps the pencil, not the source: when no slice is
-  // expected (nearest targets) the main object's analysis is dropped again.
+  // The leader already supplied its pivot order. Build the counter directly, without a
+  // temporary main object's analysis followed by the counter's own analysis. This is the
+  // same source order the leader's counter uses; slices create their main object on demand.
   InertiaCounter<T>& count_instance() {
-    if (!counter_) {
-      const bool keep_main = main_ != nullptr;
-      counter_ = std::make_unique<InertiaCounter<T>>(main_object(), fopts_);
-      if (!keep_main && info_.prepare_count) main_.reset();
-    }
+    if (!counter_) counter_ = std::make_unique<InertiaCounter<T>>(*pencil_, order_, fopts_);
     return *counter_;
   }
   // The main object of slices: the leader's options on its pivot order, analysed at its shift.

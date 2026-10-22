@@ -39,9 +39,10 @@ def run(spec_path, rundir):
     for rep in range(spec.get("reps", 3)):
         for cname, case in spec["cases"].items():
             os.makedirs(os.path.join(rundir, cname), exist_ok=True)
+            # Cyclic rotation puts each variant in every position over len(names)
+            # repetitions (AB / BA for two). Reversing odd repetitions as well
+            # would make two variants run AB every time and bias larger sweeps.
             order = names[rep % len(names):] + names[:rep % len(names)]
-            if rep % 2 == 1:
-                order = order[::-1]
             for vname in order:
                 v = spec["variants"][vname]
                 cmd = [spec["bench"], "--case", case["case"], "--jobs", spec.get("jobs", "a")]

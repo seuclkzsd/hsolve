@@ -549,8 +549,8 @@ TEST(BlasHookKernels, SmallTrsmMatchesRealDtrsm) {
     for (char uplo : {'U', 'L', 'u'})
       for (char tr : {'N', 'T', 'C'})
         for (char diag : {'N', 'U'})
-          for (fint m : {1, 2, 7, 8, 9, 17, 64, 100})
-            for (fint n : {1, 2, 4, 5}) {
+          for (fint m : {1, 2, 7, 8, 9, 15, 16, 17, 23, 24, 25, 32, 64, 100, 129})
+            for (fint n : {1, 2, 4, 5, 7, 8, 9, 16, 17}) {
               const fint lda = m + 3, ldb = m + 1;
               auto a = random_vec(static_cast<std::size_t>(lda) * m, ++seed);
               for (fint j = 0; j < m; ++j)

@@ -34,6 +34,9 @@ int main(int argc, char** argv) {
   {
     hs::mpi::MpiTransport peers;
     rc = hs::cli::run(argc, argv, &peers);
+    // An error before serve() (e.g. its log cannot be opened) leaves the leader waiting for
+    // this helper. MPI_Finalize would wait too, so terminate the job with the reported error.
+    if (peers.rank() > 0 && rc != 0) hs::mpi::abort(rc);
   }
   hs::mpi::finalize();
   return rc;

@@ -1,0 +1,224 @@
+MUMPS 5.8.2: avoid redundant atomic writes to pivot extrema (hsolve P13).
+
+The L0 subtree workers share DKEEP(19:21): minimum pivot, minimum non-null
+pivot, maximum pivot. All callers supply absolute pivot values. These extrema
+move monotonically during factorization. Read each statistic atomically first;
+when the pivot cannot change it, skip the original atomic min/max update.
+A concurrent writer can only strengthen the bound. Writers still use atomic
+min/max (never a plain assignment), so races cannot lose an extreme value.
+Negated comparisons keep unordered values on the original update path.
+The serial path, pivot selection, null detection and arithmetic are unchanged.
+Applies to all four arithmetics; no new KEEP entries or application settings.
+
+Apply after mumps-5.8.2-l0-blocking.patch with tools/dev/build_mumps.sh --patch.
+Validation and timings: results/p13_measurements.md and p13_extrema_probe.cpp.
+This is an hsolve modification of MUMPS, distributed under CeCILL-C.
+
+--- a/src/sfac_front_aux.F
++++ b/src/sfac_front_aux.F
+@@ -2538,6 +2538,7 @@
+       REAL, INTENT(INOUT) :: DKEEP(230)
+       LOGICAL, INTENT(IN) :: NULLPIVOT
+       INTEGER, INTENT(IN) :: KEEP(500)
++      REAL :: CURRENT
+       IF (KEEP(405).EQ.0) THEN
+         DKEEP(21) = max(DKEEP(21), DIAG)
+         DKEEP(19) = min(DKEEP(19), DIAG)
+@@ -2545,16 +2546,35 @@
+           DKEEP(20) = min(DKEEP(20), DIAG)
+         ENDIF
+       ELSE
+-!$OMP   ATOMIC UPDATE
+-        DKEEP(21) = max(DKEEP(21), DIAG)
++C       Extrema only move outwards during factorization. An atomic read
++C       can skip an update that cannot change them; a concurrent update
++C       only makes that skip safer. Keep the atomic min/max for writers.
++C       Negated comparisons retain the update path for unordered values.
++!$OMP   ATOMIC READ
++        CURRENT = DKEEP(21)
+ !$OMP   END ATOMIC
+-!$OMP   ATOMIC UPDATE
+-        DKEEP(19) = min(DKEEP(19), DIAG)
++        IF (.NOT.(DIAG.LE.CURRENT)) THEN
++!$OMP     ATOMIC UPDATE
++          DKEEP(21) = max(DKEEP(21), DIAG)
++!$OMP     END ATOMIC
++        ENDIF
++!$OMP   ATOMIC READ
++        CURRENT = DKEEP(19)
+ !$OMP   END ATOMIC
++        IF (.NOT.(DIAG.GE.CURRENT)) THEN
++!$OMP     ATOMIC UPDATE
++          DKEEP(19) = min(DKEEP(19), DIAG)
++!$OMP     END ATOMIC
++        ENDIF
+         IF (.NOT.NULLPIVOT) THEN
+-!$OMP     ATOMIC UPDATE
+-          DKEEP(20) = min(DKEEP(20), DIAG)
++!$OMP     ATOMIC READ
++          CURRENT = DKEEP(20)
+ !$OMP     END ATOMIC
++          IF (.NOT.(DIAG.GE.CURRENT)) THEN
++!$OMP       ATOMIC UPDATE
++            DKEEP(20) = min(DKEEP(20), DIAG)
++!$OMP       END ATOMIC
++          ENDIF
+         ENDIF
+       ENDIF
+       RETURN
+--- a/src/dfac_front_aux.F
++++ b/src/dfac_front_aux.F
+@@ -2538,6 +2538,7 @@
+       DOUBLE PRECISION, INTENT(INOUT) :: DKEEP(230)
+       LOGICAL, INTENT(IN) :: NULLPIVOT
+       INTEGER, INTENT(IN) :: KEEP(500)
++      DOUBLE PRECISION :: CURRENT
+       IF (KEEP(405).EQ.0) THEN
+         DKEEP(21) = max(DKEEP(21), DIAG)
+         DKEEP(19) = min(DKEEP(19), DIAG)
+@@ -2545,16 +2546,35 @@
+           DKEEP(20) = min(DKEEP(20), DIAG)
+         ENDIF
+       ELSE
+-!$OMP   ATOMIC UPDATE
+-        DKEEP(21) = max(DKEEP(21), DIAG)
++C       Extrema only move outwards during factorization. An atomic read
++C       can skip an update that cannot change them; a concurrent update
++C       only makes that skip safer. Keep the atomic min/max for writers.
++C       Negated comparisons retain the update path for unordered values.
++!$OMP   ATOMIC READ
++        CURRENT = DKEEP(21)
+ !$OMP   END ATOMIC
+-!$OMP   ATOMIC UPDATE
+-        DKEEP(19) = min(DKEEP(19), DIAG)
++        IF (.NOT.(DIAG.LE.CURRENT)) THEN
++!$OMP     ATOMIC UPDATE
++          DKEEP(21) = max(DKEEP(21), DIAG)
++!$OMP     END ATOMIC
++        ENDIF
++!$OMP   ATOMIC READ
++        CURRENT = DKEEP(19)
+ !$OMP   END ATOMIC
++        IF (.NOT.(DIAG.GE.CURRENT)) THEN
++!$OMP     ATOMIC UPDATE
++          DKEEP(19) = min(DKEEP(19), DIAG)
++!$OMP     END ATOMIC
++        ENDIF
+         IF (.NOT.NULLPIVOT) THEN
+-!$OMP     ATOMIC UPDATE
+-          DKEEP(20) = min(DKEEP(20), DIAG)
++!$OMP     ATOMIC READ
++          CURRENT = DKEEP(20)
+ !$OMP     END ATOMIC
++          IF (.NOT.(DIAG.GE.CURRENT)) THEN
++!$OMP       ATOMIC UPDATE
++            DKEEP(20) = min(DKEEP(20), DIAG)
++!$OMP       END ATOMIC
++          ENDIF
+         ENDIF
+       ENDIF
+       RETURN
+--- a/src/cfac_front_aux.F
++++ b/src/cfac_front_aux.F
+@@ -2527,6 +2527,7 @@
+       REAL, INTENT(INOUT) :: DKEEP(230)
+       LOGICAL, INTENT(IN) :: NULLPIVOT
+       INTEGER, INTENT(IN) :: KEEP(500)
++      REAL :: CURRENT
+       IF (KEEP(405).EQ.0) THEN
+         DKEEP(21) = max(DKEEP(21), DIAG)
+         DKEEP(19) = min(DKEEP(19), DIAG)
+@@ -2534,16 +2535,35 @@
+           DKEEP(20) = min(DKEEP(20), DIAG)
+         ENDIF
+       ELSE
+-!$OMP   ATOMIC UPDATE
+-        DKEEP(21) = max(DKEEP(21), DIAG)
++C       Extrema only move outwards during factorization. An atomic read
++C       can skip an update that cannot change them; a concurrent update
++C       only makes that skip safer. Keep the atomic min/max for writers.
++C       Negated comparisons retain the update path for unordered values.
++!$OMP   ATOMIC READ
++        CURRENT = DKEEP(21)
+ !$OMP   END ATOMIC
+-!$OMP   ATOMIC UPDATE
+-        DKEEP(19) = min(DKEEP(19), DIAG)
++        IF (.NOT.(DIAG.LE.CURRENT)) THEN
++!$OMP     ATOMIC UPDATE
++          DKEEP(21) = max(DKEEP(21), DIAG)
++!$OMP     END ATOMIC
++        ENDIF
++!$OMP   ATOMIC READ
++        CURRENT = DKEEP(19)
+ !$OMP   END ATOMIC
++        IF (.NOT.(DIAG.GE.CURRENT)) THEN
++!$OMP     ATOMIC UPDATE
++          DKEEP(19) = min(DKEEP(19), DIAG)
++!$OMP     END ATOMIC
++        ENDIF
+         IF (.NOT.NULLPIVOT) THEN
+-!$OMP     ATOMIC UPDATE
+-          DKEEP(20) = min(DKEEP(20), DIAG)
++!$OMP     ATOMIC READ
++          CURRENT = DKEEP(20)
+ !$OMP     END ATOMIC
++          IF (.NOT.(DIAG.GE.CURRENT)) THEN
++!$OMP       ATOMIC UPDATE
++            DKEEP(20) = min(DKEEP(20), DIAG)
++!$OMP       END ATOMIC
++          ENDIF
+         ENDIF
+       ENDIF
+       RETURN
+--- a/src/zfac_front_aux.F
++++ b/src/zfac_front_aux.F
+@@ -2527,6 +2527,7 @@
+       DOUBLE PRECISION, INTENT(INOUT) :: DKEEP(230)
+       LOGICAL, INTENT(IN) :: NULLPIVOT
+       INTEGER, INTENT(IN) :: KEEP(500)
++      DOUBLE PRECISION :: CURRENT
+       IF (KEEP(405).EQ.0) THEN
+         DKEEP(21) = max(DKEEP(21), DIAG)
+         DKEEP(19) = min(DKEEP(19), DIAG)
+@@ -2534,16 +2535,35 @@
+           DKEEP(20) = min(DKEEP(20), DIAG)
+         ENDIF
+       ELSE
+-!$OMP   ATOMIC UPDATE
+-        DKEEP(21) = max(DKEEP(21), DIAG)
++C       Extrema only move outwards during factorization. An atomic read
++C       can skip an update that cannot change them; a concurrent update
++C       only makes that skip safer. Keep the atomic min/max for writers.
++C       Negated comparisons retain the update path for unordered values.
++!$OMP   ATOMIC READ
++        CURRENT = DKEEP(21)
+ !$OMP   END ATOMIC
+-!$OMP   ATOMIC UPDATE
+-        DKEEP(19) = min(DKEEP(19), DIAG)
++        IF (.NOT.(DIAG.LE.CURRENT)) THEN
++!$OMP     ATOMIC UPDATE
++          DKEEP(21) = max(DKEEP(21), DIAG)
++!$OMP     END ATOMIC
++        ENDIF
++!$OMP   ATOMIC READ
++        CURRENT = DKEEP(19)
+ !$OMP   END ATOMIC
++        IF (.NOT.(DIAG.GE.CURRENT)) THEN
++!$OMP     ATOMIC UPDATE
++          DKEEP(19) = min(DKEEP(19), DIAG)
++!$OMP     END ATOMIC
++        ENDIF
+         IF (.NOT.NULLPIVOT) THEN
+-!$OMP     ATOMIC UPDATE
+-          DKEEP(20) = min(DKEEP(20), DIAG)
++!$OMP     ATOMIC READ
++          CURRENT = DKEEP(20)
+ !$OMP     END ATOMIC
++          IF (.NOT.(DIAG.GE.CURRENT)) THEN
++!$OMP       ATOMIC UPDATE
++            DKEEP(20) = min(DKEEP(20), DIAG)
++!$OMP       END ATOMIC
++          ENDIF
+         ENDIF
+       ENDIF
+       RETURN

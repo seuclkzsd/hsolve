@@ -7,7 +7,7 @@
 #
 # The default build (tools/dev/build.sh) does not call this directly but through
 # tools/dev/mumps_cache.sh, which builds the default configuration (these defaults plus
-# patches/mumps-5.8.2-l0-blocking.patch) once per cache key and reuses it. Use this script itself
+# the L0-blocking, pivot-extrema and local-scatter patches) once per cache key and reuses it. Use this script itself
 # for other configurations (link one with HS_MUMPS=<prefix> tools/dev/build.sh).
 #
 #   --isa   -march of every MUMPS object. Default nocona (SSE3; with -mtune=haswell

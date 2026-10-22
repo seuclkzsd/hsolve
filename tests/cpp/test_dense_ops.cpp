@@ -116,6 +116,37 @@ TYPED_TEST(LinalgDenseOpsReduce, NonFiniteEntriesPropagate) {
   EXPECT_TRUE(std::isinf(la::norm2(n, x.data())));
 }
 
+TYPED_TEST(LinalgDenseOpsReduce, FusedUpdatesKeepSeparateOperationsResultsAndThreadIndependence) {
+  using T = TypeParam;
+  for (index_t n : {0, 7, 1023, 1024, 1025, 32769, 300001}) {
+    std::vector<T> x(n), y(n), z(n);
+    la::fill_random(x.data(), n, 31, 0);
+    la::fill_random(y.data(), n, 31, 1);
+    la::fill_random(z.data(), n, 31, 2);
+    T alpha = T(-0.375);
+    if constexpr (hs::is_complex_v<T>) alpha += T(0.0, 0.25);
+    for (bool alias : {false, true}) {
+      ThreadCount serial(1);
+      auto expected = y;
+      la::axpy(n, alpha, alias ? expected.data() : x.data(), expected.data());
+      const T dot = la::dot(n, alias ? expected.data() : z.data(), expected.data());
+      const double norm = la::norm2(n, expected.data());
+      for (int threads : kThreadCounts) {
+        ThreadCount tc(threads);
+        auto actual = y;
+        const T got = la::axpy_dot(n, alpha, alias ? actual.data() : x.data(), actual.data(),
+                                   alias ? actual.data() : z.data());
+        EXPECT_TRUE(bitwise_equal(actual, expected)) << "n=" << n << " threads=" << threads;
+        EXPECT_TRUE(bitwise_equal(got, dot)) << "n=" << n << " threads=" << threads;
+        actual = y;
+        const double got_norm = la::axpy_norm2(n, alpha, alias ? actual.data() : x.data(), actual.data());
+        EXPECT_TRUE(bitwise_equal(actual, expected)) << "n=" << n << " threads=" << threads;
+        EXPECT_TRUE(bitwise_equal(got_norm, norm)) << "n=" << n << " threads=" << threads;
+      }
+    }
+  }
+}
+
 // ---- CGS orthogonalization ----------------------------------------------------------------------
 
 enum class Mode { Euclidean, Stored, Recompute };

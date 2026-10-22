@@ -24,6 +24,8 @@ class MumpsFactorization final : public SparseFactorization<T> {
   void analyze(const ShiftedPencil<T>& pencil, double alpha, double beta) override;
   FactorEstimate estimate() const override;
   bool factorize(double alpha, double beta) override;
+  Inertia count(double alpha, double beta) override;
+  bool has_inertia_only_count() const override;
   void solve(T* b, index_t nrhs, index_t ldb) override;
   Inertia inertia() const override { return inertia_; }
   void set_out_of_core(bool on) override { options_.out_of_core = on; }

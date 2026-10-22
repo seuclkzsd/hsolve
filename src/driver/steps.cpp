@@ -2,6 +2,9 @@
 // factorization steps (shift retries, inertia counts, analysis and memory budget, adaptive
 // ordering). See internal.hpp.
 #include <algorithm>
+#if defined(__GLIBC__)
+#include <malloc.h>
+#endif
 #include <cmath>
 #include <cstdint>
 #include <limits>
@@ -414,13 +417,14 @@ Inertia CountSource<T>::count_on_main(Ctx& c, double s, bool detection) {
   fac_.set_null_pivot_detection(detection);
   Inertia in;
   try {
-    if (fac_.factorize(1.0, -s)) in = fac_.inertia();
+    if (main_ == MainFactors::Release) in = fac_.count(1.0, -s);
+    else if (fac_.factorize(1.0, -s)) in = fac_.inertia();
   } catch (...) {
     fac_.set_null_pivot_detection(true);
     throw;
   }
   fac_.set_null_pivot_detection(true);
-  if (in.valid) c.held = FactorHeld{s, !detection};
+  if (in.valid && main_ != MainFactors::Release) c.held = FactorHeld{s, !detection};
   return in;
 }
 
@@ -453,6 +457,18 @@ Inertia CountSource<T>::count_on_counter(Ctx& c, double s, bool detection) {
   // go first.
   double allowance = counter_allowance_mb(c, cap);
   if (counter_mb > allowance && release_main(false, "allowance")) allowance = counter_allowance_mb(c, cap);
+  if (counter_mb > allowance && !fault(c.cfg, kFaultCountAllowance)) {
+#if defined(__GLIBC__)
+    // A previous count or Krylov basis can leave freed blocks in glibc's arenas. Give
+    // these pages back before concluding that another complete working set cannot fit.
+    // Re-read actual memory and apply the same cap; never credit unmeasured reusable space.
+    const double before_trim = memory_in_use(c);
+    malloc_trim(0);
+    allowance = counter_allowance_mb(c, cap);
+    event(c, "count_memory_reclaimed", {{"before_mb", before_trim / 1e6}, {"after_mb", memory_in_use(c) / 1e6},
+                              {"need_mb", counter_mb}, {"allowance_mb", allowance}});
+#endif
+  }
   if (counter_mb > allowance)
     HS_THROW(OutOfMemoryBudget, "InertiaCounter: its in-core estimate " << counter_mb << " MB exceeds the "
                                                                         << allowance

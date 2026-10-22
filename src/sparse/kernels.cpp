@@ -18,6 +18,8 @@
 // A single vector (spmv, spmm with p = 1) runs the Reference row loop on every path: it is bound by
 // the matrix stream and the x gathers, and neither AVX-512 gathers nor split sums beat it; the
 // single-column residual is one fused sweep straight from x and y (no interleaved copies).
+// Auto spmm with exactly two real columns and at least 32768 rows also reads X directly: two
+// fixed accumulators reuse each matrix entry without the interleaving pass or a variable-width loop.
 // Every output row is computed by one thread in a fixed order, so each path is deterministic and
 // independent of the thread count. Compiled for x86-64 with GCC/Clang, the AVX-512 code is built
 // with function target attributes (no -mavx512f needed) and selected only when
@@ -56,6 +58,9 @@ constexpr index_t kRowBlock = 256;  // rows per scheduling unit of the fast kern
 // column gained 1.2-3.3x).
 constexpr index_t kMinReuseNarrow = 2;
 constexpr index_t kMinReuseWide = 8;
+// Keep the established small-matrix path: P27's end-to-end small-case timings did not show a
+// stable benefit. Two columns span at least 512 KiB above this size (results/p27_measurements.md).
+constexpr index_t kDirectTwoMinRows = 32768;
 
 /// HS_KERNELS_NO_AVX512 set to anything but "" or "0": behave as on a CPU without AVX-512F.
 [[maybe_unused]] bool avx512_masked_by_environment() noexcept {
@@ -798,6 +803,30 @@ void spmm(const CsrMatrix<T>& a, const T* x, index_t ldx, T* y, index_t ldy, ind
   if (p == 1) {
     spmv_reference(a, x, y, alpha, beta);
     return;
+  }
+  // Two fixed columns avoid both the interleaved copy and the generic strided loop's
+  // width dispatch. Each column retains the CSR accumulation order; beta == 0 never reads Y.
+  if constexpr (std::is_same_v<T, double>) {
+    if (p == 2 && options.path == KernelPath::Auto && a.nrows >= kDirectTwoMinRows && a.nnz() > 0) {
+      const auto* rp = a.rowptr.data();
+      const auto* ci = a.colind.data();
+      const auto* av = a.values.data();
+      const double* x1 = x + ldx;
+      double* y1 = y + ldy;
+#pragma omp parallel for schedule(static)
+      for (index_t i = 0; i < a.nrows; ++i) {
+        double s0 = 0.0, s1 = 0.0;
+        for (index_t q = rp[i]; q < rp[i + 1]; ++q) {
+          const auto j = ci[q];
+          const double v = av[q];
+          s0 += v * x[j];
+          s1 += v * x1[j];
+        }
+        y[i] = beta == 0.0 ? alpha * s0 : alpha * s0 + beta * y[i];
+        y1[i] = beta == 0.0 ? alpha * s1 : alpha * s1 + beta * y1[i];
+      }
+      return;
+    }
   }
   const index_t m = a.ncols;
   if (a.nnz() < (p <= 4 ? kMinReuseNarrow : kMinReuseWide) * m) {

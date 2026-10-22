@@ -572,6 +572,39 @@ void axpy(index_t n, T alpha, const T* x, T* y) {
 }
 
 template <class T>
+T axpy_dot(index_t n, T alpha, const T* x, T* y, const T* z) {
+  const Partition part(n, kVecBlock, kMaxSlots);
+  constexpr index_t d = kDoubles<T>;
+  double s[d];
+  reduce_blocks(part, d, d * n >= kParallelMinWork, s, [&](index_t r0, index_t rows, double* acc) {
+    for (index_t i = r0; i < r0 + rows; ++i) y[i] += alpha * x[i];
+    if constexpr (is_complex_v<T>) {
+      double re, im;
+      zdotc(rows, dbl(z + r0), dbl(y + r0), re, im);
+      acc[0] += re;
+      acc[1] += im;
+    } else {
+      acc[0] += ddot(rows, z + r0, y + r0);
+    }
+  });
+  if constexpr (is_complex_v<T>) return T(s[0], s[1]);
+  else return s[0];
+}
+
+template <class T>
+double axpy_norm2(index_t n, T alpha, const T* x, T* y) {
+  const Partition part(n, kVecBlock, kMaxSlots);
+  constexpr index_t d = kDoubles<T>;
+  double s;
+  reduce_blocks(part, 1, d * n >= kParallelMinWork, &s, [&](index_t r0, index_t rows, double* acc) {
+    for (index_t i = r0; i < r0 + rows; ++i) y[i] += alpha * x[i];
+    const double* yd = dbl(y + r0);
+    acc[0] += ddot(d * rows, yd, yd);
+  });
+  return std::sqrt(s);
+}
+
+template <class T>
 void scal(index_t n, T alpha, T* x) {
 #pragma omp parallel for schedule(static)
   for (index_t i = 0; i < n; ++i) x[i] *= alpha;
@@ -864,6 +897,8 @@ void multiply(index_t n, index_t k, index_t m, const T* v, index_t ldv, const T*
   template T dot<T>(index_t, const T*, const T*);                                                   \
   template double norm2<T>(index_t, const T*);                                                      \
   template void axpy<T>(index_t, T, const T*, T*);                                                  \
+  template T axpy_dot<T>(index_t, T, const T*, T*, const T*);                                       \
+  template double axpy_norm2<T>(index_t, T, const T*, T*);                                          \
   template void scal<T>(index_t, T, T*);                                                            \
   template double orthogonalize_cgs2<T>(index_t, index_t, const T*, index_t, const T*, index_t, T*, \
                                         T*, T*, const ApplyFn<T>*, const OrthoOptions&,             \

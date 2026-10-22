@@ -24,6 +24,18 @@ struct InertiaCounter<T>::Impl {
   std::unique_ptr<mumps::MumpsFactorization<T, float>> sgl;  ///< created at the first single count
   InertiaCounterStats stats;
 
+  void initialize(const FactorOptions& opts, bool defer_double_analysis) {
+    options = opts;
+    options.precision = FactorPrecision::Double;
+    options.blr = false;
+    options.blr_estimates = false;
+    options.out_of_core = false;
+    // L0-OpenMP factorizations must retain the thread count of their analysis.
+    if (options.threads == 0) options.threads = max_threads();
+    stats.reused_pivot_order = !pivot_order.empty();
+    if (!defer_double_analysis) double_instance();
+  }
+
   // An inertia-only instance analysed with the source's pivot order at (alpha, beta).
   template <class U>
   std::unique_ptr<mumps::MumpsFactorization<T, U>> make_instance(double alpha, double beta) {
@@ -77,15 +89,16 @@ InertiaCounter<T>::InertiaCounter(const SparseFactorization<T>& analysed_source,
   }
   if (m.pencil == nullptr)
     HS_THROW(InvalidInput, "InertiaCounter: the source factorization has not been analysed");
-  m.options = options;
-  m.options.precision = FactorPrecision::Double;  // per count, see count()
-  m.options.blr = false;
-  m.options.blr_estimates = false;
-  m.options.out_of_core = false;
-  // L0-OpenMP factorizations must use the thread count of their analysis (INFO -58 otherwise).
-  if (m.options.threads == 0) m.options.threads = max_threads();
-  m.stats.reused_pivot_order = !m.pivot_order.empty();
-  if (!defer_double_analysis) m.double_instance();
+  m.initialize(options, defer_double_analysis);
+}
+
+template <class T>
+InertiaCounter<T>::InertiaCounter(const ShiftedPencil<T>& pencil, std::vector<int> pivot_order,
+                                const FactorOptions& options, bool defer_double_analysis)
+    : impl_(std::make_unique<Impl>()) {
+  impl_->pencil = &pencil;
+  impl_->pivot_order = std::move(pivot_order);
+  impl_->initialize(options, defer_double_analysis);
 }
 
 template <class T>
@@ -113,6 +126,16 @@ std::pair<Inertia, Inertia> InertiaCounter<T>::count_pair(double alpha1, double 
   Inertia first = count(alpha1, beta1, null_pivot_detection, precision);
   Inertia second = count(alpha2, beta2, null_pivot_detection, precision);
   return {first, second};
+}
+
+template <class T>
+void InertiaCounter<T>::set_max_memory_mb(double mb) {
+  if (!std::isfinite(mb) || mb < 0.0)
+    HS_THROW(InvalidInput, "InertiaCounter::set_max_memory_mb: must be finite and >= 0, got " << mb);
+  Impl& m = *impl_;
+  if (m.dbl) m.dbl->set_max_memory_mb(mb);
+  if (m.sgl) m.sgl->set_max_memory_mb(mb);
+  m.options.max_memory_mb = mb;
 }
 
 template <class T>

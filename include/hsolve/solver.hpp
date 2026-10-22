@@ -386,12 +386,15 @@ struct SolveReport {
   double hermitian_defect_b = 0.0;
   // strategy
   Method method = Method::Auto;  ///< resolved method
+  /// Initial eigenpair candidates: "iterative" or a matrix-verified subspace. Later rescue and
+  /// completeness reruns can still use the resolved method. No candidate source is a certificate.
+  std::string candidate_source = "iterative";
   double sigma_requested = 0.0;
   double sigma_used = 0.0;       ///< after near-singular perturbation
   index_t shift_retries = 0;
   FactorOptions factor_options;
   index_t block_size = 1;        ///< Krylov block width p of the first shift-invert run (resolved
-                                 ///< SolverConfig::block_size)
+                                 ///< SolverConfig::block_size); 0 for direct initial candidates
   // statistics
   FactorStats factor_stats;
   index_t restarts = 0;

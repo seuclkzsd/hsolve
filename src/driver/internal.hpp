@@ -347,7 +347,8 @@ FactorOptions counter_options(const Ctx& c, const SparseFactorization<T>& fac, b
 
 /// Where the Sylvester counts of a solve path come from (DESIGN §3.6-8):
 ///   * the main factorization object, refactorized at each count point: it then holds K(s)
-///     (Ctx::held), which a Krylov run at s reuses (one-sided slice anchors);
+///     (Ctx::held), which a Krylov run at s reuses (one-sided slice anchors). MainFactors::Release
+///     permits count() to discard them instead, leaving Ctx::held empty;
 ///   * an InertiaCounter, built at the first count from the main analysis' pivot order
 ///     (factor.hpp): inertia-only factorizations (measured 10-23% cheaper) that do not touch the
 ///     main factors; MainFactors says whether those are released before a count (then they are
@@ -375,7 +376,8 @@ template <class T>
 class CountSource {
  public:
   /// prefer_counter: count on the counter even with an exact main factor (see counter_pays()).
-  /// main: what counter counts do with the main factors (no effect on main-object counts).
+  /// main: what counter counts do with the main factors. Release also permits main-object
+  /// counts to discard their factors; a later solve must refactorize.
   CountSource(SparseFactorization<T>& fac, const ShiftedPencil<T>& pencil, bool prefer_counter,
               MainFactors main = MainFactors::KeepWithinCap);
   ~CountSource();

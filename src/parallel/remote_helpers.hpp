@@ -28,7 +28,7 @@ class RemoteHelpers final : public driver::HelpersOf<T> {
   bool usable(int h) const override { return helpers_.at(static_cast<std::size_t>(h)).usable; }
   void abandon(int h, const std::string& why) override;
   bool shared() const override { return shared_; }
-  void prepare(driver::Ctx& c) override;
+  void prepare(driver::Ctx& c, int max_helpers = 0) override;
   void drop(driver::Ctx& c, const std::string& why) override;
   double memory_bytes() const override;
   double count_estimate_mb() const override;

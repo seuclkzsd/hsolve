@@ -369,6 +369,19 @@ class SparseFactorization {
   ///   any other negative INFO: FactorizationFailed (message carries INFO(1), INFO(2)).
   [[nodiscard]] virtual bool factorize(double alpha, double beta) = 0;
 
+  /// Count the inertia without needing a subsequent solve at this shift. The returned value
+  /// has the same singularity/precision contract as factorize() + inertia(). The backend may
+  /// discard the factors; call factorize() again before solving. The symbolic analysis remains.
+  virtual Inertia count(double alpha, double beta) {
+    static_cast<void>(factorize(alpha, beta));
+    const Inertia result = inertia();
+    release_factors();
+    return result;
+  }
+  /// True when count() can discard factors during factorization using this object's existing
+  /// analysis. A driver that no longer needs the main factors can then avoid a separate counter.
+  virtual bool has_inertia_only_count() const { return false; }
+
   /// Solve K X = B in place; b is n x nrhs column-major with ldb >= n. Multiple right-hand sides
   /// are solved in one MUMPS call (block triangular solves). Throws Internal without a valid
   /// factorization, InvalidInput for nrhs < 0 or ldb < n, OutOfMemoryBudget / FactorizationFailed
@@ -529,6 +542,12 @@ class InertiaCounter {
   /// analysed) or as analyze() (deferred: at that first use).
   InertiaCounter(const SparseFactorization<T>& analysed_source, const FactorOptions& options,
                  bool defer_double_analysis = false);
+  /// Build directly from a pencil and a previously computed pivot_order() (same convention
+  /// and validation as SparseFactorization::set_pivot_order). Avoids analysing a temporary
+  /// source when the order is already available, e.g. on an MPI helper. The pencil must
+  /// outlive the counter; options and deferred analysis behave as in the source constructor.
+  InertiaCounter(const ShiftedPencil<T>& pencil, std::vector<int> pivot_order,
+                 const FactorOptions& options, bool defer_double_analysis = false);
   ~InertiaCounter();
   InertiaCounter(const InertiaCounter&) = delete;
   InertiaCounter& operator=(const InertiaCounter&) = delete;
@@ -548,6 +567,10 @@ class InertiaCounter {
   std::pair<Inertia, Inertia> count_pair(double alpha1, double beta1, double alpha2, double beta2,
                                          bool null_pivot_detection = true,
                                          FactorPrecision precision = FactorPrecision::Double);
+
+  /// Change the working-memory cap for subsequent counts, including instances whose analysis
+  /// is deferred. Same units and validation as SparseFactorization::set_max_memory_mb().
+  void set_max_memory_mb(double mb);
 
   /// MUMPS estimate of a double count (INFOG(16) etc. of the inertia-only analysis: incore_mb
   /// is the working memory, there are no factors to keep). Analyses a deferred double instance

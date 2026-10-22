@@ -18,7 +18,7 @@ Contents
           2.3  pybind11 3.1 (Python extension module only)       BSD-3-Clause
   Part 3  Libraries hsolve links at run time (installed from conda-forge, not in this repository;
           MUMPS: built from the source tarball in third_party/mumps/ by default)
-          3.1  MUMPS 5.8.2 (modified by an hsolve patch)          CeCILL-C (parts BSD-3-Clause)
+          3.1  MUMPS 5.8.2 (modified by hsolve patches)          CeCILL-C (parts BSD-3-Clause)
           3.2  OpenBLAS 0.3.34 (BLAS and LAPACK)                  BSD-3-Clause
           3.3  METIS 5.1.0 (through MUMPS)                        Apache-2.0
           3.4  SCOTCH 7.0 (through MUMPS)                         CeCILL-C
@@ -188,11 +188,13 @@ require.
   with the notice above (third_party/mumps/LICENSE) and the CeCILL-C text
   (third_party/mumps/CeCILL-C_V1-en.txt; the French text in the tarball's doc/). hsolve's default
   build (tools/dev/build.sh -> tools/dev/mumps_cache.sh -> tools/dev/build_mumps.sh) compiles it
-  modified by patches/mumps-5.8.2-l0-blocking.patch, an hsolve modification of MUMPS distributed
-  under the same CeCILL-C license (its header states what it changes: two block-size controls
-  under the L0-OpenMP layer). THE MUMPS LIBRARIES OF hsolve's DEFAULT BUILD ARE THEREFORE A MODIFIED
-  VERSION OF MUMPS 5.8.2 (modified by that patch); `hsolve --version` names the install, whose
-  BUILD-INFO.txt lists the patch. HS_MUMPS=env tools/dev/build.sh links the environment's unmodified
+  modified by patches/mumps-5.8.2-l0-blocking.patch, patches/mumps-5.8.2-pivot-extrema.patch
+  and patches/mumps-5.8.2-local-scatter.patch,
+  hsolve modifications of MUMPS distributed under the same CeCILL-C license (their headers describe
+  two L0 block-size controls, avoiding redundant atomic writes to pivot extrema, and parallel
+  local RHS scatter). THE MUMPS LIBRARIES OF hsolve's DEFAULT BUILD ARE THEREFORE A MODIFIED
+  VERSION OF MUMPS 5.8.2 (modified by those patches); `hsolve --version` names the install, whose
+  BUILD-INFO.txt lists the patches. HS_MUMPS=env tools/dev/build.sh links the environment's unmodified
   conda-forge mumps-seq instead.
 
 3.2 OpenBLAS 0.3.34 (OpenMP build, conda-forge libopenblas) - BLAS and LAPACK

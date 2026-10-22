@@ -198,6 +198,10 @@ if(HSOLVE_BUILD_BENCH)
     target_include_directories(bench_${name} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src" "${CMAKE_CURRENT_SOURCE_DIR}/tests/cpp")
     target_link_libraries(bench_${name} PRIVATE hsolve LAPACK::LAPACK BLAS::BLAS MUMPS::MUMPS nlohmann_json::nlohmann_json)
   endforeach()
+  # POSIX wall-clock timer for leader-thread profiling on glibc before 2.34.
+  if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    target_link_libraries(bench_factspeed_factor PRIVATE rt)
+  endif()
 endif()
 
 # ---- Python package (python/, docs/PYTHON.md): ON by default when pybind11 is found ----
@@ -239,7 +243,7 @@ if(HSOLVE_BUILD_TESTS)
       PROPERTIES ENVIRONMENT "OMP_NUM_THREADS=2;OPENBLAS_NUM_THREADS=1")
   endforeach()
   # Multi-process sessions over MPI (tests/cpp/mpi/): every test program runs as an MPI job of 1, 2
-  # and 3 ranks (rank 0 runs the tests, the others serve). Not in the glob above: they need MPI.
+  # 3 and 5 ranks (rank 0 runs the tests, the others serve). Not in the glob above: they need MPI.
   if(TARGET hsolve_mpi)
     file(GLOB HSOLVE_MPI_TEST_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/tests/cpp/mpi/test_*.cpp")
     foreach(src IN LISTS HSOLVE_MPI_TEST_SOURCES)
@@ -249,7 +253,7 @@ if(HSOLVE_BUILD_TESTS)
       target_compile_definitions(${name} PRIVATE HSOLVE_TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/tests/data")
       target_link_libraries(${name} PRIVATE hsolve_mpi_c hsolve_mpi hsolve hsolve_test_support GTest::gtest
                                             nlohmann_json::nlohmann_json)
-      foreach(ranks 1 2 3)
+      foreach(ranks 1 2 3 5)
         add_test(NAME ${name}.ranks${ranks}
                  COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} ${ranks} ${HSOLVE_MPIEXEC_TEST_FLAGS}
                          $<TARGET_FILE:${name}>)
@@ -257,6 +261,14 @@ if(HSOLVE_BUILD_TESTS)
           ENVIRONMENT "OMP_NUM_THREADS=2;OPENBLAS_NUM_THREADS=1" TIMEOUT 600 PROCESSORS ${ranks})
       endforeach()
     endforeach()
+    add_test(NAME test_mpi_cli.helper_log_failure
+      COMMAND ${CMAKE_COMMAND}
+        "-DMPIEXEC=${MPIEXEC_EXECUTABLE}" "-DMPI_NUMPROC_FLAG=${MPIEXEC_NUMPROC_FLAG}"
+        "-DMPI_FLAGS=${HSOLVE_MPIEXEC_TEST_FLAGS}" "-DHSOLVE_MPI=$<TARGET_FILE:hsolve_mpi_cli>"
+        "-DTEST_DIR=${CMAKE_CURRENT_BINARY_DIR}/test-mpi-cli-failure"
+        -P "${CMAKE_CURRENT_SOURCE_DIR}/tests/cmake/mpi_cli_failure.cmake")
+    set_tests_properties(test_mpi_cli.helper_log_failure PROPERTIES TIMEOUT 60 PROCESSORS 3
+      ENVIRONMENT "OMP_NUM_THREADS=1;OPENBLAS_NUM_THREADS=1")
   endif()
 endif()
 

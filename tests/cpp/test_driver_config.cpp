@@ -171,7 +171,7 @@ TEST(DriverReport, JsonHasDocumentedKeysAndNullForInfiniteBounds) {
   r.zero_modes_filtered = 12;
   const auto j = nlohmann::json::parse(r.to_json());
   for (const char* key : {"schema_version", "n", "nnz_a", "nnz_b", "complex_scalars", "problem", "norm2_a", "norm2_b",
-                          "scale", "method", "sigma_requested", "sigma_used", "shift_retries", "factor_options",
+                          "scale", "method", "candidate_source", "sigma_requested", "sigma_used", "shift_retries", "factor_options",
                           "factor_stats", "restarts", "op_applies", "time_total_s", "time_setup_s", "time_factor_s",
                           "time_iterate_s", "time_verify_s", "time_certificate_s", "peak_rss_bytes", "pairs",
                           "certificate", "slices", "zero_cluster_dim", "zero_modes_filtered", "success", "warnings",
@@ -182,6 +182,7 @@ TEST(DriverReport, JsonHasDocumentedKeysAndNullForInfiniteBounds) {
   EXPECT_EQ(j["version"], std::string(hs::version()));
   EXPECT_EQ(j["block_size"], 1);
   EXPECT_EQ(j["method"], "shift_invert_lanczos");
+  EXPECT_EQ(j["candidate_source"], "iterative");
   EXPECT_TRUE(j["certificate"]["lower"].is_null());
   EXPECT_EQ(j["certificate"]["upper"], 2.0);
   ASSERT_EQ(j["slices"].size(), 1u);

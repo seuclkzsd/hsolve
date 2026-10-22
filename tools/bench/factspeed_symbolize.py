@@ -17,7 +17,7 @@ Output per job (optionally only samples in [t0, t1) seconds of the job):
   * --threads: samples per thread and the share of them in OpenMP spin (idle) per thread.
 --json writes {job: {"objects", "categories", "symbols", "timeline"}}.
 Run where the objects live (the cluster node), e.g. through env/run.sh. Samples are process CPU
-time (user + system).
+time (user + system) by default, or leader wall time with --sample-leader 1.
 """
 import argparse
 import bisect

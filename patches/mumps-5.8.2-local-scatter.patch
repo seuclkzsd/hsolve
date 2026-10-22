@@ -1,0 +1,231 @@
+MUMPS 5.8.2: parallel local RHS scatter (hsolve P14).
+
+When one working process owns all N pivot rows (KEEP(89) and the fully
+summed RHS count both equal N), each front owns a disjoint contiguous range
+of RHSINTR. Distribute fronts across one OpenMP team, retaining the original
+row permutation and optional scaling, and avoid unused MPI buffer allocations.
+The metadata helper only reads IW/KEEP/PTRIST/STEP. No reductions, pivot
+choices or solve arithmetic change. The original path handles other layouts,
+small matrices (N < 32768), and trees with fewer than 64 fronts.
+Applies to all four arithmetics; no new KEEP entries or application settings.
+
+Apply after the L0-blocking and pivot-extrema patches with build_mumps.sh.
+Validation and timings: results/p14_measurements.md and p14_scatter_probe.cpp.
+This is an hsolve modification of MUMPS, distributed under CeCILL-C.
+
+--- a/src/ssol_c.F
++++ b/src/ssol_c.F
+@@ -2119,6 +2119,51 @@
+         MYID_NODES = MYID
+       ELSE
+         MYID_NODES = MYID-1
++      ENDIF
++C     hsolve P14: one working process owns all pivot rows. The front
++C     ranges in RHSINTR are disjoint, so scatter them in one team rather
++C     than walking the assembly tree serially on every solve. No MPI
++C     buffer is needed on this path. Keep small/few-front cases below.
++      IF (NSLAVES.EQ.1.AND.MYID.EQ.MASTER.AND.TYPE_PARAL.EQ.1
++     &    .AND.KEEP(89).EQ.N.AND.NB_FS_IN_RHSINTR_F.EQ.N
++     &    .AND.N.GE.32768.AND.KEEP(28).GE.64) THEN
++!$OMP PARALLEL DO SCHEDULE(STATIC)
++!$OMP& PRIVATE(NPIV,LIELL,IPOS,J1,INDX,J,JJ,K)
++        DO ISTEP=1,KEEP(28)
++          IF (MYID_NODES.NE.MUMPS_PROCNODE(PROCNODE_STEPS(ISTEP),
++     &        KEEP(199))) CYCLE
++          CALL MUMPS_SOL_GET_NPIV_LIELL_IPOS(ISTEP,KEEP,
++     &         NPIV,LIELL,IPOS,IW,LIW,PTRIST,STEP,N)
++          IF (NPIV.EQ.0) CYCLE
++          IF (MTYPE.EQ.1.OR.KEEP(50).NE.0) THEN
++            J1=IPOS+1
++          ELSE
++            J1=IPOS+1+LIELL
++          ENDIF
++          INDX=POSINRHSINTR_FWD(IW(J1))
++#if ! defined(USE_OLD_SCALING)
++          IF (LSCAL) THEN
++            DO K=1,NRHS
++              DO JJ=J1,J1+NPIV-1
++                J=IW(JJ)
++                RHSINTR(INDX+JJ-J1,K)=RHS(J,K)*
++     &               SCALING_LOC_FWD(INDX+JJ-J1)
++              ENDDO
++            ENDDO
++          ELSE
++#endif
++            DO K=1,NRHS
++              DO JJ=J1,J1+NPIV-1
++                J=IW(JJ)
++                RHSINTR(INDX+JJ-J1,K)=RHS(J,K)
++              ENDDO
++            ENDDO
++#if ! defined(USE_OLD_SCALING)
++          ENDIF
++#endif
++        ENDDO
++!$OMP END PARALLEL DO
++        RETURN
+       ENDIF
+       BUF_EFFSIZE = 0
+       BUF_MAXSIZE = max(min(BUF_MAXREF,int(2000000/NRHS)),2000)
+--- a/src/dsol_c.F
++++ b/src/dsol_c.F
+@@ -2119,6 +2119,51 @@
+         MYID_NODES = MYID
+       ELSE
+         MYID_NODES = MYID-1
++      ENDIF
++C     hsolve P14: one working process owns all pivot rows. The front
++C     ranges in RHSINTR are disjoint, so scatter them in one team rather
++C     than walking the assembly tree serially on every solve. No MPI
++C     buffer is needed on this path. Keep small/few-front cases below.
++      IF (NSLAVES.EQ.1.AND.MYID.EQ.MASTER.AND.TYPE_PARAL.EQ.1
++     &    .AND.KEEP(89).EQ.N.AND.NB_FS_IN_RHSINTR_F.EQ.N
++     &    .AND.N.GE.32768.AND.KEEP(28).GE.64) THEN
++!$OMP PARALLEL DO SCHEDULE(STATIC)
++!$OMP& PRIVATE(NPIV,LIELL,IPOS,J1,INDX,J,JJ,K)
++        DO ISTEP=1,KEEP(28)
++          IF (MYID_NODES.NE.MUMPS_PROCNODE(PROCNODE_STEPS(ISTEP),
++     &        KEEP(199))) CYCLE
++          CALL MUMPS_SOL_GET_NPIV_LIELL_IPOS(ISTEP,KEEP,
++     &         NPIV,LIELL,IPOS,IW,LIW,PTRIST,STEP,N)
++          IF (NPIV.EQ.0) CYCLE
++          IF (MTYPE.EQ.1.OR.KEEP(50).NE.0) THEN
++            J1=IPOS+1
++          ELSE
++            J1=IPOS+1+LIELL
++          ENDIF
++          INDX=POSINRHSINTR_FWD(IW(J1))
++#if ! defined(USE_OLD_SCALING)
++          IF (LSCAL) THEN
++            DO K=1,NRHS
++              DO JJ=J1,J1+NPIV-1
++                J=IW(JJ)
++                RHSINTR(INDX+JJ-J1,K)=RHS(J,K)*
++     &               SCALING_LOC_FWD(INDX+JJ-J1)
++              ENDDO
++            ENDDO
++          ELSE
++#endif
++            DO K=1,NRHS
++              DO JJ=J1,J1+NPIV-1
++                J=IW(JJ)
++                RHSINTR(INDX+JJ-J1,K)=RHS(J,K)
++              ENDDO
++            ENDDO
++#if ! defined(USE_OLD_SCALING)
++          ENDIF
++#endif
++        ENDDO
++!$OMP END PARALLEL DO
++        RETURN
+       ENDIF
+       BUF_EFFSIZE = 0
+       BUF_MAXSIZE = max(min(BUF_MAXREF,int(2000000/NRHS)),2000)
+--- a/src/csol_c.F
++++ b/src/csol_c.F
+@@ -2119,6 +2119,51 @@
+         MYID_NODES = MYID
+       ELSE
+         MYID_NODES = MYID-1
++      ENDIF
++C     hsolve P14: one working process owns all pivot rows. The front
++C     ranges in RHSINTR are disjoint, so scatter them in one team rather
++C     than walking the assembly tree serially on every solve. No MPI
++C     buffer is needed on this path. Keep small/few-front cases below.
++      IF (NSLAVES.EQ.1.AND.MYID.EQ.MASTER.AND.TYPE_PARAL.EQ.1
++     &    .AND.KEEP(89).EQ.N.AND.NB_FS_IN_RHSINTR_F.EQ.N
++     &    .AND.N.GE.32768.AND.KEEP(28).GE.64) THEN
++!$OMP PARALLEL DO SCHEDULE(STATIC)
++!$OMP& PRIVATE(NPIV,LIELL,IPOS,J1,INDX,J,JJ,K)
++        DO ISTEP=1,KEEP(28)
++          IF (MYID_NODES.NE.MUMPS_PROCNODE(PROCNODE_STEPS(ISTEP),
++     &        KEEP(199))) CYCLE
++          CALL MUMPS_SOL_GET_NPIV_LIELL_IPOS(ISTEP,KEEP,
++     &         NPIV,LIELL,IPOS,IW,LIW,PTRIST,STEP,N)
++          IF (NPIV.EQ.0) CYCLE
++          IF (MTYPE.EQ.1.OR.KEEP(50).NE.0) THEN
++            J1=IPOS+1
++          ELSE
++            J1=IPOS+1+LIELL
++          ENDIF
++          INDX=POSINRHSINTR_FWD(IW(J1))
++#if ! defined(USE_OLD_SCALING)
++          IF (LSCAL) THEN
++            DO K=1,NRHS
++              DO JJ=J1,J1+NPIV-1
++                J=IW(JJ)
++                RHSINTR(INDX+JJ-J1,K)=RHS(J,K)*
++     &               SCALING_LOC_FWD(INDX+JJ-J1)
++              ENDDO
++            ENDDO
++          ELSE
++#endif
++            DO K=1,NRHS
++              DO JJ=J1,J1+NPIV-1
++                J=IW(JJ)
++                RHSINTR(INDX+JJ-J1,K)=RHS(J,K)
++              ENDDO
++            ENDDO
++#if ! defined(USE_OLD_SCALING)
++          ENDIF
++#endif
++        ENDDO
++!$OMP END PARALLEL DO
++        RETURN
+       ENDIF
+       BUF_EFFSIZE = 0
+       BUF_MAXSIZE = max(min(BUF_MAXREF,int(2000000/NRHS)),2000)
+--- a/src/zsol_c.F
++++ b/src/zsol_c.F
+@@ -2119,6 +2119,51 @@
+         MYID_NODES = MYID
+       ELSE
+         MYID_NODES = MYID-1
++      ENDIF
++C     hsolve P14: one working process owns all pivot rows. The front
++C     ranges in RHSINTR are disjoint, so scatter them in one team rather
++C     than walking the assembly tree serially on every solve. No MPI
++C     buffer is needed on this path. Keep small/few-front cases below.
++      IF (NSLAVES.EQ.1.AND.MYID.EQ.MASTER.AND.TYPE_PARAL.EQ.1
++     &    .AND.KEEP(89).EQ.N.AND.NB_FS_IN_RHSINTR_F.EQ.N
++     &    .AND.N.GE.32768.AND.KEEP(28).GE.64) THEN
++!$OMP PARALLEL DO SCHEDULE(STATIC)
++!$OMP& PRIVATE(NPIV,LIELL,IPOS,J1,INDX,J,JJ,K)
++        DO ISTEP=1,KEEP(28)
++          IF (MYID_NODES.NE.MUMPS_PROCNODE(PROCNODE_STEPS(ISTEP),
++     &        KEEP(199))) CYCLE
++          CALL MUMPS_SOL_GET_NPIV_LIELL_IPOS(ISTEP,KEEP,
++     &         NPIV,LIELL,IPOS,IW,LIW,PTRIST,STEP,N)
++          IF (NPIV.EQ.0) CYCLE
++          IF (MTYPE.EQ.1.OR.KEEP(50).NE.0) THEN
++            J1=IPOS+1
++          ELSE
++            J1=IPOS+1+LIELL
++          ENDIF
++          INDX=POSINRHSINTR_FWD(IW(J1))
++#if ! defined(USE_OLD_SCALING)
++          IF (LSCAL) THEN
++            DO K=1,NRHS
++              DO JJ=J1,J1+NPIV-1
++                J=IW(JJ)
++                RHSINTR(INDX+JJ-J1,K)=RHS(J,K)*
++     &               SCALING_LOC_FWD(INDX+JJ-J1)
++              ENDDO
++            ENDDO
++          ELSE
++#endif
++            DO K=1,NRHS
++              DO JJ=J1,J1+NPIV-1
++                J=IW(JJ)
++                RHSINTR(INDX+JJ-J1,K)=RHS(J,K)
++              ENDDO
++            ENDDO
++#if ! defined(USE_OLD_SCALING)
++          ENDIF
++#endif
++        ENDDO
++!$OMP END PARALLEL DO
++        RETURN
+       ENDIF
+       BUF_EFFSIZE = 0
+       BUF_MAXSIZE = max(min(BUF_MAXREF,int(2000000/NRHS)),2000)

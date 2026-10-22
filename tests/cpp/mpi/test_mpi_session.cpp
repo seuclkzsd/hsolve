@@ -1,9 +1,10 @@
-// Multi-process solves over MPI (src/mpi, DESIGN §3.9): run by ctest as MPI jobs of 1, 2 and 3 ranks
+// Multi-process solves over MPI (src/mpi, DESIGN §3.9): run by ctest as MPI jobs of 1, 2, 3 and 5 ranks
 // (CMakeLists.txt: test_mpi_session.ranks<R>). Rank 0 runs the tests below - each a solve_parallel
 // of the session - while ranks 1..R-1 serve them (hs::serve) until rank 0 releases them at the end.
 // What the helpers do depends on R: with 3 ranks the certificate's two counts and the slices go to
-// the two helpers, with 2 (one helper) and 1 the leader solves alone; the results must not depend
-// on it. The same logic over thread transports: test_parallel_session.cpp.
+// helpers (counts use two, slices may use all four with 5 ranks). With 2 ranks (one helper) or 1,
+// the leader solves alone; the results must not depend on it. The same logic over thread
+// transports: test_parallel_session.cpp.
 #include <gtest/gtest.h>
 
 #include <cstdio>
@@ -75,7 +76,7 @@ TYPED_TEST(MpiSessionTyped, FailingHelpersAreReplacedByTheLeader) {
                                      nullptr, *g_peers, kForce);
   expect_interval_certified(iv);
   EXPECT_EQ(iv.report.parallel.helper_slices, 0);
-  EXPECT_EQ(iv.report.parallel.fallbacks, g_peers->size() >= 3 ? 2 : 0) << warnings(iv.report);
+  EXPECT_EQ(iv.report.parallel.fallbacks, g_peers->size() >= 3 ? g_peers->size() - 1 : 0) << warnings(iv.report);
 }
 
 // The leader's memory accounting over real processes: what the helpers hold once they have the

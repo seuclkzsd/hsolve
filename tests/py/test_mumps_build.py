@@ -1,7 +1,7 @@
 """The MUMPS the built hsolve executable and Python module load (P9 integration; CMakeLists.txt
 HSOLVE_MUMPS_ROOT, tools/dev/build.sh HS_MUMPS, docs/DESIGN.md §3.4).
 
-The default build links MUMPS 5.8.2 built from third_party/mumps/ with the L0-blocking patch
+The default build links MUMPS 5.8.2 built from third_party/mumps/ with the L0-blocking, pivot-extrema and local-scatter patches
 (tools/dev/mumps_cache.sh); HS_MUMPS=env links the environment's conda-forge mumps-seq. Both carry
 the same library names and sonames, so only the RPATH order decides which one the dynamic loader
 maps. These tests read the build directory's CMakeCache.txt and check that
@@ -167,6 +167,8 @@ def test_cache_prefix_is_keyed_by_the_build_inputs(tmp_path):
     desc = run("describe")
     assert f"tarball-sha256 {_PINNED}" in desc
     assert "patch mumps-5.8.2-l0-blocking.patch " in desc and "flags --isa nocona --opt O2" in desc
+    assert "patch mumps-5.8.2-pivot-extrema.patch " in desc
+    assert "patch mumps-5.8.2-local-scatter.patch " in desc
     # Other compilers (or any other input) give another install.
     assert run("prefix", HS_MUMPS_CACHE=str(tmp_path), FC=os.environ["CC"]) != prefix
     assert not any(tmp_path.iterdir()), "prefix / describe must not build"

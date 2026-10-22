@@ -219,6 +219,38 @@ TYPED_TEST(SparseKernelPaths, ThreadCountAndWorkspaceDoNotChangeBits) {
   }
 }
 
+TEST(SparseKernelDispatch, TwoColumnsAcrossRowThreshold) {
+  const int threads = omp_get_max_threads();
+  for (index_t m : {32767, 32768, 32769}) {
+    const index_t n = m + 5, ldx = n + 3, ldy = m + 2;
+    const auto a = random_csr<double>(m, n, 12, 5, 41);
+    const auto x = random_block<double>(n, 2, ldx, 42);
+    const auto initial = random_block<double>(m, 2, ldy, 43);
+    const auto scale = abs_product(a, x.data(), ldx, 2);
+    for (double beta : {0.0, 0.25}) {
+      auto reference = initial, one = initial, many = initial;
+      if (beta == 0.0)
+        for (index_t j = 0; j < 2; ++j)
+          for (index_t i = 0; i < m; ++i)
+            one[i + j * ldy] = many[i + j * ldy] = std::numeric_limits<double>::quiet_NaN();
+      hs::spmm(a, x.data(), ldx, reference.data(), ldy, 2, -0.75, beta, {KernelPath::Reference});
+      omp_set_num_threads(1);
+      hs::spmm(a, x.data(), ldx, one.data(), ldy, 2, -0.75, beta);
+      omp_set_num_threads(std::max(3, threads));
+      std::vector<double> workspace;
+      hs::spmm(a, x.data(), ldx, many.data(), ldy, 2, -0.75, beta, {KernelPath::Auto, &workspace});
+      omp_set_num_threads(threads);
+      EXPECT_TRUE(one == many) << "m=" << m << " beta=" << beta;
+      for (index_t j = 0; j < 2; ++j) {
+        for (index_t i = 0; i < m; ++i)
+          ASSERT_LE(std::abs(one[i + j * ldy] - reference[i + j * ldy]),
+                    1e-14 * (0.75 * scale[i + j * m] + std::abs(beta * initial[i + j * ldy])) + 1e-300);
+        for (index_t i = m; i < ldy; ++i) EXPECT_EQ(one[i + j * ldy], initial[i + j * ldy]);
+      }
+    }
+  }
+}
+
 // The fast paths are compiled per chunk width (Portable: every q = 1 .. 16, with vector tails of
 // every length): spmm and shifted_residual (with its backward error, B and B = I) agree with the
 // Reference path for every p = 1 .. 16 and two chunks (p = 16 + q).
@@ -291,7 +323,8 @@ TYPED_TEST(SparseKernelPaths, EmptyMatricesAndBlocks) {
   CsrMatrix<T> empty;  // 0 x 0
   std::vector<T> x(4, T(1)), y(4, T(2));
   for (KernelPath path : fast_paths()) {
-    hs::spmm(empty, x.data(), 1, y.data(), 1, 3, T(1), T(0), {path});
+    for (index_t p : {2, 3})
+      hs::spmm(empty, x.data(), 1, y.data(), 1, p, T(1), T(0), {path});
     // 3 x 2 with no entries: Y = beta * Y.
     CsrMatrix<T> zero;
     zero.nrows = 3;
@@ -302,6 +335,10 @@ TYPED_TEST(SparseKernelPaths, EmptyMatricesAndBlocks) {
     for (const T& v : ys) EXPECT_EQ(v, T(1));
     hs::spmm(zero, xs.data(), 2, ys.data(), 3, 0, T(1), T(0), {path});  // p = 0: no-op
     for (const T& v : ys) EXPECT_EQ(v, T(1));
+    // The direct two-column path must also handle an all-zero matrix and preserve padding.
+    std::vector<T> two(8, T(2));
+    hs::spmm(zero, xs.data(), 2, two.data(), 4, 2, T(1), T(0.5), {path});
+    EXPECT_EQ(two, (std::vector<T>{T(1), T(1), T(1), T(2), T(1), T(1), T(1), T(2)}));
   }
   EXPECT_EQ(y, std::vector<T>(4, T(2)));
 }

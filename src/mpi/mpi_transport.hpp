@@ -40,6 +40,8 @@ const char* mpi_library();
 /// mpi.h stub (libseq) shadows the real one. init() returns false when MPI_Init_thread failed.
 bool init(int* argc, char*** argv);
 void finalize();
+/// End the job when a rank cannot serve its peers; finalization alone would wait for them.
+[[noreturn]] void abort(int code);
 int world_size();
 
 }  // namespace hs::mpi

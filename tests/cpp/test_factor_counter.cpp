@@ -204,6 +204,33 @@ TYPED_TEST(FactorInertiaCounter, PrescribedSpectrumCountsAreExact) {
   EXPECT_EQ(ib.neg - ia.neg, 700);
 }
 
+// A remote helper has the pencil and the leader's permutation, but no analysed source.
+// Both precisions must count the original spectrum, including after the source is destroyed.
+TYPED_TEST(FactorInertiaCounter, DirectPivotOrderCountsWithoutAnAnalysedSource) {
+  using T = TypeParam;
+  const auto w = irregular_spectrum(240);
+  const auto a = hs::test::prescribed_spectrum<T>(w, 12, 2026);
+  ShiftedPencil<T> pencil(a, nullptr);
+  auto source = hs::make_mumps_factorization<T>();
+  source->analyze(pencil, 1.0, 0.0);
+  const auto order = source->pivot_order();
+  source.reset();
+  for (bool deferred : {false, true}) {
+    InertiaCounter<T> counter(pencil, order, {}, deferred);
+    EXPECT_EQ(counter.stats().analyses, deferred ? 0 : 1);
+    EXPECT_TRUE(counter.stats().reused_pivot_order);
+    for (auto precision : {FactorPrecision::Single, FactorPrecision::Double}) {
+      for (double s : mid_gap_shifts(w, 6, 1e-3)) {
+        const auto in = counter.count(1.0, -s, true, precision);
+        ASSERT_TRUE(in.valid);
+        EXPECT_EQ(in.neg, count_below(w, s));
+      }
+    }
+    EXPECT_EQ(counter.stats().analyses, 2);
+    EXPECT_FALSE(counter.count(0.0, 0.0).valid);
+  }
+}
+
 // B HPD: nu_-(A - sigma B) counts the generalized eigenvalues below sigma (Sylvester).
 TYPED_TEST(FactorInertiaCounter, GeneralizedPencilMatchesDenseCount) {
   using T = TypeParam;
@@ -364,6 +391,11 @@ TYPED_TEST(FactorInertiaCounter, MisuseIsRejected) {
   EXPECT_EQ(error_code_of([&] { InertiaCounter<T> c(*f, bad); }), hs::Error::Code::InvalidInput);
   NotMumpsFactorization<T> other;
   EXPECT_EQ(error_code_of([&] { InertiaCounter<T> c(other, {}); }), hs::Error::Code::InvalidInput);
+  auto order = f->pivot_order();
+  order.pop_back();
+  EXPECT_EQ(error_code_of([&] { InertiaCounter<T> c(pencil, order, {}); }), hs::Error::Code::InvalidInput);
+  InertiaCounter<T> deferred(pencil, order, {}, true);
+  EXPECT_EQ(error_code_of([&] { deferred.estimate(); }), hs::Error::Code::InvalidInput);
 }
 
 // estimate() describes the counter's own inertia-only analysis, not the source's: no factors to
@@ -418,6 +450,32 @@ TYPED_TEST(FactorInertiaCounter, MemoryCapThrowsOutOfMemoryBudget) {
   InertiaCounter<T> counter(*f, o);
   ASSERT_GT(counter.estimate().incore_mb, 1.0);
   EXPECT_EQ(error_code_of([&] { counter.count(1.0, -1.0); }), hs::Error::Code::OutOfMemoryBudget);
+}
+
+TYPED_TEST(FactorInertiaCounter, UpdatedMemoryCapAppliesToExistingAndDeferredInstances) {
+  using T = TypeParam;
+  const auto a = hs::test::laplacian_2d<T>(100, 100);
+  ShiftedPencil<T> pencil(a, nullptr);
+  auto f = hs::make_mumps_factorization<T>();
+  f->analyze(pencil, 1.0, 1.0);
+  for (bool deferred : {false, true}) {
+    InertiaCounter<T> counter(*f, {}, deferred);
+    counter.set_max_memory_mb(1.0);
+    EXPECT_EQ(counter.double_analysed(), !deferred);
+    for (auto precision : {FactorPrecision::Double, FactorPrecision::Single}) {
+      EXPECT_EQ(error_code_of([&] { counter.count(1.0, 1.0, true, precision); }),
+                hs::Error::Code::OutOfMemoryBudget);
+      counter.set_max_memory_mb(0.0);
+      const auto in = counter.count(1.0, 1.0, true, precision);
+      EXPECT_TRUE(in.valid);
+      EXPECT_EQ(in.neg, 0);
+      counter.set_max_memory_mb(1.0);
+      EXPECT_EQ(error_code_of([&] { counter.count(1.0, 1.0, true, precision); }),
+                hs::Error::Code::OutOfMemoryBudget);
+    }
+    EXPECT_EQ(error_code_of([&] { counter.set_max_memory_mb(-1.0); }), hs::Error::Code::InvalidInput);
+    EXPECT_EQ(error_code_of([&] { counter.set_max_memory_mb(INFINITY); }), hs::Error::Code::InvalidInput);
+  }
 }
 
 // ------------------------------------------------------------------------------- discard mode
@@ -502,6 +560,95 @@ TYPED_TEST(FactorDiscard, ReleasedFactorsRefactorizeFromTheSameAnalysis) {
   f->solve(x2.data(), 1, n);
   for (index_t i = 0; i < n; ++i) EXPECT_NEAR(std::abs(x2[i] - x1[i]), 0.0, 1e-12 * std::abs(x1[i]));
   EXPECT_EQ(f->stats().analyses, 1);
+}
+
+// A main object can count without retaining factors, then refactorize and solve with the
+// same analysis. Exercise L0 and deterministic modes and both real/embedded complex storage.
+TYPED_TEST(FactorDiscard, CountThenSolveReusesAnalysis) {
+  using T = TypeParam;
+  const index_t nx = 50, ny = 40, n = nx * ny;
+  const auto a = hs::test::laplacian_2d<T>(nx, ny);
+  const auto w = hs::test::laplacian_2d_eigenvalues(nx, ny);
+  const auto shifts = mid_gap_shifts(w, 4, 1e-6);
+  ShiftedPencil<T> pencil(a, nullptr);
+  for (bool deterministic : {false, true}) {
+    FactorOptions options;
+    options.deterministic = deterministic;
+    auto f = hs::make_mumps_factorization<T>(options);
+    f->analyze(pencil, 1.0, -shifts[0]);
+    ASSERT_TRUE(f->factorize(1.0, -shifts[0]));
+    std::vector<T> reference(n, T(1));
+    f->solve(reference.data(), 1, n);
+    for (double shift : shifts) {
+      const auto counted = f->count(1.0, -shift);
+      ASSERT_TRUE(counted.valid) << shift;
+      EXPECT_EQ(counted.neg, count_below(w, shift));
+      EXPECT_EQ(counted.zero, 0);
+      EXPECT_EQ(f->stats().factor_entries, 0);
+      EXPECT_FALSE(f->inertia().valid);
+      EXPECT_FALSE(f->release_factors());
+      std::vector<T> rhs(n, T(1));
+      EXPECT_EQ(error_code_of([&] { f->solve(rhs.data(), 1, n); }), hs::Error::Code::Internal);
+    }
+    const auto singular = f->count(1.0, -w[n / 3]);
+    EXPECT_FALSE(singular.valid);
+    ASSERT_TRUE(f->factorize(1.0, -shifts[0]));
+    std::vector<T> actual(n, T(1));
+    f->solve(actual.data(), 1, n);
+    for (index_t i = 0; i < n; ++i)
+      EXPECT_NEAR(std::abs(actual[i] - reference[i]), 0.0, 1e-10 * (1.0 + std::abs(reference[i])));
+    EXPECT_EQ(f->stats().analyses, 1);
+  }
+}
+
+TYPED_TEST(FactorDiscard, FailedCountRestoresFactorizationMode) {
+  using T = TypeParam;
+  const auto a = hs::test::laplacian_2d<T>(100, 100);
+  ShiftedPencil<T> pencil(a, nullptr);
+  FactorOptions options;
+  options.ooc_on_memory_error = false;
+  auto f = hs::make_mumps_factorization<T>(options);
+  f->analyze(pencil, 1.0, 0.5);
+  f->set_max_memory_mb(1.0);
+  EXPECT_EQ(error_code_of([&] { f->count(1.0, 0.5); }), hs::Error::Code::OutOfMemoryBudget);
+  EXPECT_FALSE(f->inertia().valid);
+  f->set_max_memory_mb(0.0);
+  ASSERT_TRUE(f->count(1.0, 0.5).valid);
+  ASSERT_TRUE(f->factorize(1.0, 0.5));
+  std::vector<T> rhs(a.nrows, T(1));
+  EXPECT_NO_THROW(f->solve(rhs.data(), 1, a.nrows));
+  EXPECT_GT(f->stats().factor_entries, 0);
+  EXPECT_EQ(f->stats().analyses, 1);
+}
+
+TYPED_TEST(FactorDiscard, MainCountsMatchGeneralizedDenseReferenceAndSaddleInertia) {
+  using T = TypeParam;
+  const auto a = hs::test::random_hermitian<T>(300, 0.03, 11);
+  const auto b = hs::test::random_hpd<T>(300, 0.02, 12);
+  const auto w = hs::test::dense_eigenvalues(a, &b);
+  ShiftedPencil<T> pencil(a, &b);
+  auto f = hs::make_mumps_factorization<T>();
+  f->analyze(pencil, 1.0, -0.3);
+  for (double shift : mid_gap_shifts(w, 8, 1e-6)) {
+    const auto in = f->count(1.0, -shift);
+    ASSERT_TRUE(in.valid) << shift;
+    EXPECT_EQ(in.neg, count_below(w, shift));
+  }
+  const auto ib = f->count(0.0, 1.0);
+  EXPECT_TRUE(ib.valid && ib.neg == 0 && ib.zero == 0 && ib.pos == 300);
+  EXPECT_FALSE(f->count(0.0, 0.0).valid);
+
+  const auto saddle = as_scalar<T>(saddle_point(20, 60, 3, 7));
+  ShiftedPencil<T> saddle_pencil(saddle, nullptr);
+  f->analyze(saddle_pencil, 1.0, 0.0);
+  for (int i = 0; i < 3; ++i) {
+    const auto in = f->count(1.0, 0.0);
+    ASSERT_TRUE(in.valid);
+    EXPECT_EQ(in.neg, 60);
+    EXPECT_EQ(in.zero, 0);
+    EXPECT_EQ(in.pos, saddle.nrows - 60);
+    EXPECT_EQ(f->stats().factor_entries, 0);
+  }
 }
 
 // compute_inertia discards its factors: same counts as before.

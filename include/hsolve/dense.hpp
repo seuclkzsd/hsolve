@@ -5,8 +5,11 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <cstdint>
 #include <cstdlib>
 #include <new>
+#include <utility>
+#include <type_traits>
 #include <vector>
 
 #include "hsolve/error.hpp"
@@ -47,6 +50,27 @@ struct AlignedAllocator {
 template <class T>
 using aligned_vector = std::vector<T, AlignedAllocator<T>>;
 
+namespace detail {
+// Only DenseMatrix's large parallel initialization uses no-argument construction.
+// Default-initialization starts each object's lifetime without clearing arithmetic
+// scalars. Class types (including std::complex) still run their default constructor.
+// Construction from values, copies, and the public aligned_vector keep their semantics.
+template <class T>
+struct DenseAllocator : AlignedAllocator<T> {
+  DenseAllocator() noexcept = default;
+  template <class U>
+  DenseAllocator(const DenseAllocator<U>&) noexcept {}
+  template <class U>
+  struct rebind { using other = DenseAllocator<U>; };
+  template <class U>
+  void construct(U* p) { ::new (static_cast<void*>(p)) U; }
+  template <class U, class... Args>
+  void construct(U* p, Args&&... args) {
+    ::new (static_cast<void*>(p)) U(std::forward<Args>(args)...);
+  }
+};
+}  // namespace detail
+
 template <class T>
 class DenseMatrix {
  public:
@@ -74,7 +98,31 @@ class DenseMatrix {
     if (rows < 0 || cols < 0) HS_THROW(InvalidInput, "DenseMatrix: negative size " << rows << "x" << cols);
     rows_ = rows;
     cols_ = cols;
-    buf_.assign(static_cast<std::size_t>(rows * cols), T(0));
+    const auto count = static_cast<std::size_t>(rows * cols);
+    if constexpr (std::is_arithmetic_v<T> && !std::is_same_v<T, bool>) {
+      // Assign each 2 MiB address region to one worker, avoiding concurrent first
+      // faults on the same transparent huge page. Small matrices keep the serial
+      // path. Every element is initialized before resize returns.
+      constexpr std::size_t bytes = 2 * 1024 * 1024;
+      if (count >= 2 * bytes / sizeof(T)) {
+        buf_.clear();
+        buf_.resize(count);
+        T* data = buf_.data();
+        const std::size_t first = (bytes - reinterpret_cast<std::uintptr_t>(data) % bytes) / sizeof(T);
+        const std::size_t step = bytes / sizeof(T);
+        const std::size_t blocks = 1 + (count > first ? (count - first + step - 1) / step : 0);
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static)
+#endif
+        for (std::size_t block = 0; block < blocks; ++block) {
+          const std::size_t begin = block == 0 ? 0 : first + (block - 1) * step;
+          const std::size_t end = std::min(count, block == 0 ? first : begin + step);
+          std::fill(data + begin, data + end, T(0));
+        }
+        return;
+      }
+    }
+    buf_.assign(count, T(0));
   }
 
   /// Change the number of columns keeping the leading min(cols, old cols) columns.
@@ -89,7 +137,7 @@ class DenseMatrix {
  private:
   index_t rows_ = 0;
   index_t cols_ = 0;
-  aligned_vector<T> buf_;
+  std::vector<T, detail::DenseAllocator<T>> buf_;
 };
 
 }  // namespace hs

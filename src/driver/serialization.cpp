@@ -299,6 +299,7 @@ std::string SolveReport::to_json(int indent) const {
             {"hermitian_defect_a", hermitian_defect_a},
             {"hermitian_defect_b", hermitian_defect_b},
             {"method", enum_name(method)},
+            {"candidate_source", candidate_source},
             {"sigma_requested", sigma_requested},
             {"sigma_used", sigma_used},
             {"shift_retries", shift_retries},

@@ -142,6 +142,13 @@ def test_baseline_option_defaults_put_mumps_in_the_database():
     assert inter["st_pc_factor_mat_solver_type"] == "mumps"
 
 
+def test_baseline_complex_uses_lu_and_rejects_inertia_slicing():
+    opts = dict(baseline_slepc.option_defaults("nearest", complex_scalar=True))
+    assert opts["st_pc_type"] == "lu" and opts["st_pc_factor_mat_solver_type"] == "mumps"
+    with pytest.raises(SystemExit, match="does not provide inertia"):
+        baseline_slepc.option_defaults("interval", complex_scalar=True)
+
+
 def test_baseline_rank_binding(monkeypatch):
     assert baseline_slepc.rank_cpus([41, 40, 43, 42], 1, 2) == [42, 43]
     assert baseline_slepc.rank_cpus([40, 41], 0, 1) == [40, 41]

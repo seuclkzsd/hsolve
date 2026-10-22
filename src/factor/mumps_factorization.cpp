@@ -393,6 +393,51 @@ void MumpsFactorization<T, U>::set_max_memory_mb(double mb) {
 }
 
 template <class T, class U>
+bool MumpsFactorization<T, U>::has_inertia_only_count() const {
+  return std::is_same_v<U, double> && !options_.out_of_core && !blr_at_analysis_ &&
+         !discard_at_analysis_ && std::strcmp(mumps_.raw().version_number, "5.8.2") == 0;
+}
+
+template <class T, class U>
+Inertia MumpsFactorization<T, U>::count(double alpha, double beta) {
+  // In 5.8.2 dana_driver sets KEEP(201)=-1 / KEEP(251)=1 for
+  // ICNTL(31)=1. For full-rank symmetric factorization these change storage only;
+  // dfac_driver recomputes working-memory needs for the selected mode at JOB=2.
+  // A retaining analysis has conservative (larger) memory estimates. Restrict this
+  // optimization to the audited version and in-core double precision, with no BLR.
+  if (!has_inertia_only_count())
+    return SparseFactorization<T>::count(alpha, beta);
+  HS_ASSERT(pencil_ != nullptr, "SparseFactorization::count() before a successful analyze()");
+  if (!std::isfinite(alpha) || !std::isfinite(beta))
+    HS_THROW(InvalidInput, "SparseFactorization::count: non-finite alpha/beta");
+  release_factors();
+  const int storage = mumps_.keep(201), discard = mumps_.keep(251);
+  const bool allow_ooc = options_.ooc_on_memory_error;
+  mumps_.keep(201) = -1;
+  mumps_.keep(251) = 1;
+  options_.ooc_on_memory_error = false;
+  auto restore = [&] {
+    mumps_.keep(201) = storage;
+    mumps_.keep(251) = discard;
+    options_.ooc_on_memory_error = allow_ooc;
+    holds_factors_ = false;
+    factorized_ = false;
+    inertia_.valid = false;
+  };
+  try {
+    static_cast<void>(factorize(alpha, beta));
+    const Inertia result = inertia_;
+    restore();
+    return result;
+  } catch (...) {
+    // A failed numeric phase may still own workspace. Preserve the original error.
+    mumps_.run(kFreeFactors);
+    restore();
+    throw;
+  }
+}
+
+template <class T, class U>
 bool MumpsFactorization<T, U>::release_factors() {
   if (pencil_ == nullptr || !holds_factors_) return false;
   const int info1 = mumps_.run(kFreeFactors);

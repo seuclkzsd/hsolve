@@ -84,6 +84,73 @@ def test_one_numa_node_runs_plain_hsolve(fakes):
     assert d.stdout.strip().endswith(f"{fakes['env']['HSOLVE']} --A x.npz")
 
 
+def _fake_numactl(tmp_path, env):
+    log = tmp_path / "numactl.log"
+    _script(tmp_path / "numactl",
+            f'echo "${{OMPI_COMM_WORLD_RANK:-${{PMI_RANK:-}}}} $1" >> "{log}"\n'
+            'case "$1" in --interleave=*) shift ;; *) exit 4 ;; esac\n'
+            'exec "$@"\n')
+    return log, dict(env, PATH=str(tmp_path) + os.pathsep + os.environ["PATH"])
+
+
+def test_interleave_on_one_node_keeps_the_plain_path(fakes, tmp_path):
+    log, env = _fake_numactl(tmp_path, fakes["env"])
+    r = _run(_cpus(1), ["--interleave-leader", "--", "--A", "a b.npz"], env)
+    assert r.returncode == 0, r.stderr
+    assert r.stdout.strip() == "plain hsolve: --A a b.npz"
+    assert not log.exists()
+
+
+@pytest.mark.parametrize("rank", [0, 1, 2])
+def test_only_the_leader_applies_the_memory_policy(fakes, tmp_path, rank):
+    a, b = _cpus(2)
+    log, env = _fake_numactl(tmp_path, fakes["env"])
+    env.update(HSOLVE_MPIRUN_PLAN=f"{a},{b};{a};{b}",
+               HSOLVE_MPIRUN_EXE=fakes["env"]["HSOLVE_MPI"],
+               HSOLVE_MPIRUN_INTERLEAVE="0,1", OMPI_COMM_WORLD_RANK=str(rank))
+    r = _run([a, b], ["--A", "a b.npz"], env)
+    assert r.returncode == 0, r.stderr
+    assert f"rank {rank} threads {2 if rank == 0 else 1}" in r.stdout
+    assert r.stdout.strip().endswith("args --A a b.npz")
+    if rank == 0:
+        assert log.read_text().strip() == "0 --interleave=0,1"
+    else:
+        assert not log.exists()
+
+
+def test_memory_policy_failure_is_reported(fakes, tmp_path):
+    a = _cpus(1)[0]
+    _, env = _fake_numactl(tmp_path, fakes["env"])
+    _script(tmp_path / "numactl", 'echo "policy refused" >&2\nexit 74\n')
+    env.update(HSOLVE_MPIRUN_PLAN=str(a), HSOLVE_MPIRUN_EXE=fakes["env"]["HSOLVE_MPI"],
+               HSOLVE_MPIRUN_INTERLEAVE="0,1", OMPI_COMM_WORLD_RANK="0")
+    r = _run([a], ["--A", "x.npz"], env)
+    assert r.returncode == 74
+    assert "policy refused" in r.stderr
+    assert "rank" not in r.stdout
+
+
+@pytest.mark.parametrize("kind", ["ompi", "hydra"])
+def test_interleave_selects_only_nodes_of_allowed_cpus(fakes, tmp_path, kind):
+    by_node = {}
+    for cpu in sorted(os.sched_getaffinity(0)):
+        for node in Path("/sys/devices/system/cpu", f"cpu{cpu}").glob("node[0-9]*"):
+            by_node.setdefault(int(node.name[4:]), cpu)
+    if len(by_node) < 2:
+        pytest.skip("needs allowed CPUs on two NUMA nodes")
+    chosen = sorted(by_node)[:2]
+    cpus = [by_node[n] for n in chosen]
+    mask = ",".join(map(str, chosen))
+    log, env = _fake_numactl(tmp_path, fakes["env"])
+    r = _run(cpus, ["--interleave-leader", "--mpiexec", str(fakes[kind]), "--", "--A", "x.npz"], env)
+    assert r.returncode == 0, r.stderr
+    assert len(r.stdout.strip().splitlines()) == 3
+    assert log.read_text().strip() == f"0 --interleave={mask}"
+    d = _run(cpus, ["--interleave-leader", "--dry-run", "--mpiexec", str(fakes[kind])], env)
+    assert d.returncode == 0, d.stderr
+    assert f"memory interleaved across NUMA nodes {mask}" in d.stdout
+
+
 @pytest.mark.parametrize("kind", ["ompi", "hydra"])
 def test_forced_ranks_reach_every_rank_through_the_environment(fakes, kind):
     cpus = _cpus(2)

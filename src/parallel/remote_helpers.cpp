@@ -71,7 +71,7 @@ template <class T>
 double RemoteHelpers<T>::count_estimate_mb() const {
   double mb = 0.0;
   for (int h = 1; h <= size(); ++h) {
-    if (!helpers_[static_cast<std::size_t>(h)].usable) continue;
+    if (!helpers_[static_cast<std::size_t>(h)].usable || !helpers_[static_cast<std::size_t>(h)].holds) continue;
     await_ready(h);
     mb = std::max(mb, helpers_[static_cast<std::size_t>(h)].count_mb);
   }
@@ -128,7 +128,8 @@ int RemoteHelpers<T>::receive_one(int h) const {
 template <class T>
 void RemoteHelpers<T>::ensure_idle(int h) const {
   const Helper& x = helpers_.at(static_cast<std::size_t>(h));
-  HS_ASSERT(h >= 1 && h <= size() && x.task == 0 && x.usable && sent_, "helper " << h << " cannot take a task");
+  HS_ASSERT(h >= 1 && h <= size() && x.task == 0 && x.usable && x.ready && sent_,
+            "helper " << h << " cannot take a task");
 }
 
 template <class T>
@@ -148,7 +149,7 @@ void RemoteHelpers<T>::share(driver::Ctx& c, const ShiftedPencil<T>& pencil, con
 // ranks on one node); the helpers then build their pencil and, for a certificate, analyse their
 // count instance, and answer Ready - all while the leader waits here.
 template <class T>
-void RemoteHelpers<T>::prepare(driver::Ctx& c) {
+void RemoteHelpers<T>::prepare(driver::Ctx& c, int max_helpers) {
   ctx_ = &c;
   HS_ASSERT(shared_, "prepare() before share()");
   if (!sent_) {
@@ -167,17 +168,22 @@ void RemoteHelpers<T>::prepare(driver::Ctx& c) {
     w.csr(pencil_->a());
     w.pod(static_cast<std::uint8_t>(pencil_->b() ? 1 : 0));
     if (pencil_->b()) w.csr(*pencil_->b());
+    int prepared = 0;
     for (int h = 1; h <= size(); ++h) {
       Helper& x = helpers_[static_cast<std::size_t>(h)];
       if (!x.usable) continue;
+      // concurrent_counts selects the first two usable helpers and budgets two problem copies.
+      // Extra ranks stay idle; spectrum slices may use every helper (max_helpers == 0).
+      if (max_helpers > 0 && prepared == max_helpers) break;
       peers_.send(h, w.bytes());
       x.owes_ready = true;
       x.ready = false;
       x.holds = true;
+      ++prepared;
     }
     sent_ = true;
     c.rep.parallel.share_s += timer.seconds();
-    driver::event(c, "helpers_share", {{"helpers", static_cast<std::int64_t>(size())},
+    driver::event(c, "helpers_share", {{"helpers", static_cast<std::int64_t>(prepared)},
                                        {"bytes", static_cast<std::int64_t>(w.bytes().size())},
                                        {"seconds", timer.seconds()}});
   }

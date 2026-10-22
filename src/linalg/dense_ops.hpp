@@ -45,6 +45,16 @@ double norm2(index_t n, const T* x);
 template <class T>
 void axpy(index_t n, T alpha, const T* x, T* y);
 
+/// y += alpha*x, then z^H*y, using the same reduction order as dot. The update and
+/// reduction share one parallel region and each row block stays in cache. x and z may
+/// equal y exactly; other overlapping ranges are not supported.
+template <class T>
+T axpy_dot(index_t n, T alpha, const T* x, T* y, const T* z);
+
+/// y += alpha*x, then ||y||_2, with norm2's reduction order and magnitude limits.
+template <class T>
+double axpy_norm2(index_t n, T alpha, const T* x, T* y);
+
 /// x *= alpha.
 template <class T>
 void scal(index_t n, T alpha, T* x);

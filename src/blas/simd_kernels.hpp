@@ -230,20 +230,24 @@ HS_SIMD void nn_rows(fint i0, fint i1, fint n, fint k, double alpha, const doubl
 }
 
 // C(i..i+IB, j..j+NG) = alpha * A(:, i..i+IB)^T * B(:, j..j+NG) + beta * C, A k x IB (lda),
-// B k x NG (ldb), IB <= 4 (missing rows reduce zero accumulators: every row of C gets the same
+// B k x NG (ldb), IB <= 8 (missing rows reduce zero accumulators: every row of C gets the same
 // reduction tree wherever it lies).
 template <int IB, int NG>
 HS_SIMD void tn_block(fint k, const double* a, fint lda, const double* b, fint ldb, double alpha,
                       double beta, double* c, fint ldc) {
-  reg acc[4][NG];
-  for (int r = 0; r < 4; ++r)
+  constexpr int rows = (IB + 3) / 4 * 4;
+  reg acc[rows][NG];
+  for (int r = 0; r < rows; ++r)
     for (int j = 0; j < NG; ++j) acc[r][j] = V::zero();
   fint kk = 0;
   for (; kk + V::W <= k; kk += V::W) {
     reg bv[NG];
     for (int j = 0; j < NG; ++j) bv[j] = V::loadu(b + static_cast<idx>(j) * ldb + kk);
     for (int r = 0; r < IB; ++r) {
-      const reg av = V::loadu(a + static_cast<idx>(r) * lda + kk);
+      reg av = V::loadu(a + static_cast<idx>(r) * lda + kk);
+      // Keep the shared A vector in a register. GCC otherwise folds this load into every
+      // column's FMA, issuing NG copies of the same memory access in the inner loop.
+      if constexpr (NG == 2) asm("" : "+v"(av));
       for (int j = 0; j < NG; ++j) acc[r][j] = V::fmadd(av, bv[j], acc[r][j]);
     }
   }
@@ -252,16 +256,19 @@ HS_SIMD void tn_block(fint k, const double* a, fint lda, const double* b, fint l
     reg bv[NG];
     for (int j = 0; j < NG; ++j) bv[j] = V::maskz_loadu(tail, b + static_cast<idx>(j) * ldb + kk);
     for (int r = 0; r < IB; ++r) {
-      const reg av = V::maskz_loadu(tail, a + static_cast<idx>(r) * lda + kk);
+      reg av = V::maskz_loadu(tail, a + static_cast<idx>(r) * lda + kk);
+      if constexpr (NG == 2) asm("" : "+v"(av));
       for (int j = 0; j < NG; ++j) acc[r][j] = V::fmadd(av, bv[j], acc[r][j]);
     }
   }
   alignas(32) double sums[4];
   for (int j = 0; j < NG; ++j) {
     double* cj = c + static_cast<idx>(j) * ldc;
-    V::reduce4(acc[0][j], acc[1][j], acc[2][j], acc[3][j], sums);
-    for (int r = 0; r < IB; ++r)
-      cj[r] = beta == 0.0 ? alpha * sums[r] : alpha * sums[r] + beta * cj[r];
+    for (int r0 = 0; r0 < rows; r0 += 4) {
+      V::reduce4(acc[r0][j], acc[r0 + 1][j], acc[r0 + 2][j], acc[r0 + 3][j], sums);
+      for (int r = r0; r < std::min(IB, r0 + 4); ++r)
+        cj[r] = beta == 0.0 ? alpha * sums[r - r0] : alpha * sums[r - r0] + beta * cj[r];
+    }
   }
 }
 
@@ -287,7 +294,16 @@ HS_SIMD void tn_block_dispatch(int ng, fint k, const double* a, fint lda, const 
 // Rows [i0, i1) of C = alpha * A^T * B + beta * C (A k x m, B k x n).
 HS_SIMD void tn_rows(fint i0, fint i1, fint n, fint k, double alpha, const double* a, fint lda,
                      const double* b, fint ldb, double beta, double* c, fint ldc) {
-  for (fint i = i0; i < i1; i += 4) {
+  fint i = i0;
+  if constexpr (V::W == 8) {
+    // AVX-512 has room for 16 accumulators: reuse each B vector over eight output rows.
+    // Short columns benefit; long columns prefer the four-stream prefetch pattern below
+    // (bench_asmkern_kernels, results/p11_measurements.json). Reduction order is unchanged.
+    if (n == 2 && k <= 256)
+      for (; i + 8 <= i1; i += 8)
+        tn_block<8, 2>(k, a + static_cast<idx>(i) * lda, lda, b, ldb, alpha, beta, c + i, ldc);
+  }
+  for (; i < i1; i += 4) {
     const int ib = static_cast<int>(std::min<fint>(4, i1 - i));
     const double* ai = a + static_cast<idx>(i) * lda;
     for (fint j0 = 0; j0 < n; j0 += V::kGroup) {
@@ -313,16 +329,295 @@ HS_SIMD void tn_rows(fint i0, fint i1, fint n, fint k, double alpha, const doubl
 }
 
 // ------------------------------------------------------------------------- small triangular solve
-// B(m x n) := op(A)^{-1} B (side L, alpha = 1), the reference BLAS loop orders with up to 4
-// right-hand sides per pass, so that every chunk of the triangle is loaded once for all of them
-// (MUMPS solves 1, 2 or 4 at a time). The unit diagonal is never read.
+// B(m x n) := op(A)^{-1} B (side L, alpha = 1), the reference BLAS loop orders with up to 8
+// right-hand sides per pass on AVX-512 (4 on AVX2 and for the remainder). Each triangle chunk
+// is loaded once for the group. The unit diagonal is never read.
 
 // op(A) = A: x_j for the columns of the group, then rows [i0, i1) of each column updated with
 // column j of A (b_i -= a_ij x_j, one FMA per element): forward for lower, backward for upper.
+// Eight right-hand sides share one pass over the triangle on AVX-512.
+// The arithmetic and per-column reduction order are the same as the four-column path.
+// Keep the eight right-hand sides contiguous during column updates.
+// For these medium triangles the 32 KiB scratch fits L1; every row update is one vector.
+// Packing changes addresses only. The per-element division/FMA order stays unchanged.
 template <bool kUnit>
-HS_SIMD void trsm_col(bool upper, fint m, fint n, const double* a, fint lda, double* b,
-                      fint ldb) {
-  for (fint c0 = 0; c0 < n; c0 += 4) {
+__attribute__((target("avx512f"), noinline)) void trsm_col8_packed(bool upper, fint m, const double* a,
+                                                       fint lda, double* b, fint ldb) {
+  alignas(64) double packed[512 * 8];
+  for (int q = 0; q < 8; ++q)
+    for (fint i = 0; i < m; ++i)
+      packed[8 * i + q] = b[i + static_cast<idx>(q) * ldb];
+  for (fint step = 0; step < m; ++step) {
+    const fint j = upper ? m - 1 - step : step;
+    const double* aj = a + static_cast<idx>(j) * lda;
+    if (!kUnit)
+      for (int q = 0; q < 8; ++q) packed[8 * j + q] /= aj[j];
+    const reg xs = V::loadu(packed + 8 * j);
+    const fint i0 = upper ? 0 : j + 1, i1 = upper ? j : m;
+    for (fint i = i0; i < i1; ++i) {
+      const reg bv = V::loadu(packed + 8 * i);
+      V::store(packed + 8 * i, V::fnmadd(V::set1(aj[i]), xs, bv));
+    }
+  }
+  for (int q = 0; q < 8; ++q)
+    for (fint i = 0; i < m; ++i)
+      b[i + static_cast<idx>(q) * ldb] = packed[8 * i + q];
+}
+
+template <bool kUnit>
+HS_SIMD void trsm_col8(bool upper, fint m, const double* a, fint lda, double* b,
+                       fint ldb) {
+  if constexpr (V::W == 8) {
+    if (m >= 64 && m <= 512) {
+      trsm_col8_packed<kUnit>(upper, m, a, lda, b, ldb);
+      return;
+    }
+  }
+  double* bc[8];
+  for (int q = 0; q < 8; ++q) bc[q] = b + static_cast<idx>(q) * ldb;
+  for (fint step = 0; step < m; ++step) {
+    const fint j = upper ? m - 1 - step : step;
+    const double* aj = a + static_cast<idx>(j) * lda;
+    reg xs[8];
+    for (int q = 0; q < 8; ++q) {
+      double x = bc[q][j];
+      if (!kUnit) x /= aj[j];
+      bc[q][j] = x;
+      xs[q] = V::set1(x);
+    }
+    const fint i0 = upper ? 0 : j + 1, i1 = upper ? j : m;
+    for (fint i = i0; i < i1; i += V::W) {
+      const auto mk = V::tail(std::min<fint>(V::W, i1 - i));
+      const reg av = V::maskz_loadu(mk, aj + i);
+      for (int q = 0; q < 8; ++q) {
+        const reg bv = V::maskz_loadu(mk, bc[q] + i);
+        V::mask_storeu(bc[q] + i, mk, V::fnmadd(av, xs[q], bv));
+      }
+    }
+  }
+}
+
+// Fixed one/two-right-hand-side loops avoid work for unused accumulator columns.
+
+// Retain up to 32 rows of one/two right-hand sides in registers during column updates.
+// Every active element follows the same FMA chain as the streamed path. Masked loads never
+// read the unused triangle or unit diagonal, and inactive lanes keep their current values.
+template <bool Unit, int NC, int NR, class Vec = V>
+HS_SIMD void trsm_col_register(bool upper, fint m, const double* a, fint lda, double* b, fint ldb) {
+  if constexpr (Vec::W == 8) {
+    typename Vec::reg rhs[NC][NR];
+    const unsigned long long all = (1ULL << m) - 1;
+#pragma GCC unroll 2
+    for (int q = 0; q < NC; ++q) {
+#pragma GCC unroll 4
+      for (int r = 0; r < NR; ++r)
+        rhs[q][r] = _mm512_maskz_loadu_pd(static_cast<__mmask8>(all >> (8 * r)),
+                                          b + static_cast<idx>(q) * ldb + 8 * r);
+    }
+    for (fint step = 0; step < m; ++step) {
+      const fint j = upper ? m - 1 - step : step;
+      const double* aj = a + static_cast<idx>(j) * lda;
+      const __m512i lane = _mm512_set1_epi64(j % 8);
+      typename Vec::reg xs[NC];
+#pragma GCC unroll 2
+      for (int q = 0; q < NC; ++q) {
+        typename Vec::reg current = rhs[q][0];
+#pragma GCC unroll 4
+        for (int r = 1; r < NR; ++r)
+          if (j >= 8 * r) current = rhs[q][r];
+        xs[q] = _mm512_permutexvar_pd(lane, current);
+        if constexpr (!Unit) {
+          const double x = _mm_cvtsd_f64(_mm512_castpd512_pd128(xs[q])) / aj[j];
+          xs[q] = _mm512_set1_pd(x);
+#pragma GCC unroll 4
+          for (int r = 0; r < NR; ++r)
+            if (j / 8 == r)
+              rhs[q][r] =
+                  _mm512_mask_mov_pd(rhs[q][r], static_cast<__mmask8>(1U << (j % 8)), xs[q]);
+        }
+      }
+      const unsigned long long active =
+          upper ? ((1ULL << j) - 1) : (all & ~((1ULL << (j + 1)) - 1));
+#pragma GCC unroll 4
+      for (int r = 0; r < NR; ++r) {
+        const __mmask8 mask = static_cast<__mmask8>(active >> (8 * r));
+        const __m512d av = _mm512_maskz_loadu_pd(mask, aj + 8 * r);
+#pragma GCC unroll 2
+        for (int q = 0; q < NC; ++q) rhs[q][r] = _mm512_mask3_fnmadd_pd(av, xs[q], rhs[q][r], mask);
+      }
+    }
+#pragma GCC unroll 2
+    for (int q = 0; q < NC; ++q) {
+#pragma GCC unroll 4
+      for (int r = 0; r < NR; ++r)
+        _mm512_mask_storeu_pd(b + static_cast<idx>(q) * ldb + 8 * r,
+                              static_cast<__mmask8>(all >> (8 * r)), rhs[q][r]);
+    }
+  }
+}
+
+template <bool Unit, int NC>
+HS_SIMD void trsm_col_short(bool upper, fint m, const double* a, fint lda, double* b, fint ldb) {
+  if constexpr (V::W == 8) {
+    if (m <= 8) return trsm_col_register<Unit, NC, 1>(upper, m, a, lda, b, ldb);
+    if (m <= 16) return trsm_col_register<Unit, NC, 2>(upper, m, a, lda, b, ldb);
+    if (m <= 24) return trsm_col_register<Unit, NC, 3>(upper, m, a, lda, b, ldb);
+    if (m <= 32) return trsm_col_register<Unit, NC, 4>(upper, m, a, lda, b, ldb);
+  }
+  double* bc[NC];
+  for (int q = 0; q < NC; ++q) bc[q] = b + static_cast<idx>(q) * ldb;
+  for (fint step = 0; step < m; ++step) {
+    const fint j = upper ? m - 1 - step : step;
+    const double* aj = a + static_cast<idx>(j) * lda;
+    reg xs[NC];
+    for (int q = 0; q < NC; ++q) {
+      double x = bc[q][j];
+      if (!Unit) x /= aj[j];
+      bc[q][j] = x;
+      xs[q] = V::set1(x);
+    }
+    const fint i0 = upper ? 0 : j + 1, i1 = upper ? j : m;
+    for (fint i = i0; i < i1; i += V::W) {
+      const auto mk = V::tail(std::min<fint>(V::W, i1 - i));
+      const reg av = V::maskz_loadu(mk, aj + i);
+      for (int q = 0; q < NC; ++q) {
+        const reg bv = V::maskz_loadu(mk, bc[q] + i);
+        V::mask_storeu(bc[q] + i, mk, V::fnmadd(av, xs[q], bv));
+      }
+    }
+  }
+}
+
+// One/two-RHS transposed solve for at most one/two vector blocks.
+// The current b[i] is still its original value: substitution only writes earlier
+// solved positions. Keep those solved values in registers, avoiding partial stores
+// followed by overlapping vector loads. Preserve the streamed path's FMA lanes.
+template <bool Unit, int NC, int NR, class Vec = V>
+HS_SIMD void trsm_dot_register(bool upper, fint m, const double* a, fint lda,
+                               double* b, fint ldb) {
+  if constexpr (Vec::W == 8) {
+    typename Vec::reg rhs[NC][NR];
+    const unsigned all = (1U << m) - 1;
+    for (int q = 0; q < NC; ++q)
+      for (int r = 0; r < NR; ++r)
+        rhs[q][r] = _mm512_maskz_loadu_pd(static_cast<__mmask8>(all >> (8 * r)),
+                                         b + static_cast<idx>(q) * ldb + 8 * r);
+    for (fint step = 0; step < m; ++step) {
+      const fint i = upper ? step : m - 1 - step;
+      const double* ai = a + static_cast<idx>(i) * lda;
+      const fint j0 = upper ? 0 : i + 1, j1 = upper ? i : m;
+      const __m512i shift = _mm512_add_epi64(_mm512_setr_epi64(0, 1, 2, 3, 4, 5, 6, 7),
+                                            _mm512_set1_epi64(j0 % 8));
+      typename Vec::reg acc[NC];
+      for (int q = 0; q < NC; ++q) acc[q] = Vec::zero();
+      for (int r = 0; r < NR; ++r) {
+        const fint j = j0 + 8 * r;
+        if (j >= j1) break;
+        const __mmask8 mk = Vec::tail(std::min<fint>(8, j1 - j));
+        const typename Vec::reg av = _mm512_maskz_loadu_pd(mk, ai + j);
+        for (int q = 0; q < NC; ++q) {
+          typename Vec::reg window;
+          if constexpr (NR == 1) {
+            window = _mm512_maskz_permutexvar_pd(mk, shift, rhs[q][0]);
+          } else {
+            // NR == 2: a second chunk can occur only when j0 < 8.
+            window = j < 8 ? _mm512_maskz_permutex2var_pd(mk, rhs[q][0], shift, rhs[q][1])
+                           : _mm512_maskz_permutexvar_pd(mk, shift, rhs[q][1]);
+          }
+          acc[q] = Vec::fmadd(av, window, acc[q]);
+        }
+      }
+      alignas(16) double sums[2];
+      if constexpr (NC == 1) {
+        const __m256d lo = _mm512_castpd512_pd256(acc[0]);
+        const __m256d hi = _mm512_extractf64x4_pd(acc[0], 1);
+        const __m256d pairs = _mm256_hadd_pd(lo, hi);
+        const __m128d halves = _mm_add_pd(_mm256_castpd256_pd128(pairs),
+                                         _mm256_extractf128_pd(pairs, 1));
+        sums[0] = _mm_cvtsd_f64(_mm_add_sd(halves, _mm_unpackhi_pd(halves, halves)));
+      } else {
+        const __m512d pairs = _mm512_add_pd(_mm512_unpacklo_pd(acc[0], acc[1]),
+                                           _mm512_unpackhi_pd(acc[0], acc[1]));
+        const __m256d lo = _mm512_castpd512_pd256(pairs), hi = _mm512_extractf64x4_pd(pairs, 1);
+        const __m128d lower = _mm_add_pd(_mm256_castpd256_pd128(lo), _mm256_extractf128_pd(lo, 1));
+        const __m128d upper_sum = _mm_add_pd(_mm256_castpd256_pd128(hi), _mm256_extractf128_pd(hi, 1));
+        _mm_store_pd(sums, _mm_add_pd(lower, upper_sum));
+      }
+      for (int q = 0; q < NC; ++q) {
+        double x = b[static_cast<idx>(q) * ldb + i] - sums[q];
+        if (!Unit) x /= ai[i];
+        const typename Vec::reg xv = Vec::set1(x);
+        for (int r = 0; r < NR; ++r)
+          if (i / 8 == r)
+            rhs[q][r] = _mm512_mask_mov_pd(rhs[q][r], static_cast<__mmask8>(1U << (i % 8)), xv);
+      }
+    }
+    for (int q = 0; q < NC; ++q)
+      for (int r = 0; r < NR; ++r)
+        _mm512_mask_storeu_pd(b + static_cast<idx>(q) * ldb + 8 * r,
+                             static_cast<__mmask8>(all >> (8 * r)), rhs[q][r]);
+  }
+}
+
+template <bool Unit, int NC, class Vec = V>
+HS_SIMD void trsm_dot_short(bool upper, fint m, const double* a, fint lda, double* b, fint ldb) {
+  if constexpr (Vec::W == 8) {
+    if (m >= 3 && m <= 16) {
+      if (m <= 8) return trsm_dot_register<Unit, NC, 1>(upper, m, a, lda, b, ldb);
+      return trsm_dot_register<Unit, NC, 2>(upper, m, a, lda, b, ldb);
+    }
+  }
+  double* bc[NC];
+  for (int q = 0; q < NC; ++q) bc[q] = b + static_cast<idx>(q) * ldb;
+  alignas(32) double sums[4];
+  for (fint step = 0; step < m; ++step) {
+    const fint i = upper ? step : m - 1 - step;
+    const double* ai = a + static_cast<idx>(i) * lda;
+    const fint j0 = upper ? 0 : i + 1, j1 = upper ? i : m;
+    typename Vec::reg acc[4] = {V::zero(), V::zero(), V::zero(), V::zero()};
+    for (fint j = j0; j < j1; j += V::W) {
+      const auto mk = V::tail(std::min<fint>(V::W, j1 - j));
+      const reg av = V::maskz_loadu(mk, ai + j);
+      for (int q = 0; q < NC; ++q) acc[q] = V::fmadd(av, V::maskz_loadu(mk, bc[q] + j), acc[q]);
+    }
+    // Adjacent pairs, then four-element halves, then the whole sum: the reduce4 tree.
+    if constexpr (Vec::W == 8 && NC == 1) {
+      const __m256d lo = _mm512_castpd512_pd256(acc[0]);
+      const __m256d hi = _mm512_extractf64x4_pd(acc[0], 1);
+      const __m256d pairs = _mm256_hadd_pd(lo, hi);
+      const __m128d halves =
+          _mm_add_pd(_mm256_castpd256_pd128(pairs), _mm256_extractf128_pd(pairs, 1));
+      sums[0] = _mm_cvtsd_f64(_mm_add_sd(halves, _mm_unpackhi_pd(halves, halves)));
+    } else if constexpr (Vec::W == 8 && NC == 2) {
+      const __m512d pairs =
+          _mm512_add_pd(_mm512_unpacklo_pd(acc[0], acc[1]), _mm512_unpackhi_pd(acc[0], acc[1]));
+      const __m256d lo = _mm512_castpd512_pd256(pairs), hi = _mm512_extractf64x4_pd(pairs, 1);
+      const __m128d lower = _mm_add_pd(_mm256_castpd256_pd128(lo), _mm256_extractf128_pd(lo, 1));
+      const __m128d upper = _mm_add_pd(_mm256_castpd256_pd128(hi), _mm256_extractf128_pd(hi, 1));
+      _mm_store_pd(sums, _mm_add_pd(lower, upper));
+    } else {
+      V::reduce4(acc[0], acc[1], acc[2], acc[3], sums);
+    }
+    for (int q = 0; q < NC; ++q) {
+      double x = bc[q][i] - sums[q];
+      if (!Unit) x /= ai[i];
+      bc[q][i] = x;
+    }
+  }
+}
+
+template <bool kUnit>
+HS_SIMD void trsm_col(bool upper, fint m, fint n, const double* a, fint lda, double* b, fint ldb) {
+  if constexpr (V::W == 8) {
+    if (n == 1) return trsm_col_short<kUnit, 1>(upper, m, a, lda, b, ldb);
+    if (n == 2) return trsm_col_short<kUnit, 2>(upper, m, a, lda, b, ldb);
+  }
+  fint c0 = 0;
+  if constexpr (V::W == 8) {
+    for (; c0 + 8 <= n; c0 += 8)
+      trsm_col8<kUnit>(upper, m, a, lda, b + static_cast<idx>(c0) * ldb, ldb);
+  }
+  for (; c0 < n; c0 += 4) {
     const int nc = static_cast<int>(std::min<fint>(4, n - c0));
     double* bc[4];
     for (int q = 0; q < nc; ++q) bc[q] = b + static_cast<idx>(c0 + q) * ldb;
@@ -353,9 +648,46 @@ HS_SIMD void trsm_col(bool upper, fint m, fint n, const double* a, fint lda, dou
 // op(A) = A^T: x_i = (b_i - A(j-range, i) . x(j-range)) / a_ii, the dot products of a group
 // computed together and reduced with reduce4: forward for upper A (A^T lower), backward for lower.
 template <bool kUnit>
+HS_SIMD void trsm_dot8(bool upper, fint m, const double* a, fint lda, double* b,
+                       fint ldb) {
+  double* bc[8];
+  for (int q = 0; q < 8; ++q) bc[q] = b + static_cast<idx>(q) * ldb;
+  alignas(32) double sums[8];
+  for (fint step = 0; step < m; ++step) {
+    const fint i = upper ? step : m - 1 - step;
+    const double* ai = a + static_cast<idx>(i) * lda;
+    const fint j0 = upper ? 0 : i + 1, j1 = upper ? i : m;
+    reg acc[8] = {V::zero(), V::zero(), V::zero(), V::zero(),
+                  V::zero(), V::zero(), V::zero(), V::zero()};
+    for (fint j = j0; j < j1; j += V::W) {
+      const auto mk = V::tail(std::min<fint>(V::W, j1 - j));
+      const reg av = V::maskz_loadu(mk, ai + j);
+      for (int q = 0; q < 8; ++q)
+        acc[q] = V::fmadd(av, V::maskz_loadu(mk, bc[q] + j), acc[q]);
+    }
+    V::reduce4(acc[0], acc[1], acc[2], acc[3], sums);
+    V::reduce4(acc[4], acc[5], acc[6], acc[7], sums + 4);
+    for (int q = 0; q < 8; ++q) {
+      double x = bc[q][i] - sums[q];
+      if (!kUnit) x /= ai[i];
+      bc[q][i] = x;
+    }
+  }
+}
+
+template <bool kUnit>
 HS_SIMD void trsm_dot(bool upper, fint m, fint n, const double* a, fint lda, double* b,
                       fint ldb) {
-  for (fint c0 = 0; c0 < n; c0 += 4) {
+  if constexpr (V::W == 8) {
+    if (n == 1) return trsm_dot_short<kUnit,1>(upper,m,a,lda,b,ldb);
+    if (n == 2) return trsm_dot_short<kUnit,2>(upper,m,a,lda,b,ldb);
+  }
+  fint c0 = 0;
+  if constexpr (V::W == 8) {
+    for (; c0 + 8 <= n; c0 += 8)
+      trsm_dot8<kUnit>(upper, m, a, lda, b + static_cast<idx>(c0) * ldb, ldb);
+  }
+  for (; c0 < n; c0 += 4) {
     const int nc = static_cast<int>(std::min<fint>(4, n - c0));
     double* bc[4];
     for (int q = 0; q < nc; ++q) bc[q] = b + static_cast<idx>(c0 + q) * ldb;

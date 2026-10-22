@@ -4,7 +4,7 @@
 // message encoding, the driver hooks (two certificate counts on two helpers, spectrum slices on the
 // helpers), their limits (fewer than two helpers, the memory budget) and failures (a helper task
 // that fails is done by the leader: fault bit 128), real and complex. The same checks over MPI with
-// 1, 2 and 3 ranks: tests/cpp/mpi/test_mpi_session.cpp.
+// 1, 2, 3 and 5 ranks: tests/cpp/mpi/test_mpi_session.cpp.
 #include <gtest/gtest.h>
 
 #include <cstdint>
@@ -300,8 +300,9 @@ class FakeHelpers final : public hs::driver::HelpersOf<double> {
   bool usable(int h) const override { return usable_.at(static_cast<std::size_t>(h)); }
   void abandon(int h, const std::string&) override { usable_.at(static_cast<std::size_t>(h)) = false; }
   bool shared() const override { return true; }
-  void prepare(hs::driver::Ctx&) override {
+  void prepare(hs::driver::Ctx&, int max_helpers = 0) override {
     ++prepared;
+    prepared_limit = max_helpers;
     holds = true;
   }
   void drop(hs::driver::Ctx&, const std::string&) override {
@@ -349,7 +350,7 @@ class FakeHelpers final : public hs::driver::HelpersOf<double> {
   double leave_bytes = -1.0, budget_bytes = 0.0;
   bool holds = false;
   hs::ParallelOptions opts;
-  int failing = 0, prepared = 0, drops = 0, slices_done = 0;
+  int failing = 0, prepared = 0, prepared_limit = 0, drops = 0, slices_done = 0;
   std::vector<std::pair<int, hs::driver::CountTask>> posted;
   std::vector<std::pair<int, hs::driver::SliceTask>> slices;
 
@@ -403,6 +404,7 @@ TEST(ParallelDriverHooks, TwoHelpersCountBothEnds) {
   EXPECT_EQ(f.rep.parallel.fallbacks, 0);
   EXPECT_EQ(h.prepared, 1);              // the problem goes to the helpers at their first task
   EXPECT_EQ(h.drops, 1);                 // ... and is dropped once their counts are in
+  EXPECT_EQ(h.prepared_limit, 2);
   EXPECT_FALSE(h.holds);
   EXPECT_FALSE(f.fac->inertia().valid);  // the main factors were released before the counts
 }
@@ -666,8 +668,105 @@ TEST(ParallelSessionMemory, DropFreesWhatTheHelpersHold) {
   });
 }
 
-// A helper that could not prepare (here: a pivot order of the wrong size, InvalidInput when it
-// analyses) may still hold the matrices it received: it is not usable, and drop() frees it too.
+TEST(ParallelSessionMemory, CountTasksRespectTheirCapAndBudget) {
+  const auto a = hs::test::laplacian_1d<double>(100000);
+  hs::ShiftedPencil<double> pencil(a, nullptr);
+  hs::FactorOptions fo;
+  fo.threads = 1;
+  fo.max_memory_mb = 128;
+  auto fac = hs::make_mumps_factorization<double>(fo);
+  fac->analyze(pencil, 1.0, 1.0);
+  hs::SolverConfig cfg = nearest_cfg();
+  hs::SolveReport rep;
+  hs::driver::PhaseClock clock;
+  hs::driver::Ctx c{cfg, nullptr, rep, clock};
+  hs::driver::ProblemInfo info;
+  info.prepare_count = true;
+  with_session(2, [&](hs::Transport& peers) {
+    hs::parallel::RemoteHelpers<double> hp(peers, 17u, kForce);
+    hp.share(c, pencil, *fac, info);
+    hp.prepare(c);
+    EXPECT_GT(hp.count_estimate_mb(), 1.0);
+    hs::driver::CountTask t;
+    t.s = -1;
+    t.cap_mb = 1;
+    t.budget_gb = 1;
+    auto count = [&] {
+      hp.post_count(c, 1, t);
+      return hp.wait_count(c, 1);
+    };
+    auto r = count();
+    EXPECT_FALSE(r.error.ok);
+    EXPECT_EQ(r.error.code, hs::Error::Code::OutOfMemoryBudget);
+    t.cap_mb = 128;
+    t.budget_gb = 1.0 / 1073.741824;  // the task budget limits an otherwise generous MUMPS cap
+    r = count();
+    EXPECT_FALSE(r.error.ok);
+    EXPECT_EQ(r.error.code, hs::Error::Code::OutOfMemoryBudget);
+    t.budget_gb = 1;
+    r = count();
+    EXPECT_TRUE(r.error.ok) << r.error.what;
+    EXPECT_EQ(r.nu, 0);
+    hp.drop(c, "test done");
+  });
+}
+
+class SetupRecorder final : public hs::Transport {
+ public:
+  explicit SetupRecorder(hs::Transport& peers) : setups(peers.size(), 0), peers_(peers) {}
+  int rank() const override { return peers_.rank(); }
+  int size() const override { return peers_.size(); }
+  bool ready(int from) override { return peers_.ready(from); }
+  std::vector<std::uint8_t> receive(int from, int* source = nullptr) override {
+    return peers_.receive(from, source);
+  }
+  void send(int to, const std::vector<std::uint8_t>& bytes) override {
+    hs::parallel::Reader r(bytes);
+    if (r.type() == hs::parallel::Msg::Setup) ++setups.at(static_cast<std::size_t>(to));
+    peers_.send(to, bytes);
+  }
+  std::vector<int> setups;
+
+ private:
+  hs::Transport& peers_;
+};
+
+TEST(ParallelSessionMemory, CountsPrepareOnlyTheirSelectedPair) {
+  const auto a = laplacian3d<double>();
+  hs::ShiftedPencil<double> pencil(a, nullptr);
+  hs::FactorOptions fo;
+  fo.threads = 1;
+  auto fac = hs::make_mumps_factorization<double>(fo);
+  fac->analyze(pencil, 1.0, -kSigma);
+  hs::SolverConfig cfg = nearest_cfg();
+  hs::SolveReport rep;
+  hs::driver::PhaseClock clock;
+  hs::driver::Ctx c{cfg, nullptr, rep, clock};
+  hs::driver::ProblemInfo info;
+  info.prepare_count = true;
+  with_session(5, [&](hs::Transport& peers) {
+    SetupRecorder traced(peers);
+    hs::parallel::RemoteHelpers<double> hp(traced, 19u, kForce);
+    c.helpers = &hp;
+    hp.share(c, pencil, *fac, info);
+    hp.prepare(c, 2);
+    EXPECT_EQ(traced.setups, (std::vector<int>{0, 1, 1, 0, 0}));
+    hp.drop(c, "first batch");
+    hp.abandon(1, "test failure");
+    hp.prepare(c, 2);
+    EXPECT_EQ(traced.setups, (std::vector<int>{0, 1, 2, 1, 0}));
+    hp.drop(c, "second batch");
+    // A nearest solve can delegate to slices with prepare_count still true: the task's limit,
+    // not its request for a counter analysis, decides which helpers receive the problem.
+    hp.share(c, pencil, *fac, info);
+    hp.prepare(c);
+    EXPECT_EQ(traced.setups, (std::vector<int>{0, 1, 3, 2, 1}));
+    hp.drop(c, "done");
+    c.helpers = nullptr;
+  });
+}
+
+// A helper that could not prepare may still hold the matrices it received: drop() frees them too.
 TEST(ParallelSessionMemory, HelpersThatCouldNotPrepareAreDroppedToo) {
   const auto a = laplacian3d<double>();
   hs::ShiftedPencil<double> pencil(a, nullptr);

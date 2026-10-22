@@ -55,16 +55,17 @@ NormEstimate lanczos_ends(index_t n, Apply&& apply, int steps, std::uint64_t see
   for (int j = 0; j < steps; ++j) {
     apply(v.data(), w.data());
     // w -= beta_{j-1} v_{j-1};  alpha_j = Re(v^H w) (Hermitian => real);  w -= alpha_j v
-    if (j > 0) linalg::axpy(n, T(-beta_prev), v_prev.data(), w.data());
-    const double aj = std::real(linalg::dot(n, v.data(), w.data()));
-    linalg::axpy(n, T(-aj), v.data(), w.data());
+    const double aj = std::real(j > 0
+        ? linalg::axpy_dot(n, T(-beta_prev), v_prev.data(), w.data(), v.data())
+        : linalg::dot(n, v.data(), w.data()));
     alpha.push_back(aj);
-    const double bj = linalg::norm2(n, w.data());
+    const double bj = linalg::axpy_norm2(n, T(-aj), v.data(), w.data());
     // Breakdown: an invariant subspace was found; its Ritz values are exact eigenvalues.
     const double scale = std::max(std::abs(aj), beta_prev);
     if (bj <= 1e-13 * std::max(scale, 1e-300) || j + 1 == steps) break;
     beta.push_back(bj);
     std::swap(v_prev, v);
+#pragma omp parallel for schedule(static)
     for (index_t i = 0; i < n; ++i) v[i] = w[i] / bj;
     beta_prev = bj;
   }

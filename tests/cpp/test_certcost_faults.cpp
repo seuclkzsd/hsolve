@@ -507,7 +507,11 @@ TYPED_TEST(DriverCountFailureTyped, MainObjectStandingInForTheCounterMustFitTheB
     const auto w = spectrum();
     EXPECT_EQ(in.neg, std::count_if(w.begin(), w.end(), [](double l) { return l < 0.5; }));
     EXPECT_FALSE(src.uses_counter());
-    EXPECT_EQ(ctx.held.shift, 0.5);
+    EXPECT_TRUE(std::isnan(ctx.held.shift));  // Release counts do not promise usable factors
+    EXPECT_FALSE(fac->inertia().valid);
+    ASSERT_TRUE(fac->factorize(1.0, -kSigma));
+    std::vector<T> rhs(a.nrows, T(1));
+    EXPECT_NO_THROW(fac->solve(rhs.data(), 1, a.nrows));
   }
 }
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # The MUMPS of the default build: MUMPS 5.8.2 from third_party/mumps/, patched with
-# patches/mumps-5.8.2-l0-blocking.patch, built by tools/dev/build_mumps.sh with its portable defaults
+# the L0-blocking, pivot-extrema and local-scatter patches, built by tools/dev/build_mumps.sh with portable defaults
 # (nocona -O2: conda-forge's flags) against the project environment - built once per cache key and
 # then reused (P9 integration; docs/DESIGN.md §3.4, results/p9_factspeed.md).
 #
@@ -27,7 +27,9 @@ here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 repo="$(cd "$here/../.." && pwd)"
 ver=5.8.2
 sha=eb515aa688e6dbab414bb6e889ff4c8b23f1691a843c68da5230a33ac4db7039  # = build_mumps.sh's
-patches=("$repo/patches/mumps-5.8.2-l0-blocking.patch")
+patches=("$repo/patches/mumps-5.8.2-l0-blocking.patch"
+         "$repo/patches/mumps-5.8.2-pivot-extrema.patch"
+         "$repo/patches/mumps-5.8.2-local-scatter.patch")
 flags=(--isa nocona --opt O2)
 
 die() {

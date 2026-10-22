@@ -41,12 +41,15 @@
 #include <new>
 #include <numeric>
 #include <string>
+#include <type_traits>
 #include <vector>
 
 #include "driver/certificate.hpp"
 #include "driver/helpers.hpp"
 #include "driver/internal.hpp"
 #include "driver/projection.hpp"
+#include "eigen/block_lanczos.hpp"
+#include "eigen/separable_curl.hpp"
 #include "hsolve/eigen.hpp"
 #include "hsolve/error.hpp"
 #include "hsolve/operator.hpp"
@@ -129,7 +132,8 @@ const char* which_name(Which w) {
 // ranked of the nev pairs have converged (KrylovSchurOptions::lead_nev).
 template <class T>
 void lanczos_run(Ctx& c, SparseFactorization<T>& fac, const ShiftedPencil<T>& pencil, double sigma, Which which,
-                 index_t nev, index_t p, const DenseMatrix<T>* deflation, DefiniteRun<T>& out, index_t lead = 0) {
+                 index_t nev, index_t p, const DenseMatrix<T>* deflation, DefiniteRun<T>& out, index_t lead = 0,
+                 bool test_original_residual = false) {
   const CsrMatrix<T>& a = pencil.a();
   const CsrMatrix<T>* b = pencil.b();
   DriverShiftInvert<T> op(c.cfg, fac, pencil, sigma);  // inexact factors: refined and checked
@@ -145,9 +149,40 @@ void lanczos_run(Ctx& c, SparseFactorization<T>& fac, const ShiftedPencil<T>& pe
   ko.block_size = std::max<index_t>(p, 1);
   ko.lead_nev = lead < nev ? lead : 0;
   HermitianEigResult<T> res;
+  // Shift-invert residuals can be much stricter than the requested backward error of
+  // (A, B). Test the actual Ritz vectors before spending further solves on that gap.
+  // Only the first, exact-factor block run uses this shortcut. Its existing memory plan
+  // reserves 4*nev columns beside the basis; this probe needs 3*nev (X, AX, BX).
+  eigen_detail::OriginalResidualTest<T> original;
+  index_t original_probes = 0;
+  bool original_accepted = false;
+  original.probe_tol = std::sqrt(ko.tol);
+  original.accept = [&](const DenseMatrix<T>& x, const std::vector<double>& theta) {
+    ++original_probes;
+    DenseMatrix<T> ax, bx;
+    driver::apply_block(&a, x, ax);
+    driver::apply_block(b, x, bx);
+    bool accepted = true;
+#pragma omp parallel for reduction(&& : accepted) schedule(static)
+    for (index_t j = 0; j < x.cols(); ++j) {
+      const double lambda = theta[j] != 0.0 ? sigma + 1.0 / theta[j] : kInf;
+      const auto pm = pair_metrics(ax.col(j), bx.col(j), x.col(j), x.rows(), lambda,
+                                   c.rep.norm2_a, c.rep.norm2_b);
+      accepted = accepted && std::isfinite(lambda) && pm.backward_error <= 0.5 * c.cfg.tol;
+    }
+    original_accepted = accepted;
+    if (!accepted) original.probe_tol *= 0.1;
+    return accepted;
+  };
   {
     PhaseScope phase(c.clock, Phase::Iterate);
-    res = lanczos_krylov_schur<T>(op, b_op.get(), which, ko);
+    if (test_original_residual && ko.block_size > 1 && !deflation && !inexact_factor(fac.options())) {
+      eigen_detail::LanczosTimings unused;
+      res = eigen_detail::block_lanczos_krylov_schur_timed<T>(
+          op, b_op.get(), which, ko, unused, eigen_detail::BlockTuning{}, nullptr, &original);
+    } else {
+      res = lanczos_krylov_schur<T>(op, b_op.get(), which, ko);
+    }
   }
   out.restarts += res.restarts;
   out.applies += res.op_applies;
@@ -160,6 +195,8 @@ void lanczos_run(Ctx& c, SparseFactorization<T>& fac, const ShiftedPencil<T>& pe
                        {"restarts", static_cast<std::int64_t>(res.restarts)},
                        {"op_applies", static_cast<std::int64_t>(res.op_applies)},
                        {"deflated", static_cast<std::int64_t>(deflation ? deflation->cols() : 0)},
+                       {"original_residual_probes", static_cast<std::int64_t>(original_probes)},
+                       {"original_residual_accepted", original_accepted},
                        {"max_estimate", res.history.empty() ? 0.0 : res.history.back().max_estimate}});
   if (!res.converged) {
     // Where the restarts stalled: the first restarts, then every 4^j-th, and the last one.
@@ -351,58 +388,129 @@ Solution<T> solve_nearest(Ctx& c, const ShiftedPencil<T>& pencil, SparseFactoriz
   const index_t k = t.k;
   if (k > n) HS_THROW(InvalidInput, "target.k = " << k << " exceeds the matrix order " << n);
 
-  // Factorization at the shift (near-singular handling in factorize_near). Its time and the solve
-  // calls of the Krylov run are measured for the auto choice of the completeness check.
   bool detection_off = false;
   CertificateTimings timings;
-  const FactorStats before_factor = fac.stats();
-  const double sigma = factorize_near(c, fac, t.sigma, scale, detection_off);
-  rep.sigma_used = sigma;
-  const FactorStats& fs = fac.stats();
-  if (fs.factorizations > before_factor.factorizations)
-    timings.factorize_s = (fs.factorize_s - before_factor.factorize_s) /
-                          static_cast<double>(fs.factorizations - before_factor.factorizations);
-  event(c, "factorization", {{"sigma", sigma}, {"factor_s", fs.factorize_s}, {"entries", static_cast<std::int64_t>(fs.factor_entries)},
-                             {"mb", fs.factor_mb_used}, {"mb_allocated", fs.factor_mb_allocated},
-                             {"delayed_pivots", static_cast<std::int64_t>(fs.delayed_pivots)}});
-
-  // Converge exactly the k wanted pairs (most wanted by |theta| = nearest to sigma). Asking for
-  // extra pairs only costs iterations: completeness is the certificate's job, not a safety margin.
+  double sigma = t.sigma;
   const index_t nev = std::min<index_t>(n, k);
-  // Block width: the blocktune rule on the run's shape, with the entries of the factorization the
-  // run's solves use (block_size_for; reserved up to its widest width before the analysis).
-  eigen_detail::ShiftInvertShape shape;
-  shape.n = n;
-  shape.nev = nev;
-  shape.factor_entries = static_cast<double>(fs.factor_entries);
-  shape.nnz_b = pencil.b() ? static_cast<double>(pencil.b()->nnz()) : 0.0;
-  shape.complex_scalars = is_complex_v<T>;
-  // Candidate block X, AX, BX (3 nev) and the returned vectors (nev) next to the basis. The memory
-  // plan reserved the P4 width: an auto width beyond it is halved back to it without a warning.
-  const index_t p_rule = block_size_for(c.cfg, shape);
-  const index_t p = fit_block_size<T>(c, n, nev, 0, 4 * nev, p_rule,
-                                      c.cfg.block_size > 0 ? p_rule : std::min(p_rule, reserved_block_size(c.cfg)));
-  rep.block_size = p;
+  index_t p = 1;
   DefiniteRun<T> run;
-  const FactorStats before_run = fac.stats();
-  lanczos_run(c, fac, pencil, sigma, Which::LargestMagnitude, nev, p, static_cast<const DenseMatrix<T>*>(nullptr),
-              run);
-  if (fac.stats().solves > before_run.solves) {
-    const auto calls = static_cast<double>(fac.stats().solves - before_run.solves);
-    timings.solve_call_s = (fac.stats().solve_s - before_run.solve_s) / calls;
-    timings.rhs_per_call = static_cast<double>(fac.stats().rhs_solved - before_run.rhs_solved) / calls;
+  bool structured = false;
+  if (cfg.method == Method::Auto && cfg.certificate == CertificateMode::Exact &&
+      cfg.inertia_check != Toggle::Off && !inexact_factor(fac.options())) {
+    std::string why;
+    PhaseScope phase(c.clock, Phase::Iterate);
+    // AX/BX, RR replacements, selection, and the small projected eigensystems beside X.
+    const double reserve = sizeof(T) * (6.0 * n * static_cast<double>(k) + 64.0 * k * static_cast<double>(k));
+    const double allowance = 0.95 * std::max(0.0, budget_left(c)) - reserve;
+    try {
+      structured = eigen_detail::separable_curl_candidates(
+          pencil.a(), pencil.b(), t.sigma, k, allowance, run.all.x, run.all.lambda, run.ritz_hints, why);
+      if (structured) {
+        recompute_products(pencil.a(), pencil.b(), run.all);
+        bool finite_products = true;
+#pragma omp parallel for reduction(&& : finite_products) schedule(static)
+        for (index_t j = 0; j < k; ++j)
+          for (index_t i = 0; i < n; ++i)
+            finite_products = finite_products && std::isfinite(std::real(run.all.ax(i, j))) &&
+                              std::isfinite(std::imag(run.all.ax(i, j))) &&
+                              std::isfinite(std::real(run.all.bx(i, j))) &&
+                              std::isfinite(std::imag(run.all.bx(i, j)));
+        if (!finite_products) {
+          structured = false;
+          why += "; nonfinite original-pencil products";
+        }
+      }
+      if (structured) {
+        const index_t rank = driver::rayleigh_ritz_definite(
+            run.all.x, run.all.ax, run.all.bx, run.all.lambda, kDependentGram);
+        structured = rank == k;
+        for (const auto& metric : block_metrics(run.all, n2a, n2b))
+          structured = structured && std::isfinite(metric.backward_error) &&
+                       metric.backward_error <= 0.5 * cfg.tol;
+        if (!structured) why += "; original residual or rank rejected";
+      }
+    } catch (const std::bad_alloc&) {
+      structured = false;
+      why = "candidate workspace allocation failed";
+    } catch (const Error& error) {
+      if (error.code() != Error::Code::NotConverged && error.code() != Error::Code::OutOfMemoryBudget) throw;
+      structured = false;
+      why = std::string("candidate verification failed: ") + error.what();
+    }
+    if (c.log) c.log->event("structured_candidate", {{"accepted", structured}, {"reason", why},
+        {"columns", static_cast<std::int64_t>(run.all.size())}}, structured ? 1 : 2);
+    if (!structured) run = DefiniteRun<T>{};
+    else {
+      run.converged = true;
+      rep.candidate_source = is_complex_v<T> ? "separable_bloch_curl" : "separable_cartesian_curl";
+    }
   }
-  if (!run.converged) warn(c, "Krylov-Schur did not converge all requested pairs within max_restarts");
+  if (!structured) {
+    // Factorization at the shift (near-singular handling in factorize_near). Its time and the solve
+    // calls of the Krylov run are measured for the auto choice of the completeness check.
+    const FactorStats before_factor = fac.stats();
+    sigma = factorize_near(c, fac, t.sigma, scale, detection_off);
+    rep.sigma_used = sigma;
+    const FactorStats& fs = fac.stats();
+    if (fs.factorizations > before_factor.factorizations)
+      timings.factorize_s = (fs.factorize_s - before_factor.factorize_s) /
+                            static_cast<double>(fs.factorizations - before_factor.factorizations);
+    event(c, "factorization", {{"sigma", sigma}, {"factor_s", fs.factorize_s}, {"entries", static_cast<std::int64_t>(fs.factor_entries)},
+                               {"mb", fs.factor_mb_used}, {"mb_allocated", fs.factor_mb_allocated},
+                               {"delayed_pivots", static_cast<std::int64_t>(fs.delayed_pivots)}});
+
+    // Converge exactly the k wanted pairs (most wanted by |theta| = nearest to sigma). Asking for
+    // extra pairs only costs iterations: completeness is the certificate's job, not a safety margin.
+    // Block width: the blocktune rule on the run's shape, with the entries of the factorization the
+    // run's solves use (block_size_for; reserved up to its widest width before the analysis).
+    eigen_detail::ShiftInvertShape shape;
+    shape.n = n;
+    shape.nev = nev;
+    shape.factor_entries = static_cast<double>(fs.factor_entries);
+    shape.nnz_b = pencil.b() ? static_cast<double>(pencil.b()->nnz()) : 0.0;
+    shape.complex_scalars = is_complex_v<T>;
+    // Candidate block X, AX, BX (3 nev) and the returned vectors (nev) next to the basis. The memory
+    // plan reserved the P4 width: an auto width beyond it is halved back to it without a warning.
+    const index_t p_rule = block_size_for(c.cfg, shape);
+    p = fit_block_size<T>(c, n, nev, 0, 4 * nev, p_rule,
+                                        c.cfg.block_size > 0 ? p_rule : std::min(p_rule, reserved_block_size(c.cfg)));
+    rep.block_size = p;
+    const FactorStats before_run = fac.stats();
+    lanczos_run(c, fac, pencil, sigma, Which::LargestMagnitude, nev, p, static_cast<const DenseMatrix<T>*>(nullptr),
+                run, 0, true);
+    if (fac.stats().solves > before_run.solves) {
+      const auto calls = static_cast<double>(fac.stats().solves - before_run.solves);
+      timings.solve_call_s = (fac.stats().solve_s - before_run.solve_s) / calls;
+      timings.rhs_per_call = static_cast<double>(fac.stats().rhs_solved - before_run.rhs_solved) / calls;
+    }
+    if (!run.converged) warn(c, "Krylov-Schur did not converge all requested pairs within max_restarts");
+
+  } else {
+    rep.sigma_used = sigma;
+    rep.block_size = 0;
+  }
 
   const double zero_tol = cfg.zero_filter_tol >= 0 ? cfg.zero_filter_tol * scale : -1.0;
   Block<T> sel;
   std::vector<PairMetrics> metrics;
+  bool working_shift_initialized = !structured;
+  auto prepare_working_factors = [&]() {
+    if (!working_shift_initialized) {
+      // Structured candidates skipped the initial factorization. The original target may
+      // itself be an eigenvalue, so a later rescue/rerun must establish a usable shift first.
+      sigma = factorize_near(c, fac, t.sigma, scale, detection_off);
+      rep.sigma_used = sigma;
+      working_shift_initialized = true;
+    } else {
+      refactorize_at(c, fac, sigma, detection_off);
+    }
+  };
   auto select_and_verify = [&]() {
     index_t zero_dropped = 0;
     sel = take_columns(run.all, select_nearest(run.all.lambda, t.sigma, k, zero_tol, zero_dropped));
     rep.zero_modes_filtered = zero_dropped;
     // rescue solves with K(sigma)
-    verify_and_rescue(c, fac, pencil, sel, metrics, n2a, n2b, [&]() { refactorize_at(c, fac, sigma, detection_off); });
+    verify_and_rescue(c, fac, pencil, sel, metrics, n2a, n2b, prepare_working_factors);
     index_t zd = 0;  // restore the target order (Rayleigh-Ritz sorts ascending)
     const auto order = select_nearest(sel.lambda, t.sigma, sel.size(), -1.0, zd);
     std::vector<PairMetrics> m2;
@@ -454,8 +562,9 @@ Solution<T> solve_nearest(Ctx& c, const ShiftedPencil<T>& pencil, SparseFactoriz
     select_and_verify();
   }
   InertiaCertificate& cert = rep.certificate;
-  const bool on_counter = want_cert && counter_pays(cfg, fac.estimate(), mumps_input_size(pencil),
-                                                    fac.options().threads, 2);
+  const bool count_in_place = cfg.inertia_counter == Toggle::Auto && fac.has_inertia_only_count();
+  const bool on_counter = want_cert && !count_in_place &&
+                         counter_pays(cfg, fac.estimate(), mumps_input_size(pencil), fac.options().threads, 2);
   CountSource<T> counts(fac, pencil, on_counter, MainFactors::Release);
   NearestCertifier<T> fast(c, pencil, fac, sigma, detection_off, scale, n2a, n2b, timings);
   // A count or rerun factorization that fails (MUMPS out of memory or another MUMPS error) never
@@ -582,7 +691,7 @@ Solution<T> solve_nearest(Ctx& c, const ShiftedPencil<T>& pencil, SparseFactoriz
     try {
       if (fault(cfg, kFaultRefactorization))
         throw_injected_fault(cfg, kFaultRefactorization, "refactorization at sigma for the deflated rerun");
-      refactorize_at(c, fac, sigma, detection_off);
+      prepare_working_factors();
     } catch (const Error& e) {
       if (!count_failure(e)) throw;
       why = std::string(to_string(e.code())) + ": " + e.what();

@@ -174,8 +174,8 @@ hs::CsrMatrix<double> weak_tridiagonal(index_t n) {
   return hs::csr_from_coo<double>(n, n, r, c, v);
 }
 
-// hs::solve with a 1 GiB budget: the proof gives up without building the pattern, B is factorized
-// for its inertia, the solve succeeds.
+// hs::solve with a 1 GiB budget: the weighted proof avoids both the dense IC pattern
+// and a factorization of B, and the solve succeeds.
 TEST(AnaintFixBProof, SolveWithArrowheadBDoesNotBuildThePattern) {
   const index_t n = 20000;
   const auto a = weak_tridiagonal(n);
@@ -207,10 +207,12 @@ TEST(AnaintFixBProof, SolveWithArrowheadBDoesNotBuildThePattern) {
       EXPECT_LE(j.at("max_bytes").get<double>(), 1073741824.0);
     }
     if (j.value("event", "") == "b_inertia") {
-      EXPECT_EQ(j.at("how").get<std::string>(), "factorization");
+      EXPECT_EQ(j.at("how").get<std::string>(), "weighted_dominant");
     }
   }
-  EXPECT_EQ(proofs, 1);
+  // The positive-weight Gershgorin screen now proves this star before any IC pattern
+  // or exact factorization is needed; the O(n^2) level-1 pattern must still never exist.
+  EXPECT_EQ(proofs, 0);
 }
 
 }  // namespace

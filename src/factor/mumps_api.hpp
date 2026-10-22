@@ -202,8 +202,8 @@ class Instance {
   int& icntl(int i) { return s_->icntl[i - 1]; }
   U& cntl(int i) { return s_->cntl[i - 1]; }
   /// MUMPS' internal KEEP array (exposed by [sd]mumps_c.h; set by JOB=-1, read at analysis and
-  /// factorization). Written only for the block sizes above (Blocking) and by measurement code
-  /// (MumpsControlOverrides).
+  /// factorization). Written for the block sizes above (Blocking), the version-guarded storage
+  /// switch in MumpsFactorization::count(), and measurement code (MumpsControlOverrides).
   int& keep(int i) { return s_->keep[i - 1]; }
   int keep(int i) const { return s_->keep[i - 1]; }
   int infog(int i) const { return s_->infog[i - 1]; }
@@ -212,6 +212,7 @@ class Instance {
   /// factorization under the L0-OpenMP layer, 0 without one - dfac_b.F).
   double dkeep(int i) const { return static_cast<double>(s_->dkeep[i - 1]); }
   Struc& raw() { return *s_; }
+  const Struc& raw() const { return *s_; }
 
   /// Run one job under call_mutex(); returns INFOG(1) (negative: error, positive: warning).
   int run(int job) {

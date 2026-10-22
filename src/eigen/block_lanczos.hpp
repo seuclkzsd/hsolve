@@ -8,6 +8,7 @@
 // cannot diverge; lanczos_krylov_schur.cpp documents the design behind the thresholds.
 #pragma once
 
+#include <functional>
 #include <limits>
 #include <vector>
 
@@ -164,16 +165,29 @@ struct BlockRunStats {
   index_t fallbacks = 0;  ///< run() calls (start block included) that took the column-wise path
 };
 
+/// Optional driver-only stopping test in the original eigenproblem. Once every wanted
+/// relative transformed residual is below probe_tol, assemble its Ritz vectors and call accept.
+/// A true result accepts that whole wanted set; false preserves the normal Krylov test.
+/// No change to the public eigensolver's residual-estimate contract when this is absent.
+template <class T>
+struct OriginalResidualTest {
+  double probe_tol = 0.0;
+  std::function<bool(const DenseMatrix<T>&, const std::vector<double>&)> accept;
+};
+
 /// Block Krylov-Schur, options.block_size > 1 (lanczos_krylov_schur_timed dispatches here). Same
 /// contract and timing semantics as lanczos_krylov_schur_timed. `tuning` (measurement use) changes
 /// only the basis layout and the step kernel; `stats` (may be nullptr) receives the kernel counts
 /// (all zero when the call is solved by the exact single-vector cycle, see BlockDimensions).
+/// The optional driver-only residual_test additionally permits its original-problem criterion
+/// to accept the wanted set; it is not used by the public eigensolver entry point.
 template <class T>
 HermitianEigResult<T> block_lanczos_krylov_schur_timed(LinearOperator<T>& op,
                                                        LinearOperator<T>* b_inner, Which which,
                                                        const KrylovSchurOptions<T>& options,
                                                        LanczosTimings& timings,
                                                        const BlockTuning& tuning = BlockTuning{},
-                                                       BlockRunStats* stats = nullptr);
+                                                       BlockRunStats* stats = nullptr,
+                                                       const OriginalResidualTest<T>* residual_test = nullptr);
 
 }  // namespace hs::eigen_detail

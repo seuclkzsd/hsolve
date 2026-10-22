@@ -16,11 +16,15 @@ integration) compiles it with `tools/dev/build_mumps.sh` through `tools/dev/mump
 sequential MUMPS with OpenMP, conda-forge's portable compiler flags (`-O2 -march=nocona
 -mtune=haswell`), against the project environment's METIS, SCOTCH and OpenBLAS, **modified by
 `patches/mumps-5.8.2-l0-blocking.patch`** (two block-size controls under MUMPS' L0-OpenMP layer,
-KEEP(498/499), read only when set; results/p9_factspeed.md §3.4). The checksum is verified before
+KEEP(498/499), read only when set; results/p9_factspeed.md §3.4),
+**`patches/mumps-5.8.2-pivot-extrema.patch`** (atomic reads skip redundant writes to shared pivot
+extrema; results/p13_measurements.md), and **`patches/mumps-5.8.2-local-scatter.patch`**
+(parallel local RHS scatter when one working process owns all pivot rows; results/p14_measurements.md).
+The checksum is verified before
 every unpack. `HS_MUMPS=env tools/dev/build.sh` links the environment's unmodified conda-forge
 `mumps-seq` instead.
 
-The patch is a modification of MUMPS and is distributed under the same CeCILL-C license. Binaries
-built from it carry the notice in `LICENSE` and the information that MUMPS was modified by that
-patch (`THIRD_PARTY_NOTICES` §3.1; `hsolve --version` names the MUMPS install, whose
-`BUILD-INFO.txt` lists the patch).
+The patches are modifications of MUMPS and are distributed under the same CeCILL-C license. Binaries
+built from them carry the notice in `LICENSE` and the information that MUMPS was modified by those
+patches (`THIRD_PARTY_NOTICES` §3.1; `hsolve --version` names the MUMPS install, whose
+`BUILD-INFO.txt` lists the patches).

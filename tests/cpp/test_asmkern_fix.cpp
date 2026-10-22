@@ -197,8 +197,8 @@ TEST(AsmkernFixNarrowDeterminism, NnAndTnAreBitwiseIndependentOfTheRowSplitForGe
   for (Isa isa : isas())
     for (char ta : {'N', 'T'})
       for (const fint m : {33, 40, 61, 130, 1025})
-        for (const fint n : {1, 3, 6})
-          for (const fint k : {5, 300}) {
+        for (const fint n : {1, 2, 3, 6})
+          for (const fint k : {5, 128, 300}) {
             const fint lda = (ta == 'N' ? m : k) + 1;
             const auto a = random_vec(static_cast<std::size_t>(lda) * (ta == 'N' ? k : m), ++seed);
             const auto b = random_vec(static_cast<std::size_t>(k) * n, ++seed);

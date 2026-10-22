@@ -285,6 +285,37 @@ TEST(DriverBDefiniteness, CheapTestsInOrder) {
   EXPECT_EQ(test_b_definiteness(lap, hs::driver::estimate_norm2(lap, 30, 2026)).verdict, Definiteness::Unknown);
 }
 
+TEST(DriverBDefiniteness, WeightedDominanceProvesScaledMassAndRejectsSingularity) {
+  using hs::driver::Definiteness;
+  const hs::driver::NormEstimate none;
+  // A star with off-diagonal 0.4 has eigenvalues 1 +/- sqrt(3)*0.4 and 1:
+  // positive definite, but its centre fails ordinary and Jacobi row dominance.
+  // A diagonal congruence and complex phases preserve definiteness.
+  for (double coupling : {0.4, 1.0 / std::sqrt(3.0), 0.7}) {
+    std::vector<index_t> rows, cols;
+    std::vector<cplx> vals;
+    const double scale[] = {0.1, 2.0, 0.3, 4.0};
+    for (index_t i = 0; i < 4; ++i) {
+      rows.push_back(i); cols.push_back(i); vals.push_back(scale[i] * scale[i]);
+      if (i == 0) continue;
+      const cplx v = std::polar(coupling * scale[0] * scale[i], 0.3 * static_cast<double>(i));
+      rows.push_back(0); cols.push_back(i); vals.push_back(v);
+      rows.push_back(i); cols.push_back(0); vals.push_back(std::conj(v));
+    }
+    const auto b = hs::csr_from_coo<cplx>(4, 4, rows, cols, vals);
+    const auto r = hs::driver::test_b_definiteness(b, none);
+    if (coupling == 0.4) {
+      EXPECT_EQ(r.verdict, Definiteness::Positive);
+      EXPECT_EQ(r.how, "weighted_dominant");
+      EXPECT_TRUE(r.inertia.valid);
+      EXPECT_EQ(r.inertia.pos, 4);
+    } else {
+      EXPECT_EQ(r.verdict, Definiteness::Unknown);
+      EXPECT_FALSE(r.inertia.valid);
+    }
+  }
+}
+
 /// A = L (2-D Laplacian, HPD), B = L - 2I (indefinite, positive diagonal, not dominant): the
 /// eigenvalues l / (l - 2) are real (A definite) and known from those of L.
 template <class T>

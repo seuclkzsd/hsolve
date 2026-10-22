@@ -163,6 +163,55 @@ Definiteness screen_definiteness(const CsrMatrix<T>& b) {
   return dominant ? Definiteness::Positive : Definiteness::Unknown;
 }
 
+// Gershgorin after a positive diagonal similarity: B is HPD if a positive vector w
+// satisfies sum_{j != i} |b_ij| w_j < b_ii w_i in every row. Jacobi weights and a few
+// damped comparison-matrix power steps often prove this even when raw row sums fail.
+// This is only a proof attempt: failure leaves the existing inertia/IC proof in charge.
+template <class T>
+bool weighted_diagonal_dominance(const CsrMatrix<T>& b) {
+  const index_t n = b.nrows;
+  std::vector<double> diag(static_cast<std::size_t>(n)), w(static_cast<std::size_t>(n)),
+      next(static_cast<std::size_t>(n));
+  bool finite = true;
+#pragma omp parallel for reduction(&& : finite) schedule(static)
+  for (index_t i = 0; i < n; ++i) {
+    const auto begin = b.colind.begin() + b.rowptr[i];
+    const auto end = b.colind.begin() + b.rowptr[i + 1];
+    const auto it = std::lower_bound(begin, end, static_cast<std::int32_t>(i));
+    const double d = it != end && *it == i ? std::real(b.values[it - b.colind.begin()]) : 0.0;
+    diag[i] = d;
+    w[i] = d > 0.0 ? 1.0 / std::sqrt(d) : 0.0;
+    finite = finite && d > 0.0 && std::isfinite(w[i]);
+  }
+  if (!finite) return false;
+  for (int step = 0; step < 3; ++step) {
+    bool proven = true, all_above = true;
+#pragma omp parallel for reduction(&& : proven, all_above, finite) schedule(static)
+    for (index_t i = 0; i < n; ++i) {
+      double off = 0.0;
+      for (index_t q = b.rowptr[i]; q < b.rowptr[i + 1]; ++q)
+        if (b.colind[q] != i) off += std::abs(b.values[q]) * w[b.colind[q]];
+      const double diagonal = diag[i] * w[i];
+      // Cover product, modulus and positive-sum rounding, including tiny magnitudes.
+      const double margin = 32.0 * std::numeric_limits<double>::epsilon() *
+                            static_cast<double>(b.rowptr[i + 1] - b.rowptr[i] + 1);
+      const double slack = margin * (diagonal + off) + std::numeric_limits<double>::min();
+      proven = proven && off + slack < diagonal;
+      all_above = all_above && off >= diagonal;
+      next[i] = 0.5 * w[i] + 0.5 * (off / diag[i]);
+      finite = finite && std::isfinite(off) && std::isfinite(diagonal) &&
+               std::isfinite(next[i]) && next[i] > 0.0;
+    }
+    if (!finite) return false;
+    if (proven) return true;
+    // The comparison matrix has spectral radius >= 1 in this case, so these
+    // weights cannot establish strict dominance by further power steps.
+    if (all_above) return false;
+    w.swap(next);
+  }
+  return false;
+}
+
 }  // namespace
 
 // Tests that decide before the analysis, cheapest first (internal.hpp):
@@ -175,6 +224,7 @@ Definiteness screen_definiteness(const CsrMatrix<T>& b) {
 //     -kIndefiniteRitz * ||B||_2 - about 1e6 times the rounding level - proves a negative
 //     eigenvalue. Lee-Sun-Cendes waveguide pencils show one at once (B's negative part is not
 //     small); before, their B was factorized for its inertia: 0.19 s, 10% of wg-square-1e5 (P4).
+//   * weighted_diagonal_dominance: positive row weights can prove HPD in <= 3 sparse scans.
 // Unknown: B's inertia on the main analysis decides (one factorization).
 template <class T>
 driver::BDefiniteness driver::test_b_definiteness(const CsrMatrix<T>& b, const NormEstimate& nb) {
@@ -202,6 +252,12 @@ driver::BDefiniteness driver::test_b_definiteness(const CsrMatrix<T>& b, const N
   } else if (nb.steps > 0 && nb.ritz_min < -kIndefiniteRitz * nb.norm2) {
     r.verdict = Definiteness::NotPositive;
     r.how = "lanczos";
+  } else if (weighted_diagonal_dominance(b)) {
+    r.verdict = Definiteness::Positive;
+    r.inertia.neg = r.inertia.zero = 0;
+    r.inertia.pos = n;
+    r.inertia.valid = true;
+    r.how = "weighted_dominant";
   }
   return r;
 }

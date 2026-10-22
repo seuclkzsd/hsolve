@@ -126,7 +126,7 @@ class BlockThickRestartLanczos {
   BlockThickRestartLanczos(LinearOperator<T>& op, LinearOperator<T>* b_inner, Which which,
                            const KrylovSchurOptions<T>& options, const LanczosSetup& setup,
                            const BlockDimensions& dims, const BlockTuning& tuning,
-                           LanczosTimings& timings);
+                           LanczosTimings& timings, const OriginalResidualTest<T>* residual_test);
 
   HermitianEigResult<T> run();
   /// Kernel counts of the run so far.
@@ -155,6 +155,7 @@ class BlockThickRestartLanczos {
   const Which which_;
   const KrylovSchurOptions<T>& opt_;
   LanczosTimings& time_;
+  const OriginalResidualTest<T>* residual_test_;
 
   index_t n_ = 0;
   index_t d_ = 0;
@@ -194,8 +195,9 @@ BlockThickRestartLanczos<T>::BlockThickRestartLanczos(LinearOperator<T>& op,
                                                       const LanczosSetup& setup,
                                                       const BlockDimensions& dims,
                                                       const BlockTuning& tuning,
-                                                      LanczosTimings& timings)
-    : op_(op), b_inner_(b_inner), which_(which), opt_(options), time_(timings) {
+                                                      LanczosTimings& timings,
+                                                      const OriginalResidualTest<T>* residual_test)
+    : op_(op), b_inner_(b_inner), which_(which), opt_(options), time_(timings), residual_test_(residual_test) {
   fast_ortho_ = tuning.fast_ortho;
   n_ = setup.n;
   d_ = setup.d;
@@ -336,6 +338,16 @@ void BlockThickRestartLanczos<T>::rayleigh_ritz() {
     rr_.est[i] = std::sqrt(e2);
   }
   rr_.classify(opt_.tol, which_);
+  if (residual_test_ && !rr_.done(nev_, lead_)) {
+    const index_t wanted = lead_ > 0 ? lead_ : nev_;
+    for (index_t j = 0; j < wanted; ++j) {
+      const index_t i = rr_.order[j];
+      if (!(rr_.est[i] <= residual_test_->probe_tol * rr_.ref[i])) return;
+    }
+    const auto candidates = rr_.result(n_, wanted, vcol(0));
+    if (residual_test_->accept(candidates.vectors, candidates.theta))
+      for (index_t j = 0; j < wanted; ++j) rr_.conv[rr_.order[j]] = 1;
+  }
 }
 
 /// Thick restart keeping the keep_ best Ritz pairs (ranking order); converged pairs whose coupling
@@ -453,7 +465,8 @@ HermitianEigResult<T> block_lanczos_krylov_schur_timed(LinearOperator<T>& op,
                                                        const KrylovSchurOptions<T>& options,
                                                        LanczosTimings& timings,
                                                        const BlockTuning& tuning,
-                                                       BlockRunStats* stats) {
+                                                       BlockRunStats* stats,
+                                                       const OriginalResidualTest<T>* residual_test) {
   HS_ASSERT(options.block_size > 1, "block solver called with block_size " << options.block_size);
   if (stats) *stats = BlockRunStats{};
   const LanczosSetup setup = validate_lanczos(op, b_inner, options);
@@ -472,7 +485,7 @@ HermitianEigResult<T> block_lanczos_krylov_schur_timed(LinearOperator<T>& op,
   }
   timings = LanczosTimings{};
   Timer total;
-  BlockThickRestartLanczos<T> solver(op, b_inner, which, options, setup, dims, tuning, timings);
+  BlockThickRestartLanczos<T> solver(op, b_inner, which, options, setup, dims, tuning, timings, residual_test);
   HermitianEigResult<T> result = solver.run();
   timings.total = total.seconds();
   if (stats) *stats = solver.stats();
@@ -482,7 +495,7 @@ HermitianEigResult<T> block_lanczos_krylov_schur_timed(LinearOperator<T>& op,
 #define HS_INSTANTIATE_BLOCK_LANCZOS(T)                                            \
   template HermitianEigResult<T> block_lanczos_krylov_schur_timed<T>(              \
       LinearOperator<T>&, LinearOperator<T>*, Which, const KrylovSchurOptions<T>&, \
-      LanczosTimings&, const BlockTuning&, BlockRunStats*);
+      LanczosTimings&, const BlockTuning&, BlockRunStats*, const OriginalResidualTest<T>*);
 
 HS_FOR_EACH_SCALAR(HS_INSTANTIATE_BLOCK_LANCZOS)
 #undef HS_INSTANTIATE_BLOCK_LANCZOS

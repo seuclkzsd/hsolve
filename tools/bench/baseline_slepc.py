@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """SLEPc reference solver (strong open-source baseline): Krylov-Schur + shift-and-invert with an
-MUMPS factorization - the same direct solver hsolve uses - so the comparison isolates the
-eigensolver/orchestration layer.
+MUMPS factorization, using the same upstream MUMPS version as hsolve. hsolve also uses its own
+BLAS kernels and MUMPS patches, so the comparison includes their effects.
 
 Runs in the separate env `os2026-ref` (petsc4py/slepc4py 3.26, MUMPS 5.8.2 MPI), under MPI:
 
@@ -18,7 +18,8 @@ transformation carry the prefix "st_", so MUMPS controls are -st_mat_mumps_icntl
 
 Configuration choices that favour SLEPc are deliberate: the problem type comes from the case
 metadata (hsolve detects it itself) and B of a GHEP is flagged SPD. K = A - sigma B is factorized by
-MUMPS LDL^T (PCCHOLESKY, SYM=2). The convergence test is EPS_CONV_NORM,
+MUMPS LDL^T (PCCHOLESKY, SYM=2) in real builds. Complex builds use MUMPS LU: its complex
+Cholesky supports symmetric matrices, not general Hermitian matrices. The convergence test is EPS_CONV_NORM,
 ||r|| / (||A|| + |lambda| ||B||), the same backward-error notion hsolve accepts with (SLEPc takes
 ||.||_inf, an upper bound of the 2-norm, so its estimate is the more lenient one; tools/eval checks
 the results with conservative 2-norm estimates). Targets: 'nearest' (Krylov-Schur, which =
@@ -162,14 +163,17 @@ def petsc_option_names(petsc_args: list[str]) -> list[str]:
     return [tok[1:] for tok in petsc_args if re.match(r"^-[A-Za-z]", tok)]
 
 
-def option_defaults(mode: str) -> list[tuple[str, str]]:
+def option_defaults(mode: str, *, complex_scalar: bool = False) -> list[tuple[str, str]]:
     """PETSc options-database defaults (command-line values win). The shift-invert solver choice
     is set in the code AND here: multi-communicator spectrum slicing (-eps_krylovschur_partitions
     > 1) builds one ST/KSP/PC per partition from the options database (prefix st_) and silently
     falls back to PETSc's native Cholesky without them (measured: 190 s instead of MUMPS). Slicing
     also needs the inertia of the MUMPS factorization: the root front must not go to ScaLAPACK
     (ICNTL(13)=1) and null pivots are detected (ICNTL(24)=1, CNTL(3)), as in SLEPc's ex25."""
-    out = [("st_ksp_type", "preonly"), ("st_pc_type", "cholesky"), ("st_pc_factor_mat_solver_type", "mumps")]
+    if mode == "interval" and complex_scalar:
+        raise SystemExit("baseline_slepc: complex MUMPS LU does not provide inertia for spectrum slicing")
+    out = [("st_ksp_type", "preonly"), ("st_pc_type", "lu" if complex_scalar else "cholesky"),
+           ("st_pc_factor_mat_solver_type", "mumps")]
     if mode == "interval":
         out += [("st_mat_mumps_icntl_13", "1"), ("st_mat_mumps_icntl_24", "1"), ("st_mat_mumps_cntl_3", "1e-12")]
     return out
@@ -225,7 +229,7 @@ def main(argv: list[str] | None = None) -> int:
         vals = m.data[ip[0]:ip[-1]].astype(PETSc.ScalarType)
         a = PETSc.Mat().createAIJ(size=((r1 - r0, n), (r1 - r0, n)), csr=(rows, cols, vals), comm=comm)
         a.assemble()
-        a.setOption(PETSc.Mat.Option.SYMMETRIC, True)
+        a.setOption(PETSc.Mat.Option.SYMMETRIC, not np.iscomplexobj(m.data))
         a.setOption(PETSc.Mat.Option.HERMITIAN, True)
         if spd:
             a.setOption(PETSc.Mat.Option.SPD, True)
@@ -238,7 +242,7 @@ def main(argv: list[str] | None = None) -> int:
         v.assemble()
         scatter, v0 = PETSc.Scatter.toZero(v)
         scatter.scatter(v, v0, False, PETSc.Scatter.Mode.FORWARD)
-        out = [float(x) for x in v0.getArray()] if comm.getRank() == 0 else []
+        out = [float(x.real) for x in v0.getArray()] if comm.getRank() == 0 else []
         scatter.destroy(), v0.destroy(), v.destroy()
         return out
 
@@ -250,6 +254,8 @@ def main(argv: list[str] | None = None) -> int:
     tgt = resolve_target(cs.config.get("target", {}), args.target)
     tol = args.tol if args.tol is not None else float(cs.config.get("tol", 1e-10))
     problem = cs.meta["problem"]
+    complex_scalar = np.issubdtype(PETSc.ScalarType, np.complexfloating)
+    defaults = option_defaults(tgt["mode"], complex_scalar=complex_scalar)
     if problem not in PROBLEM_TYPES:
         raise SystemExit(f"baseline_slepc: unknown problem {problem!r}")
     if tgt["mode"] == "interval" and problem == "GHIEP":
@@ -282,7 +288,7 @@ def main(argv: list[str] | None = None) -> int:
     eps.setTolerances(tol, args.max_it)
     eps.setConvergenceTest(SLEPc.EPS.Conv.NORM)
     opts = PETSc.Options()
-    for name, value in option_defaults(tgt["mode"]):
+    for name, value in defaults:
         if not opts.hasName(name):   # command-line values win
             opts.setValue(name, value)
     st = eps.getST()
@@ -290,7 +296,7 @@ def main(argv: list[str] | None = None) -> int:
     ksp = st.getKSP()
     ksp.setType(PETSc.KSP.Type.PREONLY)
     pc = ksp.getPC()
-    pc.setType(PETSc.PC.Type.CHOLESKY)  # MUMPS LDL^T (SYM=2) for indefinite K, SYM=1 when SPD
+    pc.setType(PETSc.PC.Type.LU if complex_scalar else PETSc.PC.Type.CHOLESKY)
     pc.setFactorSolverType("mumps")
     eps.setFromOptions()  # -eps_*, -st_*, -st_mat_mumps_icntl_* ... from the command line
 
@@ -359,6 +365,7 @@ def main(argv: list[str] | None = None) -> int:
         report = {
             "solver": "slepc-krylovschur-sinvert-mumps",
             "slepc_version": ".".join(map(str, SLEPc.Sys.getVersion())),
+            "petsc_scalar_type": np.dtype(PETSc.ScalarType).name, "factor_pc_type": pc.getType(),
             "mpi_ranks": comm.getSize(),
             "petsc_options": petsc_args, "unused_options": unused, "bind": args.bind,
             "omp_threads": int(os.environ.get("OMP_NUM_THREADS", "0") or 0),

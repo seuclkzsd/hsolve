@@ -2,7 +2,7 @@
 # hsolve-mpirun: run hsolve as one MPI job laid out over the sockets of this machine (DESIGN §3.9,
 # docs/PARALLEL.md). CMake copies it next to hsolve-mpi (build/<preset>/hsolve-mpirun).
 #
-#   hsolve-mpirun [--ranks R] [--dry-run] [--mpiexec PATH] [--] <hsolve arguments>
+#   hsolve-mpirun [--ranks R] [--interleave-leader] [--dry-run] [--mpiexec PATH] [--] <hsolve arguments>
 #
 # Layout (the cores this process may use: its affinity, e.g. a cgroup or taskset; per NUMA node):
 #   * rank 0, the leader: every allowed core, OMP_NUM_THREADS = their number - it runs the solve as
@@ -16,6 +16,10 @@
 # costs ~1.7-1.9 s (results/p10_mpi.md). --ranks R forces an MPI job of R ranks, R - 1 helpers: on
 # R - 1 nodes if there are that many, else the allowed cores split into R - 1 equal contiguous
 # blocks. --dry-run prints the plan and the command.
+# --interleave-leader opts into interleaving the leader's memory across the NUMA nodes containing
+# its allowed CPUs (requires numactl). Helpers retain their inherited policy. This can improve
+# large cross-socket solves, but is slower on some small cases; the default policy is unchanged.
+# On one NUMA node the option has no effect.
 # mpiexec: --mpiexec, else $MPIEXEC, else mpiexec on PATH, else $HS_REF_ENV/bin/mpiexec (the Open
 # MPI 5 of the os2026-ref environment on the cluster nodes). The plan reaches the ranks through
 # the environment (HSOLVE_MPIRUN_PLAN, HSOLVE_MPIRUN_EXE: exported, which every launcher passes to
@@ -39,13 +43,17 @@ if [ -n "${HSOLVE_MPIRUN_PLAN:-}" ]; then
   [ -n "$block" ] || { echo "hsolve-mpirun: no cores planned for rank $rank" >&2; exit 2; }
   n=$(awk -v l="$block" 'BEGIN { n = 0; k = split(l, p, ","); for (i = 1; i <= k; i++) { if (p[i] ~ /-/) { split(p[i], r, "-"); n += r[2] - r[1] + 1 } else n++ } print n }')
   export OMP_NUM_THREADS="$n" OPENBLAS_NUM_THREADS="$n"
+  if [ "$rank" = 0 ] && [ -n "${HSOLVE_MPIRUN_INTERLEAVE:-}" ]; then
+    exec taskset -c "$block" numactl --interleave="$HSOLVE_MPIRUN_INTERLEAVE" "$HSOLVE_MPIRUN_EXE" "$@"
+  fi
   exec taskset -c "$block" "$HSOLVE_MPIRUN_EXE" "$@"
 fi
 
-ranks="" dry=0 mpiexec="${MPIEXEC:-}"
+ranks="" dry=0 interleave=0 mpiexec="${MPIEXEC:-}"
 while [ $# -gt 0 ]; do
   case "$1" in
     --ranks) ranks="$2"; shift 2 ;;
+    --interleave-leader) interleave=1; shift ;;
     --dry-run) dry=1; shift ;;
     --mpiexec) mpiexec="$2"; shift 2 ;;
     --) shift; break ;;
@@ -58,7 +66,7 @@ expand() { awk -v l="$1" 'BEGIN { k = split(l, p, ","); for (i = 1; i <= k; i++)
 allowed=$(awk '/^Cpus_allowed_list/ { print $2 }' /proc/self/status)
 mapfile -t cpus < <(expand "$allowed")
 join() { local IFS=,; echo "$*"; }
-groups=()
+groups=() nodes=()
 for nd in /sys/devices/system/node/node[0-9]*; do
   [ -r "$nd/cpulist" ] || continue
   mapfile -t ncpus < <(expand "$(cat "$nd/cpulist")")
@@ -66,9 +74,17 @@ for nd in /sys/devices/system/node/node[0-9]*; do
   for c in "${cpus[@]}"; do
     for d in "${ncpus[@]}"; do [ "$c" = "$d" ] && mine+=("$c"); done
   done
-  [ ${#mine[@]} -gt 0 ] && groups+=("$(join "${mine[@]}")")
+  if [ ${#mine[@]} -gt 0 ]; then
+    groups+=("$(join "${mine[@]}")")
+    nodes+=("${nd##*node}")
+  fi
 done
 [ ${#groups[@]} -gt 0 ] || groups=("$(join "${cpus[@]}")")
+HSOLVE_MPIRUN_INTERLEAVE=""
+if [ "$interleave" = 1 ] && [ ${#nodes[@]} -gt 1 ]; then
+  command -v numactl >/dev/null 2>&1 || { echo "hsolve-mpirun: --interleave-leader requires numactl" >&2; exit 2; }
+  HSOLVE_MPIRUN_INTERLEAVE="$(join "${nodes[@]}")"
+fi
 
 # One NUMA node and no --ranks: the plain hsolve, as if called directly (all allowed cores).
 if [ -z "$ranks" ] && [ ${#groups[@]} -lt 2 ]; then
@@ -105,14 +121,19 @@ if [ "$helpers" -gt 0 ]; then
 fi
 HSOLVE_MPIRUN_PLAN=$(IFS=';'; echo "${plan[*]}")
 HSOLVE_MPIRUN_EXE="$exe"
-export HSOLVE_MPIRUN_PLAN HSOLVE_MPIRUN_EXE
+export HSOLVE_MPIRUN_PLAN HSOLVE_MPIRUN_EXE HSOLVE_MPIRUN_INTERLEAVE
 cmd=("$mpiexec" -n "$ranks")
 if "$mpiexec" --version 2>&1 | grep -qiE 'open mpi|open-mpi|openrte|prrte'; then
   cmd+=(--bind-to none -x HSOLVE_MPIRUN_PLAN -x HSOLVE_MPIRUN_EXE)
+  [ -z "$HSOLVE_MPIRUN_INTERLEAVE" ] || cmd+=(-x HSOLVE_MPIRUN_INTERLEAVE)
 fi
 cmd+=("$here/hsolve-mpirun" "$@")
 if [ "$dry" = 1 ]; then
   for ((r = 0; r < ranks; r++)); do echo "rank $r: cores ${plan[$r]}"; done
+  if [ -n "$HSOLVE_MPIRUN_INTERLEAVE" ]; then
+    echo "rank 0: memory interleaved across NUMA nodes $HSOLVE_MPIRUN_INTERLEAVE"
+    printf 'HSOLVE_MPIRUN_INTERLEAVE=%q ' "$HSOLVE_MPIRUN_INTERLEAVE"
+  fi
   printf 'HSOLVE_MPIRUN_PLAN=%q HSOLVE_MPIRUN_EXE=%q ' "$HSOLVE_MPIRUN_PLAN" "$HSOLVE_MPIRUN_EXE"
   printf '%q ' "${cmd[@]}"; echo
   exit 0

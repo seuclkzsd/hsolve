@@ -35,6 +35,13 @@
 // (format at sampler::dump), aggregated and symbolised by tools/bench/factspeed_symbolize.py (nm;
 // by symbol, category, time window, thread), and the JSON line "samples" a per-job count by object.
 // CPU time includes system time (page faults count at the faulting instruction).
+// --sample-leader 1 instead uses a monotonic wall timer directed at the calling thread;
+// this exposes its serial work and waits, rather than sampling mostly spinning workers.
+// --jobs solve instead runs the whole driver using config.json; only --threads, --reps and
+// --sample-us/--sample-out apply. Each repetition has its own sample tag and emits a full report.
+// This benchmark does not link the CLI's BLAS hook: preload libhsolve_blashook.so when profiling
+// the default CLI kernels. Repeated in-process solves reuse warm allocations/caches; use fresh
+// CLI processes without sampling for performance comparisons and independent tools/eval checks.
 // Output: one JSON object per line on stdout. Run through tools/run/guard.py (measurement slot for
 // timings: --exclusive).
 //
@@ -114,8 +121,12 @@ struct Args {
   bool mumps_stats = false;
   bool thp_disable = false;
   int sample_us = 0;
+  bool sample_leader = false;
   std::string sample_out;
 };
+
+// --jobs solve profiles complete solves with the case config; only --threads, --reps,
+// --sample-us/--sample-out/--sample-leader apply in this mode. Other factor controls are ignored.
 
 // ---------------------------------------------------------------- SIGPROF sampler
 // The handler only stores the interrupted RIP (tagged with the current job in the top byte; user
@@ -131,6 +142,8 @@ Sample* g_buf = nullptr;
 std::atomic<std::size_t> g_count{0};
 std::atomic<int> g_tag{0};
 std::atomic<std::int64_t> g_t0_ns{0};
+bool g_leader = false;
+timer_t g_timer{};
 
 std::int64_t now_ns() {
   timespec ts;
@@ -150,7 +163,7 @@ void handler(int, siginfo_t*, void* ctx) {
   g_buf[i].tid = static_cast<std::uint32_t>(syscall(SYS_gettid));
 }
 
-void install() {
+void install(bool leader) {
   g_buf = new Sample[kCapacity];
   struct sigaction sa;
   std::memset(&sa, 0, sizeof(sa));
@@ -158,11 +171,28 @@ void install() {
   sa.sa_flags = SA_SIGINFO | SA_RESTART;
   sigemptyset(&sa.sa_mask);
   if (sigaction(SIGPROF, &sa, nullptr) != 0) HS_THROW(Internal, "sigaction(SIGPROF) failed");
+  g_leader = leader;
+  if (leader) {
+    sigevent event{};
+    event.sigev_notify = SIGEV_THREAD_ID;
+    event.sigev_signo = SIGPROF;
+    event._sigev_un._tid = static_cast<pid_t>(syscall(SYS_gettid));
+    if (timer_create(CLOCK_MONOTONIC, &event, &g_timer) != 0)
+      HS_THROW(Internal, "timer_create for leader sampling failed");
+  }
 }
 
 void start(int tag, int us) {
   g_t0_ns.store(now_ns());
   g_tag.store(tag);
+  if (g_leader) {
+    itimerspec it{};
+    it.it_interval.tv_sec = us / 1000000;
+    it.it_interval.tv_nsec = (us % 1000000) * 1000;
+    it.it_value = it.it_interval;
+    if (timer_settime(g_timer, 0, &it, nullptr) != 0) HS_THROW(Internal, "timer_settime failed");
+    return;
+  }
   itimerval it;
   it.it_interval.tv_sec = us / 1000000;
   it.it_interval.tv_usec = us % 1000000;
@@ -171,6 +201,12 @@ void start(int tag, int us) {
 }
 
 void stop() {
+  if (g_leader) {
+    itimerspec it{};
+    timer_settime(g_timer, 0, &it, nullptr);
+    g_tag.store(0);
+    return;
+  }
   itimerval it;
   std::memset(&it, 0, sizeof(it));
   setitimer(ITIMER_PROF, &it, nullptr);
@@ -278,6 +314,9 @@ json factor_record(const Fac<T>& f) {
   return {{"rinfog1", m.rinfog(1)},
           {"rinfog2", m.rinfog(2)},
           {"rinfog3", m.rinfog(3)},
+          {"rinfog19", m.rinfog(19)},
+          {"rinfog20", m.rinfog(20)},
+          {"rinfog21", m.rinfog(21)},
           {"infog9", hs::mumps::decode_count(m.infog(9))},
           {"infog11", m.infog(11)},
           {"infog12", m.infog(12)},
@@ -306,8 +345,43 @@ std::vector<int> read_perm(const std::string& path, index_t n) {
   return p;
 }
 
+// Full-driver profiling: original case configuration, with only the thread count overridden.
+// Sampling excludes input loading and output. Each repetition gets its own tag/time origin.
+template <class T>
+int run_solve(const Args& args, const hs::CsrMatrix<T>& a, const hs::CsrMatrix<T>* b) {
+  if (args.reps < 1 || args.reps > 254) HS_THROW(InvalidInput, "solve profiling needs 1..254 repetitions");
+  std::ifstream file(args.case_dir / "config.json");
+  if (!file) HS_THROW(Io, "cannot open " << (args.case_dir / "config.json"));
+  std::stringstream text;
+  text << file.rdbuf();
+  auto cfg = hs::parse_config(text.str());
+  if (args.threads > 0) cfg.threads = args.threads;
+  if (args.sample_us > 0) sampler::install(args.sample_leader);
+  std::vector<std::string> tags{"none"};
+  bool ok = true;
+  for (int r = 0; r < args.reps; ++r) {
+    tags.push_back("solve-r" + std::to_string(r));
+    if (args.sample_us > 0) sampler::start(r + 1, args.sample_us);
+    auto sol = hs::solve(a, b, cfg);
+    if (args.sample_us > 0) sampler::stop();
+    auto rec = json::parse(sol.report.to_json());
+    rec.update({{"event", "solve"}, {"rep", r}, {"leader_tid", syscall(SYS_gettid)}});
+    emit(rec);
+    ok = ok && sol.report.success;
+  }
+  if (args.sample_us > 0) {
+    auto rec = sampler::dump(tags, args.sample_out);
+    rec["event"] = "samples";
+    rec["sample_us"] = args.sample_us;
+    rec["sample_scope"] = args.sample_leader ? "leader_wall" : "process_cpu";
+    emit(rec);
+  }
+  return ok ? 0 : 1;
+}
+
 template <class T>
 int run(const Args& args, const hs::CsrMatrix<T>& a, const hs::CsrMatrix<T>* b) {
+  if (args.jobs == std::vector<std::string>{"solve"}) return run_solve(args, a, b);
   const hs::ShiftedPencil<T> pencil(a, b);
   const int threads = args.threads > 0 ? args.threads : omp_get_max_threads();
   hs::FactorOptions fo;  // the driver's (factor_options_from) for an in-core double solve
@@ -370,7 +444,7 @@ int run(const Args& args, const hs::CsrMatrix<T>& a, const hs::CsrMatrix<T>* b) 
 
   std::vector<std::string> tags = {"none"};
   for (const std::string& j : args.jobs) tags.push_back(j);
-  if (args.sample_us > 0) sampler::install();
+  if (args.sample_us > 0) sampler::install(args.sample_leader);
   for (int r = 0; r < args.reps; ++r) {
     for (std::size_t ji = 0; ji < args.jobs.size(); ++ji) {
       const std::string& job = args.jobs[ji];
@@ -411,6 +485,7 @@ int run(const Args& args, const hs::CsrMatrix<T>& a, const hs::CsrMatrix<T>* b) 
     json s = sampler::dump(tags, args.sample_out);
     s["event"] = "samples";
     s["sample_us"] = args.sample_us;
+    s["sample_scope"] = args.sample_leader ? "leader_wall" : "process_cpu";
     emit(s);
   }
   return 0;
@@ -470,6 +545,7 @@ int main(int argc, char** argv) {
       else if (k == "--mumps-stats") args.mumps_stats = std::stoi(need(i)) != 0;
       else if (k == "--thp-disable") args.thp_disable = std::stoi(need(i)) != 0;
       else if (k == "--sample-us") args.sample_us = std::stoi(need(i));
+      else if (k == "--sample-leader") args.sample_leader = std::stoi(need(i)) != 0;
       else if (k == "--sample-out") args.sample_out = need(i);
       else {
         std::cerr << "unknown argument " << k << "\n";
@@ -481,7 +557,7 @@ int main(int argc, char** argv) {
     }
   }
   if (args.case_dir.empty()) {
-    std::cerr << "usage: bench_factspeed_factor --case DIR [--lower a --upper b] [--jobs main,a,b] [...]\n";
+    std::cerr << "usage: bench_factspeed_factor --case DIR [--lower a --upper b] [--jobs main,a,b|solve] [...]\n";
     return 2;
   }
   if (args.thp_disable) {

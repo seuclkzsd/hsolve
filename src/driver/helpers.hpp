@@ -64,8 +64,8 @@ struct CountTask {
   double outward = 1.0;
   double step = 0.0;
   bool s_is_gap = true;
-  double cap_mb = 0.0;     ///< memory the leader granted the count (MB; the helper's counter is capped
-                           ///< at the leader's factorization cap, fixed when it was built)
+  double cap_mb = 0.0;     ///< working-memory cap of this count (MB), also bounded by its budget
+                           ///< and the leader's factorization cap; applied before every attempt
   double budget_gb = 0.0;  ///< the helper's memory budget for the task (its SolverConfig's)
 };
 
@@ -130,7 +130,9 @@ class Helpers {
   /// problem asked for one). Done here, when the leader is about to wait anyway, so that helpers
   /// never compute while the leader does (results/p10_mpi.md: preparing during the leader's main
   /// factorization slowed it more than it saved). A helper that fails to prepare is not usable.
-  virtual void prepare(Ctx& c) = 0;
+  /// max_helpers > 0: only that many first usable helpers (counts budget a pair); 0: all
+  /// usable helpers (slices). Choose the limit before preparation; drop() before a new batch.
+  virtual void prepare(Ctx& c, int max_helpers = 0) = 0;
   /// The leader takes the work back, or the helpers' batch is done: every helper that holds the
   /// problem frees it and all built on it, and the call returns once they confirmed (their memory
   /// is then no longer charged). No task may be in flight. A later task sends the problem again

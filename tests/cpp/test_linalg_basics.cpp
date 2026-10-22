@@ -23,6 +23,31 @@ TEST(LinalgDenseMatrix, ShapeAndAlignment) {
   EXPECT_EQ(m(0, 4), 0.0);
 }
 
+TEST(LinalgDenseMatrix, LargeResetPreservesCopyAndColumnGrowth) {
+  // Cross several 2 MiB regions; neither dimension aligns with a region boundary.
+  constexpr hs::index_t rows = 1025, cols = 769;
+  hs::DenseMatrix<double> m(rows, cols);
+  const auto count = rows * cols;
+  EXPECT_TRUE(std::all_of(m.data(), m.data() + count, [](double x) { return x == 0.0; }));
+  for (hs::index_t i = 0; i < count; ++i) m.data()[i] = 1.0 + double(i % 97);
+  auto copy = m;
+  EXPECT_TRUE(std::equal(m.data(), m.data() + count, copy.data()));
+  auto moved = std::move(copy);
+  moved.resize_cols(cols + 17);
+  EXPECT_TRUE(std::equal(m.data(), m.data() + count, moved.data()));
+  EXPECT_TRUE(std::all_of(moved.data() + count, moved.data() + rows * (cols + 17),
+                          [](double x) { return x == 0.0; }));
+  // Reuse a larger capacity while reshaping: every previous value must be cleared.
+  moved.resize(cols, rows);
+  EXPECT_TRUE(std::all_of(moved.data(), moved.data() + count, [](double x) { return x == 0.0; }));
+  EXPECT_EQ(m(rows - 1, cols - 1), 1.0 + double((count - 1) % 97));
+  hs::DenseMatrix<hs::cplx> complex(rows, cols);
+  EXPECT_TRUE(std::all_of(complex.data(), complex.data() + count,
+                          [](hs::cplx z) { return z == hs::cplx(0); }));
+  hs::aligned_vector<double> normal(1000);
+  EXPECT_TRUE(std::all_of(normal.begin(), normal.end(), [](double x) { return x == 0.0; }));
+}
+
 TEST(UtilError, ThrowMacroCarriesCode) {
   try {
     HS_THROW(InvalidInput, "n=" << 3);

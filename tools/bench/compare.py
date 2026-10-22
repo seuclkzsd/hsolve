@@ -92,6 +92,8 @@ def guarded(cmd: list[str], summary: Path, cores: str, mem_gb: float, timeout: i
          "--timeout", str(timeout), "--summary", str(summary)]
     g += ["--exclusive"] if exclusive else ["--skip-busy-check"]
     proc = subprocess.run(g + ["--"] + cmd, cwd=REPO, capture_output=True, text=True)
+    summary.with_suffix(".stdout.txt").write_text(proc.stdout)
+    summary.with_suffix(".stderr.txt").write_text(proc.stderr)
     s = json.loads(summary.read_text()) if summary.exists() else {"returncode": proc.returncode, "killed": "no summary"}
     s["stderr_tail"] = proc.stderr[-1500:]
     return s
