@@ -15,8 +15,11 @@ Two problem families at n ~ 1e4, 1e5 and 1e6, generated deterministically by too
 
 `run` starts every (case, threads, memory cap, repetition) once - in this order, repetitions
 outermost - with the case's config.json (target, tol) and nothing else: each under its own
-tools/run/guard.py, pinned to the first T cores from --first-core, with the RSS cap --mem-gb (hsolve
-plans its memory budget from it, docs/DESIGN.md §3.6), and records the guard summary (wall time,
+tools/run/guard.py with the RSS cap --mem-gb (hsolve plans its memory budget from it,
+docs/DESIGN.md §3.6), pinned to T CPUs, one per physical core (no hyperthread siblings): the first
+ones of the measurement slot HS_MEASURE_CORES where the node defines one (cluster nodes: 16-31,
+which needs guard.py --exclusive around the whole `run`), else of the CPUs this process may run
+on - from --first-core / HS_TIER_FIRST_CORE when given. It records the guard summary (wall time,
 peak RSS of the process tree) next to the result directory RAW/<case>/t<T>-m<GB>-r<rep>/. Runs with
 a summary are skipped (resume). Timings need the measurement slot (guard.py --exclusive around the
 whole `run`). `table` gives per (case, threads, cap): median solve time [min-max] (report
@@ -37,6 +40,9 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
+from tools.run.guard import parse_cpulist  # noqa: E402  (standard library only)
+
 GUARD = ROOT / "tools" / "run" / "guard.py"
 # (cells, lengths) of the Yee cavities; 1e4 and 1e5 are tools/gen/yee.py's presets of the same names.
 YEE = {"1e4": ((20, 16, 12), (1.0, 0.7, 0.45)), "1e5": ((44, 34, 26), (1.0, 0.75, 0.55)),
@@ -47,7 +53,6 @@ WAVEGUIDE = {"1e4": 50, "1e5": 158, "1e6": 500}
 
 
 def generate(root: Path, sizes: list[str]) -> None:
-    sys.path.insert(0, str(ROOT))
     from tools.gen import waveguide, yee  # numpy / scipy: only needed here
 
     for size in sizes:
@@ -68,9 +73,65 @@ def find_hsolve(explicit: str | None) -> Path:
     raise SystemExit("resource_tiers: no hsolve executable (--hsolve PATH)")
 
 
+def cpulist(cpus: list[int]) -> str:
+    """[16, 17, 18, 20] -> '16-18,20' (guard.py --cores)."""
+    parts, start = [], None
+    for i, c in enumerate(cpus):
+        if start is None:
+            start = c
+        if i + 1 == len(cpus) or cpus[i + 1] != c + 1:
+            parts.append(str(c) if c == start else f"{start}-{c}")
+            start = None
+    return ",".join(parts)
+
+
+def one_per_core(cpus: list[int], topology: Path = Path("/sys/devices/system/cpu")) -> list[int]:
+    """cpus without hyperthread siblings: the first of each physical core's CPUs, in order."""
+    seen: set[int] = set()
+    out = []
+    for c in cpus:
+        try:
+            core = min(parse_cpulist((topology / f"cpu{c}" / "topology" / "thread_siblings_list").read_text()))
+        except (OSError, ValueError):
+            core = c
+        if core not in seen:
+            seen.add(core)
+            out.append(c)
+    return out
+
+
+def core_pool(environ: dict[str, str] | None = None, affinity: set[int] | None = None) -> list[int]:
+    """CPUs the runs may be pinned to, in order: the measurement slot HS_MEASURE_CORES where the
+    node defines one, else the CPUs this process may run on."""
+    env = os.environ if environ is None else environ
+    slot = env.get("HS_MEASURE_CORES", "")
+    return parse_cpulist(slot) if slot else sorted(os.sched_getaffinity(0) if affinity is None else affinity)
+
+
+def pick_cores(pool: list[int], threads: int, first: int | None) -> str:
+    """The first `threads` CPUs of pool from CPU `first` on (None: the pool's first) as a cpulist."""
+    if first is not None and first not in pool:
+        raise SystemExit(f"resource_tiers: first core {first} is not among the usable CPUs {cpulist(pool)}")
+    cpus = [c for c in pool if first is None or c >= first][:threads]
+    if len(cpus) < threads:
+        raise SystemExit(f"resource_tiers: {threads} threads need {threads} physical cores; the usable CPUs "
+                         f"{cpulist(pool)}{'' if first is None else f' from {first} on'} are {len(cpus)} "
+                         "(--threads, --first-core / HS_TIER_FIRST_CORE)")
+    return cpulist(cpus)
+
+
 def run(a: argparse.Namespace) -> int:
-    if os.environ.get("HS_SLOT_HELD") is None:
+    in_slot = os.environ.get("HS_SLOT_HELD") is not None
+    if not in_slot:
         print("resource_tiers: not inside the measurement slot - these times are not measurements", flush=True)
+    pool = one_per_core(core_pool())
+    cores = {t: pick_cores(pool, t, a.first_core) for t in (int(x) for x in a.threads.split(","))}
+    allowed = os.sched_getaffinity(0)
+    for spec in cores.values():
+        if not set(parse_cpulist(spec)) <= allowed:
+            raise SystemExit(f"resource_tiers: cores {spec} are not available to this process" +
+                             ("" if in_slot else " - the measurement slot HS_MEASURE_CORES needs guard.py --exclusive "
+                                                 "around `run`"))
     hsolve = find_hsolve(a.hsolve)
     out = Path(a.out)
     out.mkdir(parents=True, exist_ok=True)
@@ -89,12 +150,12 @@ def run(a: argparse.Namespace) -> int:
                         if gsum.exists():
                             continue
                         res.mkdir(parents=True, exist_ok=True)
-                        cores = f"{a.first_core}-{a.first_core + threads - 1}"
                         cmd = [str(hsolve), "--A", str(case / "A.npz")]
                         if (case / "B.npz").exists():
                             cmd += ["--B", str(case / "B.npz")]
                         cmd += ["--config", str(case / "config.json"), "--threads", str(threads), "--out", str(res), "-q"]
-                        g = [sys.executable, str(GUARD), "--skip-busy-check", "--cores", cores, "--threads", str(threads),
+                        g = [sys.executable, str(GUARD), "--skip-busy-check", "--cores", cores[threads],
+                             "--threads", str(threads),
                              "--mem-gb", f"{mem:g}", "--timeout", str(a.timeout), "--summary", str(gsum), "--"]
                         p = subprocess.run(g + cmd, capture_output=True, text=True)
                         (out / name / f"stderr-{run_id}.txt").write_text(p.stderr)
@@ -201,6 +262,13 @@ FAMILY_ZH = {"yee-pec-box": "三维 PEC 谐振腔，GHEP，最近 σ 的 {k} 个
              "wg-square": "二维方波导 50 GHz，GHIEP（B 不定），{k} 个传播模"}
 
 
+def certified_all(rows: list[dict[str, Any]]) -> str:
+    """One certificate state of several summary rows (a case at each thread count): 'passed' only
+    if every row passed, 'none' if no row performed one, else 'failed'."""
+    states = {r["certified"] for r in rows}
+    return "passed" if states == {"passed"} else "none" if states == {"none"} else "failed"
+
+
 def summary(rows: list[dict[str, Any]]) -> str:
     """docs/INSTALL.md's tier tables (Chinese): one row per case at the full cap, then the capped runs."""
     def fmt_t(x: float | None) -> str:
@@ -225,7 +293,7 @@ def summary(rows: list[dict[str, Any]]) -> str:
         out.append(f"| {label}（`{case}`）{'' if ok else '（有失败的运行）'} | {any_r['n']:,} | {any_r['nnz']:,} | "
                    f"{fmt_m(max(r['peak_rss_gib'] for r in per.values()))} | "
                    f"{fmt_t((per.get(16) or {}).get('time_median_s'))} | {fmt_t((per.get(4) or {}).get('time_median_s'))} | "
-                   f"{cert_zh.get(any_r['certified'], '未通过')} |")
+                   f"{cert_zh.get(certified_all(list(per.values())), '未通过')} |")
     capped = [r for r in rows if r["mem_gb"] < full]
     if capped:
         out += ["", "| 问题 | 内存上限 | 线程 | 分解方式 | 峰值内存 | 求解时间 |", "|---|---:|---:|---|---:|---:|"]
@@ -253,8 +321,10 @@ def main(argv: list[str] | None = None) -> int:
     r.add_argument("--mem-gb", default="32", help="RSS caps in GiB, comma-separated")
     r.add_argument("--reps", type=int, default=3)
     r.add_argument("--hsolve")
-    r.add_argument("--first-core", type=int, default=int(os.environ.get("HS_TIER_FIRST_CORE", "16")),
-                   help="first core of the pinned range (default 16: the cluster's measurement slot)")
+    first = os.environ.get("HS_TIER_FIRST_CORE")
+    r.add_argument("--first-core", type=int, default=int(first) if first else None,
+                   help="first CPU of the pinned ones (default: HS_TIER_FIRST_CORE, else the first CPU of the "
+                        "measurement slot HS_MEASURE_CORES where set, else of this process's CPUs)")
     r.add_argument("--timeout", type=int, default=1200)
     t = sub.add_parser("table")
     t.add_argument("raw", nargs="+")

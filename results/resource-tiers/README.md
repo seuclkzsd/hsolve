@@ -43,8 +43,8 @@
 ## 复现
 
 ```bash
-# 在集群节点上（docs/DESIGN.md §6）；其他机器去掉 cluster_run.sh 前缀即可。数据与原始结果默认在节点的
-# $HOME/hsolve-tiers（环境变量 TIERS），求解器默认 build/release/hsolve（环境变量 HSOLVE）。
+# 在集群节点上（docs/DESIGN.md §6）。数据与原始结果默认在节点的 $HOME/hsolve-tiers（环境变量 TIERS），
+# 求解器默认 build/release/hsolve（环境变量 HSOLVE）。
 tools/dev/cluster_run.sh gpu01 -- tools/dev/build.sh
 tools/dev/cluster_run.sh gpu01 -- results/resource-tiers/reproduce.sh generate
 tools/dev/cluster_run.sh gpu01 -- python3 tools/run/guard.py --exclusive --timeout 2700 -- \
@@ -52,3 +52,9 @@ tools/dev/cluster_run.sh gpu01 -- python3 tools/run/guard.py --exclusive --timeo
 tools/dev/cluster_run.sh gpu01 -- results/resource-tiers/reproduce.sh table pack
 results/resource-tiers/reproduce.sh retable     # 只由入库的原始数据重新制表
 ```
+
+其他机器：在项目环境里（`source env/activate.sh`）去掉 `cluster_run.sh` 前缀运行同样的命令。每次运行绑定的核由
+`scripts/resource_tiers.py` 选：节点定义了测量槽（`HS_MEASURE_CORES`，集群节点为 16–31）时取槽内的前 16 / 4 个核，
+否则取当前进程可用 CPU 中的前 16 / 4 个物理核（同一物理核的超线程只取一个）；`HS_TIER_FIRST_CORE=N`（或
+`run --first-core N`）指定从哪个 CPU 起。16 线程的档位需要 16 个物理核，核不够时脚本在开始前报错；
+`--threads 8,4` 之类可改测其他线程数。

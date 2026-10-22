@@ -17,7 +17,10 @@
 #     pack        that run directory (no eigenvectors, home as $HOME) as raw-tiers-<host>.tar.gz here
 #     retable     the table again from the committed raw-tiers-*.tar.gz
 # TIERS defaults to $HOME/hsolve-tiers; TIERS_HOST (default: this host) names the measured node;
-# HSOLVE (default build/release/hsolve) the executable.
+# HSOLVE (default build/release/hsolve) the executable. Cores of each run (scripts/resource_tiers.py):
+# the first 16 / 4 of the measurement slot HS_MEASURE_CORES where the node defines one (cluster
+# nodes: 16-31), else the first 16 / 4 physical cores this process may use; HS_TIER_FIRST_CORE=N
+# starts from CPU N.
 set -euo pipefail
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 root="$(cd "$here/../.." && pwd)"
@@ -43,6 +46,6 @@ for stage in "$@"; do
       trap 'rm -rf "$tmp"' EXIT
       for t in "$here"/raw-tiers-*.tar.gz; do tar -xzf "$t" -C "$tmp"; done
       "${tiers[@]}" table "$tmp"/tiers-* --md "$here/tiers.md" --json "$here/tiers.json" --summary-md "$here/tiers-summary.md" ;;
-    *) sed -n '2,21p' "$0" >&2; exit 2 ;;
+    *) sed -n '2,23p' "$0" >&2; exit 2 ;;
   esac
 done
