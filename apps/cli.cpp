@@ -255,7 +255,7 @@ int hs::cli::run(int argc, char** argv, hs::Transport* peers) {
   std::string structure, subspace;
   bool verbose = false, quiet = false, version = false, secure = false;
 
-  app.add_option("--A", a_path, "matrix A (.npz scipy sparse, .npy dense, .mtx)")->required();
+  auto* o_a = app.add_option("--A", a_path, "matrix A (.npz scipy sparse, .npy dense, .mtx); required except with --version");
   app.add_option("--B", b_path, "matrix B (generalized problem)");
   app.add_option("--config", config_path, "config.json (docs/FORMATS.md section 2)");
   app.add_option("--out", out_dir, "output directory")->capture_default_str();
@@ -318,6 +318,8 @@ int hs::cli::run(int argc, char** argv, hs::Transport* peers) {
 
   try {
     app.parse(argc, argv);
+    // --A is required for a solve; --version answers without it.
+    if (!version && o_a->count() == 0) throw CLI::RequiredError("--A");
   } catch (const CLI::ParseError& e) {
     return app.exit(e) == 0 ? 0 : 2;
   }

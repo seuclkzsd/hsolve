@@ -130,6 +130,15 @@ def test_structure_candidates_switch(case, tmp_path):
     _run("--A", str(case / "A.npz"), "--out", str(tmp_path / "on"), "--structure-candidates", "on", check=2)
 
 
+@needs_exe
+def test_version_needs_no_input_but_a_solve_does(tmp_path):
+    info = _run("--version").stdout
+    assert info.startswith("hsolve ") and "flags: " in info
+    assert _run("--A", "unused.npz", "--version").stdout == info  # --version answers before reading
+    r = _run("--out", str(tmp_path / "out"), check=2)
+    assert "--A is required" in r.stderr and not (tmp_path / "out").exists()
+
+
 def _pickle_npy(path: Path, marker: Path) -> None:
     """A .npy holding an object array whose pickle would create `marker` when unpickled."""
 
