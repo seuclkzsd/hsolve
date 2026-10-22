@@ -282,7 +282,8 @@ def conditions_text(summary: dict[str, Any]) -> str:
         return "（尚无数据）"
     c0 = rows[0]["conditions"]
     hosts = ", ".join(summary["hosts"])
-    commits = sorted({r["conditions"].get("git_commit", "")[:7] for r in rows})
+    commits = sorted({(r["conditions"].get("source_commit") or r["conditions"].get("git_commit", ""))[:7]
+                      for r in rows})
     md5s = sorted({r["conditions"].get("hsolve_md5") for r in rows if r["conditions"].get("hsolve_md5")})
     slepc = sorted({r["conditions"].get("slepc_version") for r in rows if r["conditions"].get("slepc_version")})
     reps = sorted({r["conditions"].get("reps") for r in rows})
@@ -290,7 +291,7 @@ def conditions_text(summary: dict[str, Any]) -> str:
     return "\n".join([
         f"- 硬件：{hosts}（{c0.get('cpu', '')}，2 × 16 核，251 GB），每次运行绑定一个 socket 的 16 个物理核 "
         f"`{c0.get('cores')}`、内存上限 {c0.get('mem_gb'):g} GiB，同一时刻只有一个计时运行（`tools/run/guard.py --exclusive`）。",
-        f"- 版本：hsolve 提交 {', '.join(commits)}（`build/release/hsolve`，md5 {', '.join(m[:12] for m in md5s)}），"
+        f"- 版本：hsolve 源码提交 {', '.join(commits)}（`build/release/hsolve`，md5 {', '.join(m[:12] for m in md5s)}），"
         f"SLEPc/PETSc {', '.join(slepc)}（MUMPS 5.8.2）；日期 {dates[0]} 至 {dates[-1]}。",
         f"- 重复：每个场景 {', '.join(map(str, reps))} 次，三个求解器交错运行（每次轮换先后顺序），表中时间为中位数。",
         "- 时间口径：hsolve 为报告中的 `time_total_s`（含范数估计、分析、分解、迭代、完备性证书）；SLEPc 为 "

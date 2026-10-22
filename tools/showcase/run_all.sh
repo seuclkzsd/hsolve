@@ -12,6 +12,7 @@
 #   physics                 build/test lane: PEC cavity and square waveguide against closed forms
 #   tables                  results/showcase/scenarios.{json,md} and the generated page sections
 #   slot1 | slot2 | slot3 | slot4   the campaign's four slot calls (the scenario groups below)
+#   slots-real              slot1, slot2 and slot3 one after the other (the real-scalar SLEPc build)
 #   detach STEP [ARGS...]   run a step with nohup setsid; log in $SHOWCASE_HOME/logs/
 # Figures need matplotlib, which the project env does not ship: run
 #   python3 -m tools.showcase.figures all       with any Python that has numpy + matplotlib.
@@ -33,7 +34,7 @@ SLOT3=(pec-box-1e6 waveguide-1e6)
 SLOT4=(bloch-1e4 bloch-1e5 bloch-interval)
 
 step="${1:-}"
-[ -n "$step" ] || { sed -n '2,24p' "$0" >&2; exit 2; }
+[ -n "$step" ] || { awk 'NR > 1 && /^#/ { print; next } NR > 1 { exit }' "$0" >&2; exit 2; }
 shift
 case "$step" in
   prepare)
@@ -54,6 +55,10 @@ case "$step" in
   slot2) "$0" campaign "${SLOT2[@]}" ;;
   slot3) "$0" campaign "${SLOT3[@]}" ;;
   slot4) "$0" campaign-complex "${SLOT4[@]}" ;;
+  slots-real)   # slot1-3 back to back (separate slot calls; a failed call does not stop the next)
+    rc=0
+    for s in slot1 slot2 slot3; do "$0" "$s" || rc=$?; done
+    exit "$rc" ;;
   physics)
     "${lane[@]}" python -m tools.showcase.physics run --root "$ROOT" --source-root data ;;
   tables)

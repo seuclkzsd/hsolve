@@ -229,9 +229,20 @@ def environment() -> dict[str, Any]:
         pass
     binary = compare.HSOLVE
     md5 = hashlib.md5(binary.read_bytes()).hexdigest() if binary.exists() else None
-    commit = subprocess.run(["git", "rev-parse", "HEAD"], cwd=REPO, capture_output=True, text=True).stdout.strip()
     return {"host": socket.gethostname(), "cpu": cpu, "os": platform.platform(), "python": platform.python_version(),
-            "git_commit": commit, "hsolve_binary": str(binary.relative_to(REPO)), "hsolve_md5": md5}
+            "git_commit": git_commit(), "source_commit": git_commit(SOURCE_PATHS),
+            "hsolve_binary": str(binary.relative_to(REPO)), "hsolve_md5": md5}
+
+
+# What the hsolve binary is built from: its version is the last commit touching these paths.
+SOURCE_PATHS = ("src", "apps", "include", "python", "CMakeLists.txt", "CMakePresets.json", "cmake",
+                "third_party", "patches")
+
+
+def git_commit(paths: tuple[str, ...] = ()) -> str:
+    """HEAD of the repository, or the last commit that changed `paths`."""
+    cmd = ["git", "log", "-1", "--format=%H"] + (["--", *paths] if paths else [])
+    return subprocess.run(cmd, cwd=REPO, capture_output=True, text=True).stdout.strip()
 
 
 def run_scenario(rec: dict[str, Any], args, profile_file: Path) -> dict[str, Any]:
