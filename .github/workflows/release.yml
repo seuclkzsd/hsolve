@@ -1,0 +1,230 @@
+# Release on tags v*: test the tagged commit, build the relocatable binary package, check it on
+# plain distributions (CentOS 7 = glibc 2.17, Debian 12, Ubuntu 24.04), build and test the container
+# image, then publish the image to GHCR and a GitHub Release with the package and SHA256SUMS.
+#   git tag -a v1.0.0 -m "hsolve 1.0.0" && git push origin v1.0.0
+# The tag must equal the CMake project version and CHANGELOG.md needs a dated section for it
+# (tools/release/release_info.py). Started by hand from a branch, the workflow is a dry run: the
+# same builds and checks, nothing published. Every step is a script of tools/dev or tools/release
+# that runs the same way on any machine (docs/INSTALL.md).
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  IMAGE: ghcr.io/seuclkzsd/hsolve
+
+jobs:
+  package:
+    name: tests + binary package
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    defaults:
+      run:
+        shell: bash -el {0}
+    env:
+      HS_JOBS: "4"
+      HS_MUMPS_CACHE: ${{ github.workspace }}/.cache/mumps
+      HS_MIN_AVAIL_GB: "1"
+      CUDA_VISIBLE_DEVICES: ""
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Version (tag = CMake project version, CHANGELOG section)
+        id: version
+        run: python3 tools/release/release_info.py version "$GITHUB_REF_TYPE" "$GITHUB_REF_NAME" "$GITHUB_SHA" >> "$GITHUB_OUTPUT"
+
+      - name: Conda environment (env/environment.yml, solved for glibc 2.17)
+        uses: mamba-org/setup-micromamba@f457c30a868e4760d3a6fcea5f25dc655b8edf39 # v3.2.1
+        env:
+          CONDA_OVERRIDE_GLIBC: "2.17"
+        with:
+          environment-file: env/environment.yml
+          cache-environment: true
+          init-shell: bash
+
+      - name: MUMPS cache key
+        id: mumps-key
+        run: echo "key=${{ runner.os }}-$(basename "$(tools/dev/mumps_cache.sh prefix)")" >> "$GITHUB_OUTPUT"
+
+      - name: Restore the MUMPS build
+        id: mumps-cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .cache/mumps
+          key: ${{ steps.mumps-key.outputs.key }}
+
+      - name: MUMPS 5.8.2 from third_party (patched)
+        run: tools/dev/ci.sh deps
+
+      - name: Build and test (as the CI does)
+        run: tools/dev/ci.sh build portability ctest pytest examples demo
+
+      - name: Package
+        env:
+          CI_PACKAGE_ARGS: --version ${{ steps.version.outputs.version }}
+        run: |
+          tools/dev/ci.sh package
+          cd build/ci-package
+          sha256sum "hsolve-${{ steps.version.outputs.version }}-linux-x86_64.tar.gz" > SHA256SUMS
+          cat SHA256SUMS
+
+      - name: Keep the package for the next jobs
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: release-package
+          path: |
+            build/ci-package/*.tar.gz
+            build/ci-package/*.sha256
+            build/ci-package/SHA256SUMS
+          if-no-files-found: error
+          retention-days: 30
+
+  verify:
+    name: package on ${{ matrix.image }}
+    needs: package
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        image: ["centos:centos7.9.2009", "debian:12.13-slim", "ubuntu:24.04"]
+    steps:
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Get the package
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: release-package
+          path: dist
+
+      # A plain distribution container: no conda, no compiler, no Python packages.
+      - name: Unpack and self-check in ${{ matrix.image }}
+        run: |
+          docker run --rm -v "$PWD:/src:ro" "${{ matrix.image }}" \
+            bash /src/tools/release/verify_package.sh \
+              "/src/dist/hsolve-${{ needs.package.outputs.version }}-linux-x86_64.tar.gz" /tmp/verify
+
+  image:
+    name: container image
+    needs: package
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Commit time (reproducible time stamps)
+        id: commit
+        run: echo "epoch=$(git log -1 --format=%ct)" >> "$GITHUB_OUTPUT"
+
+      - name: Docker Buildx
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - name: Image tags and labels
+        id: meta
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
+        with:
+          images: ${{ env.IMAGE }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+
+      - name: Build the image (loaded for the test)
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          load: true
+          push: false
+          tags: hsolve:test
+          build-args: |
+            HSOLVE_VERSION=${{ needs.package.outputs.version }}
+            HSOLVE_COMMIT=${{ github.sha }}
+            SOURCE_DATE_EPOCH=${{ steps.commit.outputs.epoch }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Test the image (self-check, every example, the command line)
+        run: |
+          docker run --rm hsolve:test selfcheck
+          docker run --rm hsolve:test demo --threads 4
+          docker run --rm hsolve:test --A unused.npz --version
+
+      - name: Log in to GHCR
+        if: github.ref_type == 'tag'
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Push the image
+        if: github.ref_type == 'tag'
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            HSOLVE_VERSION=${{ needs.package.outputs.version }}
+            HSOLVE_COMMIT=${{ github.sha }}
+            SOURCE_DATE_EPOCH=${{ steps.commit.outputs.epoch }}
+          cache-from: type=gha
+
+  release:
+    name: GitHub Release
+    needs: [package, verify, image]
+    if: github.ref_type == 'tag'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    steps:
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Get the package
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: release-package
+          path: dist
+
+      - name: Release notes (CHANGELOG section, how to get it)
+        run: python3 tools/release/release_info.py notes "${{ needs.package.outputs.version }}" --image "$IMAGE" > release-notes.md
+
+      - name: Publish the release
+        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
+        with:
+          name: hsolve ${{ needs.package.outputs.version }}
+          body_path: release-notes.md
+          prerelease: ${{ contains(needs.package.outputs.version, '-') }}
+          fail_on_unmatched_files: true
+          files: |
+            dist/hsolve-${{ needs.package.outputs.version }}-linux-x86_64.tar.gz
+            dist/hsolve-${{ needs.package.outputs.version }}-linux-x86_64.tar.gz.sha256
+            dist/SHA256SUMS
