@@ -349,14 +349,16 @@ struct SubspaceReport {
   double max_sin_bound = std::numeric_limits<double>::quiet_NaN();
   /// A proof (up to rounding, which is bounded a priori): the certificate counted (or was a
   /// rigorous randomized check) and lambda_min(B) - which weighs the B^{-1}-norm's remainder and
-  /// rounding terms - is proven (B = I, diagonal B, Gershgorin or the incomplete-Cholesky proof).
+  /// rounding terms - is proven (B = I, diagonal B, Gershgorin, the incomplete-Cholesky proof or an
+  /// inertia count of B - mu diag(B)).
   bool rigorous = false;
   double failure_probability = 1.0;  ///< the certificate's (0 for counts, the randomized check's delta)
   /// "2" (B = I), "b_inverse_diagonal" (diagonal B), "b_inverse_cg" (general B: preconditioned CG
   /// with a bounded remainder).
   std::string residual_norm;
   double b_min = 0.0;        ///< lower bound (or estimate) of lambda_min(B) used; 1 for B = I
-  std::string b_min_source;  ///< "identity", "diagonal", "gershgorin", "incomplete_cholesky", "estimate"
+  /// "identity", "diagonal", "gershgorin", "incomplete_cholesky", "inertia_count", "estimate"
+  std::string b_min_source;
   std::vector<SubspaceGroup> groups;
   std::string note;          ///< why not performed, pairs without a bound, caveats
   double seconds = 0.0;      ///< wall time (part of time_verify_s)

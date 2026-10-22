@@ -56,7 +56,8 @@ struct CertifiedWindow {
 struct BMinBound {
   double value = 1.0;
   bool proven = true;
-  std::string source = "identity";  ///< "identity", "diagonal", "gershgorin", "incomplete_cholesky", "estimate"
+  /// "identity", "diagonal", "gershgorin", "incomplete_cholesky", "inertia_count", "estimate"
+  std::string source = "identity";
   /// The same for the Jacobi-scaled S = D^{-1/2} B D^{-1/2}, D = diag(B) (0: none). B^{-1}-norms
   /// are bounded by both, v^H B^{-1} v <= min(||v||^2 / value, ||D^{-1/2} v||^2 / scaled): the
   /// second is far smaller for a badly scaled B (value = scaled * min_i b_ii at best).

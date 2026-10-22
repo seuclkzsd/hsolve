@@ -4,7 +4,9 @@
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
+#include <cstdint>
 #include <limits>
+#include <new>
 #include <numeric>
 #include <string>
 #include <vector>
@@ -12,6 +14,8 @@
 #include "driver/internal.hpp"
 #include "driver/norms.hpp"
 #include "hsolve/error.hpp"
+#include "hsolve/factor.hpp"
+#include "hsolve/sparse.hpp"
 #include "hsolve/util.hpp"
 #include "linalg/blas_lapack.hpp"
 #include "linalg/dense_ops.hpp"
@@ -606,10 +610,11 @@ double min_diagonal(const CsrMatrix<T>& b) {
   return dmin;
 }
 
-/// lambda_min(B) for the B^{-1}-norms (B HPD): a proof where one is cheap - the diagonal of a
-/// diagonal B, Gershgorin, the definiteness proof the solve made (Ctx::b_scaled_lower), else the
-/// incomplete-Cholesky proof of norms.hpp within half the solve's mean factorization time (at least
-/// 0.05 s) - and otherwise an estimate (not proven).
+/// lambda_min(B) and lambda_min(S), S = D^{-1/2} B D^{-1/2}, for the B^{-1}-norms (B HPD): a proof
+/// where one is cheap - the diagonal of a diagonal B, Gershgorin, the definiteness proof the solve
+/// made (Ctx::b_scaled_lower), the incomplete-Cholesky proof of norms.hpp within half the solve's
+/// mean factorization time (at least 0.05 s) - else an inertia count of B - mu D (one more
+/// factorization of B's pattern), and otherwise an estimate (not proven).
 template <class T>
 BMinBound b_min_bound(Ctx& c, const CsrMatrix<T>& b, bool diagonal) {
   BMinBound r;
@@ -653,6 +658,44 @@ BMinBound b_min_bound(Ctx& c, const CsrMatrix<T>& b, bool diagonal) {
     r.value = r.scaled * dmin * (1.0 - 4.0 * kRoundoff);
     r.source = "incomplete_cholesky";
     return r;
+  }
+  // An inertia count: B - mu D has the inertia of S - mu I (Sylvester), so an LDL^T factorization
+  // of it without negative and zero pivots proves lambda_min(S) > mu - the counting argument of the
+  // completeness certificate (compute_inertia: own analysis, double precision, no BLR, factors
+  // discarded). mu = theta_min / 2 (the Lanczos estimate, from inside), then theta_min / 20. The
+  // assembly rounds the diagonal (1 - mu) b_ii by at most 4u b_ii: lambda_min(S) > mu - 4u.
+  if (proof.theta_min > 0.0 && dmin > 0.0) {
+    CsrMatrix<T> diag = identity<T>(b.nrows);
+    const std::vector<double> inv = inverse_diagonal(b);
+    for (index_t i = 0; i < b.nrows; ++i)
+      diag.values[static_cast<std::size_t>(i)] = T(1.0 / inv[static_cast<std::size_t>(i)]);
+    const ShiftedPencil<T> pencil(diag, &b);
+    const FactorOptions fo = factor_options_from(c.cfg, count_allowance_mb(c, 0.0));
+    for (const double share : {0.5, 0.05}) {
+      const double mu = share * proof.theta_min;
+      const Timer timer;
+      Inertia in;
+      std::string error;
+      try {
+        in = compute_inertia(pencil, -mu, 1.0, fo);
+      } catch (const Error& e) {
+        error = e.what();
+      } catch (const std::bad_alloc&) {
+        error = "allocation failure (std::bad_alloc)";
+      }
+      const bool proven = error.empty() && in.valid && in.neg == 0 && in.zero == 0;
+      event(c, "subspace_b_inertia", {{"mu", mu}, {"proven", proven}, {"valid", in.valid},
+                                      {"neg", static_cast<std::int64_t>(in.neg)},
+                                      {"zero", static_cast<std::int64_t>(in.zero)}, {"seconds", timer.seconds()},
+                                      {"error", error}});
+      if (proven) {
+        r.scaled = (mu - 4.0 * kRoundoff) * (1.0 - 4.0 * kRoundoff);
+        r.value = r.scaled * dmin * (1.0 - 4.0 * kRoundoff);
+        r.source = "inertia_count";
+        return r;
+      }
+      if (!error.empty()) break;  // no memory or no factorization: a smaller mu does not help
+    }
   }
   // Not proven: half the Lanczos estimate (from inside) of lambda_min of S, times its smallest
   // diagonal entry for B, or half that of B itself.

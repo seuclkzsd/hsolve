@@ -525,6 +525,28 @@ TEST(SubspaceBoundSolveReport, NullWithAReasonUnlessACertificatePassed) {
   EXPECT_TRUE(j["pairs"][0]["subspace_sin_bound"].is_number());
   EXPECT_EQ(j["subspace"]["b_min_source"], "identity");
 
+  // lambda_min(B) of a B that neither Gershgorin nor the incomplete-Cholesky proof covers (the 1-D
+  // Laplacian: not strictly dominant, Jacobi-scaled lambda_min ~ 1e-3 < 0.1): an inertia count of
+  // B - mu D proves it, so the bound is rigorous.
+  {
+    const index_t n = 60;
+    const auto a = hs::identity<double>(n);
+    const auto b = hs::test::laplacian_1d<double>(n);
+    auto gcfg = base_config<double>();
+    gcfg.target.sigma = 1.0;
+    gcfg.target.k = 3;
+    const auto gs = hs::solve(a, &b, gcfg);
+    ASSERT_TRUE(gs.report.success) << gs.report.to_json();
+    const auto& sub = gs.report.subspace;
+    ASSERT_TRUE(sub.performed) << sub.note;
+    EXPECT_EQ(sub.b_min_source, "inertia_count") << sub.note;
+    EXPECT_TRUE(sub.rigorous) << sub.note;
+    const auto wb = hs::test::dense_eigenvalues(b, static_cast<const hs::CsrMatrix<double>*>(nullptr));
+    EXPECT_GT(sub.b_min, 0.0);
+    EXPECT_LE(sub.b_min, wb.front());
+    EXPECT_LT(sub.max_sin_bound, 1e-6);
+  }
+
   // Indefinite B: no certificate, no bound.
   const index_t n = 40;
   const auto a = hs::test::laplacian_1d<double>(n);
