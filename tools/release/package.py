@@ -20,8 +20,10 @@ Checks before the archive is written (any failure stops the packaging):
   * no ELF file needs a glibc symbol newer than --glibc-max (default 2.17: CentOS 7 and newer);
   * from a scratch copy, with an empty environment (no conda, no LD_LIBRARY_PATH), bin/hsolve
     resolves every library inside the package and solves examples/waveguide-50ghz.
-The archive is reproducible for a given tree: sorted members, owner 0:0, fixed mtime
-(SOURCE_DATE_EPOCH, default: the commit time).
+Packaging the same build twice gives the same bytes: sorted members, owner 0:0, fixed mtime
+(SOURCE_DATE_EPOCH, default: the commit time), gzip without a time stamp, and BUILD-INFO.txt
+records only what every packaging of the build gives (the smoke solve's time and memory are
+printed, not stored).
 """
 from __future__ import annotations
 
@@ -247,9 +249,13 @@ def check_glibc(stage_dir: Path, limit: tuple[int, ...]) -> str:
     return f"GLIBC_{'.'.join(map(str, worst))} ({worst_file})"
 
 
-def smoke(stage_dir: Path) -> str:
+SMOKE_CASE = "waveguide-50ghz"
+
+
+def smoke(stage_dir: Path) -> tuple[str, str]:
     """From a copy elsewhere, with an empty environment: every library resolves inside the package,
-    and the waveguide example solves."""
+    and the SMOKE_CASE example solves. Returns (smoke_result() of its report, the solver's summary
+    line with time and peak memory)."""
     with tempfile.TemporaryDirectory(prefix="hsolve-package-smoke-") as tmp:
         copy = Path(tmp) / "moved"
         shutil.copytree(stage_dir, copy, symlinks=True)
@@ -258,13 +264,31 @@ def smoke(stage_dir: Path) -> str:
         outside = {k: v for k, v in libs.items() if k not in SYSTEM_LIBS and not str(v).startswith(str(copy))}
         if outside:
             raise SystemExit(f"package: bin/hsolve resolves libraries outside the package: {outside}")
-        case = copy / "examples" / "cases" / "waveguide-50ghz"
+        case = copy / "examples" / "cases" / SMOKE_CASE
+        out = Path(tmp) / "out"
         proc = subprocess.run([str(copy / "bin" / "hsolve"), "--A", str(case / "A.npz"), "--B", str(case / "B.npz"),
-                               "--config", str(case / "config.json"), "--threads", "2", "--out", str(Path(tmp) / "out")],
+                               "--config", str(case / "config.json"), "--threads", "2", "--out", str(out)],
                               env=bare, capture_output=True, text=True, cwd=tmp)
         if proc.returncode != 0:
             raise SystemExit(f"package: smoke solve failed ({proc.returncode}):\n{proc.stdout}\n{proc.stderr}")
-        return proc.stdout.splitlines()[0] if proc.stdout else ""
+        report = json.loads((out / "report.json").read_text())
+        return smoke_result(report), (proc.stdout.splitlines()[0] if proc.stdout else "")
+
+
+def smoke_result(report: dict) -> str:
+    """The smoke solve as BUILD-INFO.txt records it: fields that every run of the build gives the
+    same (no time, no memory)."""
+    return (f"examples/{SMOKE_CASE}: n={report.get('n')} problem={report.get('problem')} "
+            f"eigenvalues={len(report.get('pairs') or [])} success={'yes' if report.get('success') else 'no'}")
+
+
+def build_info(name: str, commit: str, build: str, glibc_max: str, glibc: str, smoke_line: str,
+               notes: list[str]) -> str:
+    """BUILD-INFO.txt of the package."""
+    return "\n".join([
+        f"package: {name}", f"commit: {commit}", f"build: {build}",
+        f"needs: x86-64 Linux with glibc >= {glibc_max} (newest symbol used: {glibc})",
+        f"smoke test from a moved copy, empty environment: {smoke_line}", *notes]) + "\n"
 
 
 def write_tar(stage_dir: Path, out: Path, mtime: int) -> None:
@@ -315,7 +339,7 @@ def main(argv: list[str] | None = None) -> int:
     glibc = check_glibc(stage_dir, tuple(int(x) for x in ns.glibc_max.split(".")))
     info = subprocess.run([str(stage_dir / "bin" / "hsolve"), "--A", "unused.npz", "--version"], capture_output=True,
                           text=True, env={"PATH": "/usr/bin:/bin"}).stdout.strip()
-    solved = smoke(stage_dir)
+    solved, timing = smoke(stage_dir)
     # HSOLVE_COMMIT / SOURCE_DATE_EPOCH come from the caller where the tree has no .git (container builds).
     try:
         commit = os.environ.get("HSOLVE_COMMIT") or run(["git", "rev-parse", "HEAD"], cwd=ROOT).strip()
@@ -323,16 +347,13 @@ def main(argv: list[str] | None = None) -> int:
     except (OSError, subprocess.CalledProcessError, ValueError):
         commit = os.environ.get("HSOLVE_COMMIT") or "unknown"
         epoch = int(os.environ.get("SOURCE_DATE_EPOCH") or 0)
-    (stage_dir / "BUILD-INFO.txt").write_text("\n".join([
-        f"package: {name}", f"commit: {commit}", f"build: {info}",
-        f"needs: x86-64 Linux with glibc >= {ns.glibc_max} (newest symbol used: {glibc})",
-        f"smoke test from a moved copy, empty environment: {solved}", *notes]) + "\n")
+    (stage_dir / "BUILD-INFO.txt").write_text(build_info(name, commit, info, ns.glibc_max, glibc, solved, notes))
     tarball = ns.out / f"{name}.tar.gz"
     write_tar(stage_dir, tarball, epoch)
     digest = hashlib.sha256(tarball.read_bytes()).hexdigest()
     (ns.out / f"{name}.tar.gz.sha256").write_text(f"{digest}  {tarball.name}\n")
     size = tarball.stat().st_size / 2**20
-    print(f"{tarball} ({size:.1f} MiB, sha256 {digest})\n  {glibc}; smoke: {solved}")
+    print(f"{tarball} ({size:.1f} MiB, sha256 {digest})\n  {glibc}; smoke: {solved}\n  smoke run: {timing}")
     return 0
 
 

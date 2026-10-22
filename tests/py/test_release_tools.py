@@ -42,6 +42,9 @@ def cache_value(name: str) -> str | None:
     return None
 
 
+needs_build = pytest.mark.skipif(not HSOLVE.is_file(), reason=f"{HSOLVE} not built (tools/dev/build.sh release)")
+
+
 # ------------------------------------------------------------------------------- examples
 
 def test_example_files_match_sha256sums_and_manifest():
@@ -91,6 +94,39 @@ def test_package_archive_is_reproducible_and_owned_by_root(tmp_path):
     assert members[-1].mode & 0o111
 
 
+def test_build_info_records_the_smoke_solve_without_time_or_memory():
+    pkg = load("hsolve_package", ROOT / "tools" / "release" / "package.py")
+    report = {"n": 289, "problem": "generalized_indefinite", "pairs": [{}] * 18, "success": True,
+              "time_total_s": 0.028, "peak_rss_bytes": 75_000_000}
+    line = pkg.smoke_result(report)
+    assert line == "examples/waveguide-50ghz: n=289 problem=generalized_indefinite eigenvalues=18 success=yes"
+    text = pkg.build_info("hsolve-1.0.0-linux-x86_64", "0" * 40, "hsolve 1.0.0", "2.17", "GLIBC_2.17 (bin/hsolve)",
+                          line, [])
+    assert "time" not in text and "rss" not in text
+
+
+@needs_build
+@pytest.mark.skipif(not all(shutil.which(t) for t in ("cmake", "strip", "readelf", "ldd",
+                                                      os.environ.get("OBJDUMP") or "objdump")),
+                    reason="needs cmake, binutils and ldd")
+@pytest.mark.skipif(not os.environ.get("CONDA_PREFIX"), reason="needs the build environment (licence records)")
+def test_packaging_a_build_twice_gives_the_same_archive(tmp_path):
+    if (cache_value("HSOLVE_NATIVE") or "OFF").upper() in ("ON", "1", "TRUE", "YES"):
+        pytest.skip("a -march=native build is not packaged")
+    archives = []
+    for run in ("a", "b"):
+        proc = subprocess.run([sys.executable, str(ROOT / "tools" / "release" / "package.py"), "--build", str(BUILD),
+                               "--out", str(tmp_path / run), "--version", "0.0.0-test", "--allow-missing-legal"],
+                              capture_output=True, text=True, timeout=900)
+        assert proc.returncode == 0, proc.stdout + proc.stderr
+        archives.append(tmp_path / run / "hsolve-0.0.0-test-linux-x86_64.tar.gz")
+    assert archives[0].read_bytes() == archives[1].read_bytes()
+    with tarfile.open(archives[0]) as tar:
+        info = tar.extractfile("hsolve-0.0.0-test-linux-x86_64/BUILD-INFO.txt").read().decode()
+    assert "examples/waveguide-50ghz: n=289 problem=generalized_indefinite" in info
+    assert "success=yes" in info and "time" not in info
+
+
 @pytest.mark.skipif(shutil.which("ldd") is None, reason="needs ldd")
 def test_package_resolves_libraries_like_the_loader():
     pkg = load("hsolve_package", ROOT / "tools" / "release" / "package.py")
@@ -100,9 +136,6 @@ def test_package_resolves_libraries_like_the_loader():
 
 
 # ------------------------------------------------------------------------------- built hsolve
-
-needs_build = pytest.mark.skipif(not HSOLVE.is_file(), reason=f"{HSOLVE} not built (tools/dev/build.sh release)")
-
 
 @needs_build
 @pytest.mark.skipif(shutil.which(os.environ.get("OBJDUMP") or "objdump") is None, reason="needs objdump")
