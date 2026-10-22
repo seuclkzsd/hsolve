@@ -452,7 +452,9 @@ def waveguide_convergence(docs: list[dict[str, Any]]) -> str:
     for d in docs:
         inertia = (d.get("inertia") or {}).get("B") or ["?", "?", "?"]
         ev = d["evaluation"]
-        lines.append(f"| `{d['case']}` | {d['n']:,} | {d['h_max_mm']:.4f} | {d.get('zero_cluster_dim') or '–'} | "
+        zdim = d.get("zero_cluster_dim")
+        zdim = f"{zdim:,}" if isinstance(zdim, int) and zdim >= 0 else "–"
+        lines.append(f"| `{d['case']}` | {d['n']:,} | {d['h_max_mm']:.4f} | {zdim} | "
                      f"{inertia[0]:,} / {inertia[2]:,} | {len(d['modes'])} 个实模，复对 {d['complex_returned']} | "
                      f"{'通过' if ev['verdict'] == 'pass' else '未通过'}（{ev['completeness']}） | "
                      f"{max(m['solver_rel_error'] for m in d['modes']):.1e} | "
