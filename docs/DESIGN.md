@@ -210,7 +210,7 @@ src/mpi      （P10，不属于 libhsolve，HSOLVE_WITH_MPI）hs::Transport 的 
 - `DenseMatrix<T>`：列主序、64 字节对齐、`ld == rows`。
 - `blas_lapack.hpp`：自行声明 Fortran BLAS/LAPACK（LP64，隐藏字符串长度参数显式传递；
   **不声明 `zdotc_` 一类复数返回值函数**——Fortran 复数返回 ABI 陷阱，点积用 gemv）。
-- `dense_ops.hpp`（**所有权：lead**）：`fill_random`（计数器式 SplitMix64，结果与线程数无关）、
+- `dense_ops.hpp`（**所有权：维护者**）：`fill_random`（计数器式 SplitMix64，结果与线程数无关）、
   `dot/norm2/axpy/scal/gram/multiply`、`orthogonalize_cgs2`（欧氏 / 存储 M·V / 按需重算 M·w
   三种模式）、`orthogonalize_block_cgs2`。其它模块只消费，不得另写同功能函数。
 - **确定性归约**：`dot`、`norm2` 与 CGS 的投影 Vᴴ M w 都在只依赖问题规模的固定行块上求和（块内
@@ -239,7 +239,7 @@ src/mpi      （P10，不属于 libhsolve，HSOLVE_WITH_MPI）hs::Transport 的 
   块 Krylov-Schur 专用；一般 Krylov-Schur 块模式的回退核；P5c 起另有单投影快路径 `try_fast`，§3.5）与
   `eigen_detail::block_cgs_cholqr2`
   （`src/eigen/block_general.*`：本节的 `orthogonalize_block_cgs2` + 两次 Cholesky-QR，一般块模式的
-  快路径，§3.5）是同类核，暂归 eigen；是否并入 dense_ops 由 lead 决定。
+  快路径，§3.5）是同类核，暂归 eigen；是否并入 dense_ops 由维护者决定。
 
 ### 3.4 factor（`include/hsolve/factor.hpp`）
 - 唯一后端 MUMPS 5.8（顺序版 + OpenMP）。**一条分解路径且始终有惯性**：实数 SYM=2（LDLᵀ，
@@ -1598,7 +1598,7 @@ gpu 节点同型，无 GPU，与其他用户共用）只在空闲时使用：
 - **GPU 实验**（P10，§3.10）：只用 gpu02 的 GPU 7（与测量槽同在 NUMA node 1；其余卡属于其他作业，不得触碰）。带 GPU 的
   计时运行经 `tools/bench/gpu_slot.sh 7 TIMEOUT -- CMD`：先用 nvidia-smi 确认该卡空闲（无计算进程、显存占用 ≤ 64 MiB），
   再以 `CUDA_VISIBLE_DEVICES=7` 和 `guard.py --exclusive` 占用测量槽。默认构建的 GPU 模式为 off，单元测试默认看不到任何
-  GPU（§3.10 测试），所以其它 agent 的测量与测试不受影响；GPU 测试用 `HSOLVE_TEST_GPU_DEVICE=7` 显式打开。
+  GPU（§3.10 测试），所以同一节点上其它并行作业的测量与测试不受影响；GPU 测试用 `HSOLVE_TEST_GPU_DEVICE=7` 显式打开。
 
 **所有编译之外的运行都必须经过 `tools/run/guard.py`**（下列默认值为开发服务器的，`env/hosts/CISL-NF5468M6.sh`；
 集群节点见上；没有主机文件的机器——用户或评测机——`HS_CORES` 默认取该 shell 可用的全部 CPU，`env/activate.sh`，
@@ -1610,7 +1610,7 @@ gpu 节点同型，无 GPU，与其他用户共用）只在空闲时使用：
 - 峰值内存报告取采样和、内核高水位 VmHWM 之和、ru_maxrss 三者最大值（不漏短时尖峰）。
 - 重型实验加 `--exclusive`（全机串行）；单元测试用 `--skip-busy-check`。计时运行不要加
   `--skip-busy-check`：槽内的核若被别的进程占用，guard 会拒绝启动。
-- 多 agent 并行阶段（开发服务器）：每个 agent 使用不相交的 `HS_CORES`（各 2 核）与 `HS_JOBS=2`，并设置
+- 并行开发阶段（开发服务器）：每个并行作业使用不相交的 `HS_CORES`（各 2 核）与 `HS_JOBS=2`，并设置
   `HS_MAX_SHARED_MEM_GB=8`（超过 8 GiB 的运行必须 `--exclusive`）。集群节点上改用上面的测量槽与构建道。
 - 预估内存（MUMPS 分析）超过 28 GiB 的实验不运行，记录并上报。
 - **MPI 绑核**：`mpiexec --bind-to core` 无视 guard 的 cpuset（40,41 下 SLEPc 的 rank 被绑到 CPU 0/48
@@ -1629,7 +1629,7 @@ gpu 节点同型，无 GPU，与其他用户共用）只在空闲时使用：
 - 提交信息：`<module>: <summary>`（如 `factor: add single-precision MUMPS backend`）。
 - 生成数据（`data/`）、构建目录与原始实验输出不入库；实验汇总（`results/*.md|json`）入库。
 - 文件所有权（P1）：`include/hsolve/<m>.hpp` 与 `src/<m>/` 归该模块；`src/linalg/*`、
-  `tests/cpp/support/*`、`tools/case.py`、`CMakeLists.txt`、`docs/*` 归 lead——其他人需要改动时
+  `tests/cpp/support/*`、`tools/case.py`、`CMakeLists.txt`、`docs/*` 归维护者——其他人需要改动时
   在交付说明中提出。
 
 ## 8. 路线图

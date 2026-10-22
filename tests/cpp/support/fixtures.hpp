@@ -2,8 +2,8 @@
 // known spectra, so module tests do not each re-implement them. Test-only code: densification is
 // allowed here for n <= 4000 (docs/DESIGN.md §5). Scalar set: T in {double, cplx}.
 //
-// Ownership: the lead owns this file; agents may APPEND new fixtures (never change existing
-// signatures) and must add tests for them in tests/cpp/test_support_fixtures.cpp.
+// Ownership: the maintainers own this file; contributors may APPEND new fixtures (never change
+// existing signatures) and must add tests for them in tests/cpp/test_support_fixtures.cpp.
 #pragma once
 
 #include <cstdint>
