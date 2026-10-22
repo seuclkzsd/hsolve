@@ -29,11 +29,11 @@ if [ "$detach" = 1 ]; then
   echo "ci_clone: running in the background (pid $!); output $dir/ci.log, exit status $dir/ci.status"
   exit 0
 fi
-sha="$(git -C "$repo" rev-parse HEAD)"
+sha="$(cd "$repo" && git rev-parse HEAD)"  # no git -C: CentOS 7 has git 1.8.3
 rm -rf "$dir"
 mkdir -p "$dir"
 git clone -q --no-checkout "$repo" "$dir/src"
-git -C "$dir/src" checkout -q "$sha"
+(cd "$dir/src" && git checkout -q "$sha")
 rc=0
 (cd "$dir/src" && HS_MUMPS_CACHE="$dir/mumps-cache" tools/dev/ci.sh "$@") > "$dir/ci.log" 2>&1 || rc=$?
 echo "$rc" > "$dir/ci.status"
