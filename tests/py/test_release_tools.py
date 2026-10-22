@@ -179,6 +179,12 @@ def test_docker_context_holds_what_the_image_build_reads():
     assert os.access(ROOT / "scripts" / "docker-entrypoint.sh", os.X_OK)
 
 
+def test_install_guide_quotes_the_generated_tier_tables():
+    """docs/INSTALL.md §5 holds results/resource-tiers/tiers-summary.md verbatim (regenerate both together)."""
+    generated = (ROOT / "results" / "resource-tiers" / "tiers-summary.md").read_text()
+    assert generated.strip() in (ROOT / "docs" / "INSTALL.md").read_text()
+
+
 def test_release_version_must_match_cmake_and_a_dated_changelog_section(tmp_path):
     info = load("hsolve_release_info", ROOT / "tools" / "release" / "release_info.py")
     (tmp_path / "CMakeLists.txt").write_text("cmake_minimum_required(VERSION 3.20)\n"
