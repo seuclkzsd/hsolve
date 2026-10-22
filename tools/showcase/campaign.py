@@ -423,6 +423,8 @@ def tuning_record(sid: str, doc: dict[str, Any]) -> dict[str, Any]:
             "configurations": len({t.get("label") for t in trials}),
             "default_valid": doc.get("default_valid"), "default_median_s": doc.get("default_median_s"),
             "best": best, "best_median_s": doc.get("best_median_s") if best else None,
+            # every run of the best configuration in the tuning (screening and confirmation), all valid
+            "best_runs": sum(t.get("label") == best for t in trials) if best else None,
             "flaky": bool(doc.get("flaky")), "declared_flaky": doc.get("declared_flaky"),
             "confirm_reps": doc.get("confirm_reps"),
             "flaky_confirm_reps": doc.get("flaky_confirm_reps") if doc.get("flaky") else None,

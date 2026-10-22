@@ -378,6 +378,8 @@ def failure_details(summary: dict[str, Any]) -> str:
                 tu = r["slepc_tuning"]
                 msg += (f"；配置来源：{tuned_source(r)}（有效试验 {tu['valid_trials']}/{tu['trials']}，"
                         f"`{tu.get('record') or 'results/showcase/slepc_tuning.json'}`）")
+                if tu.get("best") and tu.get("best_runs") and tu["best"] == e.get("config"):
+                    msg += f"；同一配置在调优中运行 {tu['best_runs']} 次，全部有效"
             lines.append(f"- **{r['title']} / {SOLVER_LABELS[s]}**（{e['valid_runs']}/{e['reps']} 次有效）：{msg}")
     return "\n".join(lines) if lines else "（无）"
 
@@ -525,6 +527,14 @@ def limitations(summary: dict[str, Any]) -> str:
                          "的区间" + ("——同一组矩阵的区间查询见「区间内全部特征值」一行，SLEPc 两种用法都正确"
                                      if interval_ok else "") + "）；hsolve 用 Sylvester 惯性数出零空间维数并排除"
                          "（`zero_filter_tol`），不需要这些输入")
+    partial = [r for r in rows if r["solvers"].get("slepc-tuned", {}).get("verdict") == "partial"]
+    if partial:
+        parts.append(f"{len(partial)} 个场景（" + "、".join(
+            f"{r['title']} {r['solvers']['slepc-tuned']['valid_runs']}/{r['solvers']['slepc-tuned']['reps']}"
+            for r in partial) + "）的逐例调优配置在一部分重复中有效、另一部分无效（多进程 MUMPS 每次运行的结果"
+                     "不完全相同" + ("；选出这些配置的调优中，它们的每次运行都有效"
+                                   if all(r.get("tuned_kind") == "case" for r in partial) else "")
+                     + "）；按「每次重复都有效」的标准计为未通过")
     if consistency:
         parts.append(f"{len(consistency)} 个场景（{'、'.join(consistency)}）没有完整的参考谱，只用 ARPACK 参考做一致性"
                      "判定，漏掉参考之外的特征值无法被发现")
@@ -634,6 +644,12 @@ def readme_facts(summary: dict[str, Any]) -> str:
             tuned = (f"逐例调优后（`{t['config']}`）{t['valid_runs']}/{t['reps']} 次有效，中位时间 {fmt_time(t['time_s'])}"
                      + (f"，是 hsolve 的 {cube['speedup_vs']['slepc-tuned']:.1f} 倍" if "slepc-tuned" in cube["speedup_vs"]
                         else ""))
+        elif set(t.get("outcomes", {})) == {"residual"}:
+            tu = cube.get("slepc_tuning") or {}
+            tuned = (f"逐例调优（`{t['config']}`）找全了这些特征值，但 {t['reps']} 次中 {t['reps'] - t['valid_runs']} 次"
+                     f"有特征对的后向误差超过容差（最大 {t['max_backward_error']:.1e}，SLEPc 自己也报告不成功）"
+                     + (f"，同一配置在调优中运行 {tu['best_runs']} 次全部有效" if tu.get("best") == t.get("config")
+                        and tu.get("best_runs") else ""))
         else:
             tuned = f"逐例调优配置 {t['valid_runs']}/{t['reps']} 次有效（{failure_text(t)}）"
         out.append(f"- **具体例子**：PEC 立方腔（n = {cube['n']:,}）求 σ 附近 {cube['target']['k']} 个特征值，目标集含 {mult} "
