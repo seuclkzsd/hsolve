@@ -13,7 +13,7 @@
 #     generate    the six cases (yee-pec-box-1e4/1e5/1e6, wg-square-1e4/1e5/1e6) into $TIERS/data
 #     run         every case at 16 and 4 threads, RAM cap 32 GiB, 3 repetitions -> $TIERS/tiers-<host>
 #     run-capped  the 1e6 cases at 16 and 4 threads with RAM caps of 8 and 4 GiB, once each
-#     table       tiers.md / tiers.json here from $TIERS/tiers-<host>
+#     table       tiers.md / tiers.json and tiers-summary.md (docs/INSTALL.md §5) here
 #     pack        that run directory (no eigenvectors, home as $HOME) as raw-tiers-<host>.tar.gz here
 #     retable     the table again from the committed raw-tiers-*.tar.gz
 # TIERS defaults to $HOME/hsolve-tiers; TIERS_HOST (default: this host) names the measured node;
@@ -36,13 +36,13 @@ for stage in "$@"; do
     run-capped)
       "${tiers[@]}" run --root "$TIERS/data" --out "$TIERS/tiers-$host" --hsolve "$hsolve" \
           --cases yee-pec-box-1e6,wg-square-1e6 --threads 16,4 --mem-gb 8,4 --reps 1 ;;
-    table) "${tiers[@]}" table "$TIERS/tiers-$host" --md "$here/tiers.md" --json "$here/tiers.json" ;;
+    table) "${tiers[@]}" table "$TIERS/tiers-$host" --md "$here/tiers.md" --json "$here/tiers.json" --summary-md "$here/tiers-summary.md" ;;
     pack) python3 scripts/pack_raw.py "$TIERS/tiers-$host" "$here/raw-tiers-$host.tar.gz" ;;
     retable)
       tmp="$(mktemp -d)"
       trap 'rm -rf "$tmp"' EXIT
       for t in "$here"/raw-tiers-*.tar.gz; do tar -xzf "$t" -C "$tmp"; done
-      "${tiers[@]}" table "$tmp"/tiers-* --md "$here/tiers.md" --json "$here/tiers.json" ;;
+      "${tiers[@]}" table "$tmp"/tiers-* --md "$here/tiers.md" --json "$here/tiers.json" --summary-md "$here/tiers-summary.md" ;;
     *) sed -n '2,21p' "$0" >&2; exit 2 ;;
   esac
 done

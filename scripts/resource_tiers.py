@@ -11,7 +11,7 @@ Two problem families at n ~ 1e4, 1e5 and 1e6, generated deterministically by too
     scripts/resource_tiers.py generate --root DIR [--sizes 1e4,1e5,1e6]
     scripts/resource_tiers.py run --root DIR --out RAW [--cases a,b] [--threads 16,4] [--mem-gb 32]
                                   [--reps 3] [--hsolve PATH] [--first-core N]
-    scripts/resource_tiers.py table RAW... --md OUT.md --json OUT.json
+    scripts/resource_tiers.py table RAW... --md OUT.md --json OUT.json [--summary-md OUT2.md]
 
 `run` starts every (case, threads, memory cap, repetition) once - in this order, repetitions
 outermost - with the case's config.json (target, tol) and nothing else: each under its own
@@ -170,8 +170,46 @@ def table(a: argparse.Namespace) -> int:
               "= tools/run/guard.py's peak of the process tree, max over the runs."]
     Path(a.md).write_text("\n".join(lines) + "\n")
     Path(a.json).write_text(json.dumps(rows, indent=2) + "\n")
+    if a.summary_md:
+        Path(a.summary_md).write_text(summary(rows))
     print("\n".join(lines))
     return 0
+
+
+FAMILY_ZH = {"yee-pec-box": "三维 PEC 谐振腔，GHEP，最近 σ 的 {k} 个",
+             "wg-square": "二维方波导 50 GHz，GHIEP（B 不定），{k} 个传播模"}
+
+
+def summary(rows: list[dict[str, Any]]) -> str:
+    """docs/INSTALL.md's tier tables (Chinese): one row per case at the full cap, then the capped runs."""
+    def fmt_t(x: float | None) -> str:
+        return "-" if x is None else (f"{x:.2f} s" if x < 10 else f"{x:.0f} s")
+
+    def fmt_m(x: float | None) -> str:
+        return "-" if x is None else (f"{x * 1024:.0f} MiB" if x < 1 else f"{x:.1f} GiB")
+
+    full = max(r["mem_gb"] for r in rows)
+    by_case: dict[str, dict[int, dict[str, Any]]] = {}
+    for r in rows:
+        if r["mem_gb"] == full:
+            by_case.setdefault(r["case"], {})[r["threads"]] = r
+    out = ["| 问题 | n | 非零元 | 峰值内存 | 求解时间，16 线程 | 求解时间，4 线程 |", "|---|---:|---:|---:|---:|---:|"]
+    for case, per in by_case.items():
+        any_r = next(iter(per.values()))
+        fam = case.rsplit("-", 1)[0]
+        label = FAMILY_ZH.get(fam, case).format(k=any_r["pairs"])
+        ok = all(r["ok"] == r["reps"] for r in per.values())
+        out.append(f"| {label}（`{case}`）{'' if ok else '（有失败的运行）'} | {any_r['n']:,} | {any_r['nnz']:,} | "
+                   f"{fmt_m(max(r['peak_rss_gib'] for r in per.values()))} | "
+                   f"{fmt_t((per.get(16) or {}).get('time_median_s'))} | {fmt_t((per.get(4) or {}).get('time_median_s'))} |")
+    capped = [r for r in rows if r["mem_gb"] < full]
+    if capped:
+        out += ["", "| 问题 | 内存上限 | 线程 | 分解方式 | 峰值内存 | 求解时间 |", "|---|---:|---:|---|---:|---:|"]
+        for r in capped:
+            mode = {"in-core": "内存内", "out-of-core": "外存"}.get(r["memory_mode"], r["memory_mode"])
+            out.append(f"| `{r['case']}` | {r['mem_gb']:g} GiB | {r['threads']} | {mode} | {fmt_m(r['peak_rss_gib'])} | "
+                       f"{fmt_t(r['time_median_s'])} |")
+    return "\n".join(out) + "\n"
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -196,6 +234,7 @@ def main(argv: list[str] | None = None) -> int:
     t.add_argument("raw", nargs="+")
     t.add_argument("--md", required=True)
     t.add_argument("--json", required=True)
+    t.add_argument("--summary-md", help="also the compact Chinese tables of docs/INSTALL.md")
     a = ap.parse_args(argv)
     if a.cmd == "generate":
         generate(a.root, a.sizes.split(","))
