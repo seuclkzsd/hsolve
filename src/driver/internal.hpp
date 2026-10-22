@@ -104,6 +104,10 @@ struct Ctx {
   std::vector<double> unreturned_lambda{};
   DenseMatrix<double> unreturned_real{};
   DenseMatrix<cplx> unreturned_complex{};
+  /// The definiteness proof of B (DESIGN §3.6-1), when it ran and proved B HPD: lambda_min of the
+  /// Jacobi-scaled B is at least this (HpdProof::lower_bound); 0: no such proof. The subspace bound
+  /// reuses it for lambda_min(B).
+  double b_scaled_lower = 0.0;
 };
 
 template <class T>

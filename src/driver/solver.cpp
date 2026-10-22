@@ -405,6 +405,7 @@ Solution<T> solve_with_factors(Ctx& c, const ShiftedPencil<T>& pencil, const Dia
                          {"stored_bytes", proof.stored_bytes}, {"level1_bound", proof.level1_bound},
                          {"level1_entries", static_cast<std::int64_t>(proof.level1_entries)}});
     if (proof.proven) {
+      c.b_scaled_lower = proof.lower_bound;
       Inertia ib;
       ib.neg = ib.zero = 0;
       ib.pos = n;

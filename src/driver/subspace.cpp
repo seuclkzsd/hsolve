@@ -27,6 +27,9 @@ constexpr double kRoundoff = 0x1p-53;
 constexpr index_t kChunkColumns = 16;
 /// A group whose Gram defect reaches this is not numerically independent: no bound.
 constexpr double kMaxOrthogonalityDefect = 0.5;
+/// CG for r^H B^{-1} r stops once its remainder bound ||s||^2 / lambda_min(B) is at most this share
+/// of the quadratic form (inflating the residual norm by at most half of it).
+constexpr double kRemainderShare = 1e-6;
 
 /// gamma_k = k u / (1 - k u) of Higham (Accuracy and Stability, §3.1), with a factor 2 of slack
 /// that also covers complex arithmetic.
@@ -85,6 +88,7 @@ void cg_b_inverse_quadratic(const CsrMatrix<T>& b, const std::vector<double>& in
                             double* q) {
   DenseMatrix<T> z(n, p), s(n, p), h(n, p), dir(n, p), bd(n, p);
   std::vector<double> rnorm(static_cast<std::size_t>(p)), rho(static_cast<std::size_t>(p));
+  std::vector<double> quad(static_cast<std::size_t>(p), 0.0);  // r^H z_k = sum_i alpha_i rho_i
   std::vector<char> done(static_cast<std::size_t>(p), 0);
   const auto precondition = [&](index_t j) {
     const T* sj = s.col(j);
@@ -115,9 +119,12 @@ void cg_b_inverse_quadratic(const CsrMatrix<T>& b, const std::vector<double>& in
         continue;
       }
       const double alpha = rho[js] / curvature;
+      quad[js] += alpha * rho[js];
       linalg::axpy(n, T(alpha), dir.col(j), z.col(j));
       const double snorm = linalg::axpy_norm2(n, T(-alpha), bd.col(j), s.col(j));
-      if (snorm <= opt.cg_tol * rnorm[js]) {
+      // Enough once the remainder bound ||s||^2 / lambda_min(B) is a negligible share of
+      // r^H B^{-1} r (approached from below by CG's r^H z_k), or s is at rounding level.
+      if (snorm * snorm <= kRemainderShare * quad[js] * b_min || snorm <= opt.cg_tol * rnorm[js]) {
         done[js] = 1;
         continue;
       }
@@ -493,21 +500,25 @@ bool diagonal_matrix(const CsrMatrix<T>& b) {
   return true;
 }
 
+/// Smallest diagonal entry of B (its real part; 0 when one is not positive).
+template <class T>
+double min_diagonal(const CsrMatrix<T>& b) {
+  double dmin = kInfinity;
+  for (const double inv : inverse_diagonal(b)) dmin = std::min(dmin, std::isfinite(inv) ? 1.0 / inv : 0.0);
+  return dmin;
+}
+
 /// lambda_min(B) for the B^{-1}-norms (B HPD): a proof where one is cheap - the diagonal of a
-/// diagonal B, Gershgorin, else the incomplete-Cholesky proof of norms.hpp within a quarter of the
-/// solve's mean factorization time - and otherwise an estimate (not proven).
+/// diagonal B, Gershgorin, the definiteness proof the solve made (Ctx::b_scaled_lower), else the
+/// incomplete-Cholesky proof of norms.hpp within half the solve's mean factorization time (at least
+/// 0.05 s) - and otherwise an estimate (not proven).
 template <class T>
 BMinBound b_min_bound(Ctx& c, const CsrMatrix<T>& b, bool diagonal) {
   BMinBound r;
+  const double dmin = min_diagonal(b);
   if (diagonal) {
-    double dmin = kInfinity;
-    for (index_t i = 0; i < b.nrows; ++i) {
-      double d = 0.0;
-      for (index_t p = b.rowptr[i]; p < b.rowptr[i + 1]; ++p) d = real_part(b.values[p]);
-      dmin = std::min(dmin, d);
-    }
     r.value = dmin;
-    r.proven = dmin > 0.0;
+    r.proven = dmin > 0.0 && std::isfinite(dmin);
     r.source = "diagonal";
     return r;
   }
@@ -517,26 +528,32 @@ BMinBound b_min_bound(Ctx& c, const CsrMatrix<T>& b, bool diagonal) {
     r.source = "gershgorin";
     return r;
   }
+  // lambda_min(W B W) >= lower with w_i = fl(1 / sqrt(b_ii)) (norms.hpp): x^H B x = y^H (W B W) y
+  // with y = W^{-1} x and ||y||^2 >= min_i b_ii (1 - 4u) ||x||^2 (the rounding of w_i).
+  const auto from_scaled = [&](double lower) { return lower * dmin * (1.0 - 8.0 * kRoundoff); };
+  if (c.b_scaled_lower > 0.0 && dmin > 0.0) {
+    r.value = from_scaled(c.b_scaled_lower);
+    r.source = "incomplete_cholesky";
+    return r;
+  }
   const FactorStats& fs = c.rep.factor_stats;
   const double t_factor = fs.factorizations > 0 ? fs.factorize_s / static_cast<double>(fs.factorizations) : 0.0;
   HpdProofOptions po;
-  po.max_seconds = std::max(0.25 * t_factor, 0.01);
+  po.max_seconds = std::max(0.5 * t_factor, 0.05);
   po.max_bytes = std::max(0.0, 0.5 * budget_left(c));
   po.seed = c.cfg.seed;
-  const ConditionBound cb = prove_condition_bound(b, po);
-  event(c, "subspace_b_min", {{"proven", cb.proven}, {"outcome", cb.proof.outcome}, {"b_min", cb.b_min},
-                              {"theta_min", cb.proof.theta_min}, {"seconds", cb.proof.seconds},
+  const HpdProof proof = prove_positive_definite(b, po);
+  event(c, "subspace_b_min", {{"proven", proof.proven}, {"outcome", proof.outcome}, {"lower", proof.lower_bound},
+                              {"theta_min", proof.theta_min}, {"seconds", proof.seconds},
                               {"budget_s", po.max_seconds}});
-  if (cb.proven) {
-    r.value = cb.b_min;
+  if (proof.proven && dmin > 0.0) {
+    r.value = from_scaled(proof.lower_bound);
     r.source = "incomplete_cholesky";
     return r;
   }
   // Not proven: half the Lanczos estimate (from inside) of lambda_min of the Jacobi-scaled B times
   // its smallest diagonal entry, or half that of B itself.
-  double dmin = kInfinity;
-  for (const double inv : inverse_diagonal(b)) dmin = std::min(dmin, 1.0 / inv);
-  double estimate = cb.proof.theta_min > 0.0 && dmin > 0.0 ? 0.5 * cb.proof.theta_min * dmin : 0.0;
+  double estimate = proof.theta_min > 0.0 && dmin > 0.0 ? 0.5 * proof.theta_min * dmin : 0.0;
   if (!(estimate > 0.0)) estimate = 0.5 * estimate_norm2(b, 30, c.cfg.seed).ritz_min;
   r.value = estimate > 0.0 ? estimate : std::numeric_limits<double>::min();
   r.proven = false;
