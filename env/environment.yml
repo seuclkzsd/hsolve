@@ -5,6 +5,7 @@
 name: hsolve
 channels:
   - conda-forge
+  - nodefaults  # conda-forge only, also where a user's .condarc lists other channels
 dependencies:
   - python=3.11
   - numpy=2.4
