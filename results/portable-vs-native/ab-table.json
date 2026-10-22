@@ -1,0 +1,468 @@
+{
+ "base": "native",
+ "new": "portable",
+ "threshold": 0.03,
+ "geomean_ratio": 1.0008509019665766,
+ "cases": 6,
+ "comparable": 6,
+ "slower": [],
+ "faster": [],
+ "rows": [
+  {
+   "case": "cav2d-rect-pert-1e5",
+   "n": 99459,
+   "problem": "GHEP",
+   "hosts": [
+    "gpu01"
+   ],
+   "native": {
+    "reps": 10,
+    "valid": 10,
+    "ok": true,
+    "time_s": 0.208736179,
+    "time_min": 0.206114615,
+    "time_max": 0.220889111,
+    "times": [
+     0.209560914,
+     0.20927669299999999,
+     0.20689885399999997,
+     0.220889111,
+     0.208195665,
+     0.206114615,
+     0.206676709,
+     0.210452791,
+     0.20652427200000004,
+     0.210047252
+    ],
+    "wall_s": 0.318,
+    "peak_rss_gib": 0.199,
+    "factorizations": "3",
+    "block_size": "2",
+    "certificate_method": "exact",
+    "completeness": "consistent",
+    "hosts": [
+     "gpu01"
+    ],
+    "binaries": [
+     "$HOME/rb-eng/ab2/bin/hsolve_native"
+    ],
+    "invalid": []
+   },
+   "portable": {
+    "reps": 10,
+    "valid": 10,
+    "ok": true,
+    "time_s": 0.208052698,
+    "time_min": 0.204798816,
+    "time_max": 0.216658861,
+    "times": [
+     0.209383815,
+     0.20547182900000002,
+     0.208668807,
+     0.216658861,
+     0.20771064900000002,
+     0.204798816,
+     0.208394747,
+     0.207552928,
+     0.21095579699999997,
+     0.20724816
+    ],
+    "wall_s": 0.318,
+    "peak_rss_gib": 0.198,
+    "factorizations": "3",
+    "block_size": "2",
+    "certificate_method": "exact",
+    "completeness": "consistent",
+    "hosts": [
+     "gpu01"
+    ],
+    "binaries": [
+     "$HOME/rb-eng/ab2/bin/hsolve_portable"
+    ],
+    "invalid": []
+   },
+   "ratio": 0.996725622729733,
+   "comparable": true
+  },
+  {
+   "case": "ss-qa8fk-qa8fm",
+   "n": 66127,
+   "problem": "GHEP",
+   "hosts": [
+    "gpu01"
+   ],
+   "native": {
+    "reps": 10,
+    "valid": 10,
+    "ok": true,
+    "time_s": 1.388476833,
+    "time_min": 1.375864001,
+    "time_max": 1.5797553680000003,
+    "times": [
+     1.5797553680000003,
+     1.394061244,
+     1.379400165,
+     1.375864001,
+     1.3828924219999998,
+     1.381281892,
+     1.5532580010000003,
+     1.438781615,
+     1.4040332370000002,
+     1.381744935
+    ],
+    "wall_s": 1.5705,
+    "peak_rss_gib": 0.439,
+    "factorizations": "3",
+    "block_size": "4",
+    "certificate_method": "exact",
+    "completeness": "consistent",
+    "hosts": [
+     "gpu01"
+    ],
+    "binaries": [
+     "$HOME/rb-eng/ab2/bin/hsolve_native"
+    ],
+    "invalid": []
+   },
+   "portable": {
+    "reps": 10,
+    "valid": 10,
+    "ok": true,
+    "time_s": 1.3943597859999999,
+    "time_min": 1.3808756630000003,
+    "time_max": 1.508732001,
+    "times": [
+     1.392303498,
+     1.390311874,
+     1.508732001,
+     1.396416074,
+     1.403987,
+     1.40485358,
+     1.392255315,
+     1.390443586,
+     1.3808756630000003,
+     1.3976040469999997
+    ],
+    "wall_s": 1.571,
+    "peak_rss_gib": 0.438,
+    "factorizations": "3",
+    "block_size": "4",
+    "certificate_method": "exact",
+    "completeness": "consistent",
+    "hosts": [
+     "gpu01"
+    ],
+    "binaries": [
+     "$HOME/rb-eng/ab2/bin/hsolve_portable"
+    ],
+    "invalid": []
+   },
+   "ratio": 1.0042369831891895,
+   "comparable": true
+  },
+  {
+   "case": "syn-mem27-46",
+   "n": 97336,
+   "problem": "HEP",
+   "hosts": [
+    "gpu01"
+   ],
+   "native": {
+    "reps": 10,
+    "valid": 10,
+    "ok": true,
+    "time_s": 2.007803934,
+    "time_min": 1.964191411,
+    "time_max": 2.122236126,
+    "times": [
+     2.0053658709999995,
+     2.010241997,
+     1.976925338,
+     1.964191411,
+     2.122236126,
+     2.029092478,
+     1.984168731,
+     2.018384663,
+     2.022099254,
+     2.000690294
+    ],
+    "wall_s": 2.173,
+    "peak_rss_gib": 0.764,
+    "factorizations": "3",
+    "block_size": "8",
+    "certificate_method": "exact",
+    "completeness": "complete",
+    "hosts": [
+     "gpu01"
+    ],
+    "binaries": [
+     "$HOME/rb-eng/ab2/bin/hsolve_native"
+    ],
+    "invalid": []
+   },
+   "portable": {
+    "reps": 10,
+    "valid": 10,
+    "ok": true,
+    "time_s": 2.0052855784999997,
+    "time_min": 1.990155989,
+    "time_max": 2.055549377,
+    "times": [
+     2.04480121,
+     2.002627214,
+     2.007943943,
+     2.055549377,
+     2.023728281,
+     2.0115039249999995,
+     1.9920681129999998,
+     1.990155989,
+     1.995576416,
+     1.996021504
+    ],
+    "wall_s": 2.175,
+    "peak_rss_gib": 0.766,
+    "factorizations": "3",
+    "block_size": "8",
+    "certificate_method": "exact",
+    "completeness": "complete",
+    "hosts": [
+     "gpu01"
+    ],
+    "binaries": [
+     "$HOME/rb-eng/ab2/bin/hsolve_portable"
+    ],
+    "invalid": []
+   },
+   "ratio": 0.9987457164231255,
+   "comparable": true
+  },
+  {
+   "case": "syn-near-singular-complex-1e5",
+   "n": 100000,
+   "problem": "HEP",
+   "hosts": [
+    "gpu01"
+   ],
+   "native": {
+    "reps": 10,
+    "valid": 10,
+    "ok": true,
+    "time_s": 2.1328700145,
+    "time_min": 2.096634417,
+    "time_max": 2.249235395,
+    "times": [
+     2.132136091,
+     2.1276653229999996,
+     2.1041514149999996,
+     2.096634417,
+     2.1336039379999994,
+     2.1507973170000003,
+     2.1577168370000006,
+     2.136243363,
+     2.249235395,
+     2.112958483
+    ],
+    "wall_s": 2.522,
+    "peak_rss_gib": 0.532,
+    "factorizations": "4",
+    "block_size": "4",
+    "certificate_method": "exact",
+    "completeness": "complete",
+    "hosts": [
+     "gpu01"
+    ],
+    "binaries": [
+     "$HOME/rb-eng/ab2/bin/hsolve_native"
+    ],
+    "invalid": []
+   },
+   "portable": {
+    "reps": 10,
+    "valid": 10,
+    "ok": true,
+    "time_s": 2.121683597,
+    "time_min": 2.109514559,
+    "time_max": 2.1717916069999994,
+    "times": [
+     2.1717916069999994,
+     2.1615078479999994,
+     2.137452177,
+     2.1381434319999997,
+     2.1114890060000002,
+     2.1125091770000006,
+     2.112104723,
+     2.109514559,
+     2.123193849,
+     2.120173345
+    ],
+    "wall_s": 2.522,
+    "peak_rss_gib": 0.528,
+    "factorizations": "4",
+    "block_size": "4",
+    "certificate_method": "exact",
+    "completeness": "complete",
+    "hosts": [
+     "gpu01"
+    ],
+    "binaries": [
+     "$HOME/rb-eng/ab2/bin/hsolve_portable"
+    ],
+    "invalid": []
+   },
+   "ratio": 0.9947552277335465,
+   "comparable": true
+  },
+  {
+   "case": "wg-square-1e5",
+   "n": 99225,
+   "problem": "GHIEP",
+   "hosts": [
+    "gpu01"
+   ],
+   "native": {
+    "reps": 10,
+    "valid": 10,
+    "ok": true,
+    "time_s": 0.45383804400000005,
+    "time_min": 0.449743424,
+    "time_max": 0.48769485600000007,
+    "times": [
+     0.45265854800000005,
+     0.48769485600000007,
+     0.45240540900000004,
+     0.4830050269999999,
+     0.463017059,
+     0.45453975399999996,
+     0.454000944,
+     0.449743424,
+     0.45367514400000003,
+     0.453012501
+    ],
+    "wall_s": 0.5694999999999999,
+    "peak_rss_gib": 0.273,
+    "factorizations": "1",
+    "block_size": "2",
+    "certificate_method": "none",
+    "completeness": "consistent",
+    "hosts": [
+     "gpu01"
+    ],
+    "binaries": [
+     "$HOME/rb-eng/ab2/bin/hsolve_native"
+    ],
+    "invalid": []
+   },
+   "portable": {
+    "reps": 10,
+    "valid": 10,
+    "ok": true,
+    "time_s": 0.4567080385,
+    "time_min": 0.45239547,
+    "time_max": 0.480751678,
+    "times": [
+     0.459556134,
+     0.45239547,
+     0.461842575,
+     0.464494666,
+     0.4539698810000001,
+     0.456640226,
+     0.45342633200000004,
+     0.45677585100000007,
+     0.453716203,
+     0.480751678
+    ],
+    "wall_s": 0.5685,
+    "peak_rss_gib": 0.272,
+    "factorizations": "1",
+    "block_size": "2",
+    "certificate_method": "none",
+    "completeness": "consistent",
+    "hosts": [
+     "gpu01"
+    ],
+    "binaries": [
+     "$HOME/rb-eng/ab2/bin/hsolve_portable"
+    ],
+    "invalid": []
+   },
+   "ratio": 1.0063238296963928,
+   "comparable": true
+  },
+  {
+   "case": "yee-pec-box-1e5",
+   "n": 109744,
+   "problem": "GHEP",
+   "hosts": [
+    "gpu01"
+   ],
+   "native": {
+    "reps": 10,
+    "valid": 10,
+    "ok": true,
+    "time_s": 1.1779730615,
+    "time_min": 1.172218764,
+    "time_max": 1.233943402,
+    "times": [
+     1.214802767,
+     1.181056266,
+     1.233943402,
+     1.177644093,
+     1.175163151,
+     1.172218764,
+     1.17830203,
+     1.175669427,
+     1.172420759,
+     1.207085419
+    ],
+    "wall_s": 1.321,
+    "peak_rss_gib": 0.554,
+    "factorizations": "2",
+    "block_size": "0",
+    "certificate_method": "exact",
+    "completeness": "complete",
+    "hosts": [
+     "gpu01"
+    ],
+    "binaries": [
+     "$HOME/rb-eng/ab2/bin/hsolve_native"
+    ],
+    "invalid": []
+   },
+   "portable": {
+    "reps": 10,
+    "valid": 10,
+    "ok": true,
+    "time_s": 1.1831257800000001,
+    "time_min": 1.178715247,
+    "time_max": 1.31650975,
+    "times": [
+     1.180500471,
+     1.178715247,
+     1.180671481,
+     1.18256275,
+     1.21928224,
+     1.224096621,
+     1.182744097,
+     1.31650975,
+     1.183507463,
+     1.195744301
+    ],
+    "wall_s": 1.322,
+    "peak_rss_gib": 0.549,
+    "factorizations": "2",
+    "block_size": "0",
+    "certificate_method": "exact",
+    "completeness": "complete",
+    "hosts": [
+     "gpu01"
+    ],
+    "binaries": [
+     "$HOME/rb-eng/ab2/bin/hsolve_portable"
+    ],
+    "invalid": []
+   },
+   "ratio": 1.0043742243930764,
+   "comparable": true
+  }
+ ]
+}
