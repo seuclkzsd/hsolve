@@ -1,7 +1,8 @@
-# Reproducible development/runtime environment (conda-forge only).
-#   conda env create -f env/environment.yml && conda activate os2026
-# Versions below are the ones validated on the development machine (2026-10).
-name: os2026
+# Build and runtime environment of hsolve (conda-forge only; docs/INSTALL.md):
+#   conda env create -f env/environment.yml && conda activate hsolve
+#   (or: micromamba create -f env/environment.yml && micromamba activate hsolve)
+# The versions below are the ones the tests, the CI and the release packages use (2026-10).
+name: hsolve
 channels:
   - conda-forge
 dependencies:
