@@ -330,7 +330,8 @@ def conditions_text(summary: dict[str, Any]) -> str:
         f"- 硬件：{hosts}（{c0.get('cpu', '')}，2 × 16 核，251 GB），每次运行绑定一个 socket 的 16 个物理核 "
         f"`{c0.get('cores')}`、内存上限 {c0.get('mem_gb'):g} GiB，同一时刻只有一个计时运行（`tools/run/guard.py --exclusive`）。",
         f"- 版本：hsolve 源码提交 {', '.join(commits)}（`build/release/hsolve`，md5 {', '.join(m[:12] for m in md5s)}），"
-        f"SLEPc/PETSc {', '.join(slepc)}（MUMPS 5.8.2）；日期 {dates[0]} 至 {dates[-1]}。",
+        f"SLEPc/PETSc {', '.join(slepc)}（MUMPS 5.8.2）；日期 "
+        f"{dates[0] if dates[0] == dates[-1] else f'{dates[0]} 至 {dates[-1]}'}。",
         f"- 重复：每个场景 {', '.join(map(str, reps))} 次，三个求解器交错运行（每次轮换先后顺序），表中时间为中位数。",
         "- 时间口径：hsolve 为报告中的 `time_total_s`（含范数估计、分析、分解、迭代、完备性证书）；SLEPc 为 "
         "`-log_view` 的 setup + solve + 特征向量计算（含 MUMPS 分析与分解）。两者都不含进程启动和读写文件。"

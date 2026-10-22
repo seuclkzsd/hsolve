@@ -134,7 +134,11 @@ def failure_short(e: dict[str, Any] | None, unsupported: bool = False) -> str:
         parts.append("error exit")
     if not parts and "unclaimed" in oc:
         parts.append("reported failure")
-    return ", ".join(parts) or "invalid"
+    text = ", ".join(parts) or "invalid"
+    failed = e.get("reps", 0) - e.get("valid_runs", 0)
+    if e.get("valid_runs"):          # some repetitions were valid: say how many were not
+        text += f" ({failed} of {e['reps']} runs)"
+    return text
 
 
 def status(row: dict[str, Any], s: str) -> tuple[bool, str]:
