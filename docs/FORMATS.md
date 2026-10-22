@@ -71,7 +71,7 @@ data/refs/<name>/ref.json        {"kind","note","count","complete","window"}
 `problem ∈ {auto, standard, generalized_definite, generalized_indefinite}`；
 `method ∈ {auto, shift_invert_lanczos, shift_invert_krylov_schur, lanczos}`；
 `factor_precision ∈ {double, single, auto}`；`blr / out_of_core / inertia_check / inertia_counter ∈ {auto, on, off}`；
-`certificate ∈ {exact, randomized, auto, off}`；`structure_candidates ∈ {off, auto}`；`subspace_bound ∈ {auto, off}`；
+`certificate ∈ {exact, randomized, auto, off}`；`structure_candidates ∈ {off, auto}`；`subspace_bound ∈ {auto, on, off}`；
 `secure` 为 true / false。
 
 取值与语义（校验见 `parse_config`；算法见 `docs/DESIGN.md` §3.6）：
@@ -158,8 +158,11 @@ data/refs/<name>/ref.json        {"kind","note","count","complete","window"}
   `candidate_source` 写明首次候选来源。这条路径只适用于上述结构化网格算子，不作为一般性能的依据。
 - `subspace_bound`（特征向量子空间夹角的后验界，`docs/DESIGN.md` §3.6-8c）：`auto`（默认）= HEP/GHEP 的证书通过时，
   按 Davis–Kahan sinΘ 定理给出每个返回特征对所在簇的子空间夹角上界，写入报告 `subspace` 与 `pairs[].subspace_sin_bound`
-  （§3）；`off` = 不计算（`subspace.note` 为 "disabled by configuration"）。代价：返回向量上各一次 A、B 乘积与簇内 Gram
-  矩阵，一般 B 另有每列一次 Jacobi 预条件 CG（B = I 与对角 B 不需要），计入 `time_verify_s`。
+  （§3）；λ_min(B)（一般 B 的 B^{-1}-范数要用）只用廉价的证明（对角、Gershgorin、不完全 Cholesky），都不适用时用估计
+  （`subspace.rigorous = false`）。`on` = 同 auto，但 λ_min(B) 总要证明：廉价证明都不适用时对 B − μ·diag(B) 做惯性计数
+  （再分解一到两次 B 的模式，`b_min_source = "inertia_count"`）。`off` = 不计算（`subspace.note` 为
+  "disabled by configuration"）。代价：返回向量上各一次 A、B 乘积与 |A|、|B| 乘积、簇内 Gram 矩阵，一般 B 另有每列一次
+  Jacobi 预条件 CG（B = I 与对角 B 不需要），计入 `time_verify_s`；实测见 `results/subspace_bound.md`。
 - `secure`（数据保护，§5）：true 时命令行的报告与事件日志不含任何文件路径（输入改记形状、nnz、dtype 与输入文件字节的
   SHA-256），命令行创建的全部文件（结果、报告、日志、MUMPS 外存文件）权限为 0600、目录 0700。求解本身不变。
 - 当前限制：B 不定（GHIEP）只支持 `mode = nearest`（其余抛 Unsupported）；`method = lanczos`
@@ -175,7 +178,7 @@ data/refs/<name>/ref.json        {"kind","note","count","complete","window"}
 把 nearest 证书的两次计数 / 窗口目标的切片交给 helper 进程，auto 按代价规则；`hsolve` 接受而不起作用，见
 `docs/PARALLEL.md`）、`--gpu off|auto|on`（P10，也可用环境变量 `HS_GPU`：BLAS hook 把 MUMPS 分解中的大 dgemm 以
 FP64 cuBLAS 卸载到 GPU，CUDA 库运行时加载；默认 off，auto 只在分解估计 ≥ 3e12 flops 时用 GPU，无 GPU 时为 CPU 路径，
-`docs/DESIGN.md` §3.10）；`--structure-candidates off|auto`（→ `structure_candidates`）、`--subspace-bound auto|off`
+`docs/DESIGN.md` §3.10）；`--structure-candidates off|auto`（→ `structure_candidates`）、`--subspace-bound auto|on|off`
 （→ `subspace_bound`）、`--secure`（→ `secure = true`，§5）；
 另有 `--log FILE`（JSON-lines 事件日志；P7 起每条记录带进程当时的 `rss_mb` 与峰值 `peak_rss_mb`，以及地址
 空间 `vm_mb`（VmSize）与其峰值 `peak_vm_mb`（VmPeak））、`-v/--verbose`、`-q/--quiet`、`--version`。stdout
@@ -288,7 +291,7 @@ seconds}, slices[...], zero_cluster_dim, zero_modes_filtered, success, warnings[
   helper 任务时间之和，以及 `notes`（为何没交给 helper——代价规则、内存规则（发送前预测或 helper 报告后）、可用 helper
   不足——与失败、回退）。多进程模式的证书 `statement` 注明各次计数在哪里做（例如 "2 of the 2 counts made by helper
   processes"；一次由 helper、一次由 leader 时分别写明 InertiaCounter 或 main factorization）。
-- `subspace`（特征向量子空间夹角的后验界，`docs/DESIGN.md` §3.6-8c）：只在 HEP/GHEP、`subspace_bound = auto` 且证书
+- `subspace`（特征向量子空间夹角的后验界，`docs/DESIGN.md` §3.6-8c）：只在 HEP/GHEP、`subspace_bound` 不为 off 且证书
   通过（`certificate.passed`）时计算，否则 `performed = false`、`max_sin_bound = null`、各对的 `subspace_sin_bound = null`，
   `note` 说明原因（"disabled by configuration"、"not available for indefinite B ..."、"no completeness certificate ..."、
   "the completeness certificate did not pass"）。夹角都按 B 内积（B = I 时即欧氏 2-范数）度量。
@@ -303,12 +306,16 @@ seconds}, slices[...], zero_cluster_dim, zero_modes_filtered, success, warnings[
     smallest / largest 的窗口多于 k 个），它们的向量属于被界定的子空间。`gap`：组内特征值到其余全部特征值的距离下界
     δ（窗口端点与其它组的 Kahan 区间）；`residual` ≥ ‖B^{-1/2}(AX − BXΛ)‖_F（含舍入误差的先验界）；
     `orthogonality` ≥ ‖XᴴBX − I‖₂；`sin_bound = min(1, residual / (gap·sqrt(1 − orthogonality)))`。
-  - `rigorous`：证书为证明（计数，或 κ 有证明的随机检验）且 λ_min(B) 有证明（B = I、对角 B、Gershgorin 或不完全
-    Cholesky 证明）时为 true；λ_min(B) 只是估计时为 false（`note` 说明，只影响 B^{-1}-范数的余项与舍入项）。
-    `failure_probability`：取自证书（计数为 0，随机检验为其 δ）。`residual_norm`：`"2"`（B = I）、
-    `"b_inverse_diagonal"`（对角 B，精确加权）、`"b_inverse_cg"`（一般 B：Jacobi 预条件 CG，余项以 λ_min(B) 的下界界定）。
-    `b_min` / `b_min_source`：所用的 λ_min(B) 下界（或估计）及其来源（`identity`、`diagonal`、`gershgorin`、
-    `incomplete_cholesky`、`estimate`）。`seconds`：计入 `time_verify_s`。
+  - `rigorous`：证书为证明（计数，或 κ 有证明的随机检验）且 λ_min(B) 有证明（B = I、对角 B、Gershgorin、不完全
+    Cholesky 证明，或 `subspace_bound = on` 的惯性计数）时为 true；λ_min(B) 只是估计时为 false（`note` 说明，只影响
+    B^{-1}-范数的余项与舍入项）。`failure_probability`：取自证书（计数为 0，随机检验为其 δ）。`residual_norm`：`"2"`（B = I）、
+    `"b_inverse_diagonal"`（对角 B，精确加权）、`"b_inverse_cg"`（一般 B：Jacobi 预条件 CG，余项以 λ_min(B) 与
+    λ_min(D^{-1/2}BD^{-1/2}) 的下界界定，D = diag(B)）。`b_min` / `b_min_source`：所用的 λ_min(B) 下界（或估计）及其来源
+    （`identity`、`diagonal`、`gershgorin`、`incomplete_cholesky`、`inertia_count`、`estimate`）。`seconds`：计入
+    `time_verify_s`。
+  - 松紧（实测，`results/subspace_bound.md`）：有参考特征向量的 18 个测例共 118 组中界都不小于实测夹角，界 / 实测的
+    中位数约 1.6e3（最小 46，最大 8.6e6）。Davis–Kahan 只用残差范数与间隙 δ，残差主要落在远处特征方向时（谱跨度大、
+    目标处间隙小）偏松，原因与逐组数据见该文件。默认 auto 的计算时间为求解时间的中位数 1.9%（最大 15.6%）。
 - `gpu`（P10，可选，只在 GPU 模式不是 off——`--gpu` 或 `HS_GPU`——时由命令行写入，`docs/DESIGN.md` §3.10、
   `docs/BLAS.md` §10）：GPU 卸载的报告——`mode`、`available`（true / false / null = auto 低于阈值、未加载 CUDA）、
   `device`、分解数与卸载的分解数、GPU 上的 GFlop 与占估计的份额、`init_s`；不能卸载时 `reason` 说明为何走 CPU 路径

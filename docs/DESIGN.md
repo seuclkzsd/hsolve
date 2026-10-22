@@ -65,9 +65,10 @@ cuBLAS，把 MUMPS 分解（含证书计数）中被主机流量模型判为划�
 加回；默认只用 GPU，混合模式为测量选项）；模式 `HS_GPU` / `hsolve --gpu off|auto|on`，默认 off（与今天的 CPU 路径完全
 相同），无 GPU 或无 CUDA 库时自动回到 CPU（降级模式）；报告的 `gpu` 对象（§3.8、§3.10）。实测见 `results/p10_gpu.md`。
 
-v11（rb-features）——结构识别快路径改为可选、默认关闭（`structure_candidates = off`，§3.6-5）；特征向量子空间夹角的
-后验界（Davis–Kahan sinΘ，间隙取自证书窗口与 Kahan 残差区间，§3.6-8c，报告 `subspace`）；命令行的数据保护模式
-`secure`（报告与日志不含路径、输入以 SHA-256 记录、文件 0600，`docs/FORMATS.md` §5）。
+v11——结构识别快路径改为可选、默认关闭（`structure_candidates = off`，§3.6-5）；特征向量子空间夹角的
+后验界（Davis–Kahan sinΘ，间隙取自证书窗口与 Kahan 残差区间，舍入按分量计入，`subspace_bound = auto | on | off`，
+§3.6-8c，报告 `subspace`，实测 `results/subspace_bound.md`）；命令行的数据保护模式 `secure`（报告与日志不含路径、
+输入以 SHA-256 记录、文件 0600，`docs/FORMATS.md` §5）。
 
 v10（P10「mpi」，分支 p10mpi）——可选的多进程模式 `hsolve-mpi`（CMake `HSOLVE_WITH_MPI=AUTO`，启动脚本
 `hsolve-mpirun`）：leader 占全部核运行 hs::solve，每个 NUMA 节点一个 helper 进程；nearest 证书的两次精确计数由两个
@@ -1208,7 +1209,7 @@ factor（InertiaCounter）、sparse、linalg；不打印；固定种子与线程
      ≤ 1e-8 相对）的两次计数证实整簇数值相等后接受任意这些副本；否则整簇求解（先查内存预算）。
    - 报告：每次运行一条 `slices[]`（窗口、位移、which、计数、找到数、nev、重跑、重启、算子作用
      次数、是否通过）；`sigma_used` 为首片位移。
-8c. **特征向量子空间夹角的后验界**（`driver/subspace.*`，`SolverConfig::subspace_bound`，默认 `auto`；报告
+8c. **特征向量子空间夹角的后验界**（`driver/subspace.*`，`SolverConfig::subspace_bound` = auto（默认）/ on / off；报告
    `subspace` 与 `pairs[].subspace_sin_bound`，`docs/FORMATS.md` §3）。证书通过后，在 B 内积下界定每个返回特征对所在簇的
    特征向量子空间与精确特征子空间的夹角：
    - **变换**：C = B^{-1/2} A B^{-1/2} 为厄密矩阵，返回块 X（B-正交归一至舍入）对应 Y = B^{1/2}X，残差
@@ -1227,19 +1228,38 @@ factor（InertiaCounter）、sparse、linalg；不打印；固定种子与线程
      count（smallest / largest 的部分簇），或某个 J 伸出窗口时，整个窗口为一组（`kind = "window"`），与窗口的
      count 维谱子空间比较，δ 为到窗口端点的距离。
    - **残差的 B^{-1}-范数**：B = I 为 2-范数；对角 B 精确加权；一般 HPD B 对每列做 Jacobi 预条件 CG 得 z ≈ B^{-1}r，
-     对任意 z 有 rᴴB^{-1}r = Re zᴴ(2r − Bz) + sᴴB^{-1}s（s = r − Bz 显式计算），余项 ≤ ‖s‖²/λ_min(B)；CG 在余项界不超过
-     CG 自身的下界估计 rᴴz_k 的 1e-6 时停止（或 ‖s‖ ≤ 1e-10‖r‖、至多 300 步）。λ_min(B) 的下界依次取：对角元（对角 B）、
-     Gershgorin（原矩阵与 Jacobi 缩放后两者取大）、求解开始时 B 的正定性证明（§3.6-1，`Ctx::b_scaled_lower`，已证明时直接复用）、
-     不完全 Cholesky 证明（norms.hpp，预算为平均一次分解时间的 1/2、至少 0.05 s）；都不成立时（如 Jacobi 缩放后的 Lanczos
-     估计 θ < 0.1，近奇异 B）用该估计的一半，报告 `rigorous = false` 并说明——估计只进入余项与舍入项。
-   - **舍入**：残差、Gram 矩阵元与 B^{-1}-范数的浮点误差都按先验界计入（Higham §3.1 的 γ_k，取 2 倍余量覆盖复数运算；
-     |A|、|B| 的范数用行绝对值和上界），所以界对精确量成立。`rigorous` = 证书为证明且 λ_min(B) 有证明。
-   - **代价**：返回（与未返回）向量上各一次 A、B 稀疏乘积、每簇一个 Gram 矩阵（窗口组为 n·m²），一般 B 另加每列的 CG 与
-     可能的一次不完全 Cholesky 证明；分块（每块 ≤ 16 列，至多用预算余量的一半）以控制内存，放不下时不计算（`note`）。计入 verify 阶段；在计算之前先释放
-     主分解对象（界只需要 A、B 与向量）。GHIEP（无证书）、证书未通过或关闭时不计算，`note` 写明原因。
-   - **测试**：`tests/cpp/test_subspace_bound.cpp`——已知特征向量的稠密小例（B = I、对角 B、一般 B，实数与复数）上界
-     必须不小于真实夹角且至多大 3 个数量级；三重与二重特征值、未返回的副本、窗口组、两个窗口与窗口外的对；端到端的
-     nearest（k 截断重特征值）、interval（多片）与 smallest。
+     对任意 z 有 rᴴB^{-1}r = Re zᴴ(2r − Bz) + sᴴB^{-1}s（s = r − Bz 显式计算）。向量 v 的 B^{-1}-范数取两种界中较小者：
+     ‖v‖²/λ_min(B) 与 Jacobi 加权的 ‖D^{-1/2}v‖²/λ_min(S)（D = diag(B)，S = D^{-1/2}BD^{-1/2}，vᴴB^{-1}v =
+     (D^{-1/2}v)ᴴS^{-1}(D^{-1/2}v)）——B 的对角跨多个量级时（如 ss-tem27623 的 1e-9 至 3），λ_min(B) 很小而 λ_min(S) 不小，
+     后者小得多。CG 各列同时迭代（每步一次 B 的块乘积与三次按固定行块融合的向量运算，求和与线程数无关），在余项估计
+     不超过 CG 自身的下界估计 rᴴz_k 的 1% 时停止（残差范数因此至多放大 0.5%；或 ‖s‖ ≤ 1e-10‖r‖、至多 300 步）。
+     λ_min(S) 与 λ_min(B) = λ_min(S)·min bᵢᵢ 的下界依次取：对角元（对角 B）、Gershgorin（原矩阵与 Jacobi 缩放后两者）、
+     求解开始时 B 的正定性证明（§3.6-1，`Ctx::b_scaled_lower`）、不完全 Cholesky 证明（norms.hpp，预算为平均一次分解时间的
+     1/2、至少 0.05 s；求解开始时的证明已有结论——证明了，或因 θ < 0.1、主元破缺、Gershgorin 不成立而失败——则不重复，
+     `Ctx::b_proof_settled`）；`subspace_bound = on` 时再加**惯性计数**：B − μD 与 S − μI 惯性相同（Sylvester），对 B − μD
+     做一次 LDLᵀ 分解（`compute_inertia`：自己的分析、双精度、无 BLR、不保留因子，与完备性证书同一计数论证），无负、零主元即证明
+     λ_min(S) > μ − 4u（组装对角元 (1 − μ)bᵢᵢ 的舍入）；μ 先取 S 上 Lanczos 估计 θ 的一半，失败再取 θ/20。默认的 auto 不做
+     计数（它要再分解一到两次 B 的模式，在 1e5 阶的 GHEP 上与整次求解同量级）。这些都不成立时用 θ/2 的估计，报告
+     `rigorous = false` 并在 `note` 中说明（auto 时提示 on 可证明）——估计只进入余项与舍入项。`b_min_source` 记录来源。
+   - **舍入**：残差、Gram 矩阵元与 B^{-1}-范数的浮点误差都按先验界计入（Higham §3.1 的 γ_k，取 2 倍余量覆盖复数运算），
+     所以界对精确量成立。与 A、B 的乘积按分量界：|r − fl(r)| ≤ γ(|A||x| + |λ||B||x|)，|fl(Bz) − Bz| ≤ γ|B||z|，
+     Gram 矩阵元 |gᵢⱼ − fl(gᵢⱼ)| ≤ γ‖xᵢ‖·‖|B||xⱼ|‖（多一次 |A|、|B| 与 |x| 的乘积）；再按上面的 B^{-1}-范数界换算。
+     与用行绝对值和乘 ‖x‖ 的范数界相比，B 的尺度很不均匀时（特征向量在 B 的小对角元处很大）舍入项小几个数量级。
+     `rigorous` = 证书为证明且 λ_min(B) 有证明。
+   - **代价**：返回（与未返回）向量上各一次 A、B 稀疏乘积及一次 |A|、|B| 乘积、每簇一个 Gram 矩阵（窗口组为 n·m²），
+     一般 B 另加每列的 CG，必要时一次不完全 Cholesky 证明或一两次 B − μD 的惯性计数；分块（每块 ≤ 16 列，至多用预算余量的
+     一半）以控制内存，放不下时不计算（`note`）。计入 verify 阶段；在计算之前先释放主分解对象（界只需要 A、B 与向量）。
+     GHIEP（无证书）、证书未通过或关闭时不计算，`note` 写明原因。
+   - **测试**：`tests/cpp/test_subspace_bound.cpp`——已知特征向量的稠密小例（B = I、对角 B、一般 B、尺度跨 4 个量级的 B，
+     实数与复数）上界必须不小于真实夹角且至多大 3 个数量级；三重与二重特征值、未返回的副本、窗口组、两个窗口与窗口外的对；
+     端到端的 nearest（k 截断重特征值）、interval（多片）与 smallest，以及由惯性计数证明 λ_min 的一维 Laplace B。
+   - **实测**（`results/subspace_bound.md`；22 个数据测例的默认配置，gpu01 测量槽 16 核，每种设置交错 5 次取中位数）：有参考
+     特征向量的 18 个测例（11 个由生成器参数重算精确特征向量，其余为 ARPACK tol 1e-14 的参考；HEP、GHEP、复数、重数至 12
+     的重特征值）共 118 组，界在每组都不小于实测夹角，界 / 实测的中位数 1.6e3（最小 46，最大 8.6e6）。已知完整谱的组中
+     δ 与真实间隙之比的中位数为 1；差距来自 Davis–Kahan 只用残差范数：位移反演 Ritz 向量的残差主要落在离 σ 远的特征方向上，
+     它们对夹角的贡献按到那些特征值的距离缩小，界却按 δ 计——谱跨度大、目标处间隙小的测例最松（宽谱 8.6e6、零簇 1e5）。
+     默认 auto 下界的计算时间是不计算界时总时间的中位数 1.9%（最大 15.6%，cav2d-rect-pert-1e5，约一半是不完全 Cholesky
+     证明）；on 在 auto 只有估计的 3 个 GHEP 测例上证明 λ_min(B)，界的计算时间为不计算界时总时间的 19%–100%。
 
 9. **零模（零空间）处理**：EM 零空间可达 n 的 20% 以上，**不得显式 deflation 或剔除重算**；零簇
    靠位移放置排除，不靠事后过滤。`zero_filter_tol` 定义为相对 scale（< 0 关闭）。
