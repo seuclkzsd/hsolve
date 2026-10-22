@@ -2,11 +2,11 @@
 
 Each Scenario is one row of results/showcase/scenarios.md: the matrices of a data case, the target
 every solver gets, the hsolve configuration keys and the reference the independent evaluation
-(tools/eval) judges completeness against. The scenarios follow the hard cases of the COMAC task
-book: multiple eigenvalues, a shift on (or 1e-13 from) an eigenvalue, the gradient null space at
-zero (low-frequency breakdown) and a dense cluster there, generalized problems with an indefinite B,
-all eigenvalues of an interval, complex Hermitian (Bloch-periodic) problems, SuiteSparse matrices and
-one case of order 1e6.
+(tools/eval) judges completeness against. The scenarios follow the hard cases named by the COMAC
+eigensolver task (https://www.oschina.net/os2026/): multiple eigenvalues, a shift on (or 1e-13 from)
+an eigenvalue, the gradient null space at zero (low-frequency breakdown) and a dense cluster there,
+generalized problems with an indefinite B, all eigenvalues of an interval, complex Hermitian
+(Bloch-periodic) problems, SuiteSparse matrices and one case of order 1e6.
 
 `prepare` builds the campaign data root (default $HOME/rb-evidence/data on the cluster):
 
@@ -231,7 +231,7 @@ SCENARIOS: tuple[Scenario, ...] = (
     Scenario("zero-cluster", "zero", "零附近 1e4 个特征值挤在 [−1e−5, 1e−5]",
              "syn-zero-cluster-real-1e5", "syn-zero-cluster-real-1e5",
              "间距接近容差分辨率的密集簇，最近 21 个须逐一分辨"),
-    Scenario("waveguide-square", "indefinite-b", "方波导 50 GHz（赛题真实算例）：18 个传播模",
+    Scenario("waveguide-square", "indefinite-b", "方波导 10 × 10 mm、50 GHz：18 个传播模",
              "wg-square-1e5", "wg-square-1e5",
              "A、B 都不定（B 有 24649 个负特征值），A 有 24649 维零空间，TE/TM 模简并",
              reference="waveguide-family"),

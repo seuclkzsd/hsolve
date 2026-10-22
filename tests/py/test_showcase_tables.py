@@ -78,8 +78,10 @@ def test_rendering_and_regions(raw):
     assert "hsolve 2/2" in sec["scenario-table"]
     assert "1.43×" in sec["speed-table"] and "该算例的调优配置" in sec["speed-table"]
     assert "直接调用 SLEPc" in sec["failure-details"]
-    assert "hsolve **2/2**" in sec["headline"] and "漏解 1 个（1 个：title multiplet-cube）" in sec["headline"]
-    assert "1 个更快（1.43–1.43×）" in sec["headline"]
+    cube_title = next(c.title for c in tables.scn.SCENARIOS if c.id == "multiplet-cube")   # catalogue wording wins
+    assert "hsolve **2/2**" in sec["headline"] and f"未通过 2 个场景：不支持（库报错） 1 个" in sec["headline"]
+    assert f"漏解 1 个（{cube_title}）" in sec["headline"]
+    assert "1 个场景 hsolve 更快（1.43–1.43×）" in sec["headline"]
     assert "c004" in sec["limitations"] and "GHIEP" in sec["limitations"]
     page = "# t\n<!-- BEGIN GENERATED: speed-table -->\nold\n<!-- END GENERATED: speed-table -->\ntail\n"
     new = tables.replace_regions(page, {"speed-table": sec["speed-table"]})
@@ -87,6 +89,32 @@ def test_rendering_and_regions(raw):
     assert tables.replace_regions(new, {"speed-table": sec["speed-table"]}) == new   # idempotent
     with pytest.raises(ValueError):
         tables.replace_regions(page, {"scenario-table": "x"})
+
+
+def test_readme_quotes_count_from_the_summary(raw):
+    s = tables.build_summary(raw)
+    assert s["run_counts"]["hsolve"] == {"runs": 4, "valid": 4, "max_backward_error": pytest.approx(1e-14)}
+    sec = tables.readme_sections(s)
+    facts = sec["readme-facts"]
+    assert "hsolve 2/2，SLEPc 常规用法 0/2，SLEPc 逐例调优 1/2" in facts
+    assert "hsolve 4/4 次有效" in facts
+    assert "每次都返回 10 个特征对，却漏掉其中 1 个" in facts and "惯性计数 10 个 = 找到 10 个" in facts
+    assert "中位求解时间之比为 1.43–1.43（每个场景都是 hsolve 更快）" in facts
+    assert "1.0e-14" in facts and "c004" in facts
+    table = sec["readme-table"].splitlines()
+    assert len(table) == 4 and "**不支持**（PETSc 报错）" in table[3] and "正确 3/3，2.1 s" in table[2]
+    assert "hsolve 2/2, SLEPc default use 0/2, SLEPc tuned per case 1/2" in sec["readme-facts-en"]
+
+
+def test_campaign_tuning_is_reported(raw, tmp_path):
+    tf = tmp_path / "tuning.json"
+    tf.write_text(json.dumps({"tunings": {"multiplet-cube": {"configurations": 31, "trials": 70, "valid_trials": 0,
+                                                             "best": None}}}))
+    s = tables.build_summary(raw, tuning_file=tf)
+    r = s["scenarios"][0]
+    assert tables.tuned_source(r) == "本次逐例调优 31 种配置、70 次试验均未通过评测，沿用该算例的调优配置"
+    lim = tables.limitations(s)
+    assert "1 个场景（" in lim and "没有找到通过评测的配置" in lim
 
 
 def test_outcome_classes():
@@ -113,6 +141,28 @@ def test_merge_profiles_later_sources_win(tmp_path):
     got = {p["name"]: p for p in doc["profiles"]}
     assert set(got) == {"x", "y"} and got["x"]["config"]["options"] == {"eps_ncv": "3k"}
     assert got["x"]["source"].endswith("b.json") and [s["profiles"] for s in doc["sources"]] == [2, 1]
+
+
+def test_merge_profiles_scope_filter_and_tuning_record(tmp_path):
+    def profile(scope, name):
+        return {"scope": scope, "name": name, "mode": "nearest", "cores": 16, "target": None,
+                "config": {"ranks": 1, "threads": 16, "bind": "none", "options": {}}}
+    a, b = tmp_path / "a.json", tmp_path / "b.json"
+    a.write_text(json.dumps({"schema_version": 1, "profiles": [profile("class", "HEP/nearest")]}))
+    b.write_text(json.dumps({"schema_version": 1, "profiles": [profile("class", "HEP/nearest"),
+                                                              profile("case", "cube")]}))
+    doc = campaign.merge_profiles(((a, "base"), (b, "showcase", ("case",)), (tmp_path / "missing.json", "none")))
+    assert [(p["scope"], p["name"], p["source"].endswith(n)) for p, n in zip(doc["profiles"], ("b.json", "a.json"))] \
+        == [("case", "cube", True), ("class", "HEP/nearest", True)]
+    assert [s["profiles"] for s in doc["sources"]] == [1, 1, 0]
+    trials = [{"label": "1x16", "valid": False, "why": "completeness incomplete"},
+              {"label": "1x16 eps_ncv=3k", "valid": True, "why": None},
+              {"label": "1x16 eps_ncv=3k", "valid": True, "why": None}]
+    rec = campaign.tuning_record("multiplet-cube", {"case": "cube", "mode": "nearest", "trials": trials,
+                                                     "best": "1x16 eps_ncv=3k", "best_median_s": 4.0,
+                                                     "default_valid": False, "default_median_s": 3.0})
+    assert (rec["trials"], rec["valid_trials"], rec["configurations"]) == (3, 2, 2)
+    assert rec["best_median_s"] == 4.0 and rec["invalid_reasons"] == ["completeness incomplete"]
 
 
 def test_raw_records_are_written_home_relative():

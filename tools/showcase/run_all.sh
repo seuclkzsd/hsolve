@@ -5,6 +5,10 @@
 #                                                   (tools/dev/cluster_run.sh HOST -- tools/showcase/run_all.sh STEP)
 # Steps:
 #   prepare [IDS...]        build/test lane: campaign data root (cases, references, resolved targets)
+#   tune IDS...             measurement slot, one guard --exclusive call: tools/bench/tune_slepc.py on
+#                           these scenarios' cases (16 cores) -> results/showcase/slepc_tuned_showcase.json,
+#                           summary results/showcase/slepc_tuning.json (run `profiles` afterwards)
+#   tunes [IDS...]          `tune` once per scenario (default: those without a case profile), then `profiles`
 #   profiles                merged tuned SLEPc profiles -> results/showcase/slepc_tuned_profiles.json
 #   probe                   build/test lane: SLEPc's own error for a complex Hermitian interval
 #   campaign IDS...         measurement slot, one guard --exclusive call (<= 2700 s): these scenarios
@@ -36,6 +40,8 @@ SLOT1=(multiplet-cube te-tm-pairs-box sigma-on-eigenvalue sigma-1e-13 lowfreq-nu
 SLOT2=(waveguide-square waveguide-slab interval-box ss-2cubes-sphere ss-qa8fk ss-tem27623 ss-tem152078)
 SLOT3=(pec-box-1e6 waveguide-1e6)
 SLOT4=(bloch-1e4 bloch-1e5 bloch-interval)
+# Scenarios whose case had no tuned profile at 16 cores (the class profile stood in for it).
+TUNE_IDS=(multiplet-cube ss-2cubes-sphere zero-cluster waveguide-slab ss-tem27623 ss-tem152078 lowfreq-null-space)
 
 step="${1:-}"
 [ -n "$step" ] || { awk 'NR > 1 && /^#/ { print; next } NR > 1 { exit }' "$0" >&2; exit 2; }
@@ -46,6 +52,14 @@ case "$step" in
       --source-root data --source-root "$EXTRA_DATA" ${1:+--only "$@"} ;;
   profiles)
     python -m tools.showcase.campaign profiles ;;
+  tune)
+    "${slot[@]}" python -m tools.showcase.campaign tune --root "$ROOT" --scenario "$@" ;;
+  tunes)   # one slot call per scenario (a tuning takes 5-20 min)
+    rc=0
+    [ $# -gt 0 ] || set -- "${TUNE_IDS[@]}"
+    for s in "$@"; do "$0" tune "$s" || rc=$?; done
+    "$0" profiles
+    exit "$rc" ;;
   probe)
     read -r lo hi < <(python -c "import json,sys; s=json.load(open(sys.argv[1]))['scenarios']['bloch-interval']['target']; print(s['lower'], s['upper'])" "$ROOT/showcase-scenarios.json")
     "${lane[@]}" env "LD_LIBRARY_PATH=$REF_COMPLEX/lib" "$REF_COMPLEX/bin/python" -m tools.showcase.slepc_probe \
