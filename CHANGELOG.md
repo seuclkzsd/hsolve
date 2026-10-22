@@ -21,6 +21,8 @@
   贡献电磁测试矩阵）与 PR 模板、`ROADMAP.md`、`CITATION.cff`、`.editorconfig`。
 - 文档站（MkDocs Material，GitHub Pages）：快速开始、用户指南（命令行、Python 接口、配置与输出格式、结果解读与诊断）、
   算法原理、并行方案、评测与对比、设计文档、开发者指南、研发记录、路线图与本更新日志。
+- SLEPc 对照基线的环境：发布的对比所用的精确包列表（`env/slepc-baseline-real.explicit.txt`、
+  `env/slepc-baseline-complex.explicit.txt`）与在其它机器上求解同样版本的 `env/slepc-baseline.yml`。
 - {{TODO:rb-eng 的条目：CI 工作流、容器镜像、Release 二进制包与 SHA256SUMS}}
 - {{TODO:rb-evidence 的条目：困难场景对比与展示页、原始数据与生成表格的脚本}}
 

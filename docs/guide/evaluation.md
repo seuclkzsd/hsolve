@@ -12,8 +12,10 @@ hsolve 公开的每个正确性与性能数字都按同一套方法得到：结�
 3. **无效的运行不比速度。** 加速比只在双方每一次重复都通过评测时给出；一方漏解或残差超标时，照实记为失败。
 4. **同口径计时。** 只比较求解器内部时间：hsolve 的 `time_total_s`，对 SLEPc 的 EPSSetUp + EPSSolve + 推迟的特征向量
    计算；都不含进程启动、读矩阵与写结果。
-5. **对手的两种用法都给。** 与 SLEPc 对比时使用同一版本的 MUMPS（5.8.2）作为其分解后端，分别报告默认用法与
-   逐例调优的配置（`tools/bench/tune_slepc.py` 在每个测例与核数上搜索布局、排序、BLR 与 Krylov 参数）。
+5. **对手的两种用法都给。** 与 SLEPc 对比时使用同一上游版本的 MUMPS（5.8.2）作为其分解后端，分别报告默认用法与
+   逐例调优的配置（`tools/bench/tune_slepc.py` 在每个测例与核数上搜索布局、排序、BLR 与 Krylov 参数）。SLEPc 用的是
+   conda-forge 原样的 MPI 版 MUMPS；hsolve 链接的 MUMPS 另有 3 个补丁（`patches/`）与 P9 选定的块参数，并经 BLAS hook
+   使用自研的 AVX-512 / AVX2 回代内核，所以速度对比包含这些改动的效果。
 6. **测量纪律。** 计时运行独占一个 16 核 socket 的测量槽（32 GiB 上限，同一时刻只有一个运行，构建与测试另用一组核），
    求解器交错运行、重复多次取中位数；测试条件与提交号写在每张表的表头。
 
@@ -57,10 +59,16 @@ python -m tools.gen.yee yee-pec-box-1e5            # 生成到 data/cases/ 与 d
 
 ## 与 SLEPc 对比
 
-对照基线在单独的 conda 环境中运行（PETSc / SLEPc 3.26，同版本 MUMPS 5.8.2），环境与离线部署见
-[依赖与许可证](../DEPENDENCIES.md)：
+对照基线在单独的 conda 环境中运行（PETSc / SLEPc 3.26.0，MPI 版 MUMPS 5.8.2，Open MPI 5.0.11），与 hsolve 的环境分开，
+两份 MUMPS 不会混用。发布的对比所用环境的精确包列表随仓库提供：实数为
+[`env/slepc-baseline-real.explicit.txt`](../../env/slepc-baseline-real.explicit.txt)，复数（复厄密测例）为
+[`env/slepc-baseline-complex.explicit.txt`](../../env/slepc-baseline-complex.explicit.txt)；这两份列表要求带 AVX-512 的
+linux-64 机器，其它机器用 [`env/slepc-baseline.yml`](../../env/slepc-baseline.yml) 求解同样的版本。各组件的许可证与
+集群上的离线部署见[依赖与许可证](../DEPENDENCIES.md)。
 
 ```bash
+conda create -p "$HOME/envs/hsolve-slepc" --file env/slepc-baseline-real.explicit.txt
+export HS_REF_ENV="$HOME/envs/hsolve-slepc"        # tools/bench 在这里找对照环境
 python3 tools/run/guard.py --exclusive --timeout 2700 -- python3 tools/bench/compare.py --tag mytag \
     --cores 16-31 --slepc-profile best --reps 5 CASE1 CASE2 ...    # 结果表写到 results/mytag.md
 python3 tools/run/guard.py -- python -m tools.eval.sweep results/raw/mytag
