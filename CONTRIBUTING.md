@@ -75,9 +75,9 @@ C++ 代码遵循 [`.clang-format`](.clang-format)（Google 风格，100 列）�
 factor: reuse the analysis for the certificate counts and drop the factors in between
 ```
 
-- `<area>` 是模块或目录名：`io`、`sparse`、`linalg`、`factor`、`ops`、`eigen`、`verify`、`driver`、`blas`、
-  `gpu`、`parallel`、`mpi`、`python`、`apps`、`tools`、`bench`、`tests`、`docs`、`results`、`build`、`ci`。
-- 摘要用祈使句，说明做了什么；第一行不超过 100 个字符，中文或英文均可。
+- `<area>` 是改动所在的模块、目录或文件，例如 `factor`、`eigen`、`driver`、`blas`、`python`、`tools`、`bench`、
+  `tests`、`docs`、`results`、`build`、`ci`、`readme`、`changelog`。
+- 第一行用一句话概括做了什么，中文或英文均可。
 - 正文说明动机和验证方式：跑了哪些检查；引用的数字写明条件（CPU、核数、线程数、内存上限、版本、重复次数、取的统计量）。
 - 一个提交只做一件事，每个提交都能编译、测试通过。
 
