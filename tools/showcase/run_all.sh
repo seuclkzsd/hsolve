@@ -9,6 +9,7 @@
 #                           these scenarios' cases (16 cores) -> results/showcase/slepc_tuned_showcase.json,
 #                           summary results/showcase/slepc_tuning.json (run `profiles` afterwards)
 #   tunes [IDS...]          `tune` once per scenario (default: those without a case profile), then `profiles`
+#                           and `tuning-report` (results/showcase/slepc_tuning.md)
 #   profiles                merged tuned SLEPc profiles -> results/showcase/slepc_tuned_profiles.json
 #   probe                   build/test lane: SLEPc's own error for a complex Hermitian interval
 #   campaign IDS...         measurement slot, one guard --exclusive call (<= 2700 s): these scenarios
@@ -59,7 +60,10 @@ case "$step" in
     [ $# -gt 0 ] || set -- "${TUNE_IDS[@]}"
     for s in "$@"; do "$0" tune "$s" || rc=$?; done
     "$0" profiles
+    "$0" tuning-report
     exit "$rc" ;;
+  tuning-report)   # the tuner's own report of every showcase tuning -> results/showcase/slepc_tuning.md
+    python tools/bench/tune_slepc.py --report results/raw/showcase-tune/*/tune.json > results/showcase/slepc_tuning.md ;;
   probe)
     read -r lo hi < <(python -c "import json,sys; s=json.load(open(sys.argv[1]))['scenarios']['bloch-interval']['target']; print(s['lower'], s['upper'])" "$ROOT/showcase-scenarios.json")
     "${lane[@]}" env "LD_LIBRARY_PATH=$REF_COMPLEX/lib" "$REF_COMPLEX/bin/python" -m tools.showcase.slepc_probe \

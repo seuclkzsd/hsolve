@@ -8,6 +8,8 @@
 | `raw/<场景>.json` | 一个困难场景的全部运行：每次运行的求解器、重复序号、耗时、内存、评测结果（缺失的特征值、伪特征值、后向误差）、hsolve 的证书与配置、SLEPc 的配置来源、参考谱在目标附近的各个能级及其重数；未通过的运行另存 stderr / stdout 末尾 | `tools/showcase/campaign.py` |
 | `raw/slepc-probe.json` | 直接调用 SLEPc 求复厄密问题区间内全部特征值时库本身的报错 | `tools/showcase/slepc_probe.py` |
 | `slepc_tuned_profiles.json` | 「逐例调优」用的 SLEPc 配置（16 核），由各轮调优结果按来源合并 | `tools/showcase/campaign.py profiles` |
+| `slepc_tuned_showcase.json` | 本次为没有逐例配置的场景补做的调优得到的配置（调优程序的配置文件） | `tools/bench/tune_slepc.py`（经 `campaign.py tune`） |
+| `slepc_tuning.json` / `slepc_tuning.md` | 补做调优的过程：每个场景试了多少种配置、多少次运行、有效几次、默认与最佳配置的时间；调优程序自己的报告 | `tools/showcase/campaign.py tune`、`run_all.sh tuning-report` |
 | `scenarios.json` / `scenarios.md` | 每个场景、每个求解器的结论（正确 / 未通过类别）、时间、内存、精度 | `tools/showcase/tables.py` |
 | `physics/cavity.json` | 矩形谐振腔：hsolve 频率对离散精确值与解析解 | `tools/showcase/physics.py` |
 | `physics/waveguide.json` | 方波导 n ≈ 1e5 / 1e6：传播常数对分族参考与解析解 | `tools/showcase/physics.py` |
