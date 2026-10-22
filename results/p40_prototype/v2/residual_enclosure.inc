@@ -1,0 +1,106 @@
+  // SIMD residual enclosure on the ORIGINAL A/B coefficients. Each scaled
+  // coefficient is split by TwoProduct; its two parts enter separate Dot2Err
+  // products. Dot2Err: Ogita/Rump/Oishi, SISC 26(6), Algorithm 5.8 / Corollary 5.9,
+  // https://www.tuhh.de/ti3/paper/rump/OgRuOi05.pdf . No magnitude-order assumption.
+  // This is a sufficient acceptance check, never a replacement tolerance.
+  #if defined(__GNUC__) && !defined(__clang__)
+  __attribute__((optimize("fp-contract=off")))
+  #endif
+  double enclosed_residual(const cplx* x,index_t nrhs,index_t ldx,
+      const std::vector<cplx>& rhs,std::vector<cplx>& r,bool* enclosed=nullptr,
+      std::vector<cplx>* radii=nullptr) const {
+    if(enclosed)*enclosed=false;
+    if(radii)radii->clear();
+#if defined(__AVX512F__)
+    // Error-free transformations require round-to-nearest and gradual underflow.
+    if((_mm_getcsr()&((3u<<13)|(1u<<15)|(1u<<6)))!=0)
+      return residual<long double>(x,nrhs,ldx,rhs,r);
+    const int n=order();const auto& a=pencil_.a();const auto* b=pencil_.b();
+    auto supported=[](double v){return v==0. || (std::isfinite(v)&&std::abs(v)>=1e-100&&std::abs(v)<=1e100);};
+    std::vector<cplx> packed((size_t)n*nrhs);r.resize((size_t)n*nrhs);
+    if(radii)radii->resize((size_t)n*nrhs);
+    int unsafe=0;
+#pragma omp parallel for schedule(static) reduction(|:unsafe)
+    for(int i=0;i<n;++i)for(index_t j=0;j<nrhs;++j){
+      auto z=x[j*ldx+i],v=rhs[j*n+i];packed[(size_t)i*nrhs+j]=z;
+      unsafe|=!(supported(z.real())&&supported(z.imag())&&supported(v.real())&&supported(v.imag()));
+    }
+    if(unsafe){if(radii)radii->clear();return residual<long double>(x,nrhs,ldx,rhs,r);}
+    double worst=0;
+#pragma omp parallel for schedule(static) reduction(max:worst) reduction(|:unsafe)
+    for(int i=0;i<n;++i)for(index_t start=0;start<nrhs;start+=4){
+      const index_t entries=a.rowptr[i+1]-a.rowptr[i]+(b?b->rowptr[i+1]-b->rowptr[i]:1);
+      const double terms=4.*entries+1.;
+      if(terms>1048576.){unsafe=1;continue;}
+      const int columns=std::min<index_t>(4,nrhs-start);
+      const __mmask8 mask=static_cast<__mmask8>((1u<<(2*columns))-1u);
+      const auto zero=_mm512_setzero_pd();
+      const auto abs_mask=_mm512_set1_epi64(0x7fffffffffffffffLL);
+      auto absvec=[&](__m512d v){return _mm512_castsi512_pd(_mm512_and_si512(_mm512_castpd_si512(v),abs_mask));};
+      const auto signs=_mm512_setr_pd(-1.,1.,-1.,1.,-1.,1.,-1.,1.);
+      alignas(64) double bv[8]={};
+      for(int j=0;j<columns;++j){auto v=rhs[(start+j)*n+i];bv[2*j]=v.real();bv[2*j+1]=v.imag();}
+      auto hi=_mm512_load_pd(bv),lo=zero,error_sum=zero;
+      auto den=absvec(hi);den=_mm512_add_pd(den,_mm512_permute_pd(den,0x55));
+      auto accumulate=[&](__m512d z,double coefficient){
+        const auto c=_mm512_set1_pd(-coefficient);
+        const auto product=_mm512_mul_pd(c,z);
+        const auto product_error=_mm512_fmsub_pd(c,z,product);
+        const auto sum=_mm512_add_pd(hi,product);
+        const auto back=_mm512_sub_pd(sum,hi);
+        const auto addition_error=_mm512_add_pd(_mm512_sub_pd(hi,_mm512_sub_pd(sum,back)),_mm512_sub_pd(product,back));
+        const auto correction=_mm512_add_pd(addition_error,product_error);
+        lo=_mm512_add_pd(lo,correction);error_sum=_mm512_add_pd(error_sum,absvec(correction));hi=sum;
+      };
+      auto add=[&](int k,cplx value,double scale){
+        const double ar=scale*value.real(),ai=scale*value.imag();
+        if(!supported(ar)||!supported(ai)||(ar==0.&&scale!=0.&&value.real()!=0.)||(ai==0.&&scale!=0.&&value.imag()!=0.)){
+          unsafe=1;return;
+        }
+        const double er=std::fma(scale,value.real(),-ar),ei=std::fma(scale,value.imag(),-ai);
+        const auto z=_mm512_maskz_loadu_pd(mask,reinterpret_cast<const double*>(packed.data()+(size_t)k*nrhs+start));
+        const auto rotated=_mm512_mul_pd(_mm512_permute_pd(z,0x55),signs);
+        accumulate(z,ar);accumulate(z,er);accumulate(rotated,ai);accumulate(rotated,ei);
+        auto az=absvec(z);az=_mm512_add_pd(az,_mm512_permute_pd(az,0x55));
+        // Positive double sum, with a conservative lower bound applied below.
+        const double av=std::abs(ar)+std::abs(ai);
+        den=_mm512_add_pd(den,_mm512_mul_pd(_mm512_set1_pd(av),az));
+      };
+      for(index_t q=a.rowptr[i];q<a.rowptr[i+1];++q)add(a.colind[q],a.values[q],alpha_);
+      if(b){for(index_t q=b->rowptr[i];q<b->rowptr[i+1];++q)add(b->colind[q],b->values[q],beta_);}
+      else add(i,cplx(1.,0.),beta_);
+      constexpr double eps=std::numeric_limits<double>::epsilon(),u=eps*.5;
+      const double delta=(terms*u)/(1.-2.*terms*u);
+      const auto value=_mm512_add_pd(hi,lo);
+      // 8*min_normal conservatively exceeds Dot2Err's 3*min_subnormal/u.
+      const auto inner=_mm512_add_pd(_mm512_mul_pd(_mm512_set1_pd(delta),error_sum),_mm512_set1_pd(8.*std::numeric_limits<double>::min()));
+      const auto numerator=_mm512_add_pd(_mm512_mul_pd(_mm512_set1_pd(u),absvec(value)),inner);
+      const auto bound=_mm512_div_pd(numerator,_mm512_set1_pd(1.-2.*u));
+      alignas(64) double rv[8],ev[8],dv[8];_mm512_store_pd(rv,value);_mm512_store_pd(ev,bound);_mm512_store_pd(dv,den);
+      for(int j=0;j<columns;++j){
+        r[(start+j)*n+i]=cplx(rv[2*j],rv[2*j+1]);
+        if(radii)(*radii)[(start+j)*n+i]=cplx(ev[2*j],ev[2*j+1]);
+        // This margin exceeds gamma_(entries+5), including rounded scaled
+        // coefficients, magnitudes, products, positive accumulation and this multiply.
+        const double lower=dv[2*j]*(1.-8.*(terms+8.)*eps);
+        const double upper=(std::abs(rv[2*j])+std::abs(rv[2*j+1])+ev[2*j]+ev[2*j+1])*(1.+8.*eps);
+        const double eta=lower>0?std::nextafter(upper/lower,std::numeric_limits<double>::infinity()):std::numeric_limits<double>::infinity();
+        if(!std::isfinite(eta)||!(ev[2*j]>=0)||!(ev[2*j+1]>=0))unsafe=1;
+        worst=std::max(worst,std::isfinite(eta)?eta:std::numeric_limits<double>::infinity());
+      }
+    }
+    if(!unsafe){if(enclosed)*enclosed=true;return worst;}
+#endif
+    if(radii)radii->clear();
+    return residual<long double>(x,nrhs,ldx,rhs,r);
+  }
+  double accepted_residual(const cplx* x,index_t nrhs,index_t ldx,
+      const std::vector<cplx>& rhs,std::vector<cplx>& r) const {
+#if P40_ENCLOSED_ACCEPTANCE
+    bool enclosed=false;double upper=enclosed_residual(x,nrhs,ldx,rhs,r,&enclosed);
+    if(enclosed&&upper<=1e-12){++enclosure_accepts_;return upper;}
+    ++enclosure_fallbacks_;
+    if(!enclosed)return upper; // already computed by the original long-double path
+#endif
+    return residual<long double>(x,nrhs,ldx,rhs,r);
+  }

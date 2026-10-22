@@ -1,0 +1,386 @@
+{
+  "schema_version": 1,
+  "note": "P28 native complex128 tuned profiles plus P29 accuracy-verified Bloch profile; inherited unchanged configurations.",
+  "profiles": [
+    {
+      "scope": "case",
+      "name": "syn-ghep-zero-cluster-complex-1e4",
+      "mode": "nearest",
+      "cores": 16,
+      "target": null,
+      "config": {
+        "ranks": 16,
+        "threads": 1,
+        "bind": "none",
+        "options": {
+          "eps_purify": "0"
+        }
+      },
+      "tuned": {
+        "tag": "p28-complex-tune-b",
+        "date": "2026-10-16T12:58:10",
+        "host": "gpu02",
+        "valid": true,
+        "solver_s": 0.14757098999999999,
+        "default_solver_s": 0.269471,
+        "default_valid": true,
+        "speedup_vs_default": 1.8260431809802187,
+        "reps": 5,
+        "flaky": false,
+        "phases": {
+          "analysis_s": 0.039738,
+          "numeric_s": 0.02015,
+          "solve_s": 0.065566,
+          "solves": 71,
+          "ortho_s": 0.0099396,
+          "setup_s": 0.063002,
+          "eps_solve_s": 0.082752,
+          "vectors_s": 0.00031499,
+          "factorizations": 1
+        }
+      }
+    },
+    {
+      "scope": "case",
+      "name": "syn-multiplicity-complex-1e4",
+      "mode": "nearest",
+      "cores": 16,
+      "target": null,
+      "config": {
+        "ranks": 8,
+        "threads": 2,
+        "bind": "core",
+        "options": {
+          "st_mat_mumps_icntl_7": "5"
+        }
+      },
+      "tuned": {
+        "tag": "p28-complex-tune-a",
+        "date": "2026-10-16T12:41:55",
+        "host": "gpu02",
+        "valid": true,
+        "solver_s": 0.15364693000000001,
+        "default_solver_s": 0.26129079,
+        "default_valid": true,
+        "speedup_vs_default": 1.700592325534913,
+        "reps": 5,
+        "flaky": false,
+        "phases": {
+          "analysis_s": 0.027514,
+          "numeric_s": 0.024414,
+          "solve_s": 0.086329,
+          "solves": 103,
+          "ortho_s": 0.0080928,
+          "setup_s": 0.05526,
+          "eps_solve_s": 0.098192,
+          "vectors_s": 0.00019366,
+          "factorizations": 1
+        }
+      }
+    },
+    {
+      "scope": "case",
+      "name": "syn-near-singular-complex-1e4",
+      "mode": "nearest",
+      "cores": 16,
+      "target": null,
+      "config": {
+        "ranks": 16,
+        "threads": 1,
+        "bind": "core",
+        "options": {
+          "eps_non_hermitian": "1",
+          "eps_target": "0.30005645708403583",
+          "eps_tol": "1e-12"
+        }
+      },
+      "tuned": {
+        "tag": "p28-complex-tune-d",
+        "date": "2026-10-16T13:05:41",
+        "host": "gpu02",
+        "valid": true,
+        "solver_s": 0.10590159,
+        "default_solver_s": 0.15371089999999998,
+        "default_valid": false,
+        "speedup_vs_default": 1.4514503512175783,
+        "reps": 5,
+        "flaky": false,
+        "phases": {
+          "analysis_s": 0.035654,
+          "numeric_s": 0.016508,
+          "solve_s": 0.048613,
+          "solves": 56,
+          "ortho_s": 0.0031674,
+          "setup_s": 0.053698,
+          "eps_solve_s": 0.05469,
+          "vectors_s": 0.00026114,
+          "factorizations": 1
+        }
+      }
+    },
+    {
+      "scope": "case",
+      "name": "syn-near-singular-complex-1e5",
+      "mode": "nearest",
+      "cores": 16,
+      "target": null,
+      "config": {
+        "ranks": 8,
+        "threads": 2,
+        "bind": "core",
+        "options": {
+          "eps_ncv": "3k",
+          "eps_non_hermitian": "1"
+        }
+      },
+      "tuned": {
+        "tag": "p28-complex-tune-c",
+        "date": "2026-10-16T13:02:10",
+        "host": "gpu02",
+        "valid": true,
+        "solver_s": 0.9665654,
+        "default_solver_s": 1.3625571,
+        "default_valid": false,
+        "speedup_vs_default": 1.4096895047143214,
+        "reps": 5,
+        "flaky": false,
+        "phases": {
+          "analysis_s": 0.19627,
+          "numeric_s": 0.16776,
+          "solve_s": 0.463,
+          "solves": 55,
+          "ortho_s": 0.11272,
+          "setup_s": 0.38128,
+          "eps_solve_s": 0.58546,
+          "vectors_s": 0.0018054,
+          "factorizations": 1
+        }
+      }
+    },
+    {
+      "scope": "case",
+      "name": "syn-wide-range-complex-1e4",
+      "mode": "nearest",
+      "cores": 16,
+      "target": null,
+      "config": {
+        "ranks": 8,
+        "threads": 2,
+        "bind": "core",
+        "options": {
+          "eps_nev": "k+4"
+        }
+      },
+      "tuned": {
+        "tag": "p28-complex-tune-b",
+        "date": "2026-10-16T12:52:09",
+        "host": "gpu02",
+        "valid": true,
+        "solver_s": 0.09444414,
+        "default_solver_s": 0.14561893,
+        "default_valid": false,
+        "speedup_vs_default": 1.5418524643244145,
+        "reps": 5,
+        "flaky": false,
+        "phases": {
+          "analysis_s": 0.026532,
+          "numeric_s": 0.023644,
+          "solve_s": 0.037131,
+          "solves": 38,
+          "ortho_s": 0.0032489,
+          "setup_s": 0.053241,
+          "eps_solve_s": 0.041801,
+          "vectors_s": 0.00015184,
+          "factorizations": 1
+        }
+      }
+    },
+    {
+      "scope": "case",
+      "name": "syn-zero-cluster-complex-1e4",
+      "mode": "nearest",
+      "cores": 16,
+      "target": null,
+      "config": {
+        "ranks": 16,
+        "threads": 1,
+        "bind": "core",
+        "options": {
+          "eps_ncv": "4k",
+          "eps_non_hermitian": "1"
+        }
+      },
+      "tuned": {
+        "tag": "p28-complex-tune-c",
+        "date": "2026-10-16T13:03:53",
+        "host": "gpu02",
+        "valid": true,
+        "solver_s": 0.13575932,
+        "default_solver_s": 0.21461107,
+        "default_valid": false,
+        "speedup_vs_default": 1.5808201602659766,
+        "reps": 5,
+        "flaky": false,
+        "phases": {
+          "analysis_s": 0.034904,
+          "numeric_s": 0.016788,
+          "solve_s": 0.064097,
+          "solves": 80,
+          "ortho_s": 0.0086177,
+          "setup_s": 0.053215,
+          "eps_solve_s": 0.082555,
+          "vectors_s": 0.00041037,
+          "factorizations": 1
+        }
+      }
+    },
+    {
+      "scope": "case",
+      "name": "yee-photonic-rods-1e4",
+      "mode": "nearest",
+      "cores": 16,
+      "target": null,
+      "config": {
+        "ranks": 8,
+        "threads": 2,
+        "bind": "none",
+        "options": {
+          "eps_ncv": "4k",
+          "eps_tol": "1e-12"
+        }
+      },
+      "tuned": {
+        "tag": "p28-complex-tune-a",
+        "date": "2026-10-16T12:40:09",
+        "host": "gpu02",
+        "valid": true,
+        "solver_s": 0.6497404900000001,
+        "default_solver_s": 0.72971475,
+        "default_valid": false,
+        "speedup_vs_default": 1.1230864648746146,
+        "reps": 5,
+        "flaky": false,
+        "phases": {
+          "analysis_s": 0.12099,
+          "numeric_s": 0.21709,
+          "solve_s": 0.27484,
+          "solves": 40,
+          "ortho_s": 0.0072592,
+          "setup_s": 0.36673,
+          "eps_solve_s": 0.285,
+          "vectors_s": 0.00017258,
+          "factorizations": 1
+        }
+      }
+    },
+    {
+      "scope": "case",
+      "name": "yee-photonic-spheres-1e4",
+      "mode": "nearest",
+      "cores": 16,
+      "target": null,
+      "config": {
+        "ranks": 4,
+        "threads": 4,
+        "bind": "core",
+        "options": {
+          "eps_nev": "k+2"
+        }
+      },
+      "tuned": {
+        "tag": "p28-complex-tune-a",
+        "date": "2026-10-16T12:37:26",
+        "host": "gpu02",
+        "valid": true,
+        "solver_s": 0.665759,
+        "default_solver_s": 0.89276,
+        "default_valid": false,
+        "speedup_vs_default": 1.340965724834362,
+        "reps": 5,
+        "flaky": false,
+        "phases": {
+          "analysis_s": 0.11001,
+          "numeric_s": 0.21217,
+          "solve_s": 0.327217,
+          "solves": 50,
+          "ortho_s": 0.0073573,
+          "setup_s": 0.32897,
+          "eps_solve_s": 0.26115,
+          "vectors_s": 0.077538,
+          "factorizations": 1
+        }
+      }
+    },
+    {
+      "scope": "class",
+      "name": "GHEP/nearest",
+      "mode": "nearest",
+      "cores": 16,
+      "config": {
+        "ranks": 4,
+        "threads": 4,
+        "bind": "core",
+        "options": {
+          "eps_nev": "k+2"
+        }
+      },
+      "validated": false,
+      "from_cases": [
+        "yee-photonic-spheres-1e4",
+        "syn-ghep-zero-cluster-complex-1e4"
+      ]
+    },
+    {
+      "scope": "class",
+      "name": "HEP/nearest",
+      "mode": "nearest",
+      "cores": 16,
+      "config": {
+        "ranks": 8,
+        "threads": 2,
+        "bind": "core",
+        "options": {
+          "eps_nev": "k+4",
+          "eps_tol": "1e-12"
+        }
+      },
+      "validated": false,
+      "from_cases": [
+        "syn-near-singular-complex-1e5",
+        "yee-photonic-rods-1e4",
+        "yee-bloch-1e4",
+        "syn-multiplicity-complex-1e4",
+        "syn-zero-cluster-complex-1e4",
+        "syn-near-singular-complex-1e4",
+        "syn-wide-range-complex-1e4"
+      ]
+    },
+    {
+      "scope": "case",
+      "name": "yee-bloch-1e4",
+      "mode": "nearest",
+      "cores": 16,
+      "target": null,
+      "config": {
+        "ranks": 4,
+        "threads": 4,
+        "bind": "core",
+        "options": {
+          "eps_ncv": "4k",
+          "st_mat_mumps_icntl_14": "80",
+          "eps_tol": "1e-12",
+          "eps_true_residual": "1"
+        }
+      },
+      "tuned": {
+        "origin": "P29 accuracy correction after repeated validation failures; true residual configuration confirmed in fifteen repetitions under the original 1e-10 acceptance threshold.",
+        "tag": "p29-bloch-verified",
+        "host": "gpu02",
+        "valid": true,
+        "reps": 15,
+        "solver_s": 0.67866948,
+        "max_eta": 1.6829197643802107e-13
+      }
+    }
+  ]
+}

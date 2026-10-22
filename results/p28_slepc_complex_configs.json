@@ -1,0 +1,513 @@
+{
+ "round": "P28",
+ "scope": "Measured configurations for these exact original queries on the native complex128 PETSc/SLEPc environment, gpu02, 16 cores. Not a generic profile file. Use the archived compare wrapper and explicit environment.",
+ "profiles": [
+  {
+   "case": "syn-ghep-zero-cluster-complex-1e4",
+   "original_target": {
+    "mode": "nearest",
+    "sigma": 0.0,
+    "k": 26
+   },
+   "config": {
+    "ranks": 16,
+    "threads": 1,
+    "bind": "none",
+    "options": {
+     "eps_purify": "0"
+    }
+   },
+   "confirmation": {
+    "reps": 5,
+    "valid_runs": 5,
+    "ok": true,
+    "solver_s": 0.14497596000000001,
+    "solver_s_min": 0.14215550999999998,
+    "solver_s_max": 0.15421258,
+    "solver_s_all": [
+     0.14215550999999998,
+     0.14497596000000001,
+     0.1504346,
+     0.14376362,
+     0.15421258
+    ],
+    "solver_s_scope": "log_view setup+solve+vectors",
+    "wall_s": 3.145,
+    "peak_rss_gib": 1.946,
+    "solver_peak_gib": 1.937896728515625,
+    "max_eta": 3.264523793956715e-14,
+    "completeness": [
+     "complete"
+    ],
+    "pairs": 26,
+    "phases": {
+     "analysis_s": 0.041221,
+     "numeric_s": 0.019421,
+     "factorizations": 1.0,
+     "solves": 71.0,
+     "solve_s": 0.065974,
+     "ortho_s": 0.0099165,
+     "iterate_s": null,
+     "verify_s": null
+    },
+    "errors": [],
+    "invalid_reasons": [],
+    "config": "16x1 eps_purify=0",
+    "config_source": "native complex PETSc/SLEPc 3.26: case profile syn-ghep-zero-cluster-complex-1e4",
+    "config_scope": "case",
+    "set_err_vs_ref": 3.765235909123193e-15
+   }
+  },
+  {
+   "case": "syn-multiplicity-complex-1e4",
+   "original_target": {
+    "mode": "nearest",
+    "sigma": 0.42509868121178074,
+    "k": 14
+   },
+   "config": {
+    "ranks": 8,
+    "threads": 2,
+    "bind": "core",
+    "options": {
+     "st_mat_mumps_icntl_7": "5"
+    }
+   },
+   "confirmation": {
+    "reps": 5,
+    "valid_runs": 5,
+    "ok": true,
+    "solver_s": 0.1573257,
+    "solver_s_min": 0.14415395,
+    "solver_s_max": 0.16512119,
+    "solver_s_all": [
+     0.14415395,
+     0.16131657,
+     0.1573257,
+     0.14462867,
+     0.16512119
+    ],
+    "solver_s_scope": "log_view setup+solve+vectors",
+    "wall_s": 2.657,
+    "peak_rss_gib": 0.88,
+    "solver_peak_gib": 0.8709297180175781,
+    "max_eta": 2.6854989827041377e-14,
+    "completeness": [
+     "complete"
+    ],
+    "pairs": 14,
+    "phases": {
+     "analysis_s": 0.025845,
+     "numeric_s": 0.024579,
+     "factorizations": 1.0,
+     "solves": 103.0,
+     "solve_s": 0.084545,
+     "ortho_s": 0.0081686,
+     "iterate_s": null,
+     "verify_s": null
+    },
+    "errors": [],
+    "invalid_reasons": [],
+    "config": "8x2/core st_mat_mumps_icntl_7=5",
+    "config_source": "native complex PETSc/SLEPc 3.26: case profile syn-multiplicity-complex-1e4",
+    "config_scope": "case",
+    "set_err_vs_ref": 3.1169920565535193e-16
+   }
+  },
+  {
+   "case": "syn-near-singular-complex-1e4",
+   "original_target": {
+    "mode": "nearest",
+    "sigma": 0.30005641963952956,
+    "k": 10
+   },
+   "config": {
+    "ranks": 16,
+    "threads": 1,
+    "bind": "core",
+    "options": {
+     "eps_non_hermitian": "1",
+     "eps_target": "0.30005645708403583",
+     "eps_tol": "1e-12"
+    }
+   },
+   "confirmation": {
+    "reps": 5,
+    "valid_runs": 5,
+    "ok": true,
+    "solver_s": 0.10425438000000001,
+    "solver_s_min": 0.09913409,
+    "solver_s_max": 0.10641159,
+    "solver_s_all": [
+     0.09913409,
+     0.10120548,
+     0.10497841000000001,
+     0.10425438000000001,
+     0.10641159
+    ],
+    "solver_s_scope": "log_view setup+solve+vectors",
+    "wall_s": 2.945,
+    "peak_rss_gib": 1.843,
+    "solver_peak_gib": 1.83416748046875,
+    "max_eta": 6.6297401325871824e-15,
+    "completeness": [
+     "complete"
+    ],
+    "pairs": 10,
+    "phases": {
+     "analysis_s": 0.032921,
+     "numeric_s": 0.016682,
+     "factorizations": 1.0,
+     "solves": 56.0,
+     "solve_s": 0.045756,
+     "ortho_s": 0.0031139,
+     "iterate_s": null,
+     "verify_s": null
+    },
+    "errors": [],
+    "invalid_reasons": [],
+    "config": "16x1/core eps_non_hermitian=1 eps_target=0.30005645708403583 eps_tol=1e-12",
+    "config_source": "native complex PETSc/SLEPc 3.26: case profile syn-near-singular-complex-1e4",
+    "config_scope": "case",
+    "set_err_vs_ref": 5.123634149520925e-16
+   }
+  },
+  {
+   "case": "syn-near-singular-complex-1e5",
+   "original_target": {
+    "mode": "nearest",
+    "sigma": 0.2999936660991032,
+    "k": 10
+   },
+   "config": {
+    "ranks": 8,
+    "threads": 2,
+    "bind": "core",
+    "options": {
+     "eps_ncv": "3k",
+     "eps_non_hermitian": "1"
+    }
+   },
+   "confirmation": {
+    "reps": 5,
+    "valid_runs": 5,
+    "ok": true,
+    "solver_s": 0.9704588000000001,
+    "solver_s_min": 0.9384115,
+    "solver_s_max": 1.0475784,
+    "solver_s_all": [
+     0.9384115,
+     0.9407944999999999,
+     0.9704588000000001,
+     1.0050809,
+     1.0475784
+    ],
+    "solver_s_scope": "log_view setup+solve+vectors",
+    "wall_s": 3.896,
+    "peak_rss_gib": 1.485,
+    "solver_peak_gib": 1.4668502807617188,
+    "max_eta": 4.013685416913988e-12,
+    "completeness": [
+     "complete"
+    ],
+    "pairs": 10,
+    "phases": {
+     "analysis_s": 0.1967,
+     "numeric_s": 0.16819,
+     "factorizations": 1.0,
+     "solves": 55.0,
+     "solve_s": 0.46484,
+     "ortho_s": 0.11252,
+     "iterate_s": null,
+     "verify_s": null
+    },
+    "errors": [],
+    "invalid_reasons": [],
+    "config": "8x2/core eps_ncv=3k eps_non_hermitian=1",
+    "config_source": "native complex PETSc/SLEPc 3.26: case profile syn-near-singular-complex-1e5",
+    "config_scope": "case",
+    "set_err_vs_ref": 5.551061109475127e-16
+   }
+  },
+  {
+   "case": "syn-wide-range-complex-1e4",
+   "original_target": {
+    "mode": "nearest",
+    "sigma": 1.0,
+    "k": 10
+   },
+   "config": {
+    "ranks": 8,
+    "threads": 2,
+    "bind": "core",
+    "options": {
+     "eps_nev": "k+4"
+    }
+   },
+   "confirmation": {
+    "reps": 5,
+    "valid_runs": 5,
+    "ok": true,
+    "solver_s": 0.09001311,
+    "solver_s_min": 0.08919277,
+    "solver_s_max": 0.09744629,
+    "solver_s_all": [
+     0.09470856000000001,
+     0.08919277,
+     0.09001311,
+     0.09744629,
+     0.08980019
+    ],
+    "solver_s_scope": "log_view setup+solve+vectors",
+    "wall_s": 2.587,
+    "peak_rss_gib": 0.889,
+    "solver_peak_gib": 0.8805198669433594,
+    "max_eta": 1.0004252210621147e-12,
+    "completeness": [
+     "complete"
+    ],
+    "pairs": 10,
+    "phases": {
+     "analysis_s": 0.026347,
+     "numeric_s": 0.023627,
+     "factorizations": 1.0,
+     "solves": 38.0,
+     "solve_s": 0.034184,
+     "ortho_s": 0.0032728,
+     "iterate_s": null,
+     "verify_s": null
+    },
+    "errors": [],
+    "invalid_reasons": [],
+    "config": "8x2/core eps_nev=k+4",
+    "config_source": "native complex PETSc/SLEPc 3.26: case profile syn-wide-range-complex-1e4",
+    "config_scope": "case",
+    "set_err_vs_ref": 6.669651998381274e-22
+   }
+  },
+  {
+   "case": "syn-zero-cluster-complex-1e4",
+   "original_target": {
+    "mode": "nearest",
+    "sigma": 0.0,
+    "k": 20
+   },
+   "config": {
+    "ranks": 16,
+    "threads": 1,
+    "bind": "core",
+    "options": {
+     "eps_ncv": "4k",
+     "eps_non_hermitian": "1"
+    }
+   },
+   "confirmation": {
+    "reps": 5,
+    "valid_runs": 5,
+    "ok": true,
+    "solver_s": 0.13983071,
+    "solver_s_min": 0.13072027,
+    "solver_s_max": 0.14082129,
+    "solver_s_all": [
+     0.13983071,
+     0.13455514000000002,
+     0.13072027,
+     0.13998713,
+     0.14082129
+    ],
+    "solver_s_scope": "log_view setup+solve+vectors",
+    "wall_s": 3.06,
+    "peak_rss_gib": 1.843,
+    "solver_peak_gib": 1.8348922729492188,
+    "max_eta": 8.831469211175424e-15,
+    "completeness": [
+     "complete"
+    ],
+    "pairs": 20,
+    "phases": {
+     "analysis_s": 0.031723,
+     "numeric_s": 0.017421,
+     "factorizations": 1.0,
+     "solves": 80.0,
+     "solve_s": 0.066279,
+     "ortho_s": 0.0085711,
+     "iterate_s": null,
+     "verify_s": null
+    },
+    "errors": [],
+    "invalid_reasons": [],
+    "config": "16x1/core eps_ncv=4k eps_non_hermitian=1",
+    "config_source": "native complex PETSc/SLEPc 3.26: case profile syn-zero-cluster-complex-1e4",
+    "config_scope": "case",
+    "set_err_vs_ref": 1.2629673427609035e-15
+   }
+  },
+  {
+   "case": "yee-bloch-1e4",
+   "original_target": {
+    "mode": "nearest",
+    "sigma": 44.821326757022696,
+    "k": 10
+   },
+   "config": {
+    "ranks": 4,
+    "threads": 4,
+    "bind": "core",
+    "options": {
+     "eps_ncv": "4k"
+    }
+   },
+   "confirmation": {
+    "reps": 5,
+    "valid_runs": 5,
+    "ok": true,
+    "solver_s": 0.61269145,
+    "solver_s_min": 0.53886641,
+    "solver_s_max": 0.62550368,
+    "solver_s_all": [
+     0.61269145,
+     0.62550368,
+     0.60207467,
+     0.53886641,
+     0.61897507
+    ],
+    "solver_s_scope": "log_view setup+solve+vectors",
+    "wall_s": 2.932,
+    "peak_rss_gib": 0.766,
+    "solver_peak_gib": 0.758392333984375,
+    "max_eta": 1.690945184248463e-11,
+    "completeness": [
+     "complete"
+    ],
+    "pairs": 10,
+    "phases": {
+     "analysis_s": 0.1388,
+     "numeric_s": 0.20731,
+     "factorizations": 1.0,
+     "solves": 40.0,
+     "solve_s": 0.2469,
+     "ortho_s": 0.0085664,
+     "iterate_s": null,
+     "verify_s": null
+    },
+    "errors": [],
+    "invalid_reasons": [],
+    "config": "4x4/core eps_ncv=4k",
+    "config_source": "native complex PETSc/SLEPc 3.26: case profile yee-bloch-1e4",
+    "config_scope": "case",
+    "set_err_vs_ref": 1.916855558072978e-16
+   }
+  },
+  {
+   "case": "yee-photonic-rods-1e4",
+   "original_target": {
+    "mode": "nearest",
+    "sigma": 26.392204160125875,
+    "k": 10
+   },
+   "config": {
+    "ranks": 8,
+    "threads": 2,
+    "bind": "none",
+    "options": {
+     "eps_ncv": "4k",
+     "eps_tol": "1e-12"
+    }
+   },
+   "confirmation": {
+    "reps": 5,
+    "valid_runs": 5,
+    "ok": true,
+    "solver_s": 0.63642972,
+    "solver_s_min": 0.61317299,
+    "solver_s_max": 0.64739321,
+    "solver_s_all": [
+     0.63642972,
+     0.64673897,
+     0.64739321,
+     0.61898038,
+     0.61317299
+    ],
+    "solver_s_scope": "log_view setup+solve+vectors",
+    "wall_s": 3.292,
+    "peak_rss_gib": 1.251,
+    "solver_peak_gib": 1.2428359985351562,
+    "max_eta": 3.601702755028404e-13,
+    "completeness": [
+     "consistent"
+    ],
+    "pairs": 10,
+    "phases": {
+     "analysis_s": 0.15076,
+     "numeric_s": 0.20708,
+     "factorizations": 1.0,
+     "solves": 40.0,
+     "solve_s": 0.26535,
+     "ortho_s": 0.0075701,
+     "iterate_s": null,
+     "verify_s": null
+    },
+    "errors": [],
+    "invalid_reasons": [],
+    "config": "8x2 eps_ncv=4k eps_tol=1e-12",
+    "config_source": "native complex PETSc/SLEPc 3.26: case profile yee-photonic-rods-1e4",
+    "config_scope": "case"
+   }
+  },
+  {
+   "case": "yee-photonic-spheres-1e4",
+   "original_target": {
+    "mode": "nearest",
+    "sigma": 29.228328559908935,
+    "k": 10
+   },
+   "config": {
+    "ranks": 4,
+    "threads": 4,
+    "bind": "core",
+    "options": {
+     "eps_nev": "k+2"
+    }
+   },
+   "confirmation": {
+    "reps": 5,
+    "valid_runs": 5,
+    "ok": true,
+    "solver_s": 0.6814560000000001,
+    "solver_s_min": 0.641922,
+    "solver_s_max": 0.69079,
+    "solver_s_all": [
+     0.6825699999999999,
+     0.69079,
+     0.641922,
+     0.6814560000000001,
+     0.6750609999999999
+    ],
+    "solver_s_scope": "log_view setup+solve+vectors",
+    "wall_s": 3.017,
+    "peak_rss_gib": 0.763,
+    "solver_peak_gib": 0.7547340393066406,
+    "max_eta": 5.143842794292265e-11,
+    "completeness": [
+     "consistent"
+    ],
+    "pairs": 10,
+    "phases": {
+     "analysis_s": 0.10777,
+     "numeric_s": 0.21237,
+     "factorizations": 1.0,
+     "solves": 50.0,
+     "solve_s": 0.333059,
+     "ortho_s": 0.0072542,
+     "iterate_s": null,
+     "verify_s": null
+    },
+    "errors": [],
+    "invalid_reasons": [],
+    "config": "4x4/core eps_nev=k+2",
+    "config_source": "native complex PETSc/SLEPc 3.26: case profile yee-photonic-spheres-1e4",
+    "config_scope": "case"
+   }
+  }
+ ]
+}

@@ -1,0 +1,690 @@
+--- a/src/eigen/separable_curl.hpp
++++ b/src/eigen/separable_curl.hpp
+@@ -24,4 +24,12 @@
+                                std::vector<double>& lambda, std::vector<double>& hints,
+                                std::string& why);
+ 
++/// Complex counterpart for Bloch-periodic Cartesian grids (at least three cells per axis).
++/// Infers unit-modulus boundary phases from A and verifies the entire stencil. The same
++/// original-pencil verification, workspace and completeness requirements apply.
++bool separable_curl_candidates(const CsrMatrix<cplx>& a, const CsrMatrix<cplx>* b, double sigma,
++                               index_t k, double memory_bytes, DenseMatrix<cplx>& x,
++                               std::vector<double>& lambda, std::vector<double>& hints,
++                               std::string& why);
++
+ }  // namespace hs::eigen_detail
+--- /dev/null
++++ b/src/eigen/separable_bloch.cpp
+@@ -0,0 +1,271 @@
++// Matrix-verified Bloch curl-curl candidates. The forward difference has symbol
++// d_j = sqrt(alpha_j) * (exp(i theta_j) - 1); each Fourier block is
++// ||d||^2 I - d d^H. Its transverse space supplies candidates, not a certificate.
++#include "eigen/separable_curl.hpp"
++
++#include <algorithm>
++#include <array>
++#include <cmath>
++#include <complex>
++#include <limits>
++#include <string>
++#include <utility>
++#include <vector>
++
++namespace hs::eigen_detail {
++namespace {
++bool finite(cplx z) { return std::isfinite(z.real()) && std::isfinite(z.imag()); }
++
++struct BlochModel {
++  std::array<index_t, 3> cells{}, stride{};
++  std::array<double, 3> mass{}, alpha{}, phase{};
++  std::array<cplx, 3> wrap{};
++  index_t volume = 0;
++  index_t index(int d, const std::array<index_t, 3>& p) const {
++    return d * volume + p[0] * stride[0] + p[1] * stride[1] + p[2];
++  }
++};
++
++bool recognize(const CsrMatrix<cplx>& a, const CsrMatrix<cplx>* b, BlochModel& m,
++               std::string& why) {
++  const index_t n = a.nrows;
++  why = "periodic first row";
++  if (n < 81 || n % 3 || a.rowptr[1] != 13 || a.colind[0] != 0 || a.colind[1] != 1)
++    return false;
++  m.volume = n / 3;
++  // Row zero of the x block: diagonal, +/-z, +/-y, then four entries in each other block.
++  const index_t nz = a.colind[3], span_y = a.colind[4];
++  if (nz < 3 || a.colind[2] != nz - 1 || span_y % nz || a.colind[5] < m.volume)
++    return false;
++  const index_t ny = span_y / nz + 1;
++  if (ny < 3 || ny > m.volume / nz || m.volume % (ny * nz)) return false;
++  const index_t nx = m.volume / (ny * nz);
++  if (nx < 3) return false;
++  m.cells = {nx, ny, nz};
++  m.stride = {ny * nz, nz, 1};
++  why = "periodic block-constant diagonal mass";
++  if (b && (b->nrows != n || b->nnz() != n)) return false;
++  for (int d = 0; d < 3; ++d) {
++    const cplx mass = b ? b->values[d * m.volume] : cplx{1};
++    if (!finite(mass) || mass.imag() != 0 || mass.real() <= 0) return false;
++    m.mass[d] = mass.real();
++    if (b)
++      for (index_t row = d * m.volume; row < (d + 1) * m.volume; ++row)
++        if (b->rowptr[row] != row || b->rowptr[row + 1] != row + 1 ||
++            b->colind[row] != row || b->values[row] != mass)
++          return false;
++  }
++  auto at = [&](index_t row, index_t col) {
++    const auto begin = a.colind.begin() + a.rowptr[row], end = a.colind.begin() + a.rowptr[row + 1];
++    const auto it = std::lower_bound(begin, end, col);
++    return it == end || *it != col ? cplx{} : a.values[it - a.colind.begin()];
++  };
++  why = "periodic positive coefficients and unit phases";
++  for (int d = 0; d < 3; ++d) {
++    const int block = d == 0 ? 1 : 0;
++    const index_t row = block * m.volume;
++    m.alpha[d] = -at(row, row + m.stride[d]).real() / m.mass[block];
++    if (!std::isfinite(m.alpha[d]) || m.alpha[d] <= 0) return false;
++    const cplx wrap = std::conj(-at(row, row + (m.cells[d] - 1) * m.stride[d]) /
++                              (m.alpha[d] * m.mass[block]));
++    if (!finite(wrap) || std::abs(std::abs(wrap) - 1) > 128 * std::numeric_limits<double>::epsilon())
++      return false;
++    m.wrap[d] = wrap / std::abs(wrap);
++    m.phase[d] = std::arg(m.wrap[d]);
++  }
++  std::array<double, 3> diagonal{};
++  std::array<std::array<double, 3>, 3> cross{};
++  double largest = 0;
++  for (int d = 0; d < 3; ++d) {
++    for (int e = 0; e < 3; ++e) {
++      if (d == e) continue;
++      diagonal[d] += 2 * m.alpha[e] * m.mass[d];
++      cross[d][e] = -static_cast<double>(std::sqrt(
++          static_cast<long double>(m.alpha[d]) * m.alpha[e] * m.mass[d] * m.mass[e]));
++      if (!std::isfinite(cross[d][e])) return false;
++      largest = std::max(largest, std::abs(cross[d][e]));
++    }
++    if (!std::isfinite(diagonal[d])) return false;
++    largest = std::max(largest, diagonal[d]);
++  }
++  const double threshold = 128 * std::numeric_limits<double>::epsilon() * largest;
++  bool match = true;
++#pragma omp parallel for reduction(&& : match) schedule(static)
++  for (index_t row = 0; row < n; ++row) {
++    const int d = static_cast<int>(row / m.volume);
++    const index_t local = row % m.volume;
++    const std::array<index_t, 3> pos{local / m.stride[0], local / nz % ny, local % nz};
++    std::array<std::pair<index_t, cplx>, 13> expected{};
++    int count = 0;
++    expected[count++] = {row, diagonal[d]};
++    for (int e = 0; e < 3; ++e) {
++      if (d == e) continue;
++      for (int sign : {-1, 1}) {
++        auto p = pos;
++        p[e] += sign;
++        cplx phase = 1;
++        if (p[e] < 0) {
++          p[e] += m.cells[e];
++          phase = std::conj(m.wrap[e]);
++        } else if (p[e] == m.cells[e]) {
++          p[e] = 0;
++          phase = m.wrap[e];
++        }
++        expected[count++] = {m.index(d, p), -m.alpha[e] * m.mass[d] * phase};
++      }
++      // Off-diagonal block is -sqrt(alpha_d alpha_e mass_d mass_e) D_e^H D_d.
++      for (int u : {0, 1})
++        for (int v : {0, 1}) {
++          auto p = pos;
++          cplx phase = 1;
++          p[d] += u;
++          p[e] -= v;
++          if (p[d] == m.cells[d]) {
++            p[d] = 0;
++            phase *= m.wrap[d];
++          }
++          if (p[e] < 0) {
++            p[e] += m.cells[e];
++            phase *= std::conj(m.wrap[e]);
++          }
++          expected[count++] = {m.index(e, p), cross[d][e] * (u == v ? 1 : -1) * phase};
++        }
++    }
++    std::sort(expected.begin(), expected.end(), [](const auto& x, const auto& y) { return x.first < y.first; });
++    if (a.rowptr[row + 1] - a.rowptr[row] != count) {
++      match = false;
++      continue;
++    }
++    for (int j = 0; j < count; ++j) {
++      const index_t q = a.rowptr[row] + j;
++      match = match && a.colind[q] == expected[j].first && finite(a.values[q]) &&
++              std::abs(a.values[q] - expected[j].second) <= threshold;
++    }
++  }
++  why = match ? "periodic matrix stencil verified" : "full periodic stencil mismatch";
++  return match;
++}
++
++struct Mode {
++  std::array<index_t, 3> m{};
++  double lambda = 0;
++};
++using Vector = std::array<cplx, 3>;
++void normalize(Vector& v) {
++  const double norm = std::hypot(std::abs(v[0]), std::abs(v[1]), std::abs(v[2]));
++  for (auto& x : v) x /= norm;
++}
++}  // namespace
++
++bool separable_curl_candidates(const CsrMatrix<cplx>& a, const CsrMatrix<cplx>* b, double sigma,
++                               index_t k, double memory_bytes, DenseMatrix<cplx>& x,
++                               std::vector<double>& lambda, std::vector<double>& hints,
++                               std::string& why) {
++  why = "invalid periodic candidate target";
++  if (k < 1 || k > a.nrows || !std::isfinite(sigma)) return false;
++  BlochModel model;
++  if (!recognize(a, b, model, why)) return false;
++  const double axes = static_cast<double>(model.cells[0]) + model.cells[1] + model.cells[2];
++  const double need = static_cast<double>(model.volume) * (sizeof(Mode) + sizeof(double)) +
++                      16.0 * a.nrows * static_cast<double>(k) + 16.0 * k * axes +
++                      256.0 * k + 24.0 * axes + 4096.0;
++  if (!(memory_bytes > 0) || !std::isfinite(memory_bytes) || !std::isfinite(need) || need > memory_bytes) {
++    why = "periodic candidate workspace exceeds the available budget";
++    return false;
++  }
++  const double pi = std::acos(-1.0);
++  std::array<std::vector<cplx>, 3> symbol;
++  for (int d = 0; d < 3; ++d) {
++    symbol[d].resize(model.cells[d]);
++    for (index_t j = 0; j < model.cells[d]; ++j) {
++      const double theta = (model.phase[d] + 2 * pi * j) / model.cells[d];
++      // exp(i theta)-1 without cancellation for a small phase.
++      symbol[d][j] = 2 * std::sqrt(model.alpha[d]) * std::sin(0.5 * theta) *
++                     cplx{-std::sin(0.5 * theta), std::cos(0.5 * theta)};
++    }
++  }
++  std::vector<Mode> modes;
++  modes.reserve(static_cast<std::size_t>(model.volume));
++  for (index_t i = 0; i < model.cells[0]; ++i)
++    for (index_t j = 0; j < model.cells[1]; ++j)
++      for (index_t l = 0; l < model.cells[2]; ++l) {
++        const double value = std::norm(symbol[0][i]) + std::norm(symbol[1][j]) + std::norm(symbol[2][l]);
++        if (!std::isfinite(value)) {
++          why = "nonfinite periodic modal value";
++          return false;
++        }
++        if (value > 0) modes.push_back({{i, j, l}, value});
++      }
++  std::sort(modes.begin(), modes.end(), [&](const Mode& x, const Mode& y) {
++    const double dx = std::abs(x.lambda - sigma), dy = std::abs(y.lambda - sigma);
++    return dx != dy ? dx < dy : x.m < y.m;
++  });
++  why = "periodic target touches null space or incomplete multiplet";
++  const std::size_t take = static_cast<std::size_t>(k / 2);
++  if (k % 2 || take == 0 || take > modes.size()) return false;
++  const double radius = std::abs(modes[take - 1].lambda - sigma);
++  const double gap = 512 * std::numeric_limits<double>::epsilon() *
++                     std::max(model.alpha[0] + model.alpha[1] + model.alpha[2], std::abs(sigma));
++  if (std::abs(sigma) <= radius + gap ||
++      (take < modes.size() && std::abs(modes[take].lambda - sigma) <= radius + gap))
++    return false;
++  struct Basis {
++    std::array<std::vector<cplx>, 3> axes;
++    std::array<Vector, 2> polarization;
++  };
++  std::vector<Basis> bases(take);
++  for (std::size_t q = 0; q < take; ++q) {
++    auto& basis = bases[q];
++    Vector d;
++    for (int axis = 0; axis < 3; ++axis) {
++      const index_t mode = modes[q].m[axis], n = model.cells[axis];
++      d[axis] = symbol[axis][mode];
++      const double theta = (model.phase[axis] + 2 * pi * mode) / n;
++      basis.axes[axis].resize(n);
++      for (index_t j = 0; j < n; ++j)
++        basis.axes[axis][j] = std::polar(1 / std::sqrt(static_cast<double>(n)), theta * j);
++    }
++    normalize(d);
++    int axis = 0;
++    for (int e = 1; e < 3; ++e)
++      if (std::abs(d[e]) < std::abs(d[axis])) axis = e;
++    auto& v = basis.polarization[0];
++    for (int e = 0; e < 3; ++e) v[e] = (e == axis ? 1.0 : 0.0) - d[e] * std::conj(d[axis]);
++    normalize(v);
++    auto& w = basis.polarization[1];
++    w = {std::conj(d[1] * v[2] - d[2] * v[1]), std::conj(d[2] * v[0] - d[0] * v[2]),
++         std::conj(d[0] * v[1] - d[1] * v[0])};
++    normalize(w);
++  }
++  x = DenseMatrix<cplx>(a.nrows, k);
++  lambda.resize(k);
++  bool all_finite = true;
++#pragma omp parallel for reduction(&& : all_finite) schedule(static)
++  for (index_t j = 0; j < k; ++j) {
++    const auto& basis = bases[j / 2];
++    lambda[j] = modes[j / 2].lambda;
++    for (int orientation = 0; orientation < 3; ++orientation) {
++      const cplx weight = basis.polarization[j % 2][orientation] / std::sqrt(model.mass[orientation]);
++      index_t row = orientation * model.volume;
++      for (cplx u : basis.axes[0])
++        for (cplx v : basis.axes[1])
++          for (cplx w : basis.axes[2]) {
++            const cplx value = weight * u * v * w;
++            all_finite = all_finite && finite(value);
++            x(row++, j) = value;
++          }
++    }
++  }
++  if (!all_finite) {
++    why = "nonfinite periodic candidate vector";
++    return false;
++  }
++  hints.clear();
++  hints.reserve(modes.size() + 1);
++  hints.push_back(0);
++  for (const auto& mode : modes) hints.push_back(mode.lambda);
++  why = "verified Bloch matrix stencil " + std::to_string(model.cells[0]) + "x" +
++        std::to_string(model.cells[1]) + "x" + std::to_string(model.cells[2]);
++  return true;
++}
++}  // namespace hs::eigen_detail
+--- a/src/driver/definite.cpp
++++ b/src/driver/definite.cpp
+@@ -395,54 +395,54 @@
+   index_t p = 1;
+   DefiniteRun<T> run;
+   bool structured = false;
+-  if constexpr (std::is_same_v<T, double>) {
+-    if (cfg.method == Method::Auto && cfg.certificate == CertificateMode::Exact &&
+-        cfg.inertia_check != Toggle::Off && !inexact_factor(fac.options())) {
+-      std::string why;
+-      PhaseScope phase(c.clock, Phase::Iterate);
+-      // AX/BX, RR replacements, selection, and the small projected eigensystems beside X.
+-      const double reserve = 8.0 * (6.0 * n * static_cast<double>(k) + 64.0 * k * static_cast<double>(k));
+-      const double allowance = 0.95 * std::max(0.0, budget_left(c)) - reserve;
+-      try {
+-        structured = eigen_detail::separable_curl_candidates(
+-            pencil.a(), pencil.b(), t.sigma, k, allowance, run.all.x, run.all.lambda, run.ritz_hints, why);
+-        if (structured) {
+-          recompute_products(pencil.a(), pencil.b(), run.all);
+-          bool finite_products = true;
++  if (cfg.method == Method::Auto && cfg.certificate == CertificateMode::Exact &&
++      cfg.inertia_check != Toggle::Off && !inexact_factor(fac.options())) {
++    std::string why;
++    PhaseScope phase(c.clock, Phase::Iterate);
++    // AX/BX, RR replacements, selection, and the small projected eigensystems beside X.
++    const double reserve = sizeof(T) * (6.0 * n * static_cast<double>(k) + 64.0 * k * static_cast<double>(k));
++    const double allowance = 0.95 * std::max(0.0, budget_left(c)) - reserve;
++    try {
++      structured = eigen_detail::separable_curl_candidates(
++          pencil.a(), pencil.b(), t.sigma, k, allowance, run.all.x, run.all.lambda, run.ritz_hints, why);
++      if (structured) {
++        recompute_products(pencil.a(), pencil.b(), run.all);
++        bool finite_products = true;
+ #pragma omp parallel for reduction(&& : finite_products) schedule(static)
+-          for (index_t j = 0; j < k; ++j)
+-            for (index_t i = 0; i < n; ++i)
+-              finite_products = finite_products && std::isfinite(run.all.ax(i, j)) &&
+-                                std::isfinite(run.all.bx(i, j));
+-          if (!finite_products) {
+-            structured = false;
+-            why += "; nonfinite original-pencil products";
+-          }
++        for (index_t j = 0; j < k; ++j)
++          for (index_t i = 0; i < n; ++i)
++            finite_products = finite_products && std::isfinite(std::real(run.all.ax(i, j))) &&
++                              std::isfinite(std::imag(run.all.ax(i, j))) &&
++                              std::isfinite(std::real(run.all.bx(i, j))) &&
++                              std::isfinite(std::imag(run.all.bx(i, j)));
++        if (!finite_products) {
++          structured = false;
++          why += "; nonfinite original-pencil products";
+         }
+-        if (structured) {
+-          const index_t rank = driver::rayleigh_ritz_definite(
+-              run.all.x, run.all.ax, run.all.bx, run.all.lambda, kDependentGram);
+-          structured = rank == k;
+-          for (const auto& metric : block_metrics(run.all, n2a, n2b))
+-            structured = structured && std::isfinite(metric.backward_error) &&
+-                         metric.backward_error <= 0.5 * cfg.tol;
+-          if (!structured) why += "; original residual or rank rejected";
+-        }
+-      } catch (const std::bad_alloc&) {
+-        structured = false;
+-        why = "candidate workspace allocation failed";
+-      } catch (const Error& error) {
+-        if (error.code() != Error::Code::NotConverged && error.code() != Error::Code::OutOfMemoryBudget) throw;
+-        structured = false;
+-        why = std::string("candidate verification failed: ") + error.what();
+       }
+-      if (c.log) c.log->event("structured_candidate", {{"accepted", structured}, {"reason", why},
+-          {"columns", static_cast<std::int64_t>(run.all.size())}}, structured ? 1 : 2);
+-      if (!structured) run = DefiniteRun<T>{};
+-      else {
+-        run.converged = true;
+-        rep.candidate_source = "separable_cartesian_curl";
++      if (structured) {
++        const index_t rank = driver::rayleigh_ritz_definite(
++            run.all.x, run.all.ax, run.all.bx, run.all.lambda, kDependentGram);
++        structured = rank == k;
++        for (const auto& metric : block_metrics(run.all, n2a, n2b))
++          structured = structured && std::isfinite(metric.backward_error) &&
++                       metric.backward_error <= 0.5 * cfg.tol;
++        if (!structured) why += "; original residual or rank rejected";
+       }
++    } catch (const std::bad_alloc&) {
++      structured = false;
++      why = "candidate workspace allocation failed";
++    } catch (const Error& error) {
++      if (error.code() != Error::Code::NotConverged && error.code() != Error::Code::OutOfMemoryBudget) throw;
++      structured = false;
++      why = std::string("candidate verification failed: ") + error.what();
++    }
++    if (c.log) c.log->event("structured_candidate", {{"accepted", structured}, {"reason", why},
++        {"columns", static_cast<std::int64_t>(run.all.size())}}, structured ? 1 : 2);
++    if (!structured) run = DefiniteRun<T>{};
++    else {
++      run.converged = true;
++      rep.candidate_source = is_complex_v<T> ? "separable_bloch_curl" : "separable_cartesian_curl";
+     }
+   }
+   if (!structured) {
+@@ -493,12 +493,24 @@
+   const double zero_tol = cfg.zero_filter_tol >= 0 ? cfg.zero_filter_tol * scale : -1.0;
+   Block<T> sel;
+   std::vector<PairMetrics> metrics;
++  bool working_shift_initialized = !structured;
++  auto prepare_working_factors = [&]() {
++    if (!working_shift_initialized) {
++      // Structured candidates skipped the initial factorization. The original target may
++      // itself be an eigenvalue, so a later rescue/rerun must establish a usable shift first.
++      sigma = factorize_near(c, fac, t.sigma, scale, detection_off);
++      rep.sigma_used = sigma;
++      working_shift_initialized = true;
++    } else {
++      refactorize_at(c, fac, sigma, detection_off);
++    }
++  };
+   auto select_and_verify = [&]() {
+     index_t zero_dropped = 0;
+     sel = take_columns(run.all, select_nearest(run.all.lambda, t.sigma, k, zero_tol, zero_dropped));
+     rep.zero_modes_filtered = zero_dropped;
+     // rescue solves with K(sigma)
+-    verify_and_rescue(c, fac, pencil, sel, metrics, n2a, n2b, [&]() { refactorize_at(c, fac, sigma, detection_off); });
++    verify_and_rescue(c, fac, pencil, sel, metrics, n2a, n2b, prepare_working_factors);
+     index_t zd = 0;  // restore the target order (Rayleigh-Ritz sorts ascending)
+     const auto order = select_nearest(sel.lambda, t.sigma, sel.size(), -1.0, zd);
+     std::vector<PairMetrics> m2;
+@@ -679,7 +691,7 @@
+     try {
+       if (fault(cfg, kFaultRefactorization))
+         throw_injected_fault(cfg, kFaultRefactorization, "refactorization at sigma for the deflated rerun");
+-      refactorize_at(c, fac, sigma, detection_off);
++      prepare_working_factors();
+     } catch (const Error& e) {
+       if (!count_failure(e)) throw;
+       why = std::string(to_string(e.code())) + ": " + e.what();
+--- a/tests/cpp/test_separable_curl.cpp
++++ b/tests/cpp/test_separable_curl.cpp
+@@ -19,9 +19,12 @@
+ namespace {
+ using hs::index_t;
+ 
+-struct Pencil {
+-  hs::CsrMatrix<double> a, b;
++template <class T>
++struct TestPencil {
++  hs::CsrMatrix<T> a, b;
+ };
++using Pencil = TestPencil<double>;
++using ComplexPencil = TestPencil<hs::cplx>;
+ 
+ // Independent face assembly C^T C: each face has its oriented circulation on up to four
+ // edges. It does not use the recognizer's row stencils or the modal eigenvalue formula.
+@@ -79,7 +82,8 @@
+   return p;
+ }
+ 
+-hs::SolverConfig target(const Pencil& p, index_t minimum = 3) {
++template <class T>
++hs::SolverConfig target(const TestPencil<T>& p, index_t minimum = 3) {
+   auto w = hs::test::dense_eigenvalues(p.a, &p.b);
+   std::vector<double> positive;
+   for (double x : w)
+@@ -87,7 +91,8 @@
+   hs::SolverConfig c;
+   c.threads = 2;
+   c.memory_budget_gb = 2;
+-  c.target.sigma = 0.5 * (positive[0] + positive[1]);
++  const std::size_t first = hs::is_complex_v<T> ? std::min<std::size_t>(8, positive.size() - 2) : 0;
++  c.target.sigma = 0.5 * (positive[first] + positive[first + 1]);
+   std::sort(w.begin(), w.end(), [&](double a, double b) {
+     return std::abs(a - c.target.sigma) < std::abs(b - c.target.sigma);
+   });
+@@ -99,8 +104,9 @@
+   return c;
+ }
+ 
+-void expect_reference(const Pencil& p, const hs::SolverConfig& c,
+-                      const hs::Solution<double>& solution) {
++template <class T>
++void expect_reference(const TestPencil<T>& p, const hs::SolverConfig& c,
++                      const hs::Solution<T>& solution) {
+   ASSERT_TRUE(solution.report.success) << solution.report.to_json();
+   ASSERT_EQ(solution.eigenvalues.size(), static_cast<std::size_t>(c.target.k));
+   for (const auto& pair : solution.report.pairs) EXPECT_LE(pair.backward_error, c.tol);
+@@ -200,6 +206,16 @@
+   EXPECT_GT(solution.report.op_applies, 0);
+ }
+ 
++TEST(SeparableCurl, RecoveryInitializesFactorsAtAnEigenvalueTarget) {
++  const auto p = assemble({4, 4, 4}, {16, 16, 16}, {1, 1, 1});
++  auto cfg = target(p);
++  cfg.certificate_fault_drop = 1;
++  const auto solution = hs::solve(p.a, &p.b, cfg);
++  expect_reference(p, cfg, solution);
++  EXPECT_EQ(solution.report.candidate_source, "separable_cartesian_curl");
++  EXPECT_GT(solution.report.op_applies, 0);
++}
++
+ TEST(SeparableCurl, HonorsExplicitMethodAndCertificateFailure) {
+   const auto p = assemble({4, 5, 6}, {9.2, 13.7, 21.3}, {.3, .5, .7});
+   auto cfg = target(p);
+@@ -215,4 +231,148 @@
+   EXPECT_TRUE(solution.report.certificate.performed);
+   EXPECT_FALSE(solution.report.certificate.passed);
+ }
++
++// Independently assemble C^H C from face circulations with forward periodic differences.
++// The recognizer, its expected row template and its modal formula are not used here.
++ComplexPencil assemble_bloch(std::array<index_t, 3> cells, std::array<double, 3> alpha,
++                            std::array<double, 3> mass, std::array<double, 3> phase) {
++  using hs::cplx;
++  const index_t volume = cells[0] * cells[1] * cells[2], n = 3 * volume;
++  auto edge = [&](int d, const std::array<index_t, 3>& p) {
++    return d * volume + (p[0] * cells[1] + p[1]) * cells[2] + p[2];
++  };
++  std::vector<index_t> rows, cols;
++  std::vector<cplx> values;
++  for (int normal = 0; normal < 3; ++normal) {
++    const int e = (normal + 1) % 3, f = (normal + 2) % 3;
++    for (index_t i = 0; i < cells[0]; ++i)
++      for (index_t j = 0; j < cells[1]; ++j)
++        for (index_t k = 0; k < cells[2]; ++k) {
++          const std::array<index_t, 3> pos{i, j, k};
++          std::vector<std::pair<index_t, cplx>> circulation;
++          for (int derivative : {e, f}) {
++            const int component = derivative == e ? f : e;
++            const double sign = derivative == e ? 1 : -1;
++            const double scale = sign * std::sqrt(alpha[derivative] * mass[component]);
++            circulation.emplace_back(edge(component, pos), -scale);
++            auto next = pos;
++            ++next[derivative];
++            cplx wrap = 1;
++            if (next[derivative] == cells[derivative]) {
++              next[derivative] = 0;
++              wrap = std::polar(1.0, phase[derivative]);
++            }
++            circulation.emplace_back(edge(component, next), scale * wrap);
++          }
++          for (const auto& left : circulation)
++            for (const auto& right : circulation) {
++              rows.push_back(left.first);
++              cols.push_back(right.first);
++              values.push_back(std::conj(left.second) * right.second);
++            }
++        }
++  }
++  ComplexPencil p{hs::csr_from_coo(n, n, rows, cols, values, true), hs::identity<cplx>(n)};
++  for (int d = 0; d < 3; ++d)
++    for (index_t row = d * volume; row < (d + 1) * volume; ++row) p.b.values[row] = mass[d];
++  return p;
++}
++
++TEST(SeparableBloch, IndependentFacesDenseReferenceAndSpecialPhases) {
++  std::mt19937_64 random(290016);
++  for (int trial = 0; trial < 9; ++trial) {
++    const std::array<index_t, 3> cells{3 + index_t(random() % 3), 3 + index_t(random() % 3),
++                                      3 + index_t(random() % 3)};
++    const std::array<double, 3> alpha{5.1 + (random() % 100) * .07, 7.3 + (random() % 100) * .09,
++                                     8.7 + (random() % 100) * .11};
++    std::array<double, 3> phase{.3 + .01 * (random() % 100), -.7 - .01 * (random() % 100), .23};
++    if (trial == 0) phase = {0, 0, 0};
++    if (trial == 1) phase = {std::acos(-1.0), 0, 0};
++    if (trial == 2) phase = {1e-12, -1e-12, 0};
++    const auto p = assemble_bloch(cells, alpha,
++        trial % 2 ? std::array<double, 3>{1, 1, 1} : std::array<double, 3>{.2, .37, .59}, phase);
++    const auto cfg = target(p, 4);
++    const auto solution = hs::solve(p.a, &p.b, cfg);
++    expect_reference(p, cfg, solution);
++    EXPECT_EQ(solution.report.candidate_source, "separable_bloch_curl") << trial;
++    EXPECT_EQ(solution.report.op_applies, 0);
++    EXPECT_EQ(solution.report.block_size, 0);
++    if (trial % 2) {
++      const auto standard = hs::solve(p.a, nullptr, cfg);
++      expect_reference(p, cfg, standard);
++      EXPECT_EQ(standard.report.candidate_source, "separable_bloch_curl");
++    }
++  }
++}
++
++TEST(SeparableBloch, RejectsInteriorAndBoundaryChangesAndNonuniformMass) {
++  const auto base = assemble_bloch({3, 4, 5}, {11.2, 17.1, 20.3}, {.3, .5, .7}, {.7, -1.1, .3});
++  for (int variant = 0; variant < 4; ++variant) {
++    auto p = base;
++    if (variant == 0) {
++      const index_t row = p.a.nrows / 2;
++      for (index_t q = p.a.rowptr[row]; q < p.a.rowptr[row + 1]; ++q)
++        if (p.a.colind[q] == row) p.a.values[q] *= 1.001;
++    } else if (variant == 1) {
++      p.b.values[p.b.nrows / 2] *= 1.001;
++    } else {
++      // Change a Hermitian boundary pair away from the rows used to infer the phases.
++      const index_t row = 20, col = 24;
++      for (index_t q = p.a.rowptr[row]; q < p.a.rowptr[row + 1]; ++q)
++        if (p.a.colind[q] == col)
++          p.a.values[q] *= variant == 2 ? hs::cplx{1.001} : std::polar(1.0, .01);
++      for (index_t q = p.a.rowptr[col]; q < p.a.rowptr[col + 1]; ++q)
++        if (p.a.colind[q] == row)
++          p.a.values[q] *= variant == 2 ? hs::cplx{1.001} : std::polar(1.0, -.01);
++    }
++    const auto cfg = target(p, 4);
++    const auto solution = hs::solve(p.a, &p.b, cfg);
++    expect_reference(p, cfg, solution);
++    EXPECT_EQ(solution.report.candidate_source, "iterative") << variant;
++    EXPECT_GT(solution.report.op_applies, 0);
++  }
++}
++
++TEST(SeparableBloch, WorkspaceNullSpacePartialMultipletsAndUnsupportedGrid) {
++  auto p = assemble_bloch({3, 4, 5}, {11.2, 17.1, 20.3}, {.3, .5, .7}, {.7, -1.1, .3});
++  const auto cfg = target(p, 4);
++  hs::DenseMatrix<hs::cplx> x;
++  std::vector<double> lambda, hints;
++  std::string why;
++  EXPECT_FALSE(hs::eigen_detail::separable_curl_candidates(p.a, &p.b, cfg.target.sigma,
++                                                           cfg.target.k, 0, x, lambda, hints, why));
++  EXPECT_TRUE(x.empty());
++  EXPECT_NE(why.find("budget"), std::string::npos);
++  EXPECT_FALSE(hs::eigen_detail::separable_curl_candidates(p.a, &p.b, 0, 4, 1e8, x, lambda, hints, why));
++  EXPECT_FALSE(hs::eigen_detail::separable_curl_candidates(p.a, &p.b, cfg.target.sigma,
++                                                           1, 1e8, x, lambda, hints, why));
++  const auto degenerate = assemble_bloch({3, 3, 3}, {16, 16, 16}, {1, 1, 1}, {0, 0, 0});
++  EXPECT_FALSE(hs::eigen_detail::separable_curl_candidates(degenerate.a, &degenerate.b, 48,
++                                                           2, 1e8, x, lambda, hints, why));
++  p = assemble_bloch({2, 4, 5}, {11.2, 17.1, 20.3}, {.3, .5, .7}, {.7, -1.1, .3});
++  EXPECT_FALSE(hs::eigen_detail::separable_curl_candidates(p.a, &p.b, cfg.target.sigma,
++                                                           4, 1e8, x, lambda, hints, why));
++}
++
++TEST(SeparableBloch, OriginalCertificateAndRerunRemainRequired) {
++  const auto p = assemble_bloch({3, 4, 5}, {11.2, 17.1, 20.3}, {.3, .5, .7}, {.7, -1.1, .3});
++  auto cfg = target(p, 4);
++  cfg.certificate_fault_drop = 1;
++  auto solution = hs::solve(p.a, &p.b, cfg);
++  expect_reference(p, cfg, solution);
++  EXPECT_EQ(solution.report.candidate_source, "separable_bloch_curl");
++  EXPECT_GT(solution.report.op_applies, 0);
++  cfg.certificate_fault_drop = 0;
++  cfg.certificate_fault_count = 1 | 2 | 16;
++  solution = hs::solve(p.a, &p.b, cfg);
++  EXPECT_FALSE(solution.report.success);
++  EXPECT_EQ(solution.report.candidate_source, "separable_bloch_curl");
++  EXPECT_TRUE(solution.report.certificate.performed);
++  EXPECT_FALSE(solution.report.certificate.passed);
++  cfg.certificate_fault_count = 0;
++  cfg.method = hs::Method::ShiftInvertLanczos;
++  solution = hs::solve(p.a, &p.b, cfg);
++  expect_reference(p, cfg, solution);
++  EXPECT_EQ(solution.report.candidate_source, "iterative");
++}
+ }  // namespace
+--- a/docs/DESIGN.md
++++ b/docs/DESIGN.md
+@@ -966,15 +966,20 @@
+    「最近 k 个」的选择始终相对原始 σ₀。P2 的第二次 10× 扰动在该例上落到所需半径的 5 倍处（证书数出 166 个、
+    找到 21 个），已废。有意放在或紧挨重特征值的位移（§3.6-8b 的部分簇与重根重跑，`on_eigenvalue`）不按簇
+    判定、照常扰动，不告警、不计 shift_retries。
+-5. **候选向量与迭代求解**：实数 nearest 在 `method = auto`、`certificate = exact`、惯性检查开启且
++5. **候选向量与迭代求解**：nearest 在 `method = auto`、`certificate = exact`、惯性检查开启且
+    主分解为精确双精度时，先尝试可分离笛卡尔 curl-curl 候选空间（`eigen/separable_curl.cpp`）。只从矩阵推断
+    三个方向的网格尺寸、常系数与分量常数对角质量阵，逐行核对完整稀疏模板；不读取测例名称、网格元数据或参考谱。
+-   对通过核对的矩阵，以节点正弦、边单元余弦的张量积和横向极化构造候选。要求目标避开零空间并包含整个边界重根簇；
++   实数 PEC 以节点正弦、边单元余弦的张量积和横向极化构造候选。复数 Bloch 周期路径
++   （`eigen/separable_bloch.cpp`）要求每方向至少三个单元，从边界耦合推断单位模周期相位，核对每个矩阵元素；
++   用复指数张量积与差分符号的两个厄密正交横向极化构造候选，质量归一化仍来自实际 B。
++   两条路径均要求目标避开零空间并包含整个边界重根簇；
+    模态表、向量与一维基表均先检查工作区预算，另预留原问题验证工作区。分配失败、模板不符、部分重根簇或预算不足均回到
+    原迭代路径。候选还必须在**原始 A、B** 上通过秩揭示 Rayleigh–Ritz、有限性与每对后向误差 ≤ 0.5·tol 检查。
+    通过后省去首次位移分解和 Krylov 运行；§3.6-6～8 的最终验证、精确 Sylvester 计数与缺对重跑保持执行，模态公式不充当证书。
+-   日志 `structured_candidate` 记录准入结果；报告 `candidate_source = separable_cartesian_curl`、`block_size = 0`
+-   描述首次候选来源，后续补救仍可做位移反演。显式指定方法、复数、窗口目标和非精确分解继续原路径。
++   日志 `structured_candidate` 记录准入结果；报告 `candidate_source = separable_cartesian_curl`（PEC）或
++   `separable_bloch_curl`（复数 Bloch）、`block_size = 0` 描述首次候选来源，后续补救仍可做位移反演。
++   跳过首次分解后，若残差补救或缺对重跑首次需要工作位移的因子，先执行现有近奇异位移处理，不能假定原始目标可直接分解。
++   显式指定方法、窗口目标、非精确分解及未通过完整模板验证的矩阵继续原路径。
+ 
+    **迭代求解**：内层容差 = tol × inner_tol_factor；θ → λ = σ + 1/θ。nearest 恰好收敛 k 对
+    （nev = k；完备性由证书负责，不靠多算余量）。主分解为单精度 / BLR 时算子带双精度迭代修正
+--- a/docs/FORMATS.md
++++ b/docs/FORMATS.md
+@@ -188,7 +188,8 @@
+ - `solver`（P4）：恒为 `"hsolve"`（评测在调用方未指名时用它作求解器名，§4）；`version`：`hs::version()`。
+   Python 接口的 `report` 是同一份 JSON。
+ - `candidate_source`：首次候选向量的来源，默认 `"iterative"`；自动路径从完整矩阵验证可分离笛卡尔
+-  curl-curl 结构并通过原问题残差检查时为 `"separable_cartesian_curl"`（DESIGN §3.6-5）。它只描述首次
++  curl-curl 结构并通过原问题残差检查时，实数 PEC 为 `"separable_cartesian_curl"`，复数 Bloch 周期为
++  `"separable_bloch_curl"`（DESIGN §3.6-5）。它只描述首次
+   候选来源；最终残差、精确完备性证书及必要时的迭代补救照常执行，`method` 仍为解析后的驱动方法。
+ - `block_size`（P4）：第一次位移反演运行实际使用的块宽（配置解析 + 内存适配之后，DESIGN §3.6-5）。
+   首次候选直接来自已验证结构时为 0；后续补救的块宽见事件日志。
+--- a/results/p28_measurements.md
++++ b/results/p28_measurements.md
+@@ -8,7 +8,7 @@
+ 
+ 全部构建环境验证、数值试验与计时在 gpu02 双路 Xeon Silver 4314 上运行，没有使用 GPU。性能实验固定 CPU 16–31、16 个物理核、32 GiB、exclusive guard；正确性诊断与 Python 测试使用 8–15、12 GiB。九例最终交错比较各五次；hsolve 保持 P27 二进制、原始容差与 exact 证书，SLEPc 使用独立 complex128 环境。
+ 
+-求解器时间采用 hsolve 的 time_total_s（包含验证和证书），SLEPc 的 setup + solve + vectors，排除双方进程启动及输入输出。SLEPc nearest 本身不做相同的惯性证书；本轮九例双方都由同一个独立评估器按原始目标、容差、重数和完整参考谱验收，全部为 complete。没有从 hsolve 的评分时间中扣除证书成本。CLI 总墙钟另存于 JSON，不把 Python/MPI 启动成本当作数值算法优势。
++求解器时间采用 hsolve 的 time_total_s（包含验证和证书），SLEPc 的 setup + solve + vectors，排除双方进程启动及输入输出。SLEPc nearest 本身不做相同的惯性证书；本轮九例双方都由同一个独立评估器按原始目标、容差和重数验收；七例有完整参考谱，状态为 complete，两例光子晶体只有部分参考，状态为 consistent，不能据此认定参考谱完备性。没有从 hsolve 的评分时间中扣除证书成本。CLI 总墙钟另存于 JSON，不把 Python/MPI 启动成本当作数值算法优势。
+ 
+ ## 五轮确认，中位数秒
+ 

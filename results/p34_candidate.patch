@@ -1,0 +1,187 @@
+--- a/src/driver/definite.cpp
++++ b/src/driver/definite.cpp
+@@ -35,6 +35,10 @@
+ // are returned with the certificate "not completed".
+ #include <algorithm>
+ #include <cmath>
++#include <cstdio>
++#ifndef P34_PROJECT_RESCUE
++#define P34_PROJECT_RESCUE 1
++#endif
+ #include <deque>
+ #include <limits>
+ #include <memory>
+@@ -77,30 +81,49 @@
+                      const std::vector<index_t>& cols, double n2a, double n2b, double tol) {
+   const index_t n = blk.x.rows();
+   index_t rescued = 0;
+-  std::vector<T> r(static_cast<std::size_t>(n));
++  DenseMatrix<T> correction(n, 1), bcorrection;
++  linalg::OrthoOptions projection_options;
++  projection_options.reorth = linalg::Reorth::Always;
+   for (index_t j : cols) {
+     for (int it = 0; it < 3; ++it) {
+-      T* x = blk.x.col(j);
++      const T* x = blk.x.col(j);
+       const T* ax = blk.ax.col(j);
+       const T* bx = blk.bx.col(j);
+       const double rho = std::real(linalg::dot(n, x, ax)) / std::real(linalg::dot(n, x, bx));
++      const double before = driver::pair_metrics(ax, bx, x, n, rho, n2a, n2b).backward_error;
++      T* r = correction.data();
+       for (index_t i = 0; i < n; ++i) r[i] = ax[i] - T(rho) * bx[i];
+-      fac.solve(r.data(), 1, n);
+-      for (index_t i = 0; i < n; ++i) x[i] -= r[i];
+-      // B-normalize and refresh the products of this column.
++      fac.solve(r, 1, n);
++      // Keep the correction outside the current B-orthonormal Ritz subspace.
++      // Inverse iteration near a multiple eigenvalue can otherwise amplify a
++      // rounding component along an already found vector and collapse rank.
++      if constexpr (P34_PROJECT_RESCUE != 0) {
++        if (b) driver::apply_block(b, correction, bcorrection);
++        linalg::orthogonalize_cgs2<T>(n, blk.size(), blk.x.data(), n,
++            b ? blk.bx.data() : nullptr, n, r, b ? bcorrection.data() : nullptr,
++            nullptr, nullptr, projection_options);
++      }
+       DenseMatrix<T> xc(n, 1), axc, bxc;
+-      std::copy(x, x + n, xc.col(0));
++      for (index_t i = 0; i < n; ++i) xc(i, 0) = x[i] - r[i];
+       driver::apply_block(&a, xc, axc);
+       driver::apply_block(b, xc, bxc);
+-      const double bn = std::sqrt(std::max(std::real(linalg::dot(n, xc.col(0), bxc.col(0))), 1e-300));
+-      for (index_t i = 0; i < n; ++i) {
+-        blk.x(i, j) = xc(i, 0) / bn;
+-        blk.ax(i, j) = axc(i, 0) / bn;
+-        blk.bx(i, j) = bxc(i, 0) / bn;
+-      }
+-      blk.lambda[j] = std::real(linalg::dot(n, blk.x.col(j), blk.ax.col(j)));
+-      const auto pm = driver::pair_metrics(blk.ax.col(j), blk.bx.col(j), blk.x.col(j), n, blk.lambda[j], n2a, n2b);
+-      if (pm.backward_error <= tol) break;
++      const double bn2 = std::real(linalg::dot(n, xc.data(), bxc.data()));
++      if (!(bn2 > 0) || !std::isfinite(bn2)) break;
++      const double bn = std::sqrt(bn2);
++      for (index_t i = 0; i < n; ++i) { xc(i,0) /= bn; axc(i,0) /= bn; bxc(i,0) /= bn; }
++      const double candidate_lambda = std::real(linalg::dot(n, xc.data(), axc.data())) /
++                                      std::real(linalg::dot(n, xc.data(), bxc.data()));
++      const double after = driver::pair_metrics(axc.data(), bxc.data(), xc.data(), n,
++                                               candidate_lambda, n2a, n2b).backward_error;
++      const bool accepted = std::isfinite(candidate_lambda) && std::isfinite(after) && after < before;
++      std::fprintf(stderr, "P34 rescue projected=%d column=%lld step=%d before=%.17g after=%.17g accepted=%d\n",
++                   P34_PROJECT_RESCUE, static_cast<long long>(j), it, before, after, int(accepted));
++      if (!accepted) break;
++      std::copy_n(xc.data(), n, blk.x.col(j));
++      std::copy_n(axc.data(), n, blk.ax.col(j));
++      std::copy_n(bxc.data(), n, blk.bx.col(j));
++      blk.lambda[j] = candidate_lambda;
++      if (after <= tol) break;
+     }
+     ++rescued;
+   }
+@@ -297,12 +320,26 @@
+   if (failing.empty()) return;
+   prepare();
+   if (!fac.inertia().valid) return;
+-  const index_t r = rescue_pairs(fac, pencil.a(), pencil.b(), sel, failing, n2a, n2b, c.cfg.tol);
+-  const index_t m0 = sel.size();
+-  const index_t kept = driver::rayleigh_ritz_definite(sel.x, sel.ax, sel.bx, sel.lambda, kDependentGram);
+-  event(c, "rescue",
+-        {{"pairs", static_cast<std::int64_t>(r)}, {"dependent_dropped", static_cast<std::int64_t>(m0 - kept)}});
+-  metrics = block_metrics(sel, n2a, n2b);
++  // Recheck the whole Ritz block between bounded correction passes. A
++  // decreasing residual can still need more than the original three steps.
++  for (int pass = 0; pass < 3 && !failing.empty(); ++pass) {
++    double before = 0.0;
++    for (const auto& pm : metrics) before = std::max(before, pm.backward_error);
++    const index_t r = rescue_pairs(fac, pencil.a(), pencil.b(), sel, failing, n2a, n2b, c.cfg.tol);
++    const index_t m0 = sel.size();
++    const index_t kept = driver::rayleigh_ritz_definite(sel.x, sel.ax, sel.bx, sel.lambda, kDependentGram);
++    metrics = block_metrics(sel, n2a, n2b);
++    failing.clear();
++    double after = 0.0;
++    for (index_t j = 0; j < sel.size(); ++j) {
++      after = std::max(after, metrics[j].backward_error);
++      if (metrics[j].backward_error > c.cfg.tol) failing.push_back(j);
++    }
++    event(c, "rescue",
++          {{"pairs", static_cast<std::int64_t>(r)}, {"dependent_dropped", static_cast<std::int64_t>(m0 - kept)},
++           {"pass", static_cast<std::int64_t>(pass)}, {"max_before", before}, {"max_after", after}});
++    if (!(after < before)) break;
++  }
+ }
+ 
+ // Indices of the pairs selected for the nearest target, in output order (nearest first).
+@@ -578,6 +615,7 @@
+       if (std::isfinite(l) && l >= lo && l <= hi && !(zero_tol >= 0 && std::abs(l) <= zero_tol)) ++found;
+     return found;
+   };
++  bool tighten_window = false;
+   for (int round = 0; want_cert && round < 3; ++round) {
+     if (sel.size() == 0) break;
+     const double tiny = 1e-12 * std::max(scale, std::abs(t.sigma));
+@@ -586,7 +624,12 @@
+     auto push_out = [&](double edge, double dir) {
+       const double nb = nearest_beyond(hints, edge, dir, tiny);
+       const double gap_default = std::max(1e-3 * std::abs(edge - t.sigma), 1e-8 * std::max(scale, 1e-300));
+-      return std::isnan(nb) ? edge + dir * gap_default : 0.5 * (edge + nb);
++      if (!tighten_window) return std::isnan(nb) ? edge + dir * gap_default : 0.5 * (edge + nb);
++      // After an oversized missing count, a remote hint must not expand the
++      // window across hundreds of unwanted eigenvalues. Use at most the existing
++      // no-hint margin; still take the midpoint when a nearer hint exists.
++      const double margin = std::isnan(nb) ? gap_default : std::min(gap_default, 0.5 * std::abs(nb - edge));
++      return edge + dir * margin;
+     };
+     double r = 0.0;
+     for (double l : sel.lambda) r = std::max(r, std::abs(l - t.sigma));
+@@ -598,10 +641,16 @@
+     // Fewer than k selected pairs (fault injection, pairs left unconverged, a rescue merging
+     // columns): every check covers only the found pairs' window / disc, which may end before the
+     // k-th nearest eigenvalue - a passed check then still reruns for the pairs short.
+-    const index_t short_by = std::min<index_t>(k, n) - sel.size();
++    const index_t accepted_pairs = static_cast<index_t>(std::count_if(metrics.begin(), metrics.end(),
++        [&](const PairMetrics& pm) { return std::isfinite(pm.backward_error) && pm.backward_error <= cfg.tol; }));
++    const index_t short_by = std::min<index_t>(k, n) - accepted_pairs;
+     auto rerun_short = [&]() {
+-      warn(c, "certificate: only " + std::to_string(sel.size()) + " of " + std::to_string(k) +
+-                  " pairs selected; deflated rerun for the nearest ones beyond");
++      if (sel.size() < std::min<index_t>(k, n))
++        warn(c, "certificate: only " + std::to_string(sel.size()) + " of " + std::to_string(k) +
++                    " pairs selected; deflated rerun for the nearest ones beyond");
++      else
++        warn(c, "certificate: only " + std::to_string(accepted_pairs) + " of " + std::to_string(k) +
++                    " pairs meet the original residual tolerance; deflated rerun for the unaccepted pairs");
+       return short_by;
+     };
+     const RoundPairs<T> pairs{run.all, &sel, select_nearest(run.all.lambda, t.sigma, k, zero_tol, zd)};
+@@ -673,7 +722,32 @@
+                     " eigenvalue(s) missing in the window; deflated rerun");
+       }
+     }
+-    keep_converged(run, n2a, n2b, cfg.tol);
++    // Preserve wide gaps for the fast certificate methods. Only retry a
++    // narrower window after a count requests more than another full k pairs.
++    // This retry changes no vectors and does not consume a Krylov rerun.
++    if (!tighten_window && missing > std::max<index_t>(k, 1)) {
++      tighten_window = true;
++      event(c, "certificate_window_tightened", {{"round", static_cast<std::int64_t>(round)},
++          {"missing", static_cast<std::int64_t>(missing)}, {"requested", static_cast<std::int64_t>(k)}});
++      --round;
++      continue;
++    }
++    // Carry the actually corrected selected vectors into the next solve.
++    // Their uncorrected copies in run.all must not become the deflation basis.
++    std::vector<char> replaced(static_cast<std::size_t>(run.all.size()), 0);
++    for (index_t q : pairs.selected_columns) replaced[static_cast<std::size_t>(q)] = 1;
++    std::vector<index_t> other;
++    for (index_t q = 0; q < run.all.size(); ++q) if (!replaced[static_cast<std::size_t>(q)]) other.push_back(q);
++    Block<T> carried = take_columns(run.all, other);
++    append_columns(carried.x, sel.x); append_columns(carried.ax, sel.ax); append_columns(carried.bx, sel.bx);
++    carried.lambda.insert(carried.lambda.end(), sel.lambda.begin(), sel.lambda.end());
++    driver::rayleigh_ritz_definite(carried.x, carried.ax, carried.bx, carried.lambda, kDependentGram);
++    run.all = std::move(carried);
++    // The rerun must be able to replace every selected vector still above
++    // the requested tolerance. keep_converged uses a ten-tolerance cutoff.
++    keep_converged(run, n2a, n2b, cfg.tol / 10.0);
++    event(c, "corrected_deflation", {{"columns", static_cast<std::int64_t>(run.all.size())},
++                                     {"selected", static_cast<std::int64_t>(sel.size())}});
+     // The missing pairs are the nearest sigma beyond the deflated ones: the rerun asks for two
+     // more, which shape its basis and are kept when they converge, but it ends once the missing
+     // ones have (lead; the next round checks the window again). A pair beyond them may lie in a

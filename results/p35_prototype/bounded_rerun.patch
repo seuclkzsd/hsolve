@@ -1,0 +1,39 @@
+--- P35/definite_packed.cpp
++++ P35/definite_capped.cpp
+@@ -620,6 +620,7 @@
+     return found;
+   };
+   bool tighten_window = false;
++  bool capped_rerun_used = false;
+   for (int round = 0; want_cert && round < 3; ++round) {
+     if (sel.size() == 0) break;
+     const double tiny = 1e-12 * std::max(scale, std::abs(t.sigma));
+@@ -736,6 +737,20 @@
+       --round;
+       continue;
+     }
++    // Inaccurate selected Ritz values can put hundreds of unwanted values
++    // inside the certificate window. Try one bounded nearest rerun before
++    // requesting that whole window. Re-select and certify the result normally;
++    // subsequent reruns retain the full count requirement, including clusters
++    // wider than k. This extra attempt does not consume a normal rerun.
++    const bool capped_this_round = !capped_rerun_used && short_by > 0 &&
++                                   missing > std::max<index_t>(k, 1);
++    if (capped_this_round) {
++      event(c, "certificate_rerun_capped", {{"round", static_cast<std::int64_t>(round)},
++          {"window_missing", static_cast<std::int64_t>(missing)},
++          {"requested", static_cast<std::int64_t>(k)}});
++      capped_rerun_used = true;
++      missing = std::max<index_t>(k, 1);
++    }
+     // Compact the unselected columns first, then copy the corrected selected
+     // columns into the remaining storage. This preserves the P34 column order
+     // without keeping a second full X/AX/BX block alive during Rayleigh-Ritz.
+@@ -804,6 +819,7 @@
+         fit_block_size<T>(c, n, nev_rerun, d, 3 * d + 4 * nev_rerun, rerun_block_size(cfg, p, missing));
+     lanczos_run(c, fac, pencil, sigma, Which::LargestMagnitude, nev_rerun, p_rerun, &defl, run, missing);
+     select_and_verify();
++    if (capped_this_round) --round;
+   }
+   if (cert.performed && cert.passed && sel.size() < std::min<index_t>(k, n))
+     cert.statement += "; but only " + std::to_string(sel.size()) + " of " + std::to_string(k) +

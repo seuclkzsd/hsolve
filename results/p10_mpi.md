@@ -640,3 +640,71 @@ The multi-process times are unchanged within 2%. The larger 1e5 ratios come from
 spread over two sockets, which was slower in this campaign (2.402 vs 2.260 s on syn-mem27-46; its
 two-socket spread at 1e5, section 4.1). Every run of g1e5, giv1-3, g1e6 and g16 was valid
 (tools/eval: 194/194).
+
+## 8. Direct helper-counter construction (2026-10-15)
+
+The helper already receives the leader's pivot order. Previously `ProblemOf::count_instance`
+analysed a temporary main factorization on that order, constructed an `InertiaCounter` (another
+symbolic analysis), then destroyed the temporary source. The counter now accepts the pencil and
+the received pivot order directly: one analysis per helper. The automatic cost rule charges one
+analysis as well. This changes the certificate preparation path, with the same exact-count
+certificate and tolerances; the helper's task cap and memory-budget checks remain enforced.
+
+Baseline: main `6d408b0` plus the preceding count-budget, helper-selection and CLI-failure fixes.
+Those fixes are present in both binaries. Measurements use gpu01, 16 physical cores split across
+two sockets (`8-15,16-23`), rank 0 on all 16 and two helpers with 8 cores each, 32 GiB, default case
+configuration, `certificate=exact`, GPU off. The independent old/new executables are alternated
+AB/BA by `tools/bench/ab_cases.py`, under one exclusive guard. `time_total_s` excludes MPI startup;
+the guard's wall time includes startup and output. The machine-readable data in
+`p10_counter_prepare.json` records every repetition, validity, timing and binary SHA-256.
+
+Five repetitions per binary on each 1e5 case (40 runs), all independently valid according to
+`tools.eval.sweep` (backward errors, reference spectrum and completeness). Medians in seconds:
+
+| case | solver before | solver after | time reduction | wall before | wall after | preparation before / after |
+|---|---:|---:|---:|---:|---:|---:|
+| syn-mem27-46 | 1.998 | 1.932 | 3.3% | 3.940 | 3.885 | 0.260 / 0.196 |
+| yee-pec-box-1e5 | 2.510 | 2.456 | 2.1% | 4.484 | 4.423 | 0.242 / 0.170 |
+| ss-qa8fk-qa8fm | 1.703 | 1.624 | 4.6% | 3.732 | 3.618 | 0.236 / 0.197 |
+| cav2d-rect-pert-1e5 (no helper counts) | 0.379 | 0.384 | -1.2% | 2.376 | 2.377 | 0 / 0 |
+
+Preparation is the sum of the `helpers_share` and `helpers_ready` event times: 16-30% less for the
+three cases using helpers. End-to-end savings are smaller, including MPI startup. The short 2-D
+control keeps its counts on the leader and is unchanged in wall time; no speedup is claimed there.
+Raw outputs: gpu01 `/tmp/os2026-perf-ab-small`; data root `/share/home/linzihan/os2026/data`.
+
+The million-row `syn-mem27-100` was then measured in three interleaved repetitions per binary,
+all six independently valid against the discrete exact reference (`tol=1e-10`, 12/12 pairs,
+exact certificate). Preparation falls from 2.005 to 1.328 s (34%); the entire certificate from
+28.368 to 27.681 s. Solver medians are 66.198 to 65.705 s (-0.7%), wall medians 68.713 to 68.382 s
+(-0.5%). Solver ranges overlap (before 65.439-66.584 s, after 64.945-66.467 s): the certificate
+improvement is consistent, but factorization and iteration vary enough to obscure it in individual
+whole-run comparisons. This is a preparation optimization, with modest end-to-end gain at 1e6.
+Raw outputs: gpu01 `/tmp/os2026-perf-ab-large`; data root
+`/share/home/linzihan/p7_p7-membudget/data`.
+
+Reproduce using two wrapper executables that each set `HSOLVE_MPI` to the corresponding binary
+and exec `hsolve-mpirun --ranks 3 -- "$@"` (the wrappers used here also append
+`--log <out>/events.jsonl`):
+
+```bash
+env/run.sh env HS_DATA_ROOT=/share/home/linzihan/os2026/data \
+  python3 tools/run/guard.py --exclusive --cores 8-15,16-23 --mem-gb 32 --timeout 600 -- \
+  python3 tools/bench/ab_cases.py run --bin before=/tmp/os2026-perf-before-mpi \
+  --bin after=/tmp/os2026-perf-after-mpi --reps 0,1,2,3,4 --cores 8-15,16-23 \
+  --run-dir /tmp/os2026-perf-ab-small --timeout 90 \
+  syn-mem27-46 yee-pec-box-1e5 ss-qa8fk-qa8fm cav2d-rect-pert-1e5
+env/run.sh python3 tools/run/guard.py --skip-busy-check --mem-gb 10 --timeout 240 -- \
+  python3 -m tools.eval.sweep /tmp/os2026-perf-ab-small \
+  --root /share/home/linzihan/os2026/data --out /tmp/os2026-perf-ab-small/eval.md
+env/run.sh python3 tools/bench/ab_cases.py table --base before --new after /tmp/os2026-perf-ab-small
+```
+
+For the 1e6 campaign, use the large data root and run directory above, `--reps 0,1,2`, outer
+`--timeout 900`, per-run `--timeout 180 --deadline 850`, and the single case `syn-mem27-100`.
+Evaluate with the matching large data root. All 46 runs across both campaigns pass independently.
+
+Validation: full release build; counter and parallel regression tests 80/80, including direct
+construction after source destruction, real/complex spectra, both precisions, deferred analysis,
+invalid permutations, budgets, fallback and MPI ranks 1/2/3/5. Remaining C++ regressions have no
+failures (device/platform-dependent skips and three disabled performance tests); Python 399/399.

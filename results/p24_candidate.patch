@@ -1,0 +1,623 @@
+--- a/src/driver/definite.cpp
++++ b/src/driver/definite.cpp
+@@ -34,6 +34,13 @@
+ // count failed (an anchor's gap point, a partial cluster's verification): the other slices' pairs
+ // are returned with the certificate "not completed".
+ #include <algorithm>
++#include <cerrno>
++#include <cstdio>
++#include <filesystem>
++#include <sstream>
++#include <omp.h>
++#include <sched.h>
++#include <unistd.h>
+ #include <cmath>
+ #include <cstdlib>
+ #include <deque>
+@@ -58,6 +65,63 @@
+ namespace hs::driver {
+ 
+ namespace {
++
++// Private P24 measurement: shrink the existing worker pool only during one Lanczos run.
++// Every requested CPU must belong to the incoming guard mask; restore all saved masks.
++class P24IterationScope {
++ public:
++  P24IterationScope() {
++    const char* value = std::getenv("P24_ITER_THREADS");
++    if (!value || !*value) return;
++    threads_ = std::stoi(value);
++    previous_ = omp_get_max_threads();
++    if (threads_ <= 0 || threads_ > previous_) HS_THROW(InvalidInput, "P24 thread limit");
++    cpu_set_t allowed, wanted;
++    CPU_ZERO(&wanted);
++    if (sched_getaffinity(0, sizeof(allowed), &allowed)) HS_THROW(Internal, "P24 get affinity");
++    const char* cpus = std::getenv("P24_ITER_CPUS");
++    if (!cpus) HS_THROW(InvalidInput, "P24 CPUs missing");
++    std::istringstream input(cpus);
++    std::string part;
++    while (std::getline(input, part, ',')) {
++      std::size_t used = 0;
++      const int cpu = std::stoi(part, &used);
++      if (used != part.size() || cpu < 0 || cpu >= CPU_SETSIZE || !CPU_ISSET(cpu, &allowed))
++        HS_THROW(InvalidInput, "P24 CPU outside guard");
++      CPU_SET(cpu, &wanted);
++    }
++    if (CPU_COUNT(&wanted) != threads_) HS_THROW(InvalidInput, "P24 CPU/thread mismatch");
++    try {
++      for (const auto& entry : std::filesystem::directory_iterator("/proc/self/task")) {
++        const pid_t tid = static_cast<pid_t>(std::stol(entry.path().filename().string()));
++        cpu_set_t prior;
++        if (sched_getaffinity(tid, sizeof(prior), &prior)) {
++          if (errno == ESRCH) continue;
++          HS_THROW(Internal, "P24 worker affinity read");
++        }
++        saved_.push_back({tid, prior});
++        if (sched_setaffinity(tid, sizeof(wanted), &wanted) && errno != ESRCH)
++          HS_THROW(Internal, "P24 worker affinity set");
++      }
++      omp_set_num_threads(threads_);
++    } catch (...) { restore(); throw; }
++    std::fprintf(stderr, "P24_SCOPE begin threads=%d cpus=%s tasks=%zu\n", threads_, cpus, saved_.size());
++  }
++  ~P24IterationScope() { if (previous_ > 0) { restore(); std::fprintf(stderr, "P24_SCOPE end threads=%d\n", previous_); } }
++  P24IterationScope(const P24IterationScope&) = delete;
++  P24IterationScope& operator=(const P24IterationScope&) = delete;
++ private:
++  void restore() noexcept {
++    if (previous_ > 0) omp_set_num_threads(previous_);
++    for (const auto& item : saved_)
++      if (sched_setaffinity(item.first, sizeof(item.second), &item.second) && errno != ESRCH) {
++        std::fprintf(stderr, "P24 affinity restore failed\n"); std::abort();
++      }
++    saved_.clear();
++  }
++  int previous_ = 0, threads_ = 0;
++  std::vector<std::pair<pid_t, cpu_set_t>> saved_;
++};
+ 
+ /// Pairs with a backward error above this are not counted as found (ghost / unconverged Ritz
+ /// pairs); between tol and this they count but are reported as not accepted.
+@@ -133,6 +197,8 @@
+ void lanczos_run(Ctx& c, SparseFactorization<T>& fac, const ShiftedPencil<T>& pencil, double sigma, Which which,
+                  index_t nev, index_t p, const DenseMatrix<T>* deflation, DefiniteRun<T>& out, index_t lead = 0,
+                  bool test_original_residual = false) {
++  P24IterationScope iteration_scope;
++  Timer p24_clock;
+   const CsrMatrix<T>& a = pencil.a();
+   const CsrMatrix<T>* b = pencil.b();
+   DriverShiftInvert<T> op(c.cfg, fac, pencil, sigma);  // inexact factors: refined and checked
+@@ -156,6 +222,24 @@
+   index_t original_probes = 0;
+   bool original_accepted = false;
+   original.probe_tol = std::sqrt(ko.tol);
++  if (std::getenv("P24_TRACE")) {
++    original.observe = [&](index_t m, index_t restart, const std::vector<double>& theta,
++                           const std::vector<index_t>& order) {
++      std::fprintf(stderr, "P24_RITZ {\"t\":%.9g,\"m\":%lld,\"restart\":%lld,\"sigma\":%.17g,\"k\":%lld,\"lambda\":[",
++                   p24_clock.seconds(), static_cast<long long>(m), static_cast<long long>(restart),
++                   sigma, static_cast<long long>(nev));
++      bool first = true;
++      for (index_t i : order) {
++        if (!first) std::fputc(',', stderr);
++        first = false;
++        const double lambda = theta[i] != 0.0 ? sigma + 1.0/theta[i] : kInf;
++        if (std::isfinite(lambda)) std::fprintf(stderr, "%.17g", lambda);
++        else std::fputs("null", stderr);
++      }
++      std::fputs("]}\n", stderr);
++    };
++  }
++
+   original.accept = [&](const DenseMatrix<T>& x, const std::vector<double>& theta) {
+     ++original_probes;
+     DenseMatrix<T> ax, bx;
+--- a/src/eigen/block_lanczos.cpp
++++ b/src/eigen/block_lanczos.cpp
+@@ -338,6 +338,8 @@
+     rr_.est[i] = std::sqrt(e2);
+   }
+   rr_.classify(opt_.tol, which_);
++  if (residual_test_ && residual_test_->observe)
++    residual_test_->observe(m_, restarts_, rr_.theta, rr_.order);
+   if (residual_test_ && !rr_.done(nev_, lead_)) {
+     const index_t wanted = lead_ > 0 ? lead_ : nev_;
+     for (index_t j = 0; j < wanted; ++j) {
+--- a/src/eigen/block_lanczos.hpp
++++ b/src/eigen/block_lanczos.hpp
+@@ -171,6 +171,8 @@
+ /// No change to the public eigensolver's residual-estimate contract when this is absent.
+ template <class T>
+ struct OriginalResidualTest {
++  // Private P24 observer: no stopping decision and no Ritz-vector assembly.
++  std::function<void(index_t, index_t, const std::vector<double>&, const std::vector<index_t>&)> observe;
+   double probe_tol = 0.0;
+   std::function<bool(const DenseMatrix<T>&, const std::vector<double>&)> accept;
+ };
+--- /dev/null
++++ b/experiments/p24/probe_shim.c
+@@ -0,0 +1,60 @@
++/* Private P20 experiment: override only the compression tolerance of an already
++ * enabled BLR instance. Exact inertia counters have BLR disabled and are untouched.
++ * The driver retains its solve refinement, fallback, residual checks and certificate.
++ * No production configuration or default changes.
++ */
++#define _GNU_SOURCE
++#include <dmumps_c.h>
++#include <dlfcn.h>
++#include <errno.h>
++#include <math.h>
++#include <stdio.h>
++#include <stdlib.h>
++#include <unistd.h>
++#include <omp.h>
++
++void dmumps_c(DMUMPS_STRUC_C *id) {
++  typedef void (*call_t)(DMUMPS_STRUC_C *);
++  static call_t next;
++  static double tolerance;
++  static int initialized;
++  if (!initialized) {
++    next = (call_t)dlsym(RTLD_NEXT, "dmumps_c");
++    const char *s = getenv("P20_BLR_TOL");
++    char *end = NULL;
++    errno = 0;
++    tolerance = s ? strtod(s, &end) : 0.0;
++    if (!next || !s || end == s || *end || errno ||
++        !isfinite(tolerance) || tolerance <= 0.0 || tolerance >= 1.0) {
++      fprintf(stderr, "P20 BLR experiment: invalid tolerance or missing next dmumps_c\n");
++      abort();
++    }
++    initialized = 1;
++  }
++  const int job = (int)id->job;
++  const int original_threads = (int)id->icntl[15];
++  const char* request = getenv("P24_ITER_THREADS");
++  const int wanted = request ? atoi(request) : 0;
++  if (job == 3 && wanted > 0 && omp_get_max_threads() == wanted) {
++    id->icntl[15] = wanted;
++    fprintf(stderr, "P24_SOLVE threads=%d caller=%d nrhs=%d\n", wanted, omp_get_max_threads(), (int)id->nrhs);
++  }
++  const int override = job != -1 && id->icntl[34] != 0;
++  if (override) {
++    const double saved = id->cntl[6];
++    id->cntl[6] = tolerance;
++    if (job == 1 || job == 2)
++      fprintf(stderr, "P20 MUMPS pid=%ld job=%d blr=%d compression=%.17g caller=%.17g discard=%d scaling=%d null_detection=%d override=1\n",
++              (long)getpid(), job, (int)id->icntl[34], tolerance, saved,
++              (int)id->icntl[30], (int)id->icntl[7], (int)id->icntl[23]);
++    next(id);
++    id->cntl[6] = saved;
++  } else {
++    if (job == 1 || job == 2)
++      fprintf(stderr, "P20 MUMPS pid=%ld job=%d blr=%d compression=%.17g discard=%d scaling=%d null_detection=%d override=0\n",
++              (long)getpid(), job, (int)id->icntl[34], id->cntl[6],
++              (int)id->icntl[30], (int)id->icntl[7], (int)id->icntl[23]);
++    next(id);
++  }
++  id->icntl[15] = original_threads;
++}
+--- /dev/null
++++ b/experiments/p24/affinity_shim.c
+@@ -0,0 +1,59 @@
++/* Private P20 experiment: override only the compression tolerance of an already
++ * enabled BLR instance. Exact inertia counters have BLR disabled and are untouched.
++ * The driver retains its solve refinement, fallback, residual checks and certificate.
++ * No production configuration or default changes.
++ */
++#define _GNU_SOURCE
++#include <dmumps_c.h>
++#include <dlfcn.h>
++#include <errno.h>
++#include <math.h>
++#include <stdio.h>
++#include <stdlib.h>
++#include <unistd.h>
++#include <omp.h>
++#include <sched.h>
++
++void dmumps_c(DMUMPS_STRUC_C *id) {
++  typedef void (*call_t)(DMUMPS_STRUC_C *);
++  static call_t next;
++  static double tolerance;
++  static int initialized;
++  if (!initialized) {
++    next = (call_t)dlsym(RTLD_NEXT, "dmumps_c");
++    const char *s = getenv("P20_BLR_TOL");
++    char *end = NULL;
++    errno = 0;
++    tolerance = s ? strtod(s, &end) : 0.0;
++    if (!next || !s || end == s || *end || errno ||
++        !isfinite(tolerance) || tolerance <= 0.0 || tolerance >= 1.0) {
++      fprintf(stderr, "P20 BLR experiment: invalid tolerance or missing next dmumps_c\n");
++      abort();
++    }
++    initialized = 1;
++  }
++  const int job = (int)id->job;
++  if (job == 3) {
++    cpu_set_t cpus;
++    const int nc = sched_getaffinity(0, sizeof(cpus), &cpus) ? -1 : CPU_COUNT(&cpus);
++    fprintf(stderr, "P24_SOLVE factor_threads=%d outer_threads=%d allowed_cpus=%d nrhs=%d\n",
++            (int)id->icntl[15], omp_get_max_threads(), nc, (int)id->nrhs);
++  }
++  const int override = job != -1 && id->icntl[34] != 0;
++  if (override) {
++    const double saved = id->cntl[6];
++    id->cntl[6] = tolerance;
++    if (job == 1 || job == 2)
++      fprintf(stderr, "P20 MUMPS pid=%ld job=%d blr=%d compression=%.17g caller=%.17g discard=%d scaling=%d null_detection=%d override=1\n",
++              (long)getpid(), job, (int)id->icntl[34], tolerance, saved,
++              (int)id->icntl[30], (int)id->icntl[7], (int)id->icntl[23]);
++    next(id);
++    id->cntl[6] = saved;
++  } else {
++    if (job == 1 || job == 2)
++      fprintf(stderr, "P20 MUMPS pid=%ld job=%d blr=%d compression=%.17g discard=%d scaling=%d null_detection=%d override=0\n",
++              (long)getpid(), job, (int)id->icntl[34], id->cntl[6],
++              (int)id->icntl[30], (int)id->icntl[7], (int)id->icntl[23]);
++    next(id);
++  }
++}
+--- /dev/null
++++ b/experiments/p24/l0_shim.c
+@@ -0,0 +1,68 @@
++/* Private P20 experiment: override only the compression tolerance of an already
++ * enabled BLR instance. Exact inertia counters have BLR disabled and are untouched.
++ * The driver retains its solve refinement, fallback, residual checks and certificate.
++ * No production configuration or default changes.
++ */
++#define _GNU_SOURCE
++#include <dmumps_c.h>
++#include <dlfcn.h>
++#include <errno.h>
++#include <math.h>
++#include <stdio.h>
++#include <stdlib.h>
++#include <unistd.h>
++#include <omp.h>
++#include <sched.h>
++
++void dmumps_c(DMUMPS_STRUC_C *id) {
++  typedef void (*call_t)(DMUMPS_STRUC_C *);
++  static call_t next;
++  static double tolerance;
++  static int initialized;
++  if (!initialized) {
++    next = (call_t)dlsym(RTLD_NEXT, "dmumps_c");
++    const char *s = getenv("P20_BLR_TOL");
++    char *end = NULL;
++    errno = 0;
++    tolerance = s ? strtod(s, &end) : 0.0;
++    if (!next || !s || end == s || *end || errno ||
++        !isfinite(tolerance) || tolerance <= 0.0 || tolerance >= 1.0) {
++      fprintf(stderr, "P20 BLR experiment: invalid tolerance or missing next dmumps_c\n");
++      abort();
++    }
++    initialized = 1;
++  }
++  const int job = (int)id->job;
++  const int saved_threads = (int)id->icntl[15], saved_l0 = (int)id->icntl[47];
++  const char* mode = getenv("P24_SOLVE_L0");
++  if (job == 3 && mode && mode[0] == '0') {
++    /* ICNTL(48) explicitly permits switching L0 off between factor and solve.
++       No KEEP fields or error checks are modified. Factorization remains L0-on. */
++    id->icntl[47] = 0;
++    id->icntl[15] = omp_get_max_threads();
++  }
++  if (job == 3) {
++    cpu_set_t cpus;
++    const int nc = sched_getaffinity(0, sizeof(cpus), &cpus) ? -1 : CPU_COUNT(&cpus);
++    fprintf(stderr, "P24_L0_SOLVE factor_threads=%d solve_threads=%d l0=%d allowed_cpus=%d nrhs=%d\n", saved_threads, (int)id->icntl[15], (int)id->icntl[47], nc, (int)id->nrhs);
++  }
++  const int override = job != -1 && id->icntl[34] != 0;
++  if (override) {
++    const double saved = id->cntl[6];
++    id->cntl[6] = tolerance;
++    if (job == 1 || job == 2)
++      fprintf(stderr, "P20 MUMPS pid=%ld job=%d blr=%d compression=%.17g caller=%.17g discard=%d scaling=%d null_detection=%d override=1\n",
++              (long)getpid(), job, (int)id->icntl[34], tolerance, saved,
++              (int)id->icntl[30], (int)id->icntl[7], (int)id->icntl[23]);
++    next(id);
++    id->cntl[6] = saved;
++  } else {
++    if (job == 1 || job == 2)
++      fprintf(stderr, "P20 MUMPS pid=%ld job=%d blr=%d compression=%.17g discard=%d scaling=%d null_detection=%d override=0\n",
++              (long)getpid(), job, (int)id->icntl[34], id->cntl[6],
++              (int)id->icntl[30], (int)id->icntl[7], (int)id->icntl[23]);
++    next(id);
++  }
++  id->icntl[15] = saved_threads;
++  id->icntl[47] = saved_l0;
++}
+--- /dev/null
++++ b/experiments/p24/build.py
+@@ -0,0 +1,41 @@
++#!/usr/bin/env python3
++import hashlib
++import json
++import os
++from pathlib import Path
++import shlex
++import shutil
++import subprocess
++repo=Path('/tmp/os2026-p10-repair.9doyhO');b=repo/'build/release';r=Path('/tmp/os2026-p24')
++(r/'objects').mkdir(exist_ok=True)
++tracked=[repo/'src/driver/definite.cpp',repo/'src/eigen/block_lanczos.cpp',repo/'src/eigen/block_lanczos.hpp',b/'libhsolve.a',b/'hsolve',b/'hsolve-mpi']
++def digest(p):return hashlib.sha256(p.read_bytes()).hexdigest()
++before={str(p):digest(p) for p in tracked};commands=[]
++def command(target):
++ s=subprocess.run(['ninja','-C',str(b),'-t','commands',target],capture_output=True,text=True,check=True).stdout.splitlines()[-1]
++ a=shlex.split(s)
++ if a[:2]==[':','&&']:
++  assert a[-2:]==['&&',':'];a=a[2:-2]
++ assert not any(x in ['&&','||',';'] for x in a)
++ return a
++def run(a):
++ commands.append(a);(r/'build-commands.json').write_text(json.dumps(commands,indent=2)+'\n')
++ subprocess.run(a,cwd=b,check=True)
++objects=[]
++for target,source,name in [('src/driver/definite.cpp','definite-probe.cpp','definite.cpp.o'),('src/eigen/block_lanczos.cpp','block_lanczos.cpp','block_lanczos.cpp.o')]:
++ a=command('CMakeFiles/hsolve.dir/'+target+'.o');a.insert(1,'-I'+str(r/'include'))
++ for opt,value in [('-o',r/'objects'/name),('-MF',r/'objects'/(name+'.d')),('-MT',r/'objects'/name),('-c',r/source)]:a[a.index(opt)+1]=str(value)
++ run(a);objects.append(str(r/'objects'/name))
++shutil.copy2('/tmp/os2026-p21/libhsolve-p21.a',r/'libhsolve-probe.a')
++run(shlex.split(os.environ.get('AR','ar'))+['r',str(r/'libhsolve-probe.a')]+objects)
++for name in ['hsolve','hsolve-mpi']:
++ a=command(name);assert a.count('libhsolve.a')==1;a[a.index('libhsolve.a')]=str(r/'libhsolve-probe.a')
++ a[a.index('-o')+1]=str(r/(name+'-probe'))
++ for i,x in enumerate(a):
++  if x.startswith('-Wl,--dependency-file='):a[i]='-Wl,--dependency-file='+str(r/(name+'-link.d'))
++ run(a)
++run(shlex.split(os.environ['CC'])+['-O2','-std=c11','-Wall','-Wextra','-Werror','-fPIC','-shared','-fopenmp','-I/share/home/linzihan/deps/mumps-cache/mumps-5.8.2-4aa1f2dcd75ea2ff/include',str(r/'probe_shim.c'),'-ldl','-o',str(r/'probe_shim.so')])
++after={str(p):digest(p) for p in tracked};assert before==after
++paths=['definite-probe.cpp','block_lanczos.cpp','include/eigen/block_lanczos.hpp','probe_shim.c','probe_shim.so','libhsolve-probe.a','hsolve-probe','hsolve-mpi-probe']
++(r/'build-hashes.json').write_text(json.dumps({'production_before':before,'production_after':after,'experimental':{p:digest(r/p) for p in paths}},indent=2)+'\n')
++print('P24 isolated build complete; production hashes unchanged.')
+--- /dev/null
++++ b/experiments/p24/build-affinity.sh
+@@ -0,0 +1,5 @@
++#!/usr/bin/env bash
++set -euo pipefail
++cd /tmp/os2026-p24
++"$CC" -O2 -std=c11 -Wall -Wextra -Werror -fPIC -shared -fopenmp -I/share/home/linzihan/deps/mumps-cache/mumps-5.8.2-4aa1f2dcd75ea2ff/include affinity_shim.c -ldl -o affinity_shim.so
++sha256sum affinity_shim.c affinity_shim.so > affinity-hashes.txt
+--- /dev/null
++++ b/experiments/p24/build-l0.sh
+@@ -0,0 +1,5 @@
++#!/usr/bin/env bash
++set -euo pipefail
++cd /tmp/os2026-p24
++"$CC" -O2 -std=c11 -Wall -Wextra -Werror -fPIC -shared -fopenmp -I/share/home/linzihan/deps/mumps-cache/mumps-5.8.2-4aa1f2dcd75ea2ff/include l0_shim.c -ldl -o l0_shim.so
++sha256sum l0_shim.c l0_shim.so > l0-hashes.txt
+--- /dev/null
++++ b/experiments/p24/compare.py
+@@ -0,0 +1,32 @@
++#!/usr/bin/env python3
++import argparse
++import json
++from pathlib import Path
++import sys
++sys.path.insert(0,'/tmp/os2026-p10-repair.9doyhO')
++from tools.bench import compare
++p=argparse.ArgumentParser(add_help=False);p.add_argument('--mpi',action='store_true');extra,rest=p.parse_known_args()
++r=Path('/tmp/os2026-p24')
++variants={s:{'blr':'on'} for s in ['hsolve-before','hsolve-probe','hsolve-four','hsolve-two']}
++compare.HSOLVE_VARIANTS.update(variants);compare.SOLVERS=(*variants,'slepc')
++old_command,old_run=compare.hsolve_command,compare.run_once
++def command(c,solver,out,ncores,args,target):
++ a=old_command(c,solver,out,ncores,args,target)
++ before=solver=='hsolve-before'
++ a[0]=('/tmp/os2026-p21/mpi-true' if extra.mpi else '/tmp/os2026-p21/hsolve-true') if before else str(r/('mpi-probe' if extra.mpi else 'hsolve-probe'))
++ env=['env','-u','P24_ITER_THREADS','-u','P24_ITER_CPUS','-u','P24_TRACE','-u','P24_LAYOUT','-u','P23_BATCH_RESCUE',
++      'LD_PRELOAD='+('/tmp/os2026-p20/blr_threshold.so' if before else str(r/'probe_shim.so')),
++      'P20_BLR_TOL=3e-10','P21_BLR_OPERATOR=unrefined','P21_TRUE_RESIDUAL=1']
++ if not before:env+=['P24_TRACE=1']
++ if solver=='hsolve-four':
++  env+=['P24_ITER_THREADS=4','P24_ITER_CPUS='+('8,9,16,17' if extra.mpi else '8,9,10,11'),'P24_LAYOUT=4-6']
++ elif solver=='hsolve-two':
++  env+=['P24_ITER_THREADS=2','P24_ITER_CPUS='+('8,16' if extra.mpi else '8,9'),'P24_LAYOUT=2-7']
++ return env+a
++def run(solver,*args,**kw):
++ row=old_run(solver,*args,**kw)
++ if solver in variants:row.update(config=solver,config_scope='case',config_source='P24 private observation/scaling: BLR 3e-10, unchanged P21 acceptance, no overlap; main factor 16 cores in MPI; iteration/counters 16/8+8, 4/6+6, or 2/7+7')
++ with (r/'runs.jsonl').open('a') as f:f.write(json.dumps(row)+'\n')
++ return row
++compare.hsolve_command,compare.run_once=command,run
++raise SystemExit(compare.main(rest))
+--- /dev/null
++++ b/experiments/p24/compare-affinity.py
+@@ -0,0 +1,32 @@
++#!/usr/bin/env python3
++import argparse
++import json
++from pathlib import Path
++import sys
++sys.path.insert(0,'/tmp/os2026-p10-repair.9doyhO')
++from tools.bench import compare
++p=argparse.ArgumentParser(add_help=False);p.add_argument('--mpi',action='store_true');extra,rest=p.parse_known_args()
++r=Path('/tmp/os2026-p24')
++variants={s:{'blr':'on'} for s in ['hsolve-before','hsolve-probe','hsolve-four','hsolve-two']}
++compare.HSOLVE_VARIANTS.update(variants);compare.SOLVERS=(*variants,'slepc')
++old_command,old_run=compare.hsolve_command,compare.run_once
++def command(c,solver,out,ncores,args,target):
++ a=old_command(c,solver,out,ncores,args,target)
++ before=solver=='hsolve-before'
++ a[0]=('/tmp/os2026-p21/mpi-true' if extra.mpi else '/tmp/os2026-p21/hsolve-true') if before else str(r/('mpi-probe' if extra.mpi else 'hsolve-probe'))
++ env=['env','-u','P24_ITER_THREADS','-u','P24_ITER_CPUS','-u','P24_TRACE','-u','P24_LAYOUT','-u','P23_BATCH_RESCUE',
++      'LD_PRELOAD='+('/tmp/os2026-p20/blr_threshold.so' if before else str(r/'affinity_shim.so')),
++      'OMP_WAIT_POLICY=PASSIVE','GOMP_SPINCOUNT=0','P20_BLR_TOL=3e-10','P21_BLR_OPERATOR=unrefined','P21_TRUE_RESIDUAL=1']
++ if not before:env+=['P24_TRACE=1']
++ if solver=='hsolve-four':
++  env+=['P24_ITER_THREADS=4','P24_ITER_CPUS='+('8,9,16,17' if extra.mpi else '8,9,10,11'),'P24_LAYOUT=4-6']
++ elif solver=='hsolve-two':
++  env+=['P24_ITER_THREADS=2','P24_ITER_CPUS='+('8,16' if extra.mpi else '8,9'),'P24_LAYOUT=2-7']
++ return env+a
++def run(solver,*args,**kw):
++ row=old_run(solver,*args,**kw)
++ if solver in variants:row.update(config=solver,config_scope='case',config_source='P24 private observation/scaling: BLR 3e-10, unchanged P21 acceptance, no overlap; main factor 16 cores in MPI; iteration CPUs/counter workers 16/8+8, 4/6+6, or 2/7+7; MUMPS main worker count unchanged; passive wait for all variants')
++ with (r/'runs.jsonl').open('a') as f:f.write(json.dumps(row)+'\n')
++ return row
++compare.hsolve_command,compare.run_once=command,run
++raise SystemExit(compare.main(rest))
+--- /dev/null
++++ b/experiments/p24/compare-million.py
+@@ -0,0 +1,34 @@
++#!/usr/bin/env python3
++import argparse
++import json
++from pathlib import Path
++import sys
++sys.path.insert(0,'/tmp/os2026-p10-repair.9doyhO')
++from tools.bench import compare
++p=argparse.ArgumentParser(add_help=False);p.add_argument('--mpi',action='store_true');extra,rest=p.parse_known_args()
++r=Path('/tmp/os2026-p24')
++variants={s:{'blr':'on'} for s in ['hsolve-active','hsolve-before','hsolve-probe','hsolve-four','hsolve-two']}
++compare.HSOLVE_VARIANTS.update(variants);compare.SOLVERS=(*variants,'slepc')
++old_command,old_run=compare.hsolve_command,compare.run_once
++def command(c,solver,out,ncores,args,target):
++ a=old_command(c,solver,out,ncores,args,target)
++ before=solver in ['hsolve-active','hsolve-before']
++ a[0]=('/tmp/os2026-p21/mpi-true' if extra.mpi else '/tmp/os2026-p21/hsolve-true') if before else str(r/('mpi-probe' if extra.mpi else 'hsolve-probe'))
++ env=['env','-u','P24_ITER_THREADS','-u','P24_ITER_CPUS','-u','P24_TRACE','-u','P24_LAYOUT','-u','P23_BATCH_RESCUE',
++      'LD_PRELOAD='+('/tmp/os2026-p20/blr_threshold.so' if before else str(r/'affinity_shim.so')),
++      'OMP_WAIT_POLICY=PASSIVE','GOMP_SPINCOUNT=0','P20_BLR_TOL=3e-10','P21_BLR_OPERATOR=unrefined','P21_TRUE_RESIDUAL=1']
++ if solver=='hsolve-active':
++  env=['env','-u','OMP_WAIT_POLICY','-u','GOMP_SPINCOUNT']+[x for x in env[1:] if x not in ['OMP_WAIT_POLICY=PASSIVE','GOMP_SPINCOUNT=0']]
++ if not before:env+=['P24_TRACE=1']
++ if solver=='hsolve-four':
++  env+=['P24_ITER_THREADS=4','P24_ITER_CPUS='+('8,9,16,17' if extra.mpi else '8,9,10,11'),'P24_LAYOUT=4-6']
++ elif solver=='hsolve-two':
++  env+=['P24_ITER_THREADS=2','P24_ITER_CPUS='+('8,16' if extra.mpi else '8,9'),'P24_LAYOUT=2-7']
++ return env+a
++def run(solver,*args,**kw):
++ row=old_run(solver,*args,**kw)
++ if solver in variants:row.update(config=solver,config_scope='case',config_source='P24 private observation/scaling: BLR 3e-10, unchanged P21 acceptance, no overlap; main factor 16 cores in MPI; iteration CPUs/counter workers 16/8+8, 4/6+6, or 2/7+7; MUMPS main worker count unchanged; passive wait except hsolve-active native-wait control')
++ with (r/'runs.jsonl').open('a') as f:f.write(json.dumps(row)+'\n')
++ return row
++compare.hsolve_command,compare.run_once=command,run
++raise SystemExit(compare.main(rest))
+--- /dev/null
++++ b/experiments/p24/compare-l0.py
+@@ -0,0 +1,33 @@
++#!/usr/bin/env python3
++import argparse
++import json
++from pathlib import Path
++import sys
++sys.path.insert(0,'/tmp/os2026-p10-repair.9doyhO')
++from tools.bench import compare
++p=argparse.ArgumentParser(add_help=False);p.add_argument('--mpi',action='store_true');extra,rest=p.parse_known_args()
++r=Path('/tmp/os2026-p24')
++variants={s:{'blr':'on'} for s in ['hsolve-native','hsolve-observe','hsolve-l0-16','hsolve-l0-4','hsolve-l0-2']}
++compare.HSOLVE_VARIANTS.update(variants);compare.SOLVERS=(*variants,'slepc')
++old_command,old_run=compare.hsolve_command,compare.run_once
++def command(c,solver,out,ncores,args,target):
++ a=old_command(c,solver,out,ncores,args,target)
++ native=solver=='hsolve-native'
++ a[0]=('/tmp/os2026-p21/mpi-true' if extra.mpi else '/tmp/os2026-p21/hsolve-true') if native else str(r/('mpi-probe' if extra.mpi else 'hsolve-probe'))
++ env=['env','-u','P24_ITER_THREADS','-u','P24_ITER_CPUS','-u','P24_TRACE','-u','P24_LAYOUT','-u','P24_SOLVE_L0','-u','P23_BATCH_RESCUE','-u','OMP_WAIT_POLICY','-u','GOMP_SPINCOUNT',
++      'LD_PRELOAD='+('/tmp/os2026-p20/blr_threshold.so' if native else str(r/'l0_shim.so')),
++      'P20_BLR_TOL=3e-10','P21_BLR_OPERATOR=unrefined','P21_TRUE_RESIDUAL=1']
++ if not native:env+=['P24_TRACE=1']
++ if solver.startswith('hsolve-l0-'):env+=['P24_SOLVE_L0=0']
++ if solver=='hsolve-l0-4':
++  env+=['P24_ITER_THREADS=4','P24_ITER_CPUS='+('8,9,16,17' if extra.mpi else '8,9,10,11'),'P24_LAYOUT=4-6']
++ elif solver=='hsolve-l0-2':
++  env+=['P24_ITER_THREADS=2','P24_ITER_CPUS='+('8,16' if extra.mpi else '8,9'),'P24_LAYOUT=2-7']
++ return env+a
++def run(solver,*args,**kw):
++ row=old_run(solver,*args,**kw)
++ if solver in variants:row.update(config=solver,config_scope='case',config_source='P24 public ICNTL(48)=0 for solves only where named l0; main factorization remains L0-on, solve thread count follows outer OMP; default wait policy; original P21 acceptance; no overlap yet')
++ with (r/'runs-l0.jsonl').open('a') as f:f.write(json.dumps(row)+'\n')
++ return row
++compare.hsolve_command,compare.run_once=command,run
++raise SystemExit(compare.main(rest))
+--- /dev/null
++++ b/experiments/p24/mpi-probe
+@@ -0,0 +1,13 @@
++#!/usr/bin/env bash
++set -euo pipefail
++export HSOLVE_MPIRUN_EXE=/tmp/os2026-p24/hsolve-mpi-probe
++export HSOLVE_MPIRUN_INTERLEAVE=0,1
++case "${P24_LAYOUT:-16-8}" in
++  16-8) export HSOLVE_MPIRUN_PLAN='8-15,16-23;8-15;16-23' ;;
++  4-6) export HSOLVE_MPIRUN_PLAN='8-15,16-23;10-15;18-23' ;;
++  2-7) export HSOLVE_MPIRUN_PLAN='8-15,16-23;9-15;17-23' ;;
++  *) echo 'unknown P24 layout' >&2; exit 2 ;;
++esac
++exec /share/home/linzihan/envs/os2026-ref/bin/mpiexec -n 3 --bind-to none \
++  -x HSOLVE_MPIRUN_PLAN -x HSOLVE_MPIRUN_EXE -x HSOLVE_MPIRUN_INTERLEAVE \
++  /tmp/os2026-p10-repair.9doyhO/build/release/hsolve-mpirun "$@"
+--- /dev/null
++++ b/experiments/p24/smoke.sh
+@@ -0,0 +1,4 @@
++#!/usr/bin/env bash
++set -euo pipefail
++cd /tmp/os2026-p10-repair.9doyhO
++python /tmp/os2026-p24/compare.py --solvers hsolve-before,hsolve-probe,hsolve-four,hsolve-two --reps 1 --timeout 45 --cores 8-15 --mem-gb 12 --root /share/home/linzihan/os2026/data --tag p24-smoke --out-dir /tmp/os2026-p24 cav2d-rect-pert-1e5 yee-pec-box-1e4 yee-pec-box-1e5 yee-bloch-1e4 syn-near-singular-real-1e4
+--- /dev/null
++++ b/experiments/p24/smoke-affinity.sh
+@@ -0,0 +1,4 @@
++#!/usr/bin/env bash
++set -euo pipefail
++cd /tmp/os2026-p10-repair.9doyhO
++python /tmp/os2026-p24/compare-affinity.py --solvers hsolve-before,hsolve-probe,hsolve-four,hsolve-two --reps 1 --timeout 45 --cores 8-15 --mem-gb 12 --root /share/home/linzihan/os2026/data --tag p24-affinity-smoke --out-dir /tmp/os2026-p24 cav2d-rect-pert-1e5 yee-pec-box-1e4 yee-pec-box-1e5 yee-bloch-1e4 syn-near-singular-real-1e4
+--- /dev/null
++++ b/experiments/p24/smoke-l0.sh
+@@ -0,0 +1,4 @@
++#!/usr/bin/env bash
++set -euo pipefail
++cd /tmp/os2026-p10-repair.9doyhO
++python /tmp/os2026-p24/compare-l0.py --solvers hsolve-native,hsolve-observe,hsolve-l0-16,hsolve-l0-4,hsolve-l0-2 --reps 1 --timeout 45 --cores 8-15 --mem-gb 12 --root /share/home/linzihan/os2026/data --tag p24-l0-smoke --out-dir /tmp/os2026-p24 cav2d-rect-pert-1e5 yee-pec-box-1e4 yee-pec-box-1e5 yee-bloch-1e4 syn-near-singular-real-1e4
+--- /dev/null
++++ b/experiments/p24/million-affinity.sh
+@@ -0,0 +1,4 @@
++#!/usr/bin/env bash
++set -euo pipefail
++cd /tmp/os2026-p10-repair.9doyhO
++python /tmp/os2026-p24/compare-million.py --mpi --solvers hsolve-active,hsolve-before,hsolve-probe,hsolve-four,hsolve-two --reps 2 --timeout 180 --cores 8-15,16-23 --mem-gb 32 --root /share/home/linzihan/p7_p7-membudget/data --tag p24-million-affinity --out-dir /tmp/os2026-p24 yee-pec-box-1e6
+--- /dev/null
++++ b/experiments/p24/million-l0.sh
+@@ -0,0 +1,4 @@
++#!/usr/bin/env bash
++set -euo pipefail
++cd /tmp/os2026-p10-repair.9doyhO
++python /tmp/os2026-p24/compare-l0.py --mpi --solvers hsolve-native,hsolve-observe,hsolve-l0-16,hsolve-l0-4,hsolve-l0-2 --reps 1 --timeout 180 --cores 8-15,16-23 --mem-gb 32 --root /share/home/linzihan/p7_p7-membudget/data --tag p24-million-l0 --out-dir /tmp/os2026-p24 yee-pec-box-1e6
+--- /dev/null
++++ b/experiments/p24/stop-affinity.py
+@@ -0,0 +1,13 @@
++import json,os,signal
++from pathlib import Path
++matches=[]
++for p in Path('/proc').iterdir():
++ if not p.name.isdigit():continue
++ try:a=[s.decode() for s in (p/'cmdline').read_bytes().split(b'\0') if s]
++ except (OSError,UnicodeDecodeError):continue
++ if 'tools/run/guard.py' in a and a[-2:]==['bash','/tmp/os2026-p24/million-affinity.sh']:matches.append((int(p.name),a))
++assert len(matches)==1,matches
++pid,cmd=matches[0]
++Path('/tmp/os2026-p24/affinity-stop.json').write_text(json.dumps({'pid':pid,'command':cmd,'intentional_stop':True,'reason':'First complete repetition: 4-core and 2-core affinity-only paths took 81.212 and 104.672 s vs native 48.989 s; stop further unpromising repetitions. Preserve all completed and interrupted runs. Switch to documented ICNTL48-off solve path.'},indent=2)+'\n')
++os.kill(pid,signal.SIGTERM)
++print('Sent SIGTERM to the exact P24 outer guard',pid)
+--- /dev/null
++++ b/experiments/p24/experiment.txt
+@@ -0,0 +1,18 @@
++P24 private observer and resource scaling, 2026-10-16, gpu02.
++No actual overlap yet; no production changes. P21 true-residual BLR3e-10 base.
++First small screen retained: 10/20 valid; all 10 reduced-thread attempts failed
++INFO=-58 because MUMPS L0 solve threads must match analysis/factorization.
++This is a terminal library error, not timeout. Do not bypass MUMPS validation.
++
++Revised screen retains MUMPS worker count, caps all process threads to 2 or 4
++physical CPUs during Lanczos, sets outer OMP threads to 2/4, and restores all
++saved CPU masks and outer thread count at scope exit (also on failure).
++The binding splits future overlap resources within 16 physical CPUs:
++main4 on 8,9,16,17 + counters6 on 10-15 and18-23; main2 on8,16 + counters7
++on9-15 and17-23. Main factor still gets16. All configs set OMP_WAIT_POLICY=PASSIVE
++and GOMP_SPINCOUNT=0; do not compare their timing across earlier batches.
++All actual counts still run AFTER main iteration. Observer does not change stop
++or acceptance, only records Ritz values/times. Cost overlap estimates are models,
++not measured end-to-end improvements. Failed first screen remains archived.
++
++Source inspection found a SUPPORTED alternative: MUMPS dini_defaults.F lines734-747 explicitly allows ICNTL(48) switching between factorization and solve. dsol_driver.F lines753-765 reads it each solve and lines2889-2918 requires fixed threads only for L0-on solves. A separate l0_shim prototype is prepared to disable tree parallelism only for JOB3, then reduce ICNTL16, restoring both afterwards. It has not yet been built/run; wait for current dual-core measurement to finish.

@@ -1,0 +1,212 @@
+{
+ "base": "before",
+ "new": "after",
+ "threshold": 0.03,
+ "geomean_ratio": 0.9785360207009551,
+ "cases": 3,
+ "comparable": 3,
+ "slower": [],
+ "faster": [
+  "yee-pec-cube-16"
+ ],
+ "rows": [
+  {
+   "case": "wg-halfslab-1e4",
+   "n": 9801,
+   "problem": "GHIEP",
+   "hosts": [
+    "gpu01"
+   ],
+   "before": {
+    "reps": 5,
+    "valid": 5,
+    "ok": true,
+    "time_s": 0.074382591,
+    "time_min": 0.071547702,
+    "time_max": 0.14123436500000003,
+    "times": [
+     0.14123436500000003,
+     0.071547702,
+     0.074382591,
+     0.07592526799999999,
+     0.073089945
+    ],
+    "wall_s": 0.115,
+    "peak_rss_gib": 0.074,
+    "factorizations": "1",
+    "block_size": "1",
+    "certificate_method": "none",
+    "completeness": "consistent",
+    "hosts": [
+     "gpu01"
+    ],
+    "binaries": [
+     "/tmp/hsolve-openbase"
+    ],
+    "invalid": []
+   },
+   "after": {
+    "reps": 5,
+    "valid": 5,
+    "ok": true,
+    "time_s": 0.072774452,
+    "time_min": 0.070630581,
+    "time_max": 0.102584062,
+    "times": [
+     0.08240807600000001,
+     0.07217137,
+     0.102584062,
+     0.072774452,
+     0.070630581
+    ],
+    "wall_s": 0.115,
+    "peak_rss_gib": 0.091,
+    "factorizations": "1",
+    "block_size": "1",
+    "certificate_method": "none",
+    "completeness": "consistent",
+    "hosts": [
+     "gpu01"
+    ],
+    "binaries": [
+     "/tmp/hsolve-opennew"
+    ],
+    "invalid": []
+   },
+   "ratio": 0.9783801696286704,
+   "comparable": true
+  },
+  {
+   "case": "yee-pec-cube-16",
+   "n": 10800,
+   "problem": "HEP",
+   "hosts": [
+    "gpu01"
+   ],
+   "before": {
+    "reps": 5,
+    "valid": 5,
+    "ok": true,
+    "time_s": 0.215725574,
+    "time_min": 0.210191976,
+    "time_max": 0.251328743,
+    "times": [
+     0.212509949,
+     0.251328743,
+     0.215725574,
+     0.21630058,
+     0.210191976
+    ],
+    "wall_s": 0.266,
+    "peak_rss_gib": 0.134,
+    "factorizations": "3",
+    "block_size": "4",
+    "certificate_method": "exact",
+    "completeness": "complete",
+    "hosts": [
+     "gpu01"
+    ],
+    "binaries": [
+     "/tmp/hsolve-openbase"
+    ],
+    "invalid": []
+   },
+   "after": {
+    "reps": 5,
+    "valid": 5,
+    "ok": true,
+    "time_s": 0.208930985,
+    "time_min": 0.20396882,
+    "time_max": 0.221936592,
+    "times": [
+     0.208200724,
+     0.20396882,
+     0.213940496,
+     0.208930985,
+     0.221936592
+    ],
+    "wall_s": 0.266,
+    "peak_rss_gib": 0.132,
+    "factorizations": "3",
+    "block_size": "4",
+    "certificate_method": "exact",
+    "completeness": "complete",
+    "hosts": [
+     "gpu01"
+    ],
+    "binaries": [
+     "/tmp/hsolve-opennew"
+    ],
+    "invalid": []
+   },
+   "ratio": 0.968503553500801,
+   "comparable": true
+  },
+  {
+   "case": "yee-photonic-rods-1e4",
+   "n": 10125,
+   "problem": "HEP",
+   "hosts": [
+    "gpu01"
+   ],
+   "before": {
+    "reps": 5,
+    "valid": 5,
+    "ok": true,
+    "time_s": 0.8270299939999999,
+    "time_min": 0.8199015600000001,
+    "time_max": 0.871857293,
+    "times": [
+     0.8270299939999999,
+     0.8231358700000001,
+     0.871857293,
+     0.863369624,
+     0.8199015600000001
+    ],
+    "wall_s": 0.87,
+    "peak_rss_gib": 0.369,
+    "factorizations": "1",
+    "block_size": "8",
+    "certificate_method": "exact",
+    "completeness": "consistent",
+    "hosts": [
+     "gpu01"
+    ],
+    "binaries": [
+     "/tmp/hsolve-openbase"
+    ],
+    "invalid": []
+   },
+   "after": {
+    "reps": 5,
+    "valid": 5,
+    "ok": true,
+    "time_s": 0.8177919879999999,
+    "time_min": 0.814675059,
+    "time_max": 0.8282235820000001,
+    "times": [
+     0.814675059,
+     0.8231194270000001,
+     0.8177919879999999,
+     0.8282235820000001,
+     0.8157549059999999
+    ],
+    "wall_s": 0.869,
+    "peak_rss_gib": 0.364,
+    "factorizations": "1",
+    "block_size": "8",
+    "certificate_method": "exact",
+    "completeness": "consistent",
+    "hosts": [
+     "gpu01"
+    ],
+    "binaries": [
+     "/tmp/hsolve-opennew"
+    ],
+    "invalid": []
+   },
+   "ratio": 0.9888299020990525,
+   "comparable": true
+  }
+ ]
+}

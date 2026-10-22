@@ -1,0 +1,34 @@
+--- a/src/driver/solver.cpp
++++ b/src/driver/solver.cpp
+@@ -26,6 +26,7 @@
+ #include "hsolve/solver.hpp"
+ #include "hsolve/util.hpp"
+ #include "io/csr_assembly.hpp"
++#include "/tmp/os2026-p31/band_backend_refined.hpp"
+ 
+ namespace hs {
+ 
+@@ -344,7 +345,22 @@
+   //    between double and single factors on the analysis estimates (choose_precision), and the
+   //    estimate between in-core and out-of-core factors (analyze_within_budget).
+   const double sigma0 = initial_shift(cfg.target, d.na, d.scale, rep.norm2_b);
+-  if (!pivot_order.empty()) {
++  bool native_ready = false;
++  if constexpr (is_complex_v<T>) {
++    if (pivot_order.empty() && cfg.ordering < 0 && cfg.target.mode == TargetMode::Nearest &&
++        cfg.method == Method::Auto && cfg.certificate == CertificateMode::Exact &&
++        cfg.inertia_counter == Toggle::Auto && cfg.inertia_check != Toggle::Off &&
++        cfg.factor_precision == FactorPrecision::Double && !c.helpers &&
++        type != ProblemType::GeneralizedIndefinite) {
++      driver::PhaseScope phase(clock, driver::Phase::Factor);
++      fac = p31::try_make(pencil, fopts);
++      native_ready = bool(fac);
++      if (native_ready) event(c, "factor_backend", {{"name", "p31_refined_checked_band_private"}});
++    }
++  }
++  if (native_ready) {
++    // P31 private: native symbolic preparation has completed.
++  } else if (!pivot_order.empty()) {
+     fac = make_mumps_factorization<T>(fopts);
+     fac->set_pivot_order(std::move(pivot_order));
+     driver::PhaseScope phase(clock, driver::Phase::Factor);

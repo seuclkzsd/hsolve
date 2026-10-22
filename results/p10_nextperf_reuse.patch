@@ -1,0 +1,145 @@
+--- a/src/driver/definite.cpp
++++ b/src/driver/definite.cpp
+@@ -154,6 +154,7 @@
+   eigen_detail::OriginalResidualTest<T> original;
+   index_t original_probes = 0;
+   bool original_accepted = false;
++  DenseMatrix<T> accepted_ax, accepted_bx;
+   original.probe_tol = std::sqrt(ko.tol);
+   original.accept = [&](const DenseMatrix<T>& x, const std::vector<double>& theta) {
+     ++original_probes;
+@@ -169,7 +170,12 @@
+       accepted = accepted && std::isfinite(lambda) && pm.backward_error <= 0.5 * c.cfg.tol;
+     }
+     original_accepted = accepted;
+-    if (!accepted) original.probe_tol *= 0.1;
++    if (accepted) {
++      accepted_ax = std::move(ax);
++      accepted_bx = std::move(bx);
++    } else {
++      original.probe_tol *= 0.1;
++    }
+     return accepted;
+   };
+   {
+@@ -212,7 +218,13 @@
+   Block<T> blk;
+   blk.x = std::move(res.vectors);
+   for (double th : res.theta) blk.lambda.push_back(th != 0.0 ? sigma + 1.0 / th : kInf);
+-  recompute_products(a, b, blk);
++  if (original_accepted && ko.lead_nev == 0) {
++    // A successful full-set probe returns the same Ritz columns in ranking order.
++    blk.ax = std::move(accepted_ax);
++    blk.bx = std::move(accepted_bx);
++  } else {
++    recompute_products(a, b, blk);
++  }
+   if (out.all.size() == 0) {
+     out.all = std::move(blk);
+   } else {
+--- a/src/eigen/block_lanczos.cpp
++++ b/src/eigen/block_lanczos.cpp
+@@ -180,6 +180,7 @@
+ 
+   // Rayleigh-Ritz results of the current cycle; rr_.est[i] = ||coupling_(:, i)||_2.
+   RitzPairs<T> rr_;
++  HermitianEigResult<T> accepted_;  ///< complete set accepted by the original-problem probe
+   DenseMatrix<T> coupling_;  ///< p x m: R S(m-p:m, :), the Ritz vectors' couplings to V_m
+ 
+   index_t restarts_ = 0;
+@@ -344,9 +345,15 @@
+       const index_t i = rr_.order[j];
+       if (!(rr_.est[i] <= residual_test_->probe_tol * rr_.ref[i])) return;
+     }
+-    const auto candidates = rr_.result(n_, wanted, vcol(0));
+-    if (residual_test_->accept(candidates.vectors, candidates.theta))
++    auto candidates = rr_.result(n_, wanted, vcol(0), false);
++    if (residual_test_->accept(candidates.vectors, candidates.theta)) {
+       for (index_t j = 0; j < wanted; ++j) rr_.conv[rr_.order[j]] = 1;
++      if (wanted == nev_) {
++        candidates.nconv = nev_;
++        candidates.converged = true;
++        accepted_ = std::move(candidates);
++      }
++    }
+   }
+ }
+ 
+@@ -388,7 +395,7 @@
+ template <class T>
+ HermitianEigResult<T> BlockThickRestartLanczos<T>::finish() {
+   // rr_ holds the Rayleigh-Ritz step of the m_ leading basis vectors (an early stop's probe).
+-  HermitianEigResult<T> r = rr_.result(n_, nev_, vcol(0));
++  HermitianEigResult<T> r = accepted_.converged ? std::move(accepted_) : rr_.result(n_, nev_, vcol(0));
+   r.restarts = restarts_;
+   r.op_applies = op_.applications() - op_applies0_;
+   r.history = std::move(history_);
+--- a/src/eigen/block_lanczos.hpp
++++ b/src/eigen/block_lanczos.hpp
+@@ -112,7 +112,8 @@
+   /// The result fields of the nev best ranked pairs, converged first, both groups in ranking
+   /// order: theta, estimate, vectors = V S(:, selection) for the basis V (n x m, ld n), ritz_all,
+   /// nconv, converged. restarts, op_applies and history are left to the caller. O(n m nev).
+-  HermitianEigResult<T> result(index_t n, index_t nev, const T* basis) const;
++  /// converged_first = false keeps pure ranking order, for a probe that may accept the whole set.
++  HermitianEigResult<T> result(index_t n, index_t nev, const T* basis, bool converged_first = true) const;
+ };
+ 
+ /// Basis layout of the block solver for block width p > 1 (see lanczos_krylov_schur in eigen.hpp).
+@@ -167,6 +168,8 @@
+ 
+ /// Optional driver-only stopping test in the original eigenproblem. Once every wanted
+ /// relative transformed residual is below probe_tol, assemble its Ritz vectors and call accept.
++/// Probe columns are in ranking order. On acceptance of all nev pairs, those same columns
++/// become the result, so the driver may retain their products with A and B.
+ /// A true result accepts that whole wanted set; false preserves the normal Krylov test.
+ /// No change to the public eigensolver's residual-estimate contract when this is absent.
+ template <class T>
+--- a/src/eigen/lanczos_krylov_schur.cpp
++++ b/src/eigen/lanczos_krylov_schur.cpp
+@@ -570,12 +570,13 @@
+ }
+ 
+ template <class T>
+-HermitianEigResult<T> RitzPairs<T>::result(index_t n, index_t nev, const T* basis) const {
++HermitianEigResult<T> RitzPairs<T>::result(index_t n, index_t nev, const T* basis, bool converged_first) const {
+   HermitianEigResult<T> r;
+   const index_t m = static_cast<index_t>(theta.size());
+   // The wanted pairs are the nev best ranked; converged ones first, both groups in ranking order.
+   std::vector<index_t> sel(order.begin(), order.begin() + nev);
+-  std::stable_partition(sel.begin(), sel.end(), [this](index_t i) { return conv[i] != 0; });
++  if (converged_first)
++    std::stable_partition(sel.begin(), sel.end(), [this](index_t i) { return conv[i] != 0; });
+   DenseMatrix<T> ssel(m, nev);
+   for (index_t l = 0; l < nev; ++l) {
+     const index_t i = sel[l];
+--- a/tests/cpp/test_block_lanczos.cpp
++++ b/tests/cpp/test_block_lanczos.cpp
+@@ -597,6 +597,8 @@
+   EXPECT_EQ(rejected.op_applies, baseline.op_applies);
+   EXPECT_EQ(rejected.theta, baseline.theta);
+   EXPECT_EQ(rejected.estimate, baseline.estimate);
++  DenseMatrix<T> checked_vectors;
++  std::vector<double> checked_theta;
+   test.accept = [&](const DenseMatrix<T>& x, const std::vector<double>& theta) {
+     for (index_t j = 0; j < x.cols(); ++j) {
+       double r2 = 0.0, x2 = 0.0;
+@@ -606,12 +608,18 @@
+       }
+       if (!(std::sqrt(r2 / x2) <= 1e-7)) return false;
+     }
++    checked_vectors = x;
++    checked_theta = theta;
+     return true;
+   };
+   const auto accepted = hs::eigen_detail::block_lanczos_krylov_schur_timed<T>(
+       op, nullptr, hs::Which::LargestMagnitude, opt, timing, {}, nullptr, &test);
+   ASSERT_TRUE(accepted.converged);
+   EXPECT_LT(accepted.op_applies, baseline.op_applies);
++  EXPECT_EQ(accepted.theta, checked_theta);
++  ASSERT_EQ(accepted.vectors.cols(), checked_vectors.cols());
++  for (index_t j = 0; j < opt.nev; ++j)
++    for (index_t i = 0; i < n; ++i) EXPECT_EQ(accepted.vectors(i, j), checked_vectors(i, j));
+   EXPECT_TRUE(test.accept(accepted.vectors, accepted.theta));
+   for (index_t j = 0; j < opt.nev; ++j) EXPECT_NEAR(accepted.theta[j], diagonal[j], 1e-7);
+ }

@@ -1,0 +1,115 @@
+--- a/include/hsolve/dense.hpp
++++ b/include/hsolve/dense.hpp
+@@ -7,6 +7,8 @@
+ #include <cstddef>
+ #include <cstdlib>
+ #include <new>
++#include <utility>
++#include <type_traits>
+ #include <vector>
+ 
+ #include "hsolve/error.hpp"
+@@ -47,6 +49,27 @@
+ template <class T>
+ using aligned_vector = std::vector<T, AlignedAllocator<T>>;
+ 
++namespace detail {
++// Only DenseMatrix's large parallel initialization uses no-argument construction.
++// Default-initialization starts each object's lifetime without clearing arithmetic
++// scalars. Class types (including std::complex) still run their default constructor.
++// Construction from values, copies, and the public aligned_vector keep their semantics.
++template <class T>
++struct DenseAllocator : AlignedAllocator<T> {
++  DenseAllocator() noexcept = default;
++  template <class U>
++  DenseAllocator(const DenseAllocator<U>&) noexcept {}
++  template <class U>
++  struct rebind { using other = DenseAllocator<U>; };
++  template <class U>
++  void construct(U* p) { ::new (static_cast<void*>(p)) U; }
++  template <class U, class... Args>
++  void construct(U* p, Args&&... args) {
++    ::new (static_cast<void*>(p)) U(std::forward<Args>(args)...);
++  }
++};
++}  // namespace detail
++
+ template <class T>
+ class DenseMatrix {
+  public:
+@@ -74,7 +97,31 @@
+     if (rows < 0 || cols < 0) HS_THROW(InvalidInput, "DenseMatrix: negative size " << rows << "x" << cols);
+     rows_ = rows;
+     cols_ = cols;
+-    buf_.assign(static_cast<std::size_t>(rows * cols), T(0));
++    const auto count = static_cast<std::size_t>(rows * cols);
++    if constexpr (std::is_arithmetic_v<T>) {
++      // Assign each 2 MiB address region to one worker, avoiding concurrent first
++      // faults on the same transparent huge page. Small matrices keep the serial
++      // path. Every element is initialized before resize returns.
++      constexpr std::size_t bytes = 2 * 1024 * 1024;
++      if (count >= 2 * bytes / sizeof(T)) {
++        buf_.clear();
++        buf_.resize(count);
++        T* data = buf_.data();
++        const std::size_t first = (bytes - reinterpret_cast<std::uintptr_t>(data) % bytes) / sizeof(T);
++        const std::size_t step = bytes / sizeof(T);
++        const std::size_t blocks = 1 + (count > first ? (count - first + step - 1) / step : 0);
++#ifdef _OPENMP
++#pragma omp parallel for schedule(static)
++#endif
++        for (std::size_t block = 0; block < blocks; ++block) {
++          const std::size_t begin = block == 0 ? 0 : first + (block - 1) * step;
++          const std::size_t end = std::min(count, block == 0 ? first : begin + step);
++          std::fill(data + begin, data + end, T(0));
++        }
++        return;
++      }
++    }
++    buf_.assign(count, T(0));
+   }
+ 
+   /// Change the number of columns keeping the leading min(cols, old cols) columns.
+@@ -89,7 +136,7 @@
+  private:
+   index_t rows_ = 0;
+   index_t cols_ = 0;
+-  aligned_vector<T> buf_;
++  std::vector<T, detail::DenseAllocator<T>> buf_;
+ };
+ 
+ }  // namespace hs
+--- a/tests/cpp/test_linalg_basics.cpp
++++ b/tests/cpp/test_linalg_basics.cpp
+@@ -21,6 +21,31 @@
+   m.resize_cols(5);
+   EXPECT_EQ(m(4, 2), 7.0);
+   EXPECT_EQ(m(0, 4), 0.0);
++}
++
++TEST(LinalgDenseMatrix, LargeResetPreservesCopyAndColumnGrowth) {
++  // Cross several 2 MiB regions; neither dimension aligns with a region boundary.
++  constexpr hs::index_t rows = 1025, cols = 769;
++  hs::DenseMatrix<double> m(rows, cols);
++  const auto count = rows * cols;
++  EXPECT_TRUE(std::all_of(m.data(), m.data() + count, [](double x) { return x == 0.0; }));
++  for (hs::index_t i = 0; i < count; ++i) m.data()[i] = 1.0 + double(i % 97);
++  auto copy = m;
++  EXPECT_TRUE(std::equal(m.data(), m.data() + count, copy.data()));
++  auto moved = std::move(copy);
++  moved.resize_cols(cols + 17);
++  EXPECT_TRUE(std::equal(m.data(), m.data() + count, moved.data()));
++  EXPECT_TRUE(std::all_of(moved.data() + count, moved.data() + rows * (cols + 17),
++                          [](double x) { return x == 0.0; }));
++  // Reuse a larger capacity while reshaping: every previous value must be cleared.
++  moved.resize(cols, rows);
++  EXPECT_TRUE(std::all_of(moved.data(), moved.data() + count, [](double x) { return x == 0.0; }));
++  EXPECT_EQ(m(rows - 1, cols - 1), 1.0 + double((count - 1) % 97));
++  hs::DenseMatrix<hs::cplx> complex(rows, cols);
++  EXPECT_TRUE(std::all_of(complex.data(), complex.data() + count,
++                          [](hs::cplx z) { return z == hs::cplx(0); }));
++  hs::aligned_vector<double> normal(1000);
++  EXPECT_TRUE(std::all_of(normal.begin(), normal.end(), [](double x) { return x == 0.0; }));
+ }
+ 
+ TEST(UtilError, ThrowMacroCarriesCode) {

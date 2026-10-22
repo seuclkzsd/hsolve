@@ -1,0 +1,153 @@
+{
+ "tag": "cmp-p10-nearest-qa",
+ "cores": "16-31",
+ "ncores": 16,
+ "solvers": [
+  "hsolve",
+  "hsolve-nd",
+  "slepc"
+ ],
+ "slepc_profile": "best",
+ "slepc_ranks": 1,
+ "reps": 5,
+ "target_override": null,
+ "evaluated": true,
+ "rows": [
+  {
+   "case": "ss-qa8fk-qa8fm",
+   "n": 66127,
+   "problem": "GHEP",
+   "target": {
+    "mode": "nearest",
+    "sigma": 12.823277405538153,
+    "k": 10
+   },
+   "target_desc": "k=10 @ 12.82",
+   "k": 10,
+   "norms": {
+    "norm2_a": 0.39275168912627667,
+    "norm2_b": 0.0009464304222444833,
+    "scale": 414.9821052823474,
+    "time_s": 1.325702477246523
+   },
+   "solvers": {
+    "hsolve": {
+     "reps": 5,
+     "valid_runs": 5,
+     "ok": true,
+     "solver_s": 1.427638567,
+     "solver_s_min": 1.425165267,
+     "solver_s_max": 1.538005302,
+     "solver_s_all": [
+      1.5035343990000003,
+      1.427638567,
+      1.4259494270000002,
+      1.425165267,
+      1.538005302
+     ],
+     "solver_s_scope": "report time_total_s",
+     "wall_s": 1.639,
+     "peak_rss_gib": 0.738,
+     "solver_peak_gib": 0.7375717163085938,
+     "max_eta": 2.7268614569456962e-11,
+     "completeness": [
+      "consistent"
+     ],
+     "pairs": 10,
+     "phases": {
+      "analysis_s": 0.204568593,
+      "numeric_s": 0.583709724,
+      "factorizations": 3.0,
+      "solves": 84.0,
+      "solve_s": 0.350966695,
+      "ortho_s": null,
+      "iterate_s": 0.4515372160000001,
+      "verify_s": 0.008784919999999974
+     },
+     "errors": [],
+     "invalid_reasons": [],
+     "set_diff_vs_slepc": 6.612623705519527e-16
+    },
+    "hsolve-nd": {
+     "reps": 5,
+     "valid_runs": 5,
+     "ok": true,
+     "solver_s": 1.36382667,
+     "solver_s_min": 1.343713296,
+     "solver_s_max": 1.375613137,
+     "solver_s_all": [
+      1.354680527,
+      1.343713296,
+      1.367827734,
+      1.36382667,
+      1.375613137
+     ],
+     "solver_s_scope": "report time_total_s",
+     "wall_s": 1.573,
+     "peak_rss_gib": 0.708,
+     "solver_peak_gib": 0.7075614929199219,
+     "max_eta": 2.7248770480408147e-11,
+     "completeness": [
+      "consistent"
+     ],
+     "pairs": 10,
+     "phases": {
+      "analysis_s": 0.203621424,
+      "numeric_s": 0.588520861,
+      "factorizations": 3.0,
+      "solves": 84.0,
+      "solve_s": 0.35136984499999996,
+      "ortho_s": null,
+      "iterate_s": 0.452041715,
+      "verify_s": 0.00899878800000009
+     },
+     "errors": [],
+     "invalid_reasons": [],
+     "config": "{\"block_size\": 4, \"ordering\": 10}",
+     "config_source": "explicit P10 comparison variant; exact certificate, original tolerance",
+     "config_scope": "case",
+     "set_diff_vs_slepc": 6.695801362192729e-16
+    },
+    "slepc": {
+     "reps": 5,
+     "valid_runs": 5,
+     "ok": true,
+     "solver_s": 1.47963619,
+     "solver_s_min": 1.42593773,
+     "solver_s_max": 1.5072731400000001,
+     "solver_s_all": [
+      1.47963619,
+      1.48204359,
+      1.5072731400000001,
+      1.42593773,
+      1.4556661899999999
+     ],
+     "solver_s_scope": "log_view setup+solve+vectors",
+     "wall_s": 3.996,
+     "peak_rss_gib": 1.659,
+     "solver_peak_gib": 1.6478614807128906,
+     "max_eta": 8.711819595318197e-13,
+     "completeness": [
+      "consistent"
+     ],
+     "pairs": 10,
+     "phases": {
+      "analysis_s": 0.22672,
+      "numeric_s": 0.3409,
+      "factorizations": 1.0,
+      "solves": 47.0,
+      "solve_s": 0.80429,
+      "ortho_s": 0.067881,
+      "iterate_s": null,
+      "verify_s": null
+     },
+     "errors": [],
+     "invalid_reasons": [],
+     "config": "8x2/core eps_purify=0 st_mat_mumps_icntl_28=2 st_mat_mumps_icntl_29=1",
+     "config_source": "case profile ss-qa8fk-qa8fm",
+     "config_scope": "case"
+    }
+   }
+  }
+ ]
+}

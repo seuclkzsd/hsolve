@@ -1,0 +1,50 @@
+--- a/src/driver/steps.cpp
++++ b/src/driver/steps.cpp
+@@ -4,6 +4,7 @@
+ #include <algorithm>
+ #include <cmath>
+ #include <cstdint>
++#include <cstdlib>
+ #include <limits>
+ #include <memory>
+ #include <new>
+@@ -117,6 +118,12 @@
+ 
+ SolveRefinement shift_invert_refinement(const SolverConfig& cfg, const FactorOptions& factor) {
+   SolveRefinement r;
++  // Private P21 screening only: use the fixed BLR operator in Krylov.
++  // True final residuals, exact counts and the driver's failed-attempt fallback
++  // remain in solver.cpp. This is not a production refinement policy.
++  const char* mode = std::getenv("P21_BLR_OPERATOR");
++  if (factor.blr && factor.precision == FactorPrecision::Double &&
++      mode && std::string(mode) == "unrefined") return r;
+   if (inexact_factor(factor)) {
+     r.max_steps = kInexactRefineSteps;
+     r.rel_tol = cfg.tol * cfg.inner_tol_factor * kInexactRefineTolFactor;
+--- a/src/driver/definite.cpp
++++ b/src/driver/definite.cpp
+@@ -35,6 +35,7 @@
+ // are returned with the certificate "not completed".
+ #include <algorithm>
+ #include <cmath>
++#include <cstdlib>
+ #include <deque>
+ #include <limits>
+ #include <memory>
+@@ -174,7 +175,15 @@
+   };
+   {
+     PhaseScope phase(c.clock, Phase::Iterate);
+-    if (test_original_residual && ko.block_size > 1 && !deflation && !inexact_factor(fac.options())) {
++    // Private P21 experiment: allow the same original-pencil residual check
++    // for a fixed unrefined double-BLR operator. Acceptance remains 0.5*cfg.tol.
++    const char* true_mode = std::getenv("P21_TRUE_RESIDUAL");
++    const char* operator_mode = std::getenv("P21_BLR_OPERATOR");
++    const bool fixed_blr = fac.options().blr && fac.options().precision == FactorPrecision::Double &&
++                           true_mode && std::string(true_mode) == "1" &&
++                           operator_mode && std::string(operator_mode) == "unrefined";
++    if (test_original_residual && ko.block_size > 1 && !deflation &&
++        (!inexact_factor(fac.options()) || fixed_blr)) {
+       eigen_detail::LanczosTimings unused;
+       res = eigen_detail::block_lanczos_krylov_schur_timed<T>(
+           op, b_op.get(), which, ko, unused, eigen_detail::BlockTuning{}, nullptr, &original);

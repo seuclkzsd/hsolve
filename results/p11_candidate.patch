@@ -1,0 +1,220 @@
+--- a/src/blas/simd_kernels.hpp
++++ b/src/blas/simd_kernels.hpp
+@@ -230,20 +230,24 @@
+ }
+ 
+ // C(i..i+IB, j..j+NG) = alpha * A(:, i..i+IB)^T * B(:, j..j+NG) + beta * C, A k x IB (lda),
+-// B k x NG (ldb), IB <= 4 (missing rows reduce zero accumulators: every row of C gets the same
++// B k x NG (ldb), IB <= 8 (missing rows reduce zero accumulators: every row of C gets the same
+ // reduction tree wherever it lies).
+ template <int IB, int NG>
+ HS_SIMD void tn_block(fint k, const double* a, fint lda, const double* b, fint ldb, double alpha,
+                       double beta, double* c, fint ldc) {
+-  reg acc[4][NG];
+-  for (int r = 0; r < 4; ++r)
++  constexpr int rows = (IB + 3) / 4 * 4;
++  reg acc[rows][NG];
++  for (int r = 0; r < rows; ++r)
+     for (int j = 0; j < NG; ++j) acc[r][j] = V::zero();
+   fint kk = 0;
+   for (; kk + V::W <= k; kk += V::W) {
+     reg bv[NG];
+     for (int j = 0; j < NG; ++j) bv[j] = V::loadu(b + static_cast<idx>(j) * ldb + kk);
+     for (int r = 0; r < IB; ++r) {
+-      const reg av = V::loadu(a + static_cast<idx>(r) * lda + kk);
++      reg av = V::loadu(a + static_cast<idx>(r) * lda + kk);
++      // Keep the shared A vector in a register. GCC otherwise folds this load into every
++      // column's FMA, issuing NG copies of the same memory access in the inner loop.
++      if constexpr (NG == 2) asm("" : "+v"(av));
+       for (int j = 0; j < NG; ++j) acc[r][j] = V::fmadd(av, bv[j], acc[r][j]);
+     }
+   }
+@@ -252,16 +256,19 @@
+     reg bv[NG];
+     for (int j = 0; j < NG; ++j) bv[j] = V::maskz_loadu(tail, b + static_cast<idx>(j) * ldb + kk);
+     for (int r = 0; r < IB; ++r) {
+-      const reg av = V::maskz_loadu(tail, a + static_cast<idx>(r) * lda + kk);
++      reg av = V::maskz_loadu(tail, a + static_cast<idx>(r) * lda + kk);
++      if constexpr (NG == 2) asm("" : "+v"(av));
+       for (int j = 0; j < NG; ++j) acc[r][j] = V::fmadd(av, bv[j], acc[r][j]);
+     }
+   }
+   alignas(32) double sums[4];
+   for (int j = 0; j < NG; ++j) {
+     double* cj = c + static_cast<idx>(j) * ldc;
+-    V::reduce4(acc[0][j], acc[1][j], acc[2][j], acc[3][j], sums);
+-    for (int r = 0; r < IB; ++r)
+-      cj[r] = beta == 0.0 ? alpha * sums[r] : alpha * sums[r] + beta * cj[r];
++    for (int r0 = 0; r0 < rows; r0 += 4) {
++      V::reduce4(acc[r0][j], acc[r0 + 1][j], acc[r0 + 2][j], acc[r0 + 3][j], sums);
++      for (int r = r0; r < std::min(IB, r0 + 4); ++r)
++        cj[r] = beta == 0.0 ? alpha * sums[r - r0] : alpha * sums[r - r0] + beta * cj[r];
++    }
+   }
+ }
+ 
+@@ -287,7 +294,16 @@
+ // Rows [i0, i1) of C = alpha * A^T * B + beta * C (A k x m, B k x n).
+ HS_SIMD void tn_rows(fint i0, fint i1, fint n, fint k, double alpha, const double* a, fint lda,
+                      const double* b, fint ldb, double beta, double* c, fint ldc) {
+-  for (fint i = i0; i < i1; i += 4) {
++  fint i = i0;
++  if constexpr (V::W == 8) {
++    // AVX-512 has room for 16 accumulators: reuse each B vector over eight output rows.
++    // Short columns benefit; long columns prefer the four-stream prefetch pattern below
++    // (bench_asmkern_kernels, results/p11_measurements.json). Reduction order is unchanged.
++    if (n == 2 && k <= 256)
++      for (; i + 8 <= i1; i += 8)
++        tn_block<8, 2>(k, a + static_cast<idx>(i) * lda, lda, b, ldb, alpha, beta, c + i, ldc);
++  }
++  for (; i < i1; i += 4) {
+     const int ib = static_cast<int>(std::min<fint>(4, i1 - i));
+     const double* ai = a + static_cast<idx>(i) * lda;
+     for (fint j0 = 0; j0 < n; j0 += V::kGroup) {
+--- a/src/driver/norms.cpp
++++ b/src/driver/norms.cpp
+@@ -55,16 +55,17 @@
+   for (int j = 0; j < steps; ++j) {
+     apply(v.data(), w.data());
+     // w -= beta_{j-1} v_{j-1};  alpha_j = Re(v^H w) (Hermitian => real);  w -= alpha_j v
+-    if (j > 0) linalg::axpy(n, T(-beta_prev), v_prev.data(), w.data());
+-    const double aj = std::real(linalg::dot(n, v.data(), w.data()));
+-    linalg::axpy(n, T(-aj), v.data(), w.data());
++    const double aj = std::real(j > 0
++        ? linalg::axpy_dot(n, T(-beta_prev), v_prev.data(), w.data(), v.data())
++        : linalg::dot(n, v.data(), w.data()));
+     alpha.push_back(aj);
+-    const double bj = linalg::norm2(n, w.data());
++    const double bj = linalg::axpy_norm2(n, T(-aj), v.data(), w.data());
+     // Breakdown: an invariant subspace was found; its Ritz values are exact eigenvalues.
+     const double scale = std::max(std::abs(aj), beta_prev);
+     if (bj <= 1e-13 * std::max(scale, 1e-300) || j + 1 == steps) break;
+     beta.push_back(bj);
+     std::swap(v_prev, v);
++#pragma omp parallel for schedule(static)
+     for (index_t i = 0; i < n; ++i) v[i] = w[i] / bj;
+     beta_prev = bj;
+   }
+--- a/src/linalg/dense_ops.cpp
++++ b/src/linalg/dense_ops.cpp
+@@ -569,6 +569,39 @@
+ void axpy(index_t n, T alpha, const T* x, T* y) {
+ #pragma omp parallel for schedule(static)
+   for (index_t i = 0; i < n; ++i) y[i] += alpha * x[i];
++}
++
++template <class T>
++T axpy_dot(index_t n, T alpha, const T* x, T* y, const T* z) {
++  const Partition part(n, kVecBlock, kMaxSlots);
++  constexpr index_t d = kDoubles<T>;
++  double s[d];
++  reduce_blocks(part, d, d * n >= kParallelMinWork, s, [&](index_t r0, index_t rows, double* acc) {
++    for (index_t i = r0; i < r0 + rows; ++i) y[i] += alpha * x[i];
++    if constexpr (is_complex_v<T>) {
++      double re, im;
++      zdotc(rows, dbl(z + r0), dbl(y + r0), re, im);
++      acc[0] += re;
++      acc[1] += im;
++    } else {
++      acc[0] += ddot(rows, z + r0, y + r0);
++    }
++  });
++  if constexpr (is_complex_v<T>) return T(s[0], s[1]);
++  else return s[0];
++}
++
++template <class T>
++double axpy_norm2(index_t n, T alpha, const T* x, T* y) {
++  const Partition part(n, kVecBlock, kMaxSlots);
++  constexpr index_t d = kDoubles<T>;
++  double s;
++  reduce_blocks(part, 1, d * n >= kParallelMinWork, &s, [&](index_t r0, index_t rows, double* acc) {
++    for (index_t i = r0; i < r0 + rows; ++i) y[i] += alpha * x[i];
++    const double* yd = dbl(y + r0);
++    acc[0] += ddot(d * rows, yd, yd);
++  });
++  return std::sqrt(s);
+ }
+ 
+ template <class T>
+@@ -864,6 +897,8 @@
+   template T dot<T>(index_t, const T*, const T*);                                                   \
+   template double norm2<T>(index_t, const T*);                                                      \
+   template void axpy<T>(index_t, T, const T*, T*);                                                  \
++  template T axpy_dot<T>(index_t, T, const T*, T*, const T*);                                       \
++  template double axpy_norm2<T>(index_t, T, const T*, T*);                                          \
+   template void scal<T>(index_t, T, T*);                                                            \
+   template double orthogonalize_cgs2<T>(index_t, index_t, const T*, index_t, const T*, index_t, T*, \
+                                         T*, T*, const ApplyFn<T>*, const OrthoOptions&,             \
+--- a/src/linalg/dense_ops.hpp
++++ b/src/linalg/dense_ops.hpp
+@@ -44,6 +44,16 @@
+ /// y += alpha * x.
+ template <class T>
+ void axpy(index_t n, T alpha, const T* x, T* y);
++
++/// y += alpha*x, then z^H*y, using the same reduction order as dot. The update and
++/// reduction share one parallel region and each row block stays in cache. x and z may
++/// equal y exactly; other overlapping ranges are not supported.
++template <class T>
++T axpy_dot(index_t n, T alpha, const T* x, T* y, const T* z);
++
++/// y += alpha*x, then ||y||_2, with norm2's reduction order and magnitude limits.
++template <class T>
++double axpy_norm2(index_t n, T alpha, const T* x, T* y);
+ 
+ /// x *= alpha.
+ template <class T>
+--- a/tests/cpp/test_dense_ops.cpp
++++ b/tests/cpp/test_dense_ops.cpp
+@@ -114,6 +114,37 @@
+   EXPECT_TRUE(std::isnan(std::real(la::dot(n, x.data(), x.data()))));
+   x[3333] = T(std::numeric_limits<double>::infinity());
+   EXPECT_TRUE(std::isinf(la::norm2(n, x.data())));
++}
++
++TYPED_TEST(LinalgDenseOpsReduce, FusedUpdatesKeepSeparateOperationsResultsAndThreadIndependence) {
++  using T = TypeParam;
++  for (index_t n : {0, 7, 1023, 1024, 1025, 32769, 300001}) {
++    std::vector<T> x(n), y(n), z(n);
++    la::fill_random(x.data(), n, 31, 0);
++    la::fill_random(y.data(), n, 31, 1);
++    la::fill_random(z.data(), n, 31, 2);
++    T alpha = T(-0.375);
++    if constexpr (hs::is_complex_v<T>) alpha += T(0.0, 0.25);
++    for (bool alias : {false, true}) {
++      ThreadCount serial(1);
++      auto expected = y;
++      la::axpy(n, alpha, alias ? expected.data() : x.data(), expected.data());
++      const T dot = la::dot(n, alias ? expected.data() : z.data(), expected.data());
++      const double norm = la::norm2(n, expected.data());
++      for (int threads : kThreadCounts) {
++        ThreadCount tc(threads);
++        auto actual = y;
++        const T got = la::axpy_dot(n, alpha, alias ? actual.data() : x.data(), actual.data(),
++                                   alias ? actual.data() : z.data());
++        EXPECT_TRUE(bitwise_equal(actual, expected)) << "n=" << n << " threads=" << threads;
++        EXPECT_TRUE(bitwise_equal(got, dot)) << "n=" << n << " threads=" << threads;
++        actual = y;
++        const double got_norm = la::axpy_norm2(n, alpha, alias ? actual.data() : x.data(), actual.data());
++        EXPECT_TRUE(bitwise_equal(actual, expected)) << "n=" << n << " threads=" << threads;
++        EXPECT_TRUE(bitwise_equal(got_norm, norm)) << "n=" << n << " threads=" << threads;
++      }
++    }
++  }
+ }
+ 
+ // ---- CGS orthogonalization ----------------------------------------------------------------------
+--- a/tests/cpp/test_asmkern_fix.cpp
++++ b/tests/cpp/test_asmkern_fix.cpp
+@@ -197,8 +197,8 @@
+   for (Isa isa : isas())
+     for (char ta : {'N', 'T'})
+       for (const fint m : {33, 40, 61, 130, 1025})
+-        for (const fint n : {1, 3, 6})
+-          for (const fint k : {5, 300}) {
++        for (const fint n : {1, 2, 3, 6})
++          for (const fint k : {5, 128, 300}) {
+             const fint lda = (ta == 'N' ? m : k) + 1;
+             const auto a = random_vec(static_cast<std::size_t>(lda) * (ta == 'N' ? k : m), ++seed);
+             const auto b = random_vec(static_cast<std::size_t>(k) * n, ++seed);

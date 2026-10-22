@@ -1,0 +1,346 @@
+--- a/src/blas/simd_kernels.hpp
++++ b/src/blas/simd_kernels.hpp
+@@ -329,16 +329,83 @@
+ }
+ 
+ // ------------------------------------------------------------------------- small triangular solve
+-// B(m x n) := op(A)^{-1} B (side L, alpha = 1), the reference BLAS loop orders with up to 4
+-// right-hand sides per pass, so that every chunk of the triangle is loaded once for all of them
+-// (MUMPS solves 1, 2 or 4 at a time). The unit diagonal is never read.
++// B(m x n) := op(A)^{-1} B (side L, alpha = 1), the reference BLAS loop orders with up to 8
++// right-hand sides per pass on AVX-512 (4 on AVX2 and for the remainder). Each triangle chunk
++// is loaded once for the group. The unit diagonal is never read.
+ 
+ // op(A) = A: x_j for the columns of the group, then rows [i0, i1) of each column updated with
+ // column j of A (b_i -= a_ij x_j, one FMA per element): forward for lower, backward for upper.
++// Eight right-hand sides share one pass over the triangle on AVX-512.
++// The arithmetic and per-column reduction order are the same as the four-column path.
++// Keep the eight right-hand sides contiguous during column updates.
++// For these medium triangles the 32 KiB scratch fits L1; every row update is one vector.
++// Packing changes addresses only. The per-element division/FMA order stays unchanged.
++template <bool kUnit>
++__attribute__((target("avx512f"), noinline)) void trsm_col8_packed(bool upper, fint m, const double* a,
++                                                       fint lda, double* b, fint ldb) {
++  alignas(64) double packed[512 * 8];
++  for (int q = 0; q < 8; ++q)
++    for (fint i = 0; i < m; ++i)
++      packed[8 * i + q] = b[i + static_cast<idx>(q) * ldb];
++  for (fint step = 0; step < m; ++step) {
++    const fint j = upper ? m - 1 - step : step;
++    const double* aj = a + static_cast<idx>(j) * lda;
++    if (!kUnit)
++      for (int q = 0; q < 8; ++q) packed[8 * j + q] /= aj[j];
++    const reg xs = V::loadu(packed + 8 * j);
++    const fint i0 = upper ? 0 : j + 1, i1 = upper ? j : m;
++    for (fint i = i0; i < i1; ++i) {
++      const reg bv = V::loadu(packed + 8 * i);
++      V::store(packed + 8 * i, V::fnmadd(V::set1(aj[i]), xs, bv));
++    }
++  }
++  for (int q = 0; q < 8; ++q)
++    for (fint i = 0; i < m; ++i)
++      b[i + static_cast<idx>(q) * ldb] = packed[8 * i + q];
++}
++
++template <bool kUnit>
++HS_SIMD void trsm_col8(bool upper, fint m, const double* a, fint lda, double* b,
++                       fint ldb) {
++  if constexpr (V::W == 8) {
++    if (m >= 64 && m <= 512) {
++      trsm_col8_packed<kUnit>(upper, m, a, lda, b, ldb);
++      return;
++    }
++  }
++  double* bc[8];
++  for (int q = 0; q < 8; ++q) bc[q] = b + static_cast<idx>(q) * ldb;
++  for (fint step = 0; step < m; ++step) {
++    const fint j = upper ? m - 1 - step : step;
++    const double* aj = a + static_cast<idx>(j) * lda;
++    reg xs[8];
++    for (int q = 0; q < 8; ++q) {
++      double x = bc[q][j];
++      if (!kUnit) x /= aj[j];
++      bc[q][j] = x;
++      xs[q] = V::set1(x);
++    }
++    const fint i0 = upper ? 0 : j + 1, i1 = upper ? j : m;
++    for (fint i = i0; i < i1; i += V::W) {
++      const auto mk = V::tail(std::min<fint>(V::W, i1 - i));
++      const reg av = V::maskz_loadu(mk, aj + i);
++      for (int q = 0; q < 8; ++q) {
++        const reg bv = V::maskz_loadu(mk, bc[q] + i);
++        V::mask_storeu(bc[q] + i, mk, V::fnmadd(av, xs[q], bv));
++      }
++    }
++  }
++}
++
+ template <bool kUnit>
+ HS_SIMD void trsm_col(bool upper, fint m, fint n, const double* a, fint lda, double* b,
+                       fint ldb) {
+-  for (fint c0 = 0; c0 < n; c0 += 4) {
++  fint c0 = 0;
++  if constexpr (V::W == 8) {
++    for (; c0 + 8 <= n; c0 += 8)
++      trsm_col8<kUnit>(upper, m, a, lda, b + static_cast<idx>(c0) * ldb, ldb);
++  }
++  for (; c0 < n; c0 += 4) {
+     const int nc = static_cast<int>(std::min<fint>(4, n - c0));
+     double* bc[4];
+     for (int q = 0; q < nc; ++q) bc[q] = b + static_cast<idx>(c0 + q) * ldb;
+@@ -369,9 +436,42 @@
+ // op(A) = A^T: x_i = (b_i - A(j-range, i) . x(j-range)) / a_ii, the dot products of a group
+ // computed together and reduced with reduce4: forward for upper A (A^T lower), backward for lower.
+ template <bool kUnit>
++HS_SIMD void trsm_dot8(bool upper, fint m, const double* a, fint lda, double* b,
++                       fint ldb) {
++  double* bc[8];
++  for (int q = 0; q < 8; ++q) bc[q] = b + static_cast<idx>(q) * ldb;
++  alignas(32) double sums[8];
++  for (fint step = 0; step < m; ++step) {
++    const fint i = upper ? step : m - 1 - step;
++    const double* ai = a + static_cast<idx>(i) * lda;
++    const fint j0 = upper ? 0 : i + 1, j1 = upper ? i : m;
++    reg acc[8] = {V::zero(), V::zero(), V::zero(), V::zero(),
++                  V::zero(), V::zero(), V::zero(), V::zero()};
++    for (fint j = j0; j < j1; j += V::W) {
++      const auto mk = V::tail(std::min<fint>(V::W, j1 - j));
++      const reg av = V::maskz_loadu(mk, ai + j);
++      for (int q = 0; q < 8; ++q)
++        acc[q] = V::fmadd(av, V::maskz_loadu(mk, bc[q] + j), acc[q]);
++    }
++    V::reduce4(acc[0], acc[1], acc[2], acc[3], sums);
++    V::reduce4(acc[4], acc[5], acc[6], acc[7], sums + 4);
++    for (int q = 0; q < 8; ++q) {
++      double x = bc[q][i] - sums[q];
++      if (!kUnit) x /= ai[i];
++      bc[q][i] = x;
++    }
++  }
++}
++
++template <bool kUnit>
+ HS_SIMD void trsm_dot(bool upper, fint m, fint n, const double* a, fint lda, double* b,
+                       fint ldb) {
+-  for (fint c0 = 0; c0 < n; c0 += 4) {
++  fint c0 = 0;
++  if constexpr (V::W == 8) {
++    for (; c0 + 8 <= n; c0 += 8)
++      trsm_dot8<kUnit>(upper, m, a, lda, b + static_cast<idx>(c0) * ldb, ldb);
++  }
++  for (; c0 < n; c0 += 4) {
+     const int nc = static_cast<int>(std::min<fint>(4, n - c0));
+     double* bc[4];
+     for (int q = 0; q < nc; ++q) bc[q] = b + static_cast<idx>(c0 + q) * ldb;
+--- a/tests/cpp/test_asmkern.cpp
++++ b/tests/cpp/test_asmkern.cpp
+@@ -549,8 +549,8 @@
+     for (char uplo : {'U', 'L', 'u'})
+       for (char tr : {'N', 'T', 'C'})
+         for (char diag : {'N', 'U'})
+-          for (fint m : {1, 2, 7, 8, 9, 17, 64, 100})
+-            for (fint n : {1, 2, 4, 5}) {
++          for (fint m : {1, 2, 7, 8, 9, 17, 64, 100, 129})
++            for (fint n : {1, 2, 4, 5, 7, 8, 9, 16, 17}) {
+               const fint lda = m + 3, ldb = m + 1;
+               auto a = random_vec(static_cast<std::size_t>(lda) * m, ++seed);
+               for (fint j = 0; j < m; ++j)
+--- a/apps/hsolve-mpirun
++++ b/apps/hsolve-mpirun
+@@ -2,7 +2,7 @@
+ # hsolve-mpirun: run hsolve as one MPI job laid out over the sockets of this machine (DESIGN §3.9,
+ # docs/PARALLEL.md). CMake copies it next to hsolve-mpi (build/<preset>/hsolve-mpirun).
+ #
+-#   hsolve-mpirun [--ranks R] [--dry-run] [--mpiexec PATH] [--] <hsolve arguments>
++#   hsolve-mpirun [--ranks R] [--interleave-leader] [--dry-run] [--mpiexec PATH] [--] <hsolve arguments>
+ #
+ # Layout (the cores this process may use: its affinity, e.g. a cgroup or taskset; per NUMA node):
+ #   * rank 0, the leader: every allowed core, OMP_NUM_THREADS = their number - it runs the solve as
+@@ -16,6 +16,10 @@
+ # costs ~1.7-1.9 s (results/p10_mpi.md). --ranks R forces an MPI job of R ranks, R - 1 helpers: on
+ # R - 1 nodes if there are that many, else the allowed cores split into R - 1 equal contiguous
+ # blocks. --dry-run prints the plan and the command.
++# --interleave-leader opts into interleaving the leader's memory across the NUMA nodes containing
++# its allowed CPUs (requires numactl). Helpers retain their inherited policy. This can improve
++# large cross-socket solves, but is slower on some small cases; the default policy is unchanged.
++# On one NUMA node the option has no effect.
+ # mpiexec: --mpiexec, else $MPIEXEC, else mpiexec on PATH, else $HS_REF_ENV/bin/mpiexec (the Open
+ # MPI 5 of the os2026-ref environment on the cluster nodes). The plan reaches the ranks through
+ # the environment (HSOLVE_MPIRUN_PLAN, HSOLVE_MPIRUN_EXE: exported, which every launcher passes to
+@@ -39,13 +43,17 @@
+   [ -n "$block" ] || { echo "hsolve-mpirun: no cores planned for rank $rank" >&2; exit 2; }
+   n=$(awk -v l="$block" 'BEGIN { n = 0; k = split(l, p, ","); for (i = 1; i <= k; i++) { if (p[i] ~ /-/) { split(p[i], r, "-"); n += r[2] - r[1] + 1 } else n++ } print n }')
+   export OMP_NUM_THREADS="$n" OPENBLAS_NUM_THREADS="$n"
++  if [ "$rank" = 0 ] && [ -n "${HSOLVE_MPIRUN_INTERLEAVE:-}" ]; then
++    exec taskset -c "$block" numactl --interleave="$HSOLVE_MPIRUN_INTERLEAVE" "$HSOLVE_MPIRUN_EXE" "$@"
++  fi
+   exec taskset -c "$block" "$HSOLVE_MPIRUN_EXE" "$@"
+ fi
+ 
+-ranks="" dry=0 mpiexec="${MPIEXEC:-}"
++ranks="" dry=0 interleave=0 mpiexec="${MPIEXEC:-}"
+ while [ $# -gt 0 ]; do
+   case "$1" in
+     --ranks) ranks="$2"; shift 2 ;;
++    --interleave-leader) interleave=1; shift ;;
+     --dry-run) dry=1; shift ;;
+     --mpiexec) mpiexec="$2"; shift 2 ;;
+     --) shift; break ;;
+@@ -58,7 +66,7 @@
+ allowed=$(awk '/^Cpus_allowed_list/ { print $2 }' /proc/self/status)
+ mapfile -t cpus < <(expand "$allowed")
+ join() { local IFS=,; echo "$*"; }
+-groups=()
++groups=() nodes=()
+ for nd in /sys/devices/system/node/node[0-9]*; do
+   [ -r "$nd/cpulist" ] || continue
+   mapfile -t ncpus < <(expand "$(cat "$nd/cpulist")")
+@@ -66,9 +74,17 @@
+   for c in "${cpus[@]}"; do
+     for d in "${ncpus[@]}"; do [ "$c" = "$d" ] && mine+=("$c"); done
+   done
+-  [ ${#mine[@]} -gt 0 ] && groups+=("$(join "${mine[@]}")")
++  if [ ${#mine[@]} -gt 0 ]; then
++    groups+=("$(join "${mine[@]}")")
++    nodes+=("${nd##*node}")
++  fi
+ done
+ [ ${#groups[@]} -gt 0 ] || groups=("$(join "${cpus[@]}")")
++HSOLVE_MPIRUN_INTERLEAVE=""
++if [ "$interleave" = 1 ] && [ ${#nodes[@]} -gt 1 ]; then
++  command -v numactl >/dev/null 2>&1 || { echo "hsolve-mpirun: --interleave-leader requires numactl" >&2; exit 2; }
++  HSOLVE_MPIRUN_INTERLEAVE="$(join "${nodes[@]}")"
++fi
+ 
+ # One NUMA node and no --ranks: the plain hsolve, as if called directly (all allowed cores).
+ if [ -z "$ranks" ] && [ ${#groups[@]} -lt 2 ]; then
+@@ -105,14 +121,19 @@
+ fi
+ HSOLVE_MPIRUN_PLAN=$(IFS=';'; echo "${plan[*]}")
+ HSOLVE_MPIRUN_EXE="$exe"
+-export HSOLVE_MPIRUN_PLAN HSOLVE_MPIRUN_EXE
++export HSOLVE_MPIRUN_PLAN HSOLVE_MPIRUN_EXE HSOLVE_MPIRUN_INTERLEAVE
+ cmd=("$mpiexec" -n "$ranks")
+ if "$mpiexec" --version 2>&1 | grep -qiE 'open mpi|open-mpi|openrte|prrte'; then
+   cmd+=(--bind-to none -x HSOLVE_MPIRUN_PLAN -x HSOLVE_MPIRUN_EXE)
++  [ -z "$HSOLVE_MPIRUN_INTERLEAVE" ] || cmd+=(-x HSOLVE_MPIRUN_INTERLEAVE)
+ fi
+ cmd+=("$here/hsolve-mpirun" "$@")
+ if [ "$dry" = 1 ]; then
+   for ((r = 0; r < ranks; r++)); do echo "rank $r: cores ${plan[$r]}"; done
++  if [ -n "$HSOLVE_MPIRUN_INTERLEAVE" ]; then
++    echo "rank 0: memory interleaved across NUMA nodes $HSOLVE_MPIRUN_INTERLEAVE"
++    printf 'HSOLVE_MPIRUN_INTERLEAVE=%q ' "$HSOLVE_MPIRUN_INTERLEAVE"
++  fi
+   printf 'HSOLVE_MPIRUN_PLAN=%q HSOLVE_MPIRUN_EXE=%q ' "$HSOLVE_MPIRUN_PLAN" "$HSOLVE_MPIRUN_EXE"
+   printf '%q ' "${cmd[@]}"; echo
+   exit 0
+--- a/tests/py/test_hsolve_mpirun.py
++++ b/tests/py/test_hsolve_mpirun.py
+@@ -84,6 +84,73 @@
+     assert d.stdout.strip().endswith(f"{fakes['env']['HSOLVE']} --A x.npz")
+ 
+ 
++def _fake_numactl(tmp_path, env):
++    log = tmp_path / "numactl.log"
++    _script(tmp_path / "numactl",
++            f'echo "${{OMPI_COMM_WORLD_RANK:-${{PMI_RANK:-}}}} $1" >> "{log}"\n'
++            'case "$1" in --interleave=*) shift ;; *) exit 4 ;; esac\n'
++            'exec "$@"\n')
++    return log, dict(env, PATH=str(tmp_path) + os.pathsep + os.environ["PATH"])
++
++
++def test_interleave_on_one_node_keeps_the_plain_path(fakes, tmp_path):
++    log, env = _fake_numactl(tmp_path, fakes["env"])
++    r = _run(_cpus(1), ["--interleave-leader", "--", "--A", "a b.npz"], env)
++    assert r.returncode == 0, r.stderr
++    assert r.stdout.strip() == "plain hsolve: --A a b.npz"
++    assert not log.exists()
++
++
++@pytest.mark.parametrize("rank", [0, 1, 2])
++def test_only_the_leader_applies_the_memory_policy(fakes, tmp_path, rank):
++    a, b = _cpus(2)
++    log, env = _fake_numactl(tmp_path, fakes["env"])
++    env.update(HSOLVE_MPIRUN_PLAN=f"{a},{b};{a};{b}",
++               HSOLVE_MPIRUN_EXE=fakes["env"]["HSOLVE_MPI"],
++               HSOLVE_MPIRUN_INTERLEAVE="0,1", OMPI_COMM_WORLD_RANK=str(rank))
++    r = _run([a, b], ["--A", "a b.npz"], env)
++    assert r.returncode == 0, r.stderr
++    assert f"rank {rank} threads {2 if rank == 0 else 1}" in r.stdout
++    assert r.stdout.strip().endswith("args --A a b.npz")
++    if rank == 0:
++        assert log.read_text().strip() == "0 --interleave=0,1"
++    else:
++        assert not log.exists()
++
++
++def test_memory_policy_failure_is_reported(fakes, tmp_path):
++    a = _cpus(1)[0]
++    _, env = _fake_numactl(tmp_path, fakes["env"])
++    _script(tmp_path / "numactl", 'echo "policy refused" >&2\nexit 74\n')
++    env.update(HSOLVE_MPIRUN_PLAN=str(a), HSOLVE_MPIRUN_EXE=fakes["env"]["HSOLVE_MPI"],
++               HSOLVE_MPIRUN_INTERLEAVE="0,1", OMPI_COMM_WORLD_RANK="0")
++    r = _run([a], ["--A", "x.npz"], env)
++    assert r.returncode == 74
++    assert "policy refused" in r.stderr
++    assert "rank" not in r.stdout
++
++
++@pytest.mark.parametrize("kind", ["ompi", "hydra"])
++def test_interleave_selects_only_nodes_of_allowed_cpus(fakes, tmp_path, kind):
++    by_node = {}
++    for cpu in sorted(os.sched_getaffinity(0)):
++        for node in Path("/sys/devices/system/cpu", f"cpu{cpu}").glob("node[0-9]*"):
++            by_node.setdefault(int(node.name[4:]), cpu)
++    if len(by_node) < 2:
++        pytest.skip("needs allowed CPUs on two NUMA nodes")
++    chosen = sorted(by_node)[:2]
++    cpus = [by_node[n] for n in chosen]
++    mask = ",".join(map(str, chosen))
++    log, env = _fake_numactl(tmp_path, fakes["env"])
++    r = _run(cpus, ["--interleave-leader", "--mpiexec", str(fakes[kind]), "--", "--A", "x.npz"], env)
++    assert r.returncode == 0, r.stderr
++    assert len(r.stdout.strip().splitlines()) == 3
++    assert log.read_text().strip() == f"0 --interleave={mask}"
++    d = _run(cpus, ["--interleave-leader", "--dry-run", "--mpiexec", str(fakes[kind])], env)
++    assert d.returncode == 0, d.stderr
++    assert f"memory interleaved across NUMA nodes {mask}" in d.stdout
++
++
+ @pytest.mark.parametrize("kind", ["ompi", "hydra"])
+ def test_forced_ranks_reach_every_rank_through_the_environment(fakes, kind):
+     cpus = _cpus(2)
+--- a/docs/BLAS.md
++++ b/docs/BLAS.md
+@@ -271,7 +271,7 @@
+ | token | shape class | goes to |
+ |---|---|---|
+ | `gemv1` | dgemm with N = 1 (or M = 1) | the real dgemv (A read once, never packed) |
+-| `strsm=<m>` | dtrsm side L, M <= m (capped: 4096 AVX-512, 256 AVX2, 32 portable), 1 <= N <= maxn, alpha = 1 | the hook's small triangular solve (reference loop order, up to 4 right-hand sides per pass over the triangle; no packing) |
++| `strsm=<m>` | dtrsm side L, M <= m (capped: 4096 AVX-512, 256 AVX2, 32 portable), 1 <= N <= maxn, alpha = 1 | the hook's small triangular solve (reference loop order, up to 8 right-hand sides per pass on AVX-512, 4 on the other paths; no packing) |
+ | `trsv=<n>`, `trsv1` | dtrsm side L, N <= n, alpha = 1 | N calls of the real dtrsv |
+ | `narrow` | dgemm NN / TN with 2 <= N <= maxn | the hook's narrow kernels (AVX-512F or AVX2+FMA, adapted from OpenBLAS' SkylakeX small-matrix / dgemv kernels: A streamed once, not packed); without `par`, calls outside parallel regions with >= 2 x minkb of A stay with the real routine |
+ | `par` | outside OpenMP parallel regions, calls touching >= 2 x minkb of A | fixed blocks over `threads` threads: dgemv and narrow dgemm by rows of C (narrow kernels or the real routine per block), dgemm A^T B with M < 4 x threads and K >= 1024 x threads by K (partial products summed in block order) |
+--- a/docs/PARALLEL.md
++++ b/docs/PARALLEL.md
+@@ -53,7 +53,7 @@
+ ## 4. 运行
+ 
+ ```bash
+-build/release/hsolve-mpirun [--ranks R] [--dry-run] -- --A A.npz [--B B.npz] --config config.json --out DIR [hsolve 选项]
++build/release/hsolve-mpirun [--ranks R] [--interleave-leader] [--dry-run] -- --A A.npz [--B B.npz] --config config.json --out DIR [hsolve 选项]
+ ```
+ 
+ - `hsolve-mpirun` 读本进程的 cpuset 与 NUMA 拓扑：rank 0（leader）绑定全部允许的核、`OMP_NUM_THREADS` = 其个数；
+@@ -65,6 +65,10 @@
+ - 也可以直接 `mpiexec -n R … hsolve-mpi <同样的参数>`（每个 rank 的参数相同；绑定与线程数由调用者负责）。只有一个
+   helper 时它什么也不做（并发计数与切片都要两个 helper，否则与 leader 抢核），所以 R = 2 算的与普通 hsolve 相同，
+   只多 MPI 启动。
++- `hsolve-mpirun --interleave-leader` 可选地将 leader 的内存在其允许 CPU 所在的 NUMA 节点之间交错分配，
++  需要 `numactl`；helper 不设置新策略。单 NUMA 节点上此选项无作用，默认仍使用原有内存策略。
++  该选项适合实测受益的大型跨插槽求解，不宜统一开启：P18 的百万阶 Yee 有收益，七个小例整体变慢。
++  `--dry-run` 显示节点列表；请求的策略若不能应用，启动失败，不静默降级。数据见 `results/p18_measurements.md`。
+ - 选项（只对多进程有效）：`--helper-counts auto|on|off`、`--helper-slices auto|on|off`（`hs::ParallelOptions`）。auto
+   按代价规则：计数——本次实测的主分解时间下一次计数长于 helper 的准备（一次给定顺序的分析 + 0.05 s，计数器直接使用
+   leader 提供的排列，省去临时主分解对象的分析）；切片——一片的

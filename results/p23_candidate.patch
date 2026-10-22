@@ -1,0 +1,52 @@
+--- a/src/driver/definite.cpp
++++ b/src/driver/definite.cpp
+@@ -74,6 +74,49 @@
+ template <class T>
+ index_t rescue_pairs(SparseFactorization<T>& fac, const CsrMatrix<T>& a, const CsrMatrix<T>* b, Block<T>& blk,
+                      const std::vector<index_t>& cols, double n2a, double n2b, double tol) {
++  // Private P23 experiment: at most eight independent residual corrections per solve.
++  // Retire each column at the original tolerance; retain the original three-step cap.
++  const char* batch_mode = std::getenv("P23_BATCH_RESCUE");
++  if (cols.size() > 1 && batch_mode && std::string(batch_mode) == "1") {
++    const index_t n = blk.x.rows();
++    std::vector<index_t> active = cols;
++    for (int it = 0; it < 3 && !active.empty(); ++it) {
++      std::vector<index_t> next;
++      for (std::size_t first = 0; first < active.size(); first += 8) {
++        const index_t width = static_cast<index_t>(std::min<std::size_t>(8, active.size() - first));
++        DenseMatrix<T> residual(n, width), xc(n, width), axc, bxc;
++        for (index_t k = 0; k < width; ++k) {
++          const index_t j = active[first + k];
++          const T* x = blk.x.col(j);
++          const T* ax = blk.ax.col(j);
++          const T* bx = blk.bx.col(j);
++          const double rho = std::real(linalg::dot(n, x, ax)) / std::real(linalg::dot(n, x, bx));
++          for (index_t i = 0; i < n; ++i) residual(i, k) = ax[i] - T(rho) * bx[i];
++        }
++        fac.solve(residual.data(), width, n);
++        for (index_t k = 0; k < width; ++k) {
++          const index_t j = active[first + k];
++          for (index_t i = 0; i < n; ++i) xc(i, k) = blk.x(i, j) - residual(i, k);
++        }
++        driver::apply_block(&a, xc, axc);
++        driver::apply_block(b, xc, bxc);
++        for (index_t k = 0; k < width; ++k) {
++          const index_t j = active[first + k];
++          const double bn = std::sqrt(std::max(std::real(linalg::dot(n, xc.col(k), bxc.col(k))), 1e-300));
++          for (index_t i = 0; i < n; ++i) {
++            blk.x(i, j) = xc(i, k) / bn;
++            blk.ax(i, j) = axc(i, k) / bn;
++            blk.bx(i, j) = bxc(i, k) / bn;
++          }
++          blk.lambda[j] = std::real(linalg::dot(n, blk.x.col(j), blk.ax.col(j)));
++          const auto pm = driver::pair_metrics(blk.ax.col(j), blk.bx.col(j), blk.x.col(j), n, blk.lambda[j], n2a, n2b);
++          if (!(pm.backward_error <= tol)) next.push_back(j);
++        }
++      }
++      active = std::move(next);
++    }
++    return static_cast<index_t>(cols.size());
++  }
+   const index_t n = blk.x.rows();
+   index_t rescued = 0;
+   std::vector<T> r(static_cast<std::size_t>(n));

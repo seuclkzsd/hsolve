@@ -1,0 +1,143 @@
+--- a/src/sparse/kernels.cpp
++++ b/src/sparse/kernels.cpp
+@@ -18,6 +18,8 @@
+ // A single vector (spmv, spmm with p = 1) runs the Reference row loop on every path: it is bound by
+ // the matrix stream and the x gathers, and neither AVX-512 gathers nor split sums beat it; the
+ // single-column residual is one fused sweep straight from x and y (no interleaved copies).
++// Auto spmm with exactly two real columns and at least 32768 rows also reads X directly: two
++// fixed accumulators reuse each matrix entry without the interleaving pass or a variable-width loop.
+ // Every output row is computed by one thread in a fixed order, so each path is deterministic and
+ // independent of the thread count. Compiled for x86-64 with GCC/Clang, the AVX-512 code is built
+ // with function target attributes (no -mavx512f needed) and selected only when
+@@ -56,6 +58,9 @@
+ // column gained 1.2-3.3x).
+ constexpr index_t kMinReuseNarrow = 2;
+ constexpr index_t kMinReuseWide = 8;
++// Keep the established small-matrix path: P27's end-to-end small-case timings did not show a
++// stable benefit. Two columns span at least 512 KiB above this size (results/p27_measurements.md).
++constexpr index_t kDirectTwoMinRows = 32768;
+ 
+ /// HS_KERNELS_NO_AVX512 set to anything but "" or "0": behave as on a CPU without AVX-512F.
+ [[maybe_unused]] bool avx512_masked_by_environment() noexcept {
+@@ -799,6 +804,30 @@
+     spmv_reference(a, x, y, alpha, beta);
+     return;
+   }
++  // Two fixed columns avoid both the interleaved copy and the generic strided loop's
++  // width dispatch. Each column retains the CSR accumulation order; beta == 0 never reads Y.
++  if constexpr (std::is_same_v<T, double>) {
++    if (p == 2 && options.path == KernelPath::Auto && a.nrows >= kDirectTwoMinRows && a.nnz() > 0) {
++      const auto* rp = a.rowptr.data();
++      const auto* ci = a.colind.data();
++      const auto* av = a.values.data();
++      const double* x1 = x + ldx;
++      double* y1 = y + ldy;
++#pragma omp parallel for schedule(static)
++      for (index_t i = 0; i < a.nrows; ++i) {
++        double s0 = 0.0, s1 = 0.0;
++        for (index_t q = rp[i]; q < rp[i + 1]; ++q) {
++          const auto j = ci[q];
++          const double v = av[q];
++          s0 += v * x[j];
++          s1 += v * x1[j];
++        }
++        y[i] = beta == 0.0 ? alpha * s0 : alpha * s0 + beta * y[i];
++        y1[i] = beta == 0.0 ? alpha * s1 : alpha * s1 + beta * y1[i];
++      }
++      return;
++    }
++  }
+   const index_t m = a.ncols;
+   if (a.nnz() < (p <= 4 ? kMinReuseNarrow : kMinReuseWide) * m) {
+     // Rows of X are used too rarely: the interleaved copy (one read and one write of X) costs
+--- a/include/hsolve/sparse.hpp
++++ b/include/hsolve/sparse.hpp
+@@ -106,12 +106,14 @@
+ // rows of X are reused too rarely for the copy to pay off (fewer than 2 entries per column of A on
+ // average for p <= 4, fewer than 8 for wider blocks: e.g. a diagonal B), and every path computes
+ // a single vector with the Reference row loop.
++// Auto spmm with exactly two real columns and at least 32768 rows uses two fixed accumulators
++// reading X directly, without an interleaved copy or scratch. Explicit paths retain their kernels.
+ 
+ /// Instruction-set path of the sparse kernels.
+ enum class KernelPath {
+   Auto,       ///< Avx512 when the CPU and OS support AVX-512F (checked at run time), else
+               ///< Portable; with AVX-512, chunks of fewer than 8 doubles per row (real p < 8,
+-              ///< complex p < 4) still run Portable, which is faster there
++              ///< complex p < 4) still run Portable; real p == 2 spmm with >= 32768 rows reads X directly
+   Reference,  ///< the P1 loops (strided spmm, 8 vectors per pass): for tests and benchmarks
+   Portable,   ///< interleaved kernels in plain C++ (vector extension at the build ISA's width)
+   Avx512,     ///< AVX-512F intrinsics; Unsupported (hs::Error) where AVX-512F is unavailable
+--- a/docs/DESIGN.md
++++ b/docs/DESIGN.md
+@@ -191,6 +191,8 @@
+   - 多向量（p ≥ 2）先把 X 拷成行主序交错块（每遍 A 服务 16 个向量，连续读），工作区 n·min(p, 16)
+     标量，可由 `KernelOptions::workspace` 复用；A 每列平均非零 < 2（p ≤ 4）或 < 8（更宽）时 spmm 保留
+     Reference 跨步循环（如对角 B）；单个向量在所有路径上都走 Reference 行循环。
++    Auto 的实数双列 spmm 在行数 ≥ 32768 时使用两个固定累加器直接读取 X，省去交错拷贝和临时工作区；每列仍按 CSR
++    非零顺序累加，beta=0 不读取 Y。显式 Reference / Portable / Avx512 路径不变。
+   - **确定性**：每个输出行由一个线程按固定顺序计算 ⇒ 同一路径的结果与线程数无关、逐次运行逐位相同；
+     不同路径舍入不同（求和顺序、FMA），对 Reference 的差 ≤ 1e-14·（|A||X| 尺度）（测试契约，典型
+     ~1e-15），不逐位一致。
+--- a/tests/cpp/test_sparse_kernels.cpp
++++ b/tests/cpp/test_sparse_kernels.cpp
+@@ -219,6 +219,38 @@
+   }
+ }
+ 
++TEST(SparseKernelDispatch, TwoColumnsAcrossRowThreshold) {
++  const int threads = omp_get_max_threads();
++  for (index_t m : {32767, 32768, 32769}) {
++    const index_t n = m + 5, ldx = n + 3, ldy = m + 2;
++    const auto a = random_csr<double>(m, n, 12, 5, 41);
++    const auto x = random_block<double>(n, 2, ldx, 42);
++    const auto initial = random_block<double>(m, 2, ldy, 43);
++    const auto scale = abs_product(a, x.data(), ldx, 2);
++    for (double beta : {0.0, 0.25}) {
++      auto reference = initial, one = initial, many = initial;
++      if (beta == 0.0)
++        for (index_t j = 0; j < 2; ++j)
++          for (index_t i = 0; i < m; ++i)
++            one[i + j * ldy] = many[i + j * ldy] = std::numeric_limits<double>::quiet_NaN();
++      hs::spmm(a, x.data(), ldx, reference.data(), ldy, 2, -0.75, beta, {KernelPath::Reference});
++      omp_set_num_threads(1);
++      hs::spmm(a, x.data(), ldx, one.data(), ldy, 2, -0.75, beta);
++      omp_set_num_threads(std::max(3, threads));
++      std::vector<double> workspace;
++      hs::spmm(a, x.data(), ldx, many.data(), ldy, 2, -0.75, beta, {KernelPath::Auto, &workspace});
++      omp_set_num_threads(threads);
++      EXPECT_TRUE(one == many) << "m=" << m << " beta=" << beta;
++      for (index_t j = 0; j < 2; ++j) {
++        for (index_t i = 0; i < m; ++i)
++          ASSERT_LE(std::abs(one[i + j * ldy] - reference[i + j * ldy]),
++                    1e-14 * (0.75 * scale[i + j * m] + std::abs(beta * initial[i + j * ldy])) + 1e-300);
++        for (index_t i = m; i < ldy; ++i) EXPECT_EQ(one[i + j * ldy], initial[i + j * ldy]);
++      }
++    }
++  }
++}
++
+ // The fast paths are compiled per chunk width (Portable: every q = 1 .. 16, with vector tails of
+ // every length): spmm and shifted_residual (with its backward error, B and B = I) agree with the
+ // Reference path for every p = 1 .. 16 and two chunks (p = 16 + q).
+@@ -291,7 +323,8 @@
+   CsrMatrix<T> empty;  // 0 x 0
+   std::vector<T> x(4, T(1)), y(4, T(2));
+   for (KernelPath path : fast_paths()) {
+-    hs::spmm(empty, x.data(), 1, y.data(), 1, 3, T(1), T(0), {path});
++    for (index_t p : {2, 3})
++      hs::spmm(empty, x.data(), 1, y.data(), 1, p, T(1), T(0), {path});
+     // 3 x 2 with no entries: Y = beta * Y.
+     CsrMatrix<T> zero;
+     zero.nrows = 3;
+@@ -302,6 +335,10 @@
+     for (const T& v : ys) EXPECT_EQ(v, T(1));
+     hs::spmm(zero, xs.data(), 2, ys.data(), 3, 0, T(1), T(0), {path});  // p = 0: no-op
+     for (const T& v : ys) EXPECT_EQ(v, T(1));
++    // The direct two-column path must also handle an all-zero matrix and preserve padding.
++    std::vector<T> two(8, T(2));
++    hs::spmm(zero, xs.data(), 2, two.data(), 4, 2, T(1), T(0.5), {path});
++    EXPECT_EQ(two, (std::vector<T>{T(1), T(1), T(1), T(2), T(1), T(1), T(1), T(2)}));
+   }
+   EXPECT_EQ(y, std::vector<T>(4, T(2)));
+ }

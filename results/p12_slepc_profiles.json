@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "profiles": [
+    {
+      "scope": "case",
+      "name": "ss-qa8fk-qa8fm",
+      "mode": "nearest",
+      "cores": 16,
+      "target": null,
+      "config": {
+        "ranks": 8,
+        "threads": 2,
+        "bind": "core",
+        "options": {
+          "eps_purify": "0",
+          "st_mat_mumps_icntl_28": "2",
+          "st_mat_mumps_icntl_29": "1",
+          "st_mat_mumps_icntl_14": "100"
+        }
+      },
+      "note": "P12: same tuned 8x2 profile, larger numerical workspace after one INFOG(1)=-9 failure in five runs; target and tolerance unchanged."
+    }
+  ]
+}

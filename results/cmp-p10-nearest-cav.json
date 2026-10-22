@@ -1,0 +1,112 @@
+{
+ "tag": "cmp-openperf-cav",
+ "cores": "16-31",
+ "ncores": 16,
+ "solvers": [
+  "hsolve",
+  "slepc"
+ ],
+ "slepc_profile": "best",
+ "slepc_ranks": 1,
+ "reps": 5,
+ "target_override": null,
+ "evaluated": true,
+ "rows": [
+  {
+   "case": "cav2d-rect-pert-1e5",
+   "n": 99459,
+   "problem": "GHEP",
+   "target": {
+    "mode": "nearest",
+    "sigma": 0.1418291824280898,
+    "k": 6
+   },
+   "target_desc": "k=6 @ 0.1418",
+   "k": 6,
+   "norms": {
+    "norm2_a": 3556.668286572622,
+    "norm2_b": 1.9972039452314632,
+    "scale": 1780.8237837024835,
+    "time_s": 0.242924596183002
+   },
+   "solvers": {
+    "hsolve": {
+     "reps": 5,
+     "valid_runs": 5,
+     "ok": true,
+     "solver_s": 0.27546144000000006,
+     "solver_s_min": 0.267522832,
+     "solver_s_max": 0.319308034,
+     "solver_s_all": [
+      0.28409677899999997,
+      0.275237012,
+      0.27546144000000006,
+      0.267522832,
+      0.319308034
+     ],
+     "solver_s_scope": "report time_total_s",
+     "wall_s": 0.471,
+     "peak_rss_gib": 0.21,
+     "solver_peak_gib": 0.2103424072265625,
+     "max_eta": 5.549947906298413e-12,
+     "completeness": [
+      "consistent"
+     ],
+     "pairs": 6,
+     "phases": {
+      "analysis_s": 0.028247887,
+      "numeric_s": 0.09672802999999999,
+      "factorizations": 3.0,
+      "solves": 30.0,
+      "solve_s": 0.06385648,
+      "ortho_s": null,
+      "iterate_s": 0.11696366200000001,
+      "verify_s": 0.007964006999999954
+     },
+     "errors": [],
+     "invalid_reasons": [],
+     "set_diff_vs_slepc": 3.9022423357041734e-18
+    },
+    "slepc": {
+     "reps": 5,
+     "valid_runs": 5,
+     "ok": true,
+     "solver_s": 0.21618928,
+     "solver_s_min": 0.21231126,
+     "solver_s_max": 0.21915572,
+     "solver_s_all": [
+      0.21352651,
+      0.21231126,
+      0.2183538,
+      0.21915572,
+      0.21618928
+     ],
+     "solver_s_scope": "log_view setup+solve+vectors",
+     "wall_s": 3.055,
+     "peak_rss_gib": 1.677,
+     "solver_peak_gib": 1.6579437255859375,
+     "max_eta": 2.1743569400244187e-13,
+     "completeness": [
+      "consistent"
+     ],
+     "pairs": 6,
+     "phases": {
+      "analysis_s": 0.083267,
+      "numeric_s": 0.021673,
+      "factorizations": 1.0,
+      "solves": 19.0,
+      "solve_s": 0.094465,
+      "ortho_s": 0.010148,
+      "iterate_s": null,
+      "verify_s": null
+     },
+     "errors": [],
+     "invalid_reasons": [],
+     "config": "16x1/core eps_ncv=2k eps_purify=0 st_mat_mumps_icntl_7=0 st_mat_mumps_icntl_8=0",
+     "config_source": "case profile cav2d-rect-pert-1e5",
+     "config_scope": "case"
+    }
+   }
+  }
+ ]
+}

@@ -1,0 +1,114 @@
+--- a/band_backend.hpp
++++ b/band_backend_reuse.hpp
+@@ -35,7 +35,7 @@
+   FactorOptions options_;
+   std::vector<int> order_, inverse_;
+   int width_, cap_;
+-  std::unique_ptr<::Factor> factor_;
++  std::unique_ptr<::Factor> factor_, deferred_factor_;
+   std::unique_ptr<SparseFactorization<cplx>> fallback_;
+   std::vector<double> scale_;
+   std::vector<cplx> original_band_, band_lu_, diagonal_inverse_;
+@@ -47,7 +47,7 @@
+   double alpha_ = 0, beta_ = 0;
+   double workspace_mb() const { return (double(order()) * (cap_ + 1) * 64. + double(order()) * 256.) / 1e6; }
+   void fallback(double alpha, double beta) {
+-    factor_.reset();
++    factor_.reset(); deferred_factor_.reset();
+     disabled_ = true;
+     if (!fallback_) {
+       fallback_ = make_mumps_factorization<cplx>(options_);
+@@ -58,7 +58,7 @@
+   }
+   bool factorize_impl(double alpha, double beta, bool retain) {
+     if (!std::isfinite(alpha) || !std::isfinite(beta)) HS_THROW(InvalidInput, "P33 nonfinite shift");
+-    factor_.reset(); band_lu_.clear(); band_piv_.clear(); original_band_.clear(); inertia_ = {}; alpha_ = alpha; beta_ = beta;
++    factor_.reset(); deferred_factor_.reset(); band_lu_.clear(); band_piv_.clear(); original_band_.clear(); inertia_ = {}; alpha_ = alpha; beta_ = beta;
+     if (disabled_ || options_.out_of_core || (options_.max_memory_mb > 0 && workspace_mb() > options_.max_memory_mb)) {
+       fallback(alpha, beta);
+       if (retain) { bool ok = fallback_->factorize(alpha, beta); inertia_ = fallback_->inertia(); return ok; }
+@@ -129,6 +129,12 @@
+         own_.factor_entries+=2*band_lu_.size();
+       }
+       factor_ = std::move(candidate);
++    } else if constexpr(!use_lu) {
++      // Null detection rejected a completed nonsingular factorization. Keep it
++      // unavailable to ordinary solve(), but allow the checked original-shift
++      // probe to reuse the identical factors instead of constructing them twice.
++      if(retain && detection_ && candidate->status==0 && small)
++        deferred_factor_=std::move(candidate);
+     }
+     return ok;
+   }
+@@ -277,11 +283,21 @@
+   int probe_requested(double alpha,double beta) {
+     if(disabled_)return -1;
+     if(options_.max_memory_mb>0&&workspace_mb()+double(order())*4*96/1e6>options_.max_memory_mb)return -1;
+-    Timer timer;bool accepted=false;double eta=std::numeric_limits<double>::infinity();
++    Timer timer;bool accepted=false,reused=false;double eta=std::numeric_limits<double>::infinity();
+     double relative_rhs=std::numeric_limits<double>::infinity();
+     set_null_pivot_detection(false);
+     try {
+-      if(factorize(alpha,beta)){
++      bool ready=false;
++      if constexpr(!use_lu) {
++        if(deferred_factor_ && alpha==alpha_ && beta==beta_) {
++          factor_=std::move(deferred_factor_);
++          inertia_={factor_->neg,0,order()-factor_->neg,true};
++          own_.null_pivots=0;
++          ready=reused=true;
++        }
++      }
++      if(!ready)ready=factorize(alpha,beta);
++      if(ready){
+         const index_t n=order();std::vector<cplx> rhs((size_t)n*4),x,r;
+         linalg::fill_random(rhs.data(),n*4,3301,0);x=rhs;
+         solve(x.data(),4,n);
+@@ -310,7 +326,7 @@
+     }catch(...){set_null_pivot_detection(true);throw;}
+     set_null_pivot_detection(true);
+     if(!accepted)release_factors();
+-    std::fprintf(stderr,"P33 requested_probe accepted=%d eta=%.17g relative_rhs=%.17g seconds=%.9g fallback=%d\n",int(accepted),eta,relative_rhs,timer.seconds(),int(disabled_));
++    std::fprintf(stderr,"P36 requested_probe accepted=%d eta=%.17g relative_rhs=%.17g seconds=%.9g fallback=%d reused=%d\n",int(accepted),eta,relative_rhs,timer.seconds(),int(disabled_),int(reused));
+     return accepted?1:0;
+   }
+   void analyze(const ShiftedPencil<cplx>&,double,double)override { HS_THROW(Unsupported,"P33 already analysed"); }
+@@ -354,7 +370,7 @@
+   Inertia inertia()const override {return disabled_&&fallback_?fallback_->inertia():inertia_;}
+   void set_out_of_core(bool on)override{options_.out_of_core=on;if(fallback_)fallback_->set_out_of_core(on);}
+   void set_max_memory_mb(double mb)override{if(!std::isfinite(mb)||mb<0)HS_THROW(InvalidInput,"P33 invalid memory cap");options_.max_memory_mb=mb;if(fallback_)fallback_->set_max_memory_mb(mb);}
+-  bool release_factors()override{bool had=bool(factor_);factor_.reset();band_lu_.clear();band_piv_.clear();inertia_.valid=false;return (fallback_?fallback_->release_factors():false)||had;}
++  bool release_factors()override{bool had=bool(factor_)||bool(deferred_factor_);factor_.reset();deferred_factor_.reset();band_lu_.clear();band_piv_.clear();inertia_.valid=false;return (fallback_?fallback_->release_factors():false)||had;}
+   void set_null_pivot_detection(bool on)override{detection_=on;if(fallback_)fallback_->set_null_pivot_detection(on);}
+   const FactorOptions& options()const override{return fallback_?fallback_->options():options_;}
+   index_t order()const override{return pencil_.order();}
+--- a/solver.cpp
++++ b/solver_reuse.cpp
+@@ -26,7 +26,7 @@
+ #include "hsolve/solver.hpp"
+ #include "hsolve/util.hpp"
+ #include "io/csr_assembly.hpp"
+-#include "/tmp/os2026-p36/band_backend.hpp"
++#include "/tmp/os2026-p36/band_backend_reuse.hpp"
+ 
+ namespace hs {
+ 
+--- a/check.cpp
++++ b/check_reuse.cpp
+@@ -2,7 +2,7 @@
+ #include <iostream>
+ #include <nlohmann/json.hpp>
+ #include "hsolve/io.hpp"
+-#include "band_backend.hpp"
++#include "band_backend_reuse.hpp"
+ using json=nlohmann::json;
+ hs::CsrMatrix<hs::cplx> load(const std::string& file){auto m=hs::load_matrix(file);if(m.is_complex())return std::get<hs::CsrMatrix<hs::cplx>>(std::move(m.matrix));return hs::to_complex(std::get<hs::CsrMatrix<double>>(std::move(m.matrix)));}
+ int main(int argc,char** argv){
+@@ -13,6 +13,7 @@
+   bool initial=f->factorize(alpha,beta);auto first=f->inertia();auto initial_nulls=f->stats().null_pivots;bool singular=item.value("singular",false);
+   json row={{"id",item.at("id")},{"initial_valid",initial},{"initial_negative",first.neg},{"singular",singular},{"initial_null_pivots",initial_nulls}};
+   if(item.contains("expected_null_pivots")&&initial_nulls!=item.at("expected_null_pivots").get<int>())throw std::runtime_error("null-pivot multiplicity contract mismatch");
++  if(!initial){std::vector<hs::cplx> probe(a.nrows,hs::cplx(1,0));bool rejected=false;try{f->solve(probe.data(),1,a.nrows);}catch(...){rejected=true;}if(!rejected)throw std::runtime_error("failed factors became available before checked activation");}
+   if(singular){if(initial)throw std::runtime_error("rank-deficient matrix accepted");std::cout<<row.dump()<<std::endl;continue;}
+   if(!initial){f->set_null_pivot_detection(false);if(!f->factorize(alpha,beta))throw std::runtime_error("nonsingular factor rejected with detection off");}
+   if(f->inertia().neg!=item.at("negative").get<int>())throw std::runtime_error("inertia mismatch");

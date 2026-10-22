@@ -1,0 +1,200 @@
+--- a/src/blas/simd_kernels.hpp
++++ b/src/blas/simd_kernels.hpp
+@@ -397,9 +397,144 @@
+   }
+ }
+ 
++// Fixed one/two-right-hand-side loops avoid work for unused accumulator columns.
++
++// Retain up to 32 rows of one/two right-hand sides in registers during column updates.
++// Every active element follows the same FMA chain as the streamed path. Masked loads never
++// read the unused triangle or unit diagonal, and inactive lanes keep their current values.
++template <bool Unit, int NC, int NR, class Vec = V>
++HS_SIMD void trsm_col_register(bool upper, fint m, const double* a, fint lda, double* b, fint ldb) {
++  if constexpr (Vec::W == 8) {
++    typename Vec::reg rhs[NC][NR];
++    const unsigned long long all = (1ULL << m) - 1;
++#pragma GCC unroll 2
++    for (int q = 0; q < NC; ++q) {
++#pragma GCC unroll 4
++      for (int r = 0; r < NR; ++r)
++        rhs[q][r] = _mm512_maskz_loadu_pd(static_cast<__mmask8>(all >> (8 * r)),
++                                          b + static_cast<idx>(q) * ldb + 8 * r);
++    }
++    for (fint step = 0; step < m; ++step) {
++      const fint j = upper ? m - 1 - step : step;
++      const double* aj = a + static_cast<idx>(j) * lda;
++      const __m512i lane = _mm512_set1_epi64(j % 8);
++      typename Vec::reg xs[NC];
++#pragma GCC unroll 2
++      for (int q = 0; q < NC; ++q) {
++        typename Vec::reg current = rhs[q][0];
++#pragma GCC unroll 4
++        for (int r = 1; r < NR; ++r)
++          if (j >= 8 * r) current = rhs[q][r];
++        xs[q] = _mm512_permutexvar_pd(lane, current);
++        if constexpr (!Unit) {
++          const double x = _mm_cvtsd_f64(_mm512_castpd512_pd128(xs[q])) / aj[j];
++          xs[q] = _mm512_set1_pd(x);
++#pragma GCC unroll 4
++          for (int r = 0; r < NR; ++r)
++            if (j / 8 == r)
++              rhs[q][r] =
++                  _mm512_mask_mov_pd(rhs[q][r], static_cast<__mmask8>(1U << (j % 8)), xs[q]);
++        }
++      }
++      const unsigned long long active =
++          upper ? ((1ULL << j) - 1) : (all & ~((1ULL << (j + 1)) - 1));
++#pragma GCC unroll 4
++      for (int r = 0; r < NR; ++r) {
++        const __mmask8 mask = static_cast<__mmask8>(active >> (8 * r));
++        const __m512d av = _mm512_maskz_loadu_pd(mask, aj + 8 * r);
++#pragma GCC unroll 2
++        for (int q = 0; q < NC; ++q) rhs[q][r] = _mm512_mask3_fnmadd_pd(av, xs[q], rhs[q][r], mask);
++      }
++    }
++#pragma GCC unroll 2
++    for (int q = 0; q < NC; ++q) {
++#pragma GCC unroll 4
++      for (int r = 0; r < NR; ++r)
++        _mm512_mask_storeu_pd(b + static_cast<idx>(q) * ldb + 8 * r,
++                              static_cast<__mmask8>(all >> (8 * r)), rhs[q][r]);
++    }
++  }
++}
++
++template <bool Unit, int NC>
++HS_SIMD void trsm_col_short(bool upper, fint m, const double* a, fint lda, double* b, fint ldb) {
++  if constexpr (V::W == 8) {
++    if (m <= 8) return trsm_col_register<Unit, NC, 1>(upper, m, a, lda, b, ldb);
++    if (m <= 16) return trsm_col_register<Unit, NC, 2>(upper, m, a, lda, b, ldb);
++    if (m <= 24) return trsm_col_register<Unit, NC, 3>(upper, m, a, lda, b, ldb);
++    if (m <= 32) return trsm_col_register<Unit, NC, 4>(upper, m, a, lda, b, ldb);
++  }
++  double* bc[NC];
++  for (int q = 0; q < NC; ++q) bc[q] = b + static_cast<idx>(q) * ldb;
++  for (fint step = 0; step < m; ++step) {
++    const fint j = upper ? m - 1 - step : step;
++    const double* aj = a + static_cast<idx>(j) * lda;
++    reg xs[NC];
++    for (int q = 0; q < NC; ++q) {
++      double x = bc[q][j];
++      if (!Unit) x /= aj[j];
++      bc[q][j] = x;
++      xs[q] = V::set1(x);
++    }
++    const fint i0 = upper ? 0 : j + 1, i1 = upper ? j : m;
++    for (fint i = i0; i < i1; i += V::W) {
++      const auto mk = V::tail(std::min<fint>(V::W, i1 - i));
++      const reg av = V::maskz_loadu(mk, aj + i);
++      for (int q = 0; q < NC; ++q) {
++        const reg bv = V::maskz_loadu(mk, bc[q] + i);
++        V::mask_storeu(bc[q] + i, mk, V::fnmadd(av, xs[q], bv));
++      }
++    }
++  }
++}
++
++template <bool Unit, int NC, class Vec = V>
++HS_SIMD void trsm_dot_short(bool upper, fint m, const double* a, fint lda, double* b, fint ldb) {
++  double* bc[NC];
++  for (int q = 0; q < NC; ++q) bc[q] = b + static_cast<idx>(q) * ldb;
++  alignas(32) double sums[4];
++  for (fint step = 0; step < m; ++step) {
++    const fint i = upper ? step : m - 1 - step;
++    const double* ai = a + static_cast<idx>(i) * lda;
++    const fint j0 = upper ? 0 : i + 1, j1 = upper ? i : m;
++    typename Vec::reg acc[4] = {V::zero(), V::zero(), V::zero(), V::zero()};
++    for (fint j = j0; j < j1; j += V::W) {
++      const auto mk = V::tail(std::min<fint>(V::W, j1 - j));
++      const reg av = V::maskz_loadu(mk, ai + j);
++      for (int q = 0; q < NC; ++q) acc[q] = V::fmadd(av, V::maskz_loadu(mk, bc[q] + j), acc[q]);
++    }
++    // Adjacent pairs, then four-element halves, then the whole sum: the reduce4 tree.
++    if constexpr (Vec::W == 8 && NC == 1) {
++      const __m256d lo = _mm512_castpd512_pd256(acc[0]);
++      const __m256d hi = _mm512_extractf64x4_pd(acc[0], 1);
++      const __m256d pairs = _mm256_hadd_pd(lo, hi);
++      const __m128d halves =
++          _mm_add_pd(_mm256_castpd256_pd128(pairs), _mm256_extractf128_pd(pairs, 1));
++      sums[0] = _mm_cvtsd_f64(_mm_add_sd(halves, _mm_unpackhi_pd(halves, halves)));
++    } else if constexpr (Vec::W == 8 && NC == 2) {
++      const __m512d pairs =
++          _mm512_add_pd(_mm512_unpacklo_pd(acc[0], acc[1]), _mm512_unpackhi_pd(acc[0], acc[1]));
++      const __m256d lo = _mm512_castpd512_pd256(pairs), hi = _mm512_extractf64x4_pd(pairs, 1);
++      const __m128d lower = _mm_add_pd(_mm256_castpd256_pd128(lo), _mm256_extractf128_pd(lo, 1));
++      const __m128d upper = _mm_add_pd(_mm256_castpd256_pd128(hi), _mm256_extractf128_pd(hi, 1));
++      _mm_store_pd(sums, _mm_add_pd(lower, upper));
++    } else {
++      V::reduce4(acc[0], acc[1], acc[2], acc[3], sums);
++    }
++    for (int q = 0; q < NC; ++q) {
++      double x = bc[q][i] - sums[q];
++      if (!Unit) x /= ai[i];
++      bc[q][i] = x;
++    }
++  }
++}
++
+ template <bool kUnit>
+-HS_SIMD void trsm_col(bool upper, fint m, fint n, const double* a, fint lda, double* b,
+-                      fint ldb) {
++HS_SIMD void trsm_col(bool upper, fint m, fint n, const double* a, fint lda, double* b, fint ldb) {
++  if constexpr (V::W == 8) {
++    if (n == 1) return trsm_col_short<kUnit, 1>(upper, m, a, lda, b, ldb);
++    if (n == 2) return trsm_col_short<kUnit, 2>(upper, m, a, lda, b, ldb);
++  }
+   fint c0 = 0;
+   if constexpr (V::W == 8) {
+     for (; c0 + 8 <= n; c0 += 8)
+@@ -466,6 +601,10 @@
+ template <bool kUnit>
+ HS_SIMD void trsm_dot(bool upper, fint m, fint n, const double* a, fint lda, double* b,
+                       fint ldb) {
++  if constexpr (V::W == 8) {
++    if (n == 1) return trsm_dot_short<kUnit,1>(upper,m,a,lda,b,ldb);
++    if (n == 2) return trsm_dot_short<kUnit,2>(upper,m,a,lda,b,ldb);
++  }
+   fint c0 = 0;
+   if constexpr (V::W == 8) {
+     for (; c0 + 8 <= n; c0 += 8)
+--- a/tests/cpp/test_asmkern.cpp
++++ b/tests/cpp/test_asmkern.cpp
+@@ -549,7 +549,7 @@
+     for (char uplo : {'U', 'L', 'u'})
+       for (char tr : {'N', 'T', 'C'})
+         for (char diag : {'N', 'U'})
+-          for (fint m : {1, 2, 7, 8, 9, 17, 64, 100, 129})
++          for (fint m : {1, 2, 7, 8, 9, 16, 17, 23, 24, 25, 32, 64, 100, 129})
+             for (fint n : {1, 2, 4, 5, 7, 8, 9, 16, 17}) {
+               const fint lda = m + 3, ldb = m + 1;
+               auto a = random_vec(static_cast<std::size_t>(lda) * m, ++seed);
+--- a/docs/BLAS.md
++++ b/docs/BLAS.md
+@@ -271,7 +271,7 @@
+ | token | shape class | goes to |
+ |---|---|---|
+ | `gemv1` | dgemm with N = 1 (or M = 1) | the real dgemv (A read once, never packed) |
+-| `strsm=<m>` | dtrsm side L, M <= m (capped: 4096 AVX-512, 256 AVX2, 32 portable), 1 <= N <= maxn, alpha = 1 | the hook's small triangular solve (reference loop order, up to 8 right-hand sides per pass on AVX-512, 4 on the other paths; no packing) |
++| `strsm=<m>` | dtrsm side L, M <= m (capped: 4096 AVX-512, 256 AVX2, 32 portable), 1 <= N <= maxn, alpha = 1 | the hook's small triangular solve (reference arithmetic order, up to 8 right-hand sides per pass on AVX-512, 4 on the other paths; factors are never packed) |
+ | `trsv=<n>`, `trsv1` | dtrsm side L, N <= n, alpha = 1 | N calls of the real dtrsv |
+ | `narrow` | dgemm NN / TN with 2 <= N <= maxn | the hook's narrow kernels (AVX-512F or AVX2+FMA, adapted from OpenBLAS' SkylakeX small-matrix / dgemv kernels: A streamed once, not packed); without `par`, calls outside parallel regions with >= 2 x minkb of A stay with the real routine |
+ | `par` | outside OpenMP parallel regions, calls touching >= 2 x minkb of A | fixed blocks over `threads` threads: dgemv and narrow dgemm by rows of C (narrow kernels or the real routine per block), dgemm A^T B with M < 4 x threads and K >= 1024 x threads by K (partial products summed in block order) |
+@@ -283,6 +283,17 @@
+ loops (the narrow route needs AVX2 at least; on non-x86 CPUs only the portable loops are compiled).
+ `HS_BLAS_NO_AVX512=1` / `HS_BLAS_NO_AVX2=1` force the fallbacks (tests, comparisons).
+ `HS_BLAS_PROFILE=<file>` (`%p` = pid) turns on the call profiler of section 2 in any configuration.
++
++The AVX-512 triangular solve specializes calls with one or two right-hand sides. For
++non-transposed triangles of order at most 32, the right-hand sides remain in vector registers
++throughout substitution; larger triangles use fixed-width column loops. The transposed path
++reduces only the used accumulators, with the same addition tree as the four-column path.
++Eight-column non-transposed groups at orders 64–512 use a row-major right-hand-side buffer
++of at most 32 KiB. Factors remain in their original layout, and unit diagonals are not read.
++AVX2, portable, and other remainder paths keep their existing implementations. These changes
++do not raise the default route limits (`strsm=512`, `maxn=16`). See
++[P18 measurements](../results/p18_measurements.md) and
++[P19 measurements](../results/p19_measurements.md) for microbenchmarks and complete solves.
+ 
+ Correctness and threads (tests: `test_asmkern`, `test_asmkern_fix`, `test_asmkern_fix_exehook`):
+ every routed shape class is compared with the real BLAS / a long-double reference (edge sizes,

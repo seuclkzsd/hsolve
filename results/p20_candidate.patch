@@ -1,0 +1,120 @@
+--- a/src/blas/simd_kernels.hpp
++++ b/src/blas/simd_kernels.hpp
+@@ -488,8 +488,85 @@
+   }
+ }
+ 
++// One/two-RHS transposed solve for at most one/two vector blocks.
++// The current b[i] is still its original value: substitution only writes earlier
++// solved positions. Keep those solved values in registers, avoiding partial stores
++// followed by overlapping vector loads. Preserve the streamed path's FMA lanes.
++template <bool Unit, int NC, int NR, class Vec = V>
++HS_SIMD void trsm_dot_register(bool upper, fint m, const double* a, fint lda,
++                               double* b, fint ldb) {
++  if constexpr (Vec::W == 8) {
++    typename Vec::reg rhs[NC][NR];
++    const unsigned all = (1U << m) - 1;
++    for (int q = 0; q < NC; ++q)
++      for (int r = 0; r < NR; ++r)
++        rhs[q][r] = _mm512_maskz_loadu_pd(static_cast<__mmask8>(all >> (8 * r)),
++                                         b + static_cast<idx>(q) * ldb + 8 * r);
++    for (fint step = 0; step < m; ++step) {
++      const fint i = upper ? step : m - 1 - step;
++      const double* ai = a + static_cast<idx>(i) * lda;
++      const fint j0 = upper ? 0 : i + 1, j1 = upper ? i : m;
++      const __m512i shift = _mm512_add_epi64(_mm512_setr_epi64(0, 1, 2, 3, 4, 5, 6, 7),
++                                            _mm512_set1_epi64(j0 % 8));
++      typename Vec::reg acc[NC];
++      for (int q = 0; q < NC; ++q) acc[q] = Vec::zero();
++      for (int r = 0; r < NR; ++r) {
++        const fint j = j0 + 8 * r;
++        if (j >= j1) break;
++        const __mmask8 mk = Vec::tail(std::min<fint>(8, j1 - j));
++        const typename Vec::reg av = _mm512_maskz_loadu_pd(mk, ai + j);
++        for (int q = 0; q < NC; ++q) {
++          typename Vec::reg window;
++          if constexpr (NR == 1) {
++            window = _mm512_maskz_permutexvar_pd(mk, shift, rhs[q][0]);
++          } else {
++            // NR == 2: a second chunk can occur only when j0 < 8.
++            window = j < 8 ? _mm512_maskz_permutex2var_pd(mk, rhs[q][0], shift, rhs[q][1])
++                           : _mm512_maskz_permutexvar_pd(mk, shift, rhs[q][1]);
++          }
++          acc[q] = Vec::fmadd(av, window, acc[q]);
++        }
++      }
++      alignas(16) double sums[2];
++      if constexpr (NC == 1) {
++        const __m256d lo = _mm512_castpd512_pd256(acc[0]);
++        const __m256d hi = _mm512_extractf64x4_pd(acc[0], 1);
++        const __m256d pairs = _mm256_hadd_pd(lo, hi);
++        const __m128d halves = _mm_add_pd(_mm256_castpd256_pd128(pairs),
++                                         _mm256_extractf128_pd(pairs, 1));
++        sums[0] = _mm_cvtsd_f64(_mm_add_sd(halves, _mm_unpackhi_pd(halves, halves)));
++      } else {
++        const __m512d pairs = _mm512_add_pd(_mm512_unpacklo_pd(acc[0], acc[1]),
++                                           _mm512_unpackhi_pd(acc[0], acc[1]));
++        const __m256d lo = _mm512_castpd512_pd256(pairs), hi = _mm512_extractf64x4_pd(pairs, 1);
++        const __m128d lower = _mm_add_pd(_mm256_castpd256_pd128(lo), _mm256_extractf128_pd(lo, 1));
++        const __m128d upper_sum = _mm_add_pd(_mm256_castpd256_pd128(hi), _mm256_extractf128_pd(hi, 1));
++        _mm_store_pd(sums, _mm_add_pd(lower, upper_sum));
++      }
++      for (int q = 0; q < NC; ++q) {
++        double x = b[static_cast<idx>(q) * ldb + i] - sums[q];
++        if (!Unit) x /= ai[i];
++        const typename Vec::reg xv = Vec::set1(x);
++        for (int r = 0; r < NR; ++r)
++          if (i / 8 == r)
++            rhs[q][r] = _mm512_mask_mov_pd(rhs[q][r], static_cast<__mmask8>(1U << (i % 8)), xv);
++      }
++    }
++    for (int q = 0; q < NC; ++q)
++      for (int r = 0; r < NR; ++r)
++        _mm512_mask_storeu_pd(b + static_cast<idx>(q) * ldb + 8 * r,
++                             static_cast<__mmask8>(all >> (8 * r)), rhs[q][r]);
++  }
++}
++
+ template <bool Unit, int NC, class Vec = V>
+ HS_SIMD void trsm_dot_short(bool upper, fint m, const double* a, fint lda, double* b, fint ldb) {
++  if constexpr (Vec::W == 8) {
++    if (m >= 3 && m <= 16) {
++      if (m <= 8) return trsm_dot_register<Unit, NC, 1>(upper, m, a, lda, b, ldb);
++      return trsm_dot_register<Unit, NC, 2>(upper, m, a, lda, b, ldb);
++    }
++  }
+   double* bc[NC];
+   for (int q = 0; q < NC; ++q) bc[q] = b + static_cast<idx>(q) * ldb;
+   alignas(32) double sums[4];
+--- a/tests/cpp/test_asmkern.cpp
++++ b/tests/cpp/test_asmkern.cpp
+@@ -549,7 +549,7 @@
+     for (char uplo : {'U', 'L', 'u'})
+       for (char tr : {'N', 'T', 'C'})
+         for (char diag : {'N', 'U'})
+-          for (fint m : {1, 2, 7, 8, 9, 16, 17, 23, 24, 25, 32, 64, 100, 129})
++          for (fint m : {1, 2, 7, 8, 9, 15, 16, 17, 23, 24, 25, 32, 64, 100, 129})
+             for (fint n : {1, 2, 4, 5, 7, 8, 9, 16, 17}) {
+               const fint lda = m + 3, ldb = m + 1;
+               auto a = random_vec(static_cast<std::size_t>(lda) * m, ++seed);
+--- a/docs/BLAS.md
++++ b/docs/BLAS.md
+@@ -287,13 +287,15 @@
+ The AVX-512 triangular solve specializes calls with one or two right-hand sides. For
+ non-transposed triangles of order at most 32, the right-hand sides remain in vector registers
+ throughout substitution; larger triangles use fixed-width column loops. The transposed path
+-reduces only the used accumulators, with the same addition tree as the four-column path.
++keeps solved values in registers for orders 3–16, and reduces only the used
++accumulators, with the same FMA lane assignment and addition tree as the four-column path.
+ Eight-column non-transposed groups at orders 64–512 use a row-major right-hand-side buffer
+ of at most 32 KiB. Factors remain in their original layout, and unit diagonals are not read.
+ AVX2, portable, and other remainder paths keep their existing implementations. These changes
+ do not raise the default route limits (`strsm=512`, `maxn=16`). See
+-[P18 measurements](../results/p18_measurements.md) and
+-[P19 measurements](../results/p19_measurements.md) for microbenchmarks and complete solves.
++[P18 measurements](../results/p18_measurements.md),
++[P19 measurements](../results/p19_measurements.md), and
++[P20 measurements](../results/p20_measurements.md) for microbenchmarks and complete solves.
+ 
+ Correctness and threads (tests: `test_asmkern`, `test_asmkern_fix`, `test_asmkern_fix_exehook`):
+ every routed shape class is compared with the real BLAS / a long-double reference (edge sizes,

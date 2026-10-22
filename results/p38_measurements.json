@@ -1,0 +1,4007 @@
+{
+  "round": "P38",
+  "host": "gpu02",
+  "goal_achieved": false,
+  "production_adopted": false,
+  "full_solve_attempts": 119,
+  "full_solve_valid": 119,
+  "valid_completeness": {
+    "consistent": 6,
+    "complete": 113
+  },
+  "groups": {
+    "p38-smoke": {
+      "hsolve-control": {
+        "attempts": 3,
+        "valid": 3,
+        "failures": []
+      },
+      "hsolve-partial": {
+        "attempts": 3,
+        "valid": 3,
+        "failures": []
+      }
+    },
+    "p38-cases": {
+      "hsolve-control": {
+        "attempts": 11,
+        "valid": 11,
+        "failures": []
+      },
+      "hsolve-partial": {
+        "attempts": 11,
+        "valid": 11,
+        "failures": []
+      }
+    },
+    "p38-v2-cases": {
+      "hsolve-adaptive": {
+        "attempts": 11,
+        "valid": 11,
+        "failures": []
+      }
+    },
+    "p38-v2-stress": {
+      "hsolve-adaptive": {
+        "attempts": 4,
+        "valid": 4,
+        "failures": []
+      }
+    },
+    "p38-v2-holdout": {
+      "hsolve-adaptive": {
+        "attempts": 16,
+        "valid": 16,
+        "failures": []
+      }
+    },
+    "p38-v2-fresh": {
+      "hsolve-adaptive": {
+        "attempts": 32,
+        "valid": 32,
+        "failures": []
+      }
+    },
+    "p38-v2-validation": {
+      "hsolve-adaptive": {
+        "attempts": 8,
+        "valid": 8,
+        "failures": []
+      }
+    },
+    "p38-v2-contracts": {
+      "hsolve-adaptive": {
+        "attempts": 9,
+        "valid": 9,
+        "failures": []
+      }
+    },
+    "p38-v2-main": {
+      "hsolve-adaptive": {
+        "attempts": 9,
+        "valid": 9,
+        "failures": []
+      }
+    },
+    "p38-v2-large": {
+      "hsolve-adaptive": {
+        "attempts": 2,
+        "valid": 2,
+        "failures": []
+      }
+    }
+  },
+  "source_counts": {
+    "hsolve-control": {
+      "iterative": 13,
+      "separable_bloch_curl": 1
+    },
+    "hsolve-partial": {
+      "partial_bloch_translation": 8,
+      "iterative": 5,
+      "separable_bloch_curl": 1
+    },
+    "hsolve-adaptive": {
+      "partial_bloch_translation": 8,
+      "iterative": 82,
+      "separable_bloch_curl": 1
+    }
+  },
+  "structure": [
+    {
+      "case": "yee-photonic-rods-1e4",
+      "n": 10125,
+      "attempts": [
+        {
+          "period": 15,
+          "block_order": 675,
+          "phase": 0.3141592653589793,
+          "matrices": [
+            {
+              "absolute_infinity_error": 1.1368683772161603e-13,
+              "relative_infinity_error": 3.1579677144893335e-17,
+              "nnz": 131625,
+              "reconstructed_nnz": 131625
+            }
+          ],
+          "recognized": true
+        }
+      ]
+    },
+    {
+      "case": "yee-photonic-spheres-1e4",
+      "n": 10125,
+      "attempts": [
+        {
+          "period": 15,
+          "block_order": 675,
+          "phase": 0.3141592653589793,
+          "matrices": [
+            {
+              "absolute_infinity_error": 1.464821375527116e-14,
+              "relative_infinity_error": 6.10342239802965e-17,
+              "nnz": 131625,
+              "reconstructed_nnz": 131625
+            },
+            {
+              "absolute_infinity_error": 0.8,
+              "relative_infinity_error": 0.9230769230769231,
+              "nnz": 10125,
+              "reconstructed_nnz": 10125
+            }
+          ],
+          "recognized": false
+        }
+      ]
+    },
+    {
+      "case": "yee-bloch-1e4",
+      "n": 10080,
+      "attempts": [
+        {
+          "period": 14,
+          "block_order": 720,
+          "phase": 0.31415926535897926,
+          "matrices": [
+            {
+              "absolute_infinity_error": 3.4776996862717027e-13,
+              "relative_infinity_error": 7.689300375001923e-17,
+              "nnz": 131040,
+              "reconstructed_nnz": 131040
+            }
+          ],
+          "recognized": true
+        }
+      ]
+    },
+    {
+      "case": "syn-zero-cluster-complex-1e4",
+      "n": 10000,
+      "attempts": []
+    }
+  ],
+  "small_cases": [
+    {
+      "case": "cycle-hep",
+      "solver": "hsolve-partial",
+      "candidate_source": "partial_bloch_translation",
+      "max_eta": 1.9863933742742557e-16,
+      "certificate": {
+        "count_found": 6,
+        "count_inertia": 6,
+        "endpoint_moves": 0,
+        "failure_probability": 0.0,
+        "lower": 0.6349750404875236,
+        "method": "exact",
+        "note": "",
+        "passed": true,
+        "performed": true,
+        "rigorous": true,
+        "seconds": 0.028559137,
+        "solves": 0,
+        "statement": "double-precision Sylvester counts (main factorization): nu(b) - nu(a) = 6 eigenvalue(s) in [0.634975, 0.763677], 6 distinct found pair(s) there: every eigenvalue in the window is found",
+        "upper": 0.7636773076182735
+      }
+    },
+    {
+      "case": "cycle-ghep",
+      "solver": "hsolve-partial",
+      "candidate_source": "partial_bloch_translation",
+      "max_eta": 3.274864566577683e-16,
+      "certificate": {
+        "count_found": 6,
+        "count_inertia": 6,
+        "endpoint_moves": 0,
+        "failure_probability": 0.0,
+        "lower": 0.630379124677832,
+        "method": "exact",
+        "note": "",
+        "passed": true,
+        "performed": true,
+        "rigorous": true,
+        "seconds": 0.003762436999999997,
+        "solves": 0,
+        "statement": "double-precision Sylvester counts (main factorization): nu(b) - nu(a) = 6 eigenvalue(s) in [0.630379, 0.779015], 6 distinct found pair(s) there: every eigenvalue in the window is found",
+        "upper": 0.7790151736861067
+      }
+    },
+    {
+      "case": "broken-a",
+      "solver": "hsolve-partial",
+      "candidate_source": "iterative",
+      "max_eta": 4.67111668783734e-11,
+      "certificate": {
+        "count_found": 6,
+        "count_inertia": 6,
+        "endpoint_moves": 0,
+        "failure_probability": 0.0,
+        "lower": 0.6303791246778343,
+        "method": "exact",
+        "note": "",
+        "passed": true,
+        "performed": true,
+        "rigorous": true,
+        "seconds": 0.004295482999999999,
+        "solves": 0,
+        "statement": "double-precision Sylvester counts (main factorization): nu(b) - nu(a) = 6 eigenvalue(s) in [0.630379, 0.779015], 6 distinct found pair(s) there: every eigenvalue in the window is found",
+        "upper": 0.7790151736871118
+      }
+    },
+    {
+      "case": "broken-b",
+      "solver": "hsolve-partial",
+      "candidate_source": "iterative",
+      "max_eta": 4.671058017897986e-11,
+      "certificate": {
+        "count_found": 6,
+        "count_inertia": 6,
+        "endpoint_moves": 0,
+        "failure_probability": 0.0,
+        "lower": 0.6303791246778329,
+        "method": "exact",
+        "note": "",
+        "passed": true,
+        "performed": true,
+        "rigorous": true,
+        "seconds": 0.0037522119999999996,
+        "solves": 0,
+        "statement": "double-precision Sylvester counts (main factorization): nu(b) - nu(a) = 6 eigenvalue(s) in [0.630379, 0.779015], 6 distinct found pair(s) there: every eigenvalue in the window is found",
+        "upper": 0.779015173687112
+      }
+    },
+    {
+      "case": "explicit-method",
+      "solver": "hsolve-partial",
+      "candidate_source": "iterative",
+      "max_eta": 4.671125927033129e-11,
+      "certificate": {
+        "count_found": 6,
+        "count_inertia": 6,
+        "endpoint_moves": 0,
+        "failure_probability": 0.0,
+        "lower": 0.6303791246778332,
+        "method": "exact",
+        "note": "",
+        "passed": true,
+        "performed": true,
+        "rigorous": true,
+        "seconds": 0.004065586999999999,
+        "solves": 0,
+        "statement": "double-precision Sylvester counts (main factorization): nu(b) - nu(a) = 6 eigenvalue(s) in [0.630379, 0.779015], 6 distinct found pair(s) there: every eigenvalue in the window is found",
+        "upper": 0.7790151736871118
+      }
+    },
+    {
+      "case": "certificate-off",
+      "solver": "hsolve-partial",
+      "candidate_source": "iterative",
+      "max_eta": 4.671092208739696e-11,
+      "certificate": {
+        "count_found": -1,
+        "count_inertia": -1,
+        "endpoint_moves": 0,
+        "failure_probability": 1.0,
+        "lower": 0.0,
+        "method": "none",
+        "note": "disabled by configuration",
+        "passed": false,
+        "performed": false,
+        "rigorous": false,
+        "seconds": 0.0,
+        "solves": 0,
+        "statement": "",
+        "upper": 0.0
+      }
+    },
+    {
+      "case": "missing-pair",
+      "solver": "hsolve-partial",
+      "candidate_source": "partial_bloch_translation",
+      "max_eta": 2.0624830019579016e-13,
+      "certificate": {
+        "count_found": 6,
+        "count_inertia": 6,
+        "endpoint_moves": 0,
+        "failure_probability": 0.0,
+        "lower": 0.6303791246778336,
+        "method": "exact",
+        "note": "",
+        "passed": true,
+        "performed": true,
+        "rigorous": true,
+        "seconds": 0.007390956000000004,
+        "solves": 0,
+        "statement": "double-precision Sylvester counts (main factorization): nu(b) - nu(a) = 6 eigenvalue(s) in [0.630379, 0.779015], 6 distinct found pair(s) there: every eigenvalue in the window is found",
+        "upper": 0.7790151736861064
+      }
+    },
+    {
+      "case": "cycle-sparse-mass",
+      "solver": "hsolve-partial",
+      "candidate_source": "partial_bloch_translation",
+      "max_eta": 1.2550544646349248e-16,
+      "certificate": {
+        "count_found": 6,
+        "count_inertia": 6,
+        "endpoint_moves": 0,
+        "failure_probability": 0.0,
+        "lower": 0.5374990599373013,
+        "method": "exact",
+        "note": "",
+        "passed": true,
+        "performed": true,
+        "rigorous": true,
+        "seconds": 0.0029915489999999996,
+        "solves": 0,
+        "statement": "double-precision Sylvester counts (main factorization): nu(b) - nu(a) = 6 eigenvalue(s) in [0.537499, 0.847098], 6 distinct found pair(s) there: every eigenvalue in the window is found",
+        "upper": 0.8470975633996509
+      }
+    },
+    {
+      "case": "cycle-period3",
+      "solver": "hsolve-partial",
+      "candidate_source": "partial_bloch_translation",
+      "max_eta": 1.6028432004615105e-16,
+      "certificate": {
+        "count_found": 6,
+        "count_inertia": 6,
+        "endpoint_moves": 0,
+        "failure_probability": 0.0,
+        "lower": 0.44829449017480294,
+        "method": "exact",
+        "note": "",
+        "passed": true,
+        "performed": true,
+        "rigorous": true,
+        "seconds": 0.014862903999999998,
+        "solves": 0,
+        "statement": "double-precision Sylvester counts (main factorization): nu(b) - nu(a) = 6 eigenvalue(s) in [0.448294, 0.913956], 6 distinct found pair(s) there: every eigenvalue in the window is found",
+        "upper": 0.9139564449493662
+      }
+    },
+    {
+      "case": "small-rods-hep",
+      "solver": "hsolve-partial",
+      "candidate_source": "partial_bloch_translation",
+      "max_eta": 2.053964432332373e-15,
+      "certificate": {
+        "count_found": 10,
+        "count_inertia": 10,
+        "endpoint_moves": 0,
+        "failure_probability": 0.0,
+        "lower": 20.11786730901609,
+        "method": "exact",
+        "note": "",
+        "passed": true,
+        "performed": true,
+        "rigorous": true,
+        "seconds": 0.009836995000000001,
+        "solves": 0,
+        "statement": "double-precision Sylvester counts (main factorization): nu(b) - nu(a) = 10 eigenvalue(s) in [20.1179, 32.5055], 10 distinct found pair(s) there: every eigenvalue in the window is found",
+        "upper": 32.50550837568652
+      }
+    },
+    {
+      "case": "small-rods-ghep",
+      "solver": "hsolve-partial",
+      "candidate_source": "partial_bloch_translation",
+      "max_eta": 5.5987040196305745e-14,
+      "certificate": {
+        "count_found": 10,
+        "count_inertia": 10,
+        "endpoint_moves": 0,
+        "failure_probability": 0.0,
+        "lower": 20.802117660305626,
+        "method": "exact",
+        "note": "",
+        "passed": true,
+        "performed": true,
+        "rigorous": true,
+        "seconds": 0.008626740999999997,
+        "solves": 0,
+        "statement": "double-precision Sylvester counts (main factorization): nu(b) - nu(a) = 10 eigenvalue(s) in [20.8021, 26.8943], 10 distinct found pair(s) there: every eigenvalue in the window is found",
+        "upper": 26.89434790336912
+      }
+    },
+    {
+      "case": "cycle-hep",
+      "solver": "hsolve-adaptive",
+      "candidate_source": "partial_bloch_translation",
+      "max_eta": 1.868403238732082e-16,
+      "certificate": {
+        "count_found": 6,
+        "count_inertia": 6,
+        "endpoint_moves": 0,
+        "failure_probability": 0.0,
+        "lower": 0.6349750404875243,
+        "method": "exact",
+        "note": "",
+        "passed": true,
+        "performed": true,
+        "rigorous": true,
+        "seconds": 0.06812165400000002,
+        "solves": 0,
+        "statement": "double-precision Sylvester counts (main factorization): nu(b) - nu(a) = 6 eigenvalue(s) in [0.634975, 0.763677], 6 distinct found pair(s) there: every eigenvalue in the window is found",
+        "upper": 0.7636773076182728
+      }
+    },
+    {
+      "case": "cycle-ghep",
+      "solver": "hsolve-adaptive",
+      "candidate_source": "partial_bloch_translation",
+      "max_eta": 2.884185436649723e-16,
+      "certificate": {
+        "count_found": 6,
+        "count_inertia": 6,
+        "endpoint_moves": 0,
+        "failure_probability": 0.0,
+        "lower": 0.6303791246778324,
+        "method": "exact",
+        "note": "",
+        "passed": true,
+        "performed": true,
+        "rigorous": true,
+        "seconds": 0.018680897000000002,
+        "solves": 0,
+        "statement": "double-precision Sylvester counts (main factorization): nu(b) - nu(a) = 6 eigenvalue(s) in [0.630379, 0.779015], 6 distinct found pair(s) there: every eigenvalue in the window is found",
+        "upper": 0.7790151736861063
+      }
+    },
+    {
+      "case": "broken-a",
+      "solver": "hsolve-adaptive",
+      "candidate_source": "iterative",
+      "max_eta": 4.671141568876731e-11,
+      "certificate": {
+        "count_found": 6,
+        "count_inertia": 6,
+        "endpoint_moves": 0,
+        "failure_probability": 0.0,
+        "lower": 0.6303791246778341,
+        "method": "exact",
+        "note": "",
+        "passed": true,
+        "performed": true,
+        "rigorous": true,
+        "seconds": 0.008897087999999997,
+        "solves": 0,
+        "statement": "double-precision Sylvester counts (main factorization): nu(b) - nu(a) = 6 eigenvalue(s) in [0.630379, 0.779015], 6 distinct found pair(s) there: every eigenvalue in the window is found",
+        "upper": 0.7790151736871123
+      }
+    },
+    {
+      "case": "broken-b",
+      "solver": "hsolve-adaptive",
+      "candidate_source": "iterative",
+      "max_eta": 4.6710855030764284e-11,
+      "certificate": {
+        "count_found": 6,
+        "count_inertia": 6,
+        "endpoint_moves": 0,
+        "failure_probability": 0.0,
+        "lower": 0.6303791246778326,
+        "method": "exact",
+        "note": "",
+        "passed": true,
+        "performed": true,
+        "rigorous": true,
+        "seconds": 0.011829116,
+        "solves": 0,
+        "statement": "double-precision Sylvester counts (main factorization): nu(b) - nu(a) = 6 eigenvalue(s) in [0.630379, 0.779015], 6 distinct found pair(s) there: every eigenvalue in the window is found",
+        "upper": 0.7790151736871118
+      }
+    },
+    {
+      "case": "explicit-method",
+      "solver": "hsolve-adaptive",
+      "candidate_source": "iterative",
+      "max_eta": 4.671123580908271e-11,
+      "certificate": {
+        "count_found": 6,
+        "count_inertia": 6,
+        "endpoint_moves": 0,
+        "failure_probability": 0.0,
+        "lower": 0.6303791246778319,
+        "method": "exact",
+        "note": "",
+        "passed": true,
+        "performed": true,
+        "rigorous": true,
+        "seconds": 0.0037282749999999754,
+        "solves": 0,
+        "statement": "double-precision Sylvester counts (main factorization): nu(b) - nu(a) = 6 eigenvalue(s) in [0.630379, 0.779015], 6 distinct found pair(s) there: every eigenvalue in the window is found",
+        "upper": 0.7790151736871128
+      }
+    },
+    {
+      "case": "certificate-off",
+      "solver": "hsolve-adaptive",
+      "candidate_source": "iterative",
+      "max_eta": 4.671111849651797e-11,
+      "certificate": {
+        "count_found": -1,
+        "count_inertia": -1,
+        "endpoint_moves": 0,
+        "failure_probability": 1.0,
+        "lower": 0.0,
+        "method": "none",
+        "note": "disabled by configuration",
+        "passed": false,
+        "performed": false,
+        "rigorous": false,
+        "seconds": 0.0,
+        "solves": 0,
+        "statement": "",
+        "upper": 0.0
+      }
+    },
+    {
+      "case": "missing-pair",
+      "solver": "hsolve-adaptive",
+      "candidate_source": "partial_bloch_translation",
+      "max_eta": 2.0629260712964997e-13,
+      "certificate": {
+        "count_found": 6,
+        "count_inertia": 6,
+        "endpoint_moves": 0,
+        "failure_probability": 0.0,
+        "lower": 0.6303791246778327,
+        "method": "exact",
+        "note": "",
+        "passed": true,
+        "performed": true,
+        "rigorous": true,
+        "seconds": 0.012462205000000004,
+        "solves": 0,
+        "statement": "double-precision Sylvester counts (main factorization): nu(b) - nu(a) = 6 eigenvalue(s) in [0.630379, 0.779015], 6 distinct found pair(s) there: every eigenvalue in the window is found",
+        "upper": 0.7790151736861064
+      }
+    },
+    {
+      "case": "cycle-sparse-mass",
+      "solver": "hsolve-adaptive",
+      "candidate_source": "partial_bloch_translation",
+      "max_eta": 1.1410273891238359e-16,
+      "certificate": {
+        "count_found": 6,
+        "count_inertia": 6,
+        "endpoint_moves": 0,
+        "failure_probability": 0.0,
+        "lower": 0.5374990599373015,
+        "method": "exact",
+        "note": "",
+        "passed": true,
+        "performed": true,
+        "rigorous": true,
+        "seconds": 0.06272979100000001,
+        "solves": 0,
+        "statement": "double-precision Sylvester counts (main factorization): nu(b) - nu(a) = 6 eigenvalue(s) in [0.537499, 0.847098], 6 distinct found pair(s) there: every eigenvalue in the window is found",
+        "upper": 0.8470975633996506
+      }
+    },
+    {
+      "case": "cycle-period3",
+      "solver": "hsolve-adaptive",
+      "candidate_source": "partial_bloch_translation",
+      "max_eta": 1.5063386027668477e-16,
+      "certificate": {
+        "count_found": 6,
+        "count_inertia": 6,
+        "endpoint_moves": 0,
+        "failure_probability": 0.0,
+        "lower": 0.4482944901748024,
+        "method": "exact",
+        "note": "",
+        "passed": true,
+        "performed": true,
+        "rigorous": true,
+        "seconds": 0.07276932000000001,
+        "solves": 0,
+        "statement": "double-precision Sylvester counts (main factorization): nu(b) - nu(a) = 6 eigenvalue(s) in [0.448294, 0.913956], 6 distinct found pair(s) there: every eigenvalue in the window is found",
+        "upper": 0.9139564449493669
+      }
+    },
+    {
+      "case": "small-rods-hep",
+      "solver": "hsolve-adaptive",
+      "candidate_source": "partial_bloch_translation",
+      "max_eta": 2.4755485827195775e-13,
+      "certificate": {
+        "count_found": 10,
+        "count_inertia": 10,
+        "endpoint_moves": 0,
+        "failure_probability": 0.0,
+        "lower": 20.548221345993234,
+        "method": "exact",
+        "note": "",
+        "passed": true,
+        "performed": true,
+        "rigorous": true,
+        "seconds": 0.01971141899999998,
+        "solves": 0,
+        "statement": "double-precision Sylvester counts (main factorization): nu(b) - nu(a) = 10 eigenvalue(s) in [20.5482, 32.5055], 10 distinct found pair(s) there: every eigenvalue in the window is found",
+        "upper": 32.50550837568651
+      }
+    },
+    {
+      "case": "small-rods-ghep",
+      "solver": "hsolve-adaptive",
+      "candidate_source": "partial_bloch_translation",
+      "max_eta": 5.6499867315343024e-14,
+      "certificate": {
+        "count_found": 10,
+        "count_inertia": 10,
+        "endpoint_moves": 0,
+        "failure_probability": 0.0,
+        "lower": 20.802117660305626,
+        "method": "exact",
+        "note": "",
+        "passed": true,
+        "performed": true,
+        "rigorous": true,
+        "seconds": 0.015481810999999984,
+        "solves": 0,
+        "statement": "double-precision Sylvester counts (main factorization): nu(b) - nu(a) = 10 eigenvalue(s) in [20.8021, 26.8943], 10 distinct found pair(s) there: every eigenvalue in the window is found",
+        "upper": 26.894347903369102
+      }
+    }
+  ],
+  "contracts": [
+    {
+      "case": "exact-zero-hep",
+      "solver": "hsolve-adaptive",
+      "probe_events": [
+        {
+          "accepted": false,
+          "event": "checked_requested_shift",
+          "null_pivots": 2,
+          "peak_rss_mb": 11.825152,
+          "peak_vm_mb": 1684.025344,
+          "rss_mb": 9.310208,
+          "sigma": 0.0,
+          "t": 0.046112206,
+          "vm_mb": 1681.465344
+        }
+      ],
+      "recovery_events": [],
+      "counter_used": false,
+      "sigma_requested": 0.0,
+      "sigma_used": 2.092912845463147e-08,
+      "certificate_passed": true
+    },
+    {
+      "case": "exact-quarter-ghep",
+      "solver": "hsolve-adaptive",
+      "probe_events": [
+        {
+          "accepted": false,
+          "event": "checked_requested_shift",
+          "null_pivots": 2,
+          "peak_rss_mb": 12.681216,
+          "peak_vm_mb": 1684.144128,
+          "rss_mb": 9.355264,
+          "sigma": 0.25,
+          "t": 0.054165447000000005,
+          "vm_mb": 1681.584128
+        }
+      ],
+      "recovery_events": [],
+      "counter_used": false,
+      "sigma_requested": 0.25,
+      "sigma_used": 0.2500000234541651,
+      "certificate_passed": true
+    },
+    {
+      "case": "new-cluster-hep",
+      "solver": "hsolve-adaptive",
+      "probe_events": [],
+      "recovery_events": [],
+      "counter_used": false,
+      "sigma_requested": 0.0,
+      "sigma_used": 0.0,
+      "certificate_passed": true
+    },
+    {
+      "case": "new-near-hep",
+      "solver": "hsolve-adaptive",
+      "probe_events": [
+        {
+          "accepted": false,
+          "event": "checked_requested_shift",
+          "null_pivots": 2,
+          "peak_rss_mb": 47.28832,
+          "peak_vm_mb": 1723.277312,
+          "rss_mb": 31.940608,
+          "sigma": 0.3000188515166385,
+          "t": 0.25704597900000004,
+          "vm_mb": 1704.701952
+        }
+      ],
+      "recovery_events": [],
+      "counter_used": false,
+      "sigma_requested": 0.3000188515166385,
+      "sigma_used": 0.3000188614859032,
+      "certificate_passed": true
+    },
+    {
+      "case": "new-cluster-ghep",
+      "solver": "hsolve-adaptive",
+      "probe_events": [],
+      "recovery_events": [],
+      "counter_used": false,
+      "sigma_requested": 0.0,
+      "sigma_used": 0.0,
+      "certificate_passed": true
+    },
+    {
+      "case": "counter-fallback-memory",
+      "solver": "hsolve-adaptive",
+      "probe_events": [],
+      "recovery_events": [],
+      "counter_used": true,
+      "sigma_requested": 0.0,
+      "sigma_used": 0.0,
+      "certificate_passed": true
+    },
+    {
+      "case": "counter-fallback-factor",
+      "solver": "hsolve-adaptive",
+      "probe_events": [],
+      "recovery_events": [],
+      "counter_used": true,
+      "sigma_requested": 0.0,
+      "sigma_used": 0.0,
+      "certificate_passed": true
+    },
+    {
+      "case": "counter-fallback-allocation",
+      "solver": "hsolve-adaptive",
+      "probe_events": [],
+      "recovery_events": [],
+      "counter_used": true,
+      "sigma_requested": 0.0,
+      "sigma_used": 0.0,
+      "certificate_passed": true
+    },
+    {
+      "case": "backend-result-recovery",
+      "solver": "hsolve-adaptive",
+      "probe_events": [],
+      "recovery_events": [
+        {
+          "attempt_s": 0.22937648000000002,
+          "blr": false,
+          "event": "private_backend_fallback",
+          "peak_rss_mb": 53.22752,
+          "peak_vm_mb": 2782.580736,
+          "reason": "the result was not accepted (1 of 22 pairs above tol)",
+          "rss_mb": 29.126656,
+          "t": 0.341600412,
+          "vm_mb": 2759.143424
+        }
+      ],
+      "counter_used": false,
+      "sigma_requested": 0.0,
+      "sigma_used": 0.0,
+      "certificate_passed": true
+    }
+  ],
+  "modal_work": [
+    {
+      "case": "cycle-hep",
+      "out": "/tmp/os2026-p10-repair.9doyhO/results/raw/p38-v2-cases/cycle-hep/hsolve-adaptive",
+      "solver": "hsolve-adaptive",
+      "inner_calls": 7,
+      "inner_factorizations": 7,
+      "inner_rhs": 126,
+      "requested_pair_sum": 14,
+      "sectors": [
+        {
+          "mode": 0,
+          "period": 7,
+          "n": 32,
+          "requested": 2,
+          "pairs": 2,
+          "success": 1,
+          "factors": 1,
+          "rhs": 18,
+          "seconds": 0.001988882
+        },
+        {
+          "mode": 1,
+          "period": 7,
+          "n": 32,
+          "requested": 2,
+          "pairs": 2,
+          "success": 1,
+          "factors": 1,
+          "rhs": 18,
+          "seconds": 0.00114433
+        },
+        {
+          "mode": 2,
+          "period": 7,
+          "n": 32,
+          "requested": 2,
+          "pairs": 2,
+          "success": 1,
+          "factors": 1,
+          "rhs": 18,
+          "seconds": 0.001055884
+        },
+        {
+          "mode": 3,
+          "period": 7,
+          "n": 32,
+          "requested": 2,
+          "pairs": 2,
+          "success": 1,
+          "factors": 1,
+          "rhs": 18,
+          "seconds": 0.001002686
+        },
+        {
+          "mode": 4,
+          "period": 7,
+          "n": 32,
+          "requested": 2,
+          "pairs": 2,
+          "success": 1,
+          "factors": 1,
+          "rhs": 18,
+          "seconds": 0.000989525
+        },
+        {
+          "mode": 5,
+          "period": 7,
+          "n": 32,
+          "requested": 2,
+          "pairs": 2,
+          "success": 1,
+          "factors": 1,
+          "rhs": 18,
+          "seconds": 0.000973591
+        },
+        {
+          "mode": 6,
+          "period": 7,
+          "n": 32,
+          "requested": 2,
+          "pairs": 2,
+          "success": 1,
+          "factors": 1,
+          "rhs": 18,
+          "seconds": 0.002057072
+        }
+      ]
+    },
+    {
+      "case": "cycle-ghep",
+      "out": "/tmp/os2026-p10-repair.9doyhO/results/raw/p38-v2-cases/cycle-ghep/hsolve-adaptive",
+      "solver": "hsolve-adaptive",
+      "inner_calls": 10,
+      "inner_factorizations": 10,
+      "inner_rhs": 258,
+      "requested_pair_sum": 22,
+      "sectors": [
+        {
+          "mode": 0,
+          "period": 9,
+          "n": 40,
+          "requested": 2,
+          "pairs": 2,
+          "success": 1,
+          "factors": 1,
+          "rhs": 28,
+          "seconds": 0.002523498
+        },
+        {
+          "mode": 1,
+          "period": 9,
+          "n": 40,
+          "requested": 2,
+          "pairs": 2,
+          "success": 1,
+          "factors": 1,
+          "rhs": 28,
+          "seconds": 0.002926176
+        },
+        {
+          "mode": 2,
+          "period": 9,
+          "n": 40,
+          "requested": 2,
+          "pairs": 2,
+          "success": 1,
+          "factors": 1,
+          "rhs": 22,
+          "seconds": 0.001325312
+        },
+        {
+          "mode": 3,
+          "period": 9,
+          "n": 40,
+          "requested": 2,
+          "pairs": 2,
+          "success": 1,
+          "factors": 1,
+          "rhs": 26,
+          "seconds": 0.001491817
+        },
+        {
+          "mode": 4,
+          "period": 9,
+          "n": 40,
+          "requested": 2,
+          "pairs": 2,
+          "success": 1,
+          "factors": 1,
+          "rhs": 28,
+          "seconds": 0.001561098
+        },
+        {
+          "mode": 5,
+          "period": 9,
+          "n": 40,
+          "requested": 2,
+          "pairs": 2,
+          "success": 1,
+          "factors": 1,
+          "rhs": 24,
+          "seconds": 0.001343691
+        },
+        {
+          "mode": 6,
+          "period": 9,
+          "n": 40,
+          "requested": 2,
+          "pairs": 2,
+          "success": 1,
+          "factors": 1,
+          "rhs": 24,
+          "seconds": 0.001354171
+        },
+        {
+          "mode": 7,
+          "period": 9,
+          "n": 40,
+          "requested": 2,
+          "pairs": 2,
+          "success": 1,
+          "factors": 1,
+          "rhs": 26,
+          "seconds": 0.001453661
+        },
+        {
+          "mode": 8,
+          "period": 9,
+          "n": 40,
+          "requested": 2,
+          "pairs": 2,
+          "success": 1,
+          "factors": 1,
+          "rhs": 24,
+          "seconds": 0.003492807
+        },
+        {
+          "mode": 8,
+          "period": 9,
+          "n": 40,
+          "requested": 4,
+          "pairs": 4,
+          "success": 1,
+          "factors": 1,
+          "rhs": 28,
+          "seconds": 0.001655773
+        }
+      ]
+    },
+    {
+      "case": "missing-pair",
+      "out": "/tmp/os2026-p10-repair.9doyhO/results/raw/p38-v2-cases/missing-pair/hsolve-adaptive",
+      "solver": "hsolve-adaptive",
+      "inner_calls": 10,
+      "inner_factorizations": 10,
+      "inner_rhs": 258,
+      "requested_pair_sum": 22,
+      "sectors": [
+        {
+          "mode": 0,
+          "period": 9,
+          "n": 40,
+          "requested": 2,
+          "pairs": 2,
+          "success": 1,
+          "factors": 1,
+          "rhs": 28,
+          "seconds": 0.002640777
+        },
+        {
+          "mode": 1,
+          "period": 9,
+          "n": 40,
+          "requested": 2,
+          "pairs": 2,
+          "success": 1,
+          "factors": 1,
+          "rhs": 28,
+          "seconds": 0.001747919
+        },
+        {
+          "mode": 2,
+          "period": 9,
+          "n": 40,
+          "requested": 2,
+          "pairs": 2,
+          "success": 1,
+          "factors": 1,
+          "rhs": 22,
+          "seconds": 0.001353615
+        },
+        {
+          "mode": 3,
+          "period": 9,
+          "n": 40,
+          "requested": 2,
+          "pairs": 2,
+          "success": 1,
+          "factors": 1,
+          "rhs": 26,
+          "seconds": 0.001525631
+        },
+        {
+          "mode": 4,
+          "period": 9,
+          "n": 40,
+          "requested": 2,
+          "pairs": 2,
+          "success": 1,
+          "factors": 1,
+          "rhs": 28,
+          "seconds": 0.00158936
+        },
+        {
+          "mode": 5,
+          "period": 9,
+          "n": 40,
+          "requested": 2,
+          "pairs": 2,
+          "success": 1,
+          "factors": 1,
+          "rhs": 24,
+          "seconds": 0.001364982
+        },
+        {
+          "mode": 6,
+          "period": 9,
+          "n": 40,
+          "requested": 2,
+          "pairs": 2,
+          "success": 1,
+          "factors": 1,
+          "rhs": 24,
+          "seconds": 0.001360505
+        },
+        {
+          "mode": 7,
+          "period": 9,
+          "n": 40,
+          "requested": 2,
+          "pairs": 2,
+          "success": 1,
+          "factors": 1,
+          "rhs": 26,
+          "seconds": 0.006801006
+        },
+        {
+          "mode": 8,
+          "period": 9,
+          "n": 40,
+          "requested": 2,
+          "pairs": 2,
+          "success": 1,
+          "factors": 1,
+          "rhs": 24,
+          "seconds": 0.001360613
+        },
+        {
+          "mode": 8,
+          "period": 9,
+          "n": 40,
+          "requested": 4,
+          "pairs": 4,
+          "success": 1,
+          "factors": 1,
+          "rhs": 28,
+          "seconds": 0.00159128
+        }
+      ]
+    },
+    {
+      "case": "cycle-sparse-mass",
+      "out": "/tmp/os2026-p10-repair.9doyhO/results/raw/p38-v2-cases/cycle-sparse-mass/hsolve-adaptive",
+      "solver": "hsolve-adaptive",
+      "inner_calls": 7,
+      "inner_factorizations": 7,
+      "inner_rhs": 146,
+      "requested_pair_sum": 18,
+      "sectors": [
+        {
+          "mode": 0,
+          "period": 5,
+          "n": 32,
+          "requested": 2,
+          "pairs": 2,
+          "success": 1,
+          "factors": 1,
+          "rhs": 18,
+          "seconds": 0.005327277
+        },
+        {
+          "mode": 1,
+          "period": 5,
+          "n": 32,
+          "requested": 2,
+          "pairs": 2,
+          "success": 1,
+          "factors": 1,
+          "rhs": 18,
+          "seconds": 0.001203397
+        },
+        {
+          "mode": 2,
+          "period": 5,
+          "n": 32,
+          "requested": 2,
+          "pairs": 2,
+          "success": 1,
+          "factors": 1,
+          "rhs": 18,
+          "seconds": 0.001116938
+        },
+        {
+          "mode": 3,
+          "period": 5,
+          "n": 32,
+          "requested": 2,
+          "pairs": 2,
+          "success": 1,
+          "factors": 1,
+          "rhs": 18,
+          "seconds": 0.001083926
+        },
+        {
+          "mode": 4,
+          "period": 5,
+          "n": 32,
+          "requested": 2,
+          "pairs": 2,
+          "success": 1,
+          "factors": 1,
+          "rhs": 18,
+          "seconds": 0.001087294
+        },
+        {
+          "mode": 0,
+          "period": 5,
+          "n": 32,
+          "requested": 4,
+          "pairs": 4,
+          "success": 1,
+          "factors": 1,
+          "rhs": 28,
+          "seconds": 0.001483435
+        },
+        {
+          "mode": 4,
+          "period": 5,
+          "n": 32,
+          "requested": 4,
+          "pairs": 4,
+          "success": 1,
+          "factors": 1,
+          "rhs": 28,
+          "seconds": 0.004514181
+        }
+      ]
+    },
+    {
+      "case": "cycle-period3",
+      "out": "/tmp/os2026-p10-repair.9doyhO/results/raw/p38-v2-cases/cycle-period3/hsolve-adaptive",
+      "solver": "hsolve-adaptive",
+      "inner_calls": 6,
+      "inner_factorizations": 6,
+      "inner_rhs": 138,
+      "requested_pair_sum": 18,
+      "sectors": [
+        {
+          "mode": 0,
+          "period": 3,
+          "n": 36,
+          "requested": 2,
+          "pairs": 2,
+          "success": 1,
+          "factors": 1,
+          "rhs": 18,
+          "seconds": 0.001867721
+        },
+        {
+          "mode": 1,
+          "period": 3,
+          "n": 36,
+          "requested": 2,
+          "pairs": 2,
+          "success": 1,
+          "factors": 1,
+          "rhs": 18,
+          "seconds": 0.001088195
+        },
+        {
+          "mode": 2,
+          "period": 3,
+          "n": 36,
+          "requested": 2,
+          "pairs": 2,
+          "success": 1,
+          "factors": 1,
+          "rhs": 18,
+          "seconds": 0.001037574
+        },
+        {
+          "mode": 0,
+          "period": 3,
+          "n": 36,
+          "requested": 4,
+          "pairs": 4,
+          "success": 1,
+          "factors": 1,
+          "rhs": 28,
+          "seconds": 0.001380193
+        },
+        {
+          "mode": 1,
+          "period": 3,
+          "n": 36,
+          "requested": 4,
+          "pairs": 4,
+          "success": 1,
+          "factors": 1,
+          "rhs": 28,
+          "seconds": 0.001366177
+        },
+        {
+          "mode": 2,
+          "period": 3,
+          "n": 36,
+          "requested": 4,
+          "pairs": 4,
+          "success": 1,
+          "factors": 1,
+          "rhs": 28,
+          "seconds": 0.001392186
+        }
+      ]
+    },
+    {
+      "case": "small-rods-hep",
+      "out": "/tmp/os2026-p10-repair.9doyhO/results/raw/p38-v2-cases/small-rods-hep/hsolve-adaptive",
+      "solver": "hsolve-adaptive",
+      "inner_calls": 12,
+      "inner_factorizations": 12,
+      "inner_rhs": 348,
+      "requested_pair_sum": 34,
+      "sectors": [
+        {
+          "mode": 0,
+          "period": 7,
+          "n": 60,
+          "requested": 2,
+          "pairs": 2,
+          "success": 1,
+          "factors": 1,
+          "rhs": 28,
+          "seconds": 0.003267653
+        },
+        {
+          "mode": 1,
+          "period": 7,
+          "n": 60,
+          "requested": 2,
+          "pairs": 2,
+          "success": 1,
+          "factors": 1,
+          "rhs": 22,
+          "seconds": 0.001748479
+        },
+        {
+          "mode": 2,
+          "period": 7,
+          "n": 60,
+          "requested": 2,
+          "pairs": 2,
+          "success": 1,
+          "factors": 1,
+          "rhs": 22,
+          "seconds": 0.001661206
+        },
+        {
+          "mode": 3,
+          "period": 7,
+          "n": 60,
+          "requested": 2,
+          "pairs": 2,
+          "success": 1,
+          "factors": 1,
+          "rhs": 28,
+          "seconds": 0.002156218
+        },
+        {
+          "mode": 4,
+          "period": 7,
+          "n": 60,
+          "requested": 2,
+          "pairs": 2,
+          "success": 1,
+          "factors": 1,
+          "rhs": 28,
+          "seconds": 0.002180004
+        },
+        {
+          "mode": 5,
+          "period": 7,
+          "n": 60,
+          "requested": 2,
+          "pairs": 2,
+          "success": 1,
+          "factors": 1,
+          "rhs": 24,
+          "seconds": 0.00185268
+        },
+        {
+          "mode": 6,
+          "period": 7,
+          "n": 60,
+          "requested": 2,
+          "pairs": 2,
+          "success": 1,
+          "factors": 1,
+          "rhs": 24,
+          "seconds": 0.00183614
+        },
+        {
+          "mode": 0,
+          "period": 7,
+          "n": 60,
+          "requested": 4,
+          "pairs": 4,
+          "success": 1,
+          "factors": 1,
+          "rhs": 34,
+          "seconds": 0.012442415
+        },
+        {
+          "mode": 1,
+          "period": 7,
+          "n": 60,
+          "requested": 4,
+          "pairs": 4,
+          "success": 1,
+          "factors": 1,
+          "rhs": 32,
+          "seconds": 0.012389143
+        },
+        {
+          "mode": 2,
+          "period": 7,
+          "n": 60,
+          "requested": 4,
+          "pairs": 4,
+          "success": 1,
+          "factors": 1,
+          "rhs": 36,
+          "seconds": 0.012464359
+        },
+        {
+          "mode": 5,
+          "period": 7,
+          "n": 60,
+          "requested": 4,
+          "pairs": 4,
+          "success": 1,
+          "factors": 1,
+          "rhs": 36,
+          "seconds": 0.002829486
+        },
+        {
+          "mode": 6,
+          "period": 7,
+          "n": 60,
+          "requested": 4,
+          "pairs": 4,
+          "success": 1,
+          "factors": 1,
+          "rhs": 34,
+          "seconds": 0.008703837
+        }
+      ]
+    },
+    {
+      "case": "small-rods-ghep",
+      "out": "/tmp/os2026-p10-repair.9doyhO/results/raw/p38-v2-cases/small-rods-ghep/hsolve-adaptive",
+      "solver": "hsolve-adaptive",
+      "inner_calls": 11,
+      "inner_factorizations": 11,
+      "inner_rhs": 280,
+      "requested_pair_sum": 32,
+      "sectors": [
+        {
+          "mode": 0,
+          "period": 6,
+          "n": 60,
+          "requested": 2,
+          "pairs": 2,
+          "success": 1,
+          "factors": 1,
+          "rhs": 26,
+          "seconds": 0.018643917
+        },
+        {
+          "mode": 1,
+          "period": 6,
+          "n": 60,
+          "requested": 2,
+          "pairs": 2,
+          "success": 1,
+          "factors": 1,
+          "rhs": 24,
+          "seconds": 0.002156676
+        },
+        {
+          "mode": 2,
+          "period": 6,
+          "n": 60,
+          "requested": 2,
+          "pairs": 2,
+          "success": 1,
+          "factors": 1,
+          "rhs": 22,
+          "seconds": 0.001865
+        },
+        {
+          "mode": 3,
+          "period": 6,
+          "n": 60,
+          "requested": 2,
+          "pairs": 2,
+          "success": 1,
+          "factors": 1,
+          "rhs": 24,
+          "seconds": 0.005382591
+        },
+        {
+          "mode": 4,
+          "period": 6,
+          "n": 60,
+          "requested": 2,
+          "pairs": 2,
+          "success": 1,
+          "factors": 1,
+          "rhs": 20,
+          "seconds": 0.001568642
+        },
+        {
+          "mode": 5,
+          "period": 6,
+          "n": 60,
+          "requested": 2,
+          "pairs": 2,
+          "success": 1,
+          "factors": 1,
+          "rhs": 20,
+          "seconds": 0.002559762
+        },
+        {
+          "mode": 0,
+          "period": 6,
+          "n": 60,
+          "requested": 4,
+          "pairs": 4,
+          "success": 1,
+          "factors": 1,
+          "rhs": 28,
+          "seconds": 0.002359678
+        },
+        {
+          "mode": 1,
+          "period": 6,
+          "n": 60,
+          "requested": 4,
+          "pairs": 4,
+          "success": 1,
+          "factors": 1,
+          "rhs": 30,
+          "seconds": 0.002547535
+        },
+        {
+          "mode": 2,
+          "period": 6,
+          "n": 60,
+          "requested": 4,
+          "pairs": 4,
+          "success": 1,
+          "factors": 1,
+          "rhs": 30,
+          "seconds": 0.002572363
+        },
+        {
+          "mode": 4,
+          "period": 6,
+          "n": 60,
+          "requested": 4,
+          "pairs": 4,
+          "success": 1,
+          "factors": 1,
+          "rhs": 30,
+          "seconds": 0.002512367
+        },
+        {
+          "mode": 5,
+          "period": 6,
+          "n": 60,
+          "requested": 4,
+          "pairs": 4,
+          "success": 1,
+          "factors": 1,
+          "rhs": 26,
+          "seconds": 0.002178403
+        }
+      ]
+    },
+    {
+      "case": "yee-photonic-rods-1e4",
+      "out": "/tmp/os2026-p10-repair.9doyhO/results/raw/p38-v2-main/yee-photonic-rods-1e4/hsolve-adaptive",
+      "solver": "hsolve-adaptive",
+      "inner_calls": 20,
+      "inner_factorizations": 20,
+      "inner_rhs": 550,
+      "requested_pair_sum": 50,
+      "sectors": [
+        {
+          "mode": 0,
+          "period": 15,
+          "n": 675,
+          "requested": 2,
+          "pairs": 2,
+          "success": 1,
+          "factors": 1,
+          "rhs": 30,
+          "seconds": 0.013481033
+        },
+        {
+          "mode": 1,
+          "period": 15,
+          "n": 675,
+          "requested": 2,
+          "pairs": 2,
+          "success": 1,
+          "factors": 1,
+          "rhs": 22,
+          "seconds": 0.009842544
+        },
+        {
+          "mode": 2,
+          "period": 15,
+          "n": 675,
+          "requested": 2,
+          "pairs": 2,
+          "success": 1,
+          "factors": 1,
+          "rhs": 22,
+          "seconds": 0.009509435
+        },
+        {
+          "mode": 3,
+          "period": 15,
+          "n": 675,
+          "requested": 2,
+          "pairs": 2,
+          "success": 1,
+          "factors": 1,
+          "rhs": 36,
+          "seconds": 0.012827527
+        },
+        {
+          "mode": 4,
+          "period": 15,
+          "n": 675,
+          "requested": 2,
+          "pairs": 2,
+          "success": 1,
+          "factors": 1,
+          "rhs": 24,
+          "seconds": 0.009944875
+        },
+        {
+          "mode": 5,
+          "period": 15,
+          "n": 675,
+          "requested": 2,
+          "pairs": 2,
+          "success": 1,
+          "factors": 1,
+          "rhs": 22,
+          "seconds": 0.009460888
+        },
+        {
+          "mode": 6,
+          "period": 15,
+          "n": 675,
+          "requested": 2,
+          "pairs": 2,
+          "success": 1,
+          "factors": 1,
+          "rhs": 20,
+          "seconds": 0.008959039
+        },
+        {
+          "mode": 7,
+          "period": 15,
+          "n": 675,
+          "requested": 2,
+          "pairs": 2,
+          "success": 1,
+          "factors": 1,
+          "rhs": 20,
+          "seconds": 0.008960417
+        },
+        {
+          "mode": 8,
+          "period": 15,
+          "n": 675,
+          "requested": 2,
+          "pairs": 2,
+          "success": 1,
+          "factors": 1,
+          "rhs": 20,
+          "seconds": 0.008902094
+        },
+        {
+          "mode": 9,
+          "period": 15,
+          "n": 675,
+          "requested": 2,
+          "pairs": 2,
+          "success": 1,
+          "factors": 1,
+          "rhs": 22,
+          "seconds": 0.009382272
+        },
+        {
+          "mode": 10,
+          "period": 15,
+          "n": 675,
+          "requested": 2,
+          "pairs": 2,
+          "success": 1,
+          "factors": 1,
+          "rhs": 22,
+          "seconds": 0.009439289
+        },
+        {
+          "mode": 11,
+          "period": 15,
+          "n": 675,
+          "requested": 2,
+          "pairs": 2,
+          "success": 1,
+          "factors": 1,
+          "rhs": 24,
+          "seconds": 0.010057129
+        },
+        {
+          "mode": 12,
+          "period": 15,
+          "n": 675,
+          "requested": 2,
+          "pairs": 2,
+          "success": 1,
+          "factors": 1,
+          "rhs": 34,
+          "seconds": 0.012400893
+        },
+        {
+          "mode": 13,
+          "period": 15,
+          "n": 675,
+          "requested": 2,
+          "pairs": 2,
+          "success": 1,
+          "factors": 1,
+          "rhs": 18,
+          "seconds": 0.008439354
+        },
+        {
+          "mode": 14,
+          "period": 15,
+          "n": 675,
+          "requested": 2,
+          "pairs": 2,
+          "success": 1,
+          "factors": 1,
+          "rhs": 24,
+          "seconds": 0.010027875
+        },
+        {
+          "mode": 0,
+          "period": 15,
+          "n": 675,
+          "requested": 4,
+          "pairs": 4,
+          "success": 1,
+          "factors": 1,
+          "rhs": 40,
+          "seconds": 0.014236781
+        },
+        {
+          "mode": 1,
+          "period": 15,
+          "n": 675,
+          "requested": 4,
+          "pairs": 4,
+          "success": 1,
+          "factors": 1,
+          "rhs": 32,
+          "seconds": 0.012171593
+        },
+        {
+          "mode": 2,
+          "period": 15,
+          "n": 675,
+          "requested": 4,
+          "pairs": 4,
+          "success": 1,
+          "factors": 1,
+          "rhs": 42,
+          "seconds": 0.014569707
+        },
+        {
+          "mode": 13,
+          "period": 15,
+          "n": 675,
+          "requested": 4,
+          "pairs": 4,
+          "success": 1,
+          "factors": 1,
+          "rhs": 40,
+          "seconds": 0.014055928
+        },
+        {
+          "mode": 14,
+          "period": 15,
+          "n": 675,
+          "requested": 4,
+          "pairs": 4,
+          "success": 1,
+          "factors": 1,
+          "rhs": 36,
+          "seconds": 0.01310977
+        }
+      ]
+    }
+  ],
+  "regression": {
+    "summary": {
+      "variant": "adaptive",
+      "library_sha256": "9680b5db16aa6751d34aeeb3b6c752253daaf4ccbf04dfa902391fc9c91204c6",
+      "ordinary_targets": 64,
+      "invocations": 71,
+      "success": true
+    },
+    "totals": {
+      "listed": 1123,
+      "passed": 1104,
+      "skipped": 16,
+      "disabled": 3
+    },
+    "failures": [],
+    "skips": [
+      {
+        "test": "test_asmkern_fix:AsmkernFixShortTeam.ParallelRoutesComputeEveryBlockUnderAThreadLimit",
+        "reasons": [
+          {
+            "message": "/tmp/os2026-p10-repair.9doyhO/tests/cpp/test_asmkern_fix.cpp:178\nneeds OMP_THREAD_LIMIT < 8 (ctest test_asmkern_fix.ShortTeamUnderThreadLimit2)\n"
+          }
+        ]
+      },
+      {
+        "test": "test_gpu:GpuAffinityBound.EngineThreadsMayUseEveryPlace",
+        "reasons": [
+          {
+            "message": "/tmp/os2026-p10-repair.9doyhO/tests/cpp/test_gpu.cpp:239\nruns as test_gpu.AffinityUnderOmpProcBind (OMP_PROC_BIND=close OMP_PLACES=cores)\n"
+          }
+        ]
+      },
+      {
+        "test": "test_gpu:GpuEngine.DescribesTheDevice",
+        "reasons": [
+          {
+            "message": "/tmp/os2026-p10-repair.9doyhO/tests/cpp/test_gpu.cpp:336\nset HSOLVE_TEST_GPU_DEVICE to run GPU tests\n"
+          }
+        ]
+      },
+      {
+        "test": "test_gpu:GpuEngine.MatchesTheCpuBlas",
+        "reasons": [
+          {
+            "message": "/tmp/os2026-p10-repair.9doyhO/tests/cpp/test_gpu.cpp:354\nset HSOLVE_TEST_GPU_DEVICE to run GPU tests\n"
+          }
+        ]
+      },
+      {
+        "test": "test_gpu:GpuEngine.BetaZeroNeverReadsC",
+        "reasons": [
+          {
+            "message": "/tmp/os2026-p10-repair.9doyhO/tests/cpp/test_gpu.cpp:390\nset HSOLVE_TEST_GPU_DEVICE to run GPU tests\n"
+          }
+        ]
+      },
+      {
+        "test": "test_gpu:GpuEngine.GpuOnlyCallsAreBitwiseReproducible",
+        "reasons": [
+          {
+            "message": "/tmp/os2026-p10-repair.9doyhO/tests/cpp/test_gpu.cpp:408\nset HSOLVE_TEST_GPU_DEVICE to run GPU tests\n"
+          }
+        ]
+      },
+      {
+        "test": "test_gpu:GpuEngine.ChunksLargerThanTheStagingRingAreCapped",
+        "reasons": [
+          {
+            "message": "/tmp/os2026-p10-repair.9doyhO/tests/cpp/test_gpu.cpp:426\nset HSOLVE_TEST_GPU_DEVICE to run GPU tests\n"
+          }
+        ]
+      },
+      {
+        "test": "test_gpu:GpuEngine.ModelDecidesWhatIsOffloaded",
+        "reasons": [
+          {
+            "message": "/tmp/os2026-p10-repair.9doyhO/tests/cpp/test_gpu.cpp:456\nset HSOLVE_TEST_GPU_DEVICE to run GPU tests\n"
+          }
+        ]
+      },
+      {
+        "test": "test_gpu:GpuEngine.ConcurrentCallersAreServedOrDeclined",
+        "reasons": [
+          {
+            "message": "/tmp/os2026-p10-repair.9doyhO/tests/cpp/test_gpu.cpp:479\nset HSOLVE_TEST_GPU_DEVICE to run GPU tests\n"
+          }
+        ]
+      },
+      {
+        "test": "test_gpu:GpuEngine.AFailedTileIsRecomputedOnTheCpu",
+        "reasons": [
+          {
+            "message": "/tmp/os2026-p10-repair.9doyhO/tests/cpp/test_gpu.cpp:515\nset HSOLVE_TEST_GPU_DEVICE to run GPU tests\n"
+          }
+        ]
+      },
+      {
+        "test": "test_gpu_hook:GpuHook.WithoutTheGpuModuleTheReportSaysWhy",
+        "reasons": [
+          {
+            "message": "/tmp/os2026-p10-repair.9doyhO/tests/cpp/test_gpu_hook.cpp:247\nbuilt with the GPU module (an HSOLVE_GPU=OFF build runs this test)\n"
+          }
+        ]
+      },
+      {
+        "test": "test_ops_kernels:OpsKernelPaths/0.UnavailablePathIsRefusedAtConstruction",
+        "reasons": [
+          {
+            "message": "/tmp/os2026-p10-repair.9doyhO/tests/cpp/test_ops_kernels.cpp:234\nAVX-512 available here\n"
+          }
+        ]
+      },
+      {
+        "test": "test_ops_kernels:OpsKernelPaths/1.UnavailablePathIsRefusedAtConstruction",
+        "reasons": [
+          {
+            "message": "/tmp/os2026-p10-repair.9doyhO/tests/cpp/test_ops_kernels.cpp:234\nAVX-512 available here\n"
+          }
+        ]
+      },
+      {
+        "test": "short-team:AsmkernFixShortTeam.ParallelRoutesAreAccurateOnAFullTeam",
+        "reasons": [
+          {
+            "message": "/tmp/os2026-p10-repair.9doyhO/tests/cpp/test_asmkern_fix.cpp:186\nthe runtime forms no team of 8\n"
+          }
+        ]
+      },
+      {
+        "test": "mpi-ranks1:MpiSessionMemory.HelpersDropWhatTheyHold",
+        "reasons": [
+          {
+            "message": "/tmp/os2026-p10-repair.9doyhO/tests/cpp/mpi/test_mpi_session.cpp:87\nneeds two helpers\n"
+          }
+        ]
+      },
+      {
+        "test": "mpi-ranks2:MpiSessionMemory.HelpersDropWhatTheyHold",
+        "reasons": [
+          {
+            "message": "/tmp/os2026-p10-repair.9doyhO/tests/cpp/mpi/test_mpi_session.cpp:87\nneeds two helpers\n"
+          }
+        ]
+      }
+    ]
+  },
+  "production_hashes": {
+    "/tmp/os2026-p10-repair.9doyhO/build/release/hsolve": "045409af0138ab363106ab5d7483260b69a260ed2212bbbbbc29becb70bfc377",
+    "/tmp/os2026-p10-repair.9doyhO/build/release/hsolve-mpi": "d46e2a435891f138f64acb679cda509285a6cc308756f2158fe461b4af2b6648",
+    "/tmp/os2026-p10-repair.9doyhO/build/release/libhsolve.a": "9b5e0b567830e5f22f5c01796f1084f7ea49f5860be2aa89ac3bd8312b522fd1",
+    "/tmp/os2026-p10-repair.9doyhO/build/release/libhsolve_blashook.so": "150ae2ed9beb3a06f26ee6b6670877e3048d2513d09441b122257a70fff09056"
+  },
+  "production_source_sha256": "f40ca695157d9334626b7928837716305c30439d257e0636ce9681e838d122d4",
+  "builds": {
+    "control": {
+      "production_before": {
+        "/tmp/os2026-p10-repair.9doyhO/build/release/hsolve": "045409af0138ab363106ab5d7483260b69a260ed2212bbbbbc29becb70bfc377",
+        "/tmp/os2026-p10-repair.9doyhO/build/release/hsolve-mpi": "d46e2a435891f138f64acb679cda509285a6cc308756f2158fe461b4af2b6648",
+        "/tmp/os2026-p10-repair.9doyhO/build/release/libhsolve.a": "9b5e0b567830e5f22f5c01796f1084f7ea49f5860be2aa89ac3bd8312b522fd1",
+        "/tmp/os2026-p10-repair.9doyhO/build/release/libhsolve_blashook.so": "150ae2ed9beb3a06f26ee6b6670877e3048d2513d09441b122257a70fff09056"
+      },
+      "production_after": {
+        "/tmp/os2026-p10-repair.9doyhO/build/release/hsolve": "045409af0138ab363106ab5d7483260b69a260ed2212bbbbbc29becb70bfc377",
+        "/tmp/os2026-p10-repair.9doyhO/build/release/hsolve-mpi": "d46e2a435891f138f64acb679cda509285a6cc308756f2158fe461b4af2b6648",
+        "/tmp/os2026-p10-repair.9doyhO/build/release/libhsolve.a": "9b5e0b567830e5f22f5c01796f1084f7ea49f5860be2aa89ac3bd8312b522fd1",
+        "/tmp/os2026-p10-repair.9doyhO/build/release/libhsolve_blashook.so": "150ae2ed9beb3a06f26ee6b6670877e3048d2513d09441b122257a70fff09056"
+      },
+      "experimental": {
+        "hsolve-control": "a163dd5109913aeaef3bef5583c5d05f70f6f19818b30a733b33024e909478ff",
+        "libhsolve-control.a": "c6e51fa04a5a20f44c6c3df3219a02fc96b61cc5b7d77ad8b3d3d507786115a1",
+        "hsolve-base": "045409af0138ab363106ab5d7483260b69a260ed2212bbbbbc29becb70bfc377",
+        "hsolve-native": "b781f9f4c2afd3d5aad89b86fb29c18bc81cab97f231fd51184d65c068660614"
+      },
+      "input_library": {
+        "path": "/tmp/os2026-p37/libhsolve-control.a",
+        "sha256": "f7125eca86475b5f1f8c20c8e6fd8e74431bdc3e753127faf6dd46aef70d3528"
+      },
+      "sources": {
+        "definite.cpp": "2dfc9b9a298e304e0abbb36e8cf2b2adc94b25bd2b0d6479ff6813ee6ba46706",
+        "partial_bloch.hpp": "5238b5a1d6f5b3fe57a7cc3e39490ef4c344556e7024d5a4037b61cf4b62359f"
+      }
+    },
+    "partial": {
+      "production_before": {
+        "/tmp/os2026-p10-repair.9doyhO/build/release/hsolve": "045409af0138ab363106ab5d7483260b69a260ed2212bbbbbc29becb70bfc377",
+        "/tmp/os2026-p10-repair.9doyhO/build/release/hsolve-mpi": "d46e2a435891f138f64acb679cda509285a6cc308756f2158fe461b4af2b6648",
+        "/tmp/os2026-p10-repair.9doyhO/build/release/libhsolve.a": "9b5e0b567830e5f22f5c01796f1084f7ea49f5860be2aa89ac3bd8312b522fd1",
+        "/tmp/os2026-p10-repair.9doyhO/build/release/libhsolve_blashook.so": "150ae2ed9beb3a06f26ee6b6670877e3048d2513d09441b122257a70fff09056"
+      },
+      "production_after": {
+        "/tmp/os2026-p10-repair.9doyhO/build/release/hsolve": "045409af0138ab363106ab5d7483260b69a260ed2212bbbbbc29becb70bfc377",
+        "/tmp/os2026-p10-repair.9doyhO/build/release/hsolve-mpi": "d46e2a435891f138f64acb679cda509285a6cc308756f2158fe461b4af2b6648",
+        "/tmp/os2026-p10-repair.9doyhO/build/release/libhsolve.a": "9b5e0b567830e5f22f5c01796f1084f7ea49f5860be2aa89ac3bd8312b522fd1",
+        "/tmp/os2026-p10-repair.9doyhO/build/release/libhsolve_blashook.so": "150ae2ed9beb3a06f26ee6b6670877e3048d2513d09441b122257a70fff09056"
+      },
+      "experimental": {
+        "hsolve-partial": "218feb345c0d2b85af59060705fec9624d1f11aa53c9865e2e5865303f52f6e6",
+        "libhsolve-partial.a": "1080b03790b63f5dc3829a2921d34dac963cad68d2258d71588c53bcabedb5f5",
+        "hsolve-base": "045409af0138ab363106ab5d7483260b69a260ed2212bbbbbc29becb70bfc377",
+        "hsolve-native": "b781f9f4c2afd3d5aad89b86fb29c18bc81cab97f231fd51184d65c068660614"
+      },
+      "input_library": {
+        "path": "/tmp/os2026-p37/libhsolve-control.a",
+        "sha256": "f7125eca86475b5f1f8c20c8e6fd8e74431bdc3e753127faf6dd46aef70d3528"
+      },
+      "sources": {
+        "definite.cpp": "2dfc9b9a298e304e0abbb36e8cf2b2adc94b25bd2b0d6479ff6813ee6ba46706",
+        "partial_bloch.hpp": "5238b5a1d6f5b3fe57a7cc3e39490ef4c344556e7024d5a4037b61cf4b62359f"
+      }
+    },
+    "adaptive": {
+      "production_before": {
+        "/tmp/os2026-p10-repair.9doyhO/build/release/hsolve": "045409af0138ab363106ab5d7483260b69a260ed2212bbbbbc29becb70bfc377",
+        "/tmp/os2026-p10-repair.9doyhO/build/release/hsolve-mpi": "d46e2a435891f138f64acb679cda509285a6cc308756f2158fe461b4af2b6648",
+        "/tmp/os2026-p10-repair.9doyhO/build/release/libhsolve.a": "9b5e0b567830e5f22f5c01796f1084f7ea49f5860be2aa89ac3bd8312b522fd1",
+        "/tmp/os2026-p10-repair.9doyhO/build/release/libhsolve_blashook.so": "150ae2ed9beb3a06f26ee6b6670877e3048d2513d09441b122257a70fff09056"
+      },
+      "production_after": {
+        "/tmp/os2026-p10-repair.9doyhO/build/release/hsolve": "045409af0138ab363106ab5d7483260b69a260ed2212bbbbbc29becb70bfc377",
+        "/tmp/os2026-p10-repair.9doyhO/build/release/hsolve-mpi": "d46e2a435891f138f64acb679cda509285a6cc308756f2158fe461b4af2b6648",
+        "/tmp/os2026-p10-repair.9doyhO/build/release/libhsolve.a": "9b5e0b567830e5f22f5c01796f1084f7ea49f5860be2aa89ac3bd8312b522fd1",
+        "/tmp/os2026-p10-repair.9doyhO/build/release/libhsolve_blashook.so": "150ae2ed9beb3a06f26ee6b6670877e3048d2513d09441b122257a70fff09056"
+      },
+      "experimental": {
+        "hsolve-adaptive": "99f655c58fb35642dedfc8737c406fe9d27ef014df977f4b1c21c778ad18bdc4",
+        "libhsolve-adaptive.a": "9680b5db16aa6751d34aeeb3b6c752253daaf4ccbf04dfa902391fc9c91204c6",
+        "hsolve-base": "045409af0138ab363106ab5d7483260b69a260ed2212bbbbbc29becb70bfc377",
+        "hsolve-native": "b781f9f4c2afd3d5aad89b86fb29c18bc81cab97f231fd51184d65c068660614"
+      },
+      "input_library": {
+        "path": "/tmp/os2026-p37/libhsolve-control.a",
+        "sha256": "f7125eca86475b5f1f8c20c8e6fd8e74431bdc3e753127faf6dd46aef70d3528"
+      },
+      "sources": {
+        "definite_v2.cpp": "fc1bf033880ee36c0159dc8956ae624113d15a01ed2fcdc14aabaf15579c0c3f",
+        "adaptive_bloch.hpp": "95897b4a431d603b69c51685f3ecb1953ca2d44126348399a5d6df1f97df5ed9"
+      }
+    }
+  },
+  "monitor": {
+    "returncode": 75,
+    "performance_usable": false,
+    "benchmark_started": false,
+    "elapsed_s": 181.02717813197523,
+    "reason": "No 60-second stable idle window within 180 seconds",
+    "criterion": "Reject >=0.8 target CPU or >=2 external CPUs globally; require 60 idle samples before launch."
+  },
+  "qualified_cases": {},
+  "performance": {},
+  "references": [],
+  "guards": {
+    "structure-guard.json": {
+      "cmd": [
+        "python",
+        "-u",
+        "/tmp/os2026-p38/inspect_structure.py"
+      ],
+      "returncode": 0,
+      "killed": null,
+      "wall_s": 1.119,
+      "peak_rss_gib": 0.071,
+      "peak_sampled_gib": 0.062,
+      "cpu_s": 1.076,
+      "cores": "8-15",
+      "threads": 8,
+      "mem_limit_gib": 12.0,
+      "exclusive": false
+    },
+    "build-guard.json": {
+      "cmd": [
+        "bash",
+        "-c",
+        "python -u /tmp/os2026-p38/build.py control && python -u /tmp/os2026-p38/build.py partial"
+      ],
+      "returncode": 0,
+      "killed": null,
+      "wall_s": 26.016,
+      "peak_rss_gib": 0.352,
+      "peak_sampled_gib": 0.343,
+      "cpu_s": 26.466,
+      "cores": "8-15",
+      "threads": 8,
+      "mem_limit_gib": 12.0,
+      "exclusive": false
+    },
+    "smoke-guard.json": {
+      "cmd": [
+        "python",
+        "-u",
+        "/tmp/os2026-p38/compare.py",
+        "--solvers",
+        "hsolve-control,hsolve-partial",
+        "--reps",
+        "1",
+        "--timeout",
+        "120",
+        "--cores",
+        "8-15",
+        "--mem-gb",
+        "12",
+        "--root",
+        "/share/home/linzihan/os2026/data",
+        "--tag",
+        "p38-smoke",
+        "--out-dir",
+        "/tmp/os2026-p38",
+        "yee-photonic-rods-1e4",
+        "yee-photonic-spheres-1e4",
+        "yee-bloch-1e4"
+      ],
+      "returncode": 0,
+      "killed": null,
+      "wall_s": 6.701,
+      "peak_rss_gib": 0.401,
+      "peak_sampled_gib": 0.401,
+      "cpu_s": 46.122,
+      "cores": "8-15",
+      "threads": 8,
+      "mem_limit_gib": 12.0,
+      "exclusive": false
+    },
+    "prepare-guard.json": {
+      "cmd": [
+        "python",
+        "-u",
+        "/tmp/os2026-p38/prepare_cases.py"
+      ],
+      "returncode": 0,
+      "killed": null,
+      "wall_s": 1.369,
+      "peak_rss_gib": 0.067,
+      "peak_sampled_gib": 0.067,
+      "cpu_s": 7.714,
+      "cores": "8-15",
+      "threads": 8,
+      "mem_limit_gib": 12.0,
+      "exclusive": false
+    },
+    "cases-guard.json": {
+      "cmd": [
+        "python",
+        "-u",
+        "/tmp/os2026-p38/compare.py",
+        "--solvers",
+        "hsolve-control,hsolve-partial",
+        "--reps",
+        "1",
+        "--timeout",
+        "60",
+        "--cores",
+        "8-15",
+        "--mem-gb",
+        "12",
+        "--root",
+        "/tmp/os2026-p38/data",
+        "--tag",
+        "p38-cases",
+        "--out-dir",
+        "/tmp/os2026-p38",
+        "cycle-hep",
+        "cycle-ghep",
+        "broken-a",
+        "broken-b",
+        "explicit-method",
+        "certificate-off",
+        "missing-pair",
+        "cycle-sparse-mass",
+        "cycle-period3",
+        "small-rods-hep",
+        "small-rods-ghep"
+      ],
+      "returncode": 0,
+      "killed": null,
+      "wall_s": 5.423,
+      "peak_rss_gib": 0.127,
+      "peak_sampled_gib": 0.127,
+      "cpu_s": 25.559,
+      "cores": "8-15",
+      "threads": 8,
+      "mem_limit_gib": 12.0,
+      "exclusive": false
+    },
+    "build-v2-guard.json": {
+      "cmd": [
+        "python",
+        "-u",
+        "/tmp/os2026-p38/build_v2.py",
+        "adaptive"
+      ],
+      "returncode": 0,
+      "killed": null,
+      "wall_s": 13.157,
+      "peak_rss_gib": 0.349,
+      "peak_sampled_gib": 0.34,
+      "cpu_s": 13.445,
+      "cores": "8-15",
+      "threads": 8,
+      "mem_limit_gib": 12.0,
+      "exclusive": false
+    },
+    "diagnostic-guard.json": {
+      "cmd": [
+        "python",
+        "-u",
+        "/tmp/os2026-p38/diagnostics.py"
+      ],
+      "returncode": 0,
+      "killed": null,
+      "wall_s": 156.758,
+      "peak_rss_gib": 0.653,
+      "peak_sampled_gib": 0.556,
+      "cpu_s": 1159.246,
+      "cores": "8-15",
+      "threads": 8,
+      "mem_limit_gib": 12.0,
+      "exclusive": false
+    },
+    "full-guard.json": {
+      "cmd": [
+        "python",
+        "-u",
+        "/tmp/os2026-p38/full_regression.py",
+        "adaptive"
+      ],
+      "returncode": 0,
+      "killed": null,
+      "wall_s": 213.555,
+      "peak_rss_gib": 0.407,
+      "peak_sampled_gib": 0.407,
+      "cpu_s": 432.848,
+      "cores": "8-15",
+      "threads": 8,
+      "mem_limit_gib": 12.0,
+      "exclusive": false
+    }
+  },
+  "caveats": [
+    "Shared-core diagnostic times are not performance evidence.",
+    "Only candidate construction changes; final original-pencil residual/rank checks and exact inertia certification remain mandatory.",
+    "Sector values decide where to request candidates, not certified spectral exclusion. Missing pairs use the original driver recovery.",
+    "Outer factor statistics exclude inner sector solves; their costs remain in parent time_total_s/time_iterate_s and detailed stderr records.",
+    "The two physical photonic inputs have incomplete external references.",
+    "No sparse matrix is densified by the solver. Dense full-spectrum reference is used only for new test matrices of order <=420.",
+    "Frozen private native libraries require previous P33-P37 dependencies; production P29 remains unchanged."
+  ],
+  "input_hashes": {
+    "/tmp/os2026-p35/large-data/cases/large-complex-ghep/A.npz": {
+      "size": 16812002,
+      "sha256": "9c1abde05fefe2f410d7025a16e78a278d2f07e78ea836623b79ca3018982b9e"
+    },
+    "/tmp/os2026-p35/large-data/cases/large-complex-ghep/B.npz": {
+      "size": 3452685,
+      "sha256": "0f9ff0e2690557082a1b5da98f5b2fc7f2f1f47f14540503f8ffa1a0850dfd1d"
+    },
+    "/tmp/os2026-p35/large-data/cases/large-complex-ghep/config.json": {
+      "size": 94,
+      "sha256": "f5ede7a130b5e193d231863ce9d046c8d5d3a9fd20b05e69a93d17d391565a04"
+    },
+    "/tmp/os2026-p35/large-data/cases/large-complex-ghep/meta.json": {
+      "size": 462,
+      "sha256": "b2f4ba122cd2ef3bbd2795064e2d7350045f284f026959800ba4908619d06bdf"
+    },
+    "/tmp/os2026-p35/large-data/cases/large-complex-hep/A.npz": {
+      "size": 13734639,
+      "sha256": "d753919d57513106373599d6e0e11a9f9b7a87b1310fed4b6bd0d7cb1fae433c"
+    },
+    "/tmp/os2026-p35/large-data/cases/large-complex-hep/config.json": {
+      "size": 93,
+      "sha256": "ae0ed51fec2666549a9f5f5841f255ac827d0eadcc882fdfe0d71b804a0c9ad1"
+    },
+    "/tmp/os2026-p35/large-data/cases/large-complex-hep/meta.json": {
+      "size": 440,
+      "sha256": "6f262b4c35952e77459ad5a03de8085aace722c0cbd39fa6c3d3167f1eed8980"
+    },
+    "/tmp/os2026-p35/large-data/refs/large-complex-ghep/eigenvalues.npy": {
+      "size": 524416,
+      "sha256": "41240f18fb82b50fce57cd6ff9cd68ee9a08187111fc22c3a6cdbf023a2824ac"
+    },
+    "/tmp/os2026-p35/large-data/refs/large-complex-ghep/ref.json": {
+      "size": 213,
+      "sha256": "ec7c3d7d4aaf650cc0264413f048191072bcbb37d472fee2c7ea14ddc97580d7"
+    },
+    "/tmp/os2026-p35/large-data/refs/large-complex-hep/eigenvalues.npy": {
+      "size": 524416,
+      "sha256": "819c6d844f32ff7c66e5f2b81ececd6e79e28912b1679a4b777febf7e99d3ba6"
+    },
+    "/tmp/os2026-p35/large-data/refs/large-complex-hep/ref.json": {
+      "size": 213,
+      "sha256": "ec7c3d7d4aaf650cc0264413f048191072bcbb37d472fee2c7ea14ddc97580d7"
+    },
+    "/tmp/os2026-p33/accepted-data/cases/accepted-ghep-large/A.npz": {
+      "size": 46161,
+      "sha256": "64ec72e015166b64629c06804bed3b087b85437e75e0ecb0750fb1de234684d3"
+    },
+    "/tmp/os2026-p33/accepted-data/cases/accepted-ghep-large/B.npz": {
+      "size": 15995,
+      "sha256": "488e70b1d7b994055a53c968d4b48c4fe6d9434c349ec31587fed274f0413932"
+    },
+    "/tmp/os2026-p33/accepted-data/cases/accepted-ghep-large/config.json": {
+      "size": 92,
+      "sha256": "6d0ce4789ab582f7a24ffe859798de638d9bdea682883603fbca14d1cd112876"
+    },
+    "/tmp/os2026-p33/accepted-data/cases/accepted-ghep-large/meta.json": {
+      "size": 514,
+      "sha256": "da6c0fa86e7ffed9ee9c89501676c7bc5747eb3dcba1b9f28ab622f2e653ab88"
+    },
+    "/tmp/os2026-p33/accepted-data/cases/accepted-ghep-small/A.npz": {
+      "size": 46087,
+      "sha256": "962fa57d1ac3c4c21deedc37de0aab4c6702b638d2ed47f348d9549f8b1396d9"
+    },
+    "/tmp/os2026-p33/accepted-data/cases/accepted-ghep-small/B.npz": {
+      "size": 15975,
+      "sha256": "0fc0e637cea339e7af7b531229e27c1d3fb80aa13154272e5db4839a01636d41"
+    },
+    "/tmp/os2026-p33/accepted-data/cases/accepted-ghep-small/config.json": {
+      "size": 92,
+      "sha256": "6d0ce4789ab582f7a24ffe859798de638d9bdea682883603fbca14d1cd112876"
+    },
+    "/tmp/os2026-p33/accepted-data/cases/accepted-ghep-small/meta.json": {
+      "size": 515,
+      "sha256": "37d0d99e64961f20fc04dba4e428ce895528b87df2d429b8b8c7f419532b0bc7"
+    },
+    "/tmp/os2026-p33/accepted-data/cases/accepted-hep-large/A.npz": {
+      "size": 45316,
+      "sha256": "d07fcf0499c72ef82de7e2ad9764888d3f11df330cd1b39bfff18a30b62efcb9"
+    },
+    "/tmp/os2026-p33/accepted-data/cases/accepted-hep-large/config.json": {
+      "size": 91,
+      "sha256": "971e1dab0742c9cdd1632d15f3e923b59ba6f9ab5aa5264ada1c852edf9e14a3"
+    },
+    "/tmp/os2026-p33/accepted-data/cases/accepted-hep-large/meta.json": {
+      "size": 494,
+      "sha256": "c5c1d5815e734bfa74e36c0469e3e1bc96852a18ba6db4f1ff10188f5bfa28e6"
+    },
+    "/tmp/os2026-p33/accepted-data/cases/accepted-hep-small/A.npz": {
+      "size": 45256,
+      "sha256": "5a4d9213e208e977d714c87976b75aa19411513b66abf3cc2e544024caeee974"
+    },
+    "/tmp/os2026-p33/accepted-data/cases/accepted-hep-small/config.json": {
+      "size": 91,
+      "sha256": "971e1dab0742c9cdd1632d15f3e923b59ba6f9ab5aa5264ada1c852edf9e14a3"
+    },
+    "/tmp/os2026-p33/accepted-data/cases/accepted-hep-small/meta.json": {
+      "size": 495,
+      "sha256": "e1ba3cfe3a95e885dff85b12409eb0a1212ab1abd7c87781af3145f70096950d"
+    },
+    "/tmp/os2026-p33/accepted-data/refs/accepted-ghep-large/eigenvalues.npy": {
+      "size": 32896,
+      "sha256": "a736b29eff52210e3ed38cbed50d0bdf618a7e330c8d4a076259b8f033d70bfb"
+    },
+    "/tmp/os2026-p33/accepted-data/refs/accepted-ghep-large/ref.json": {
+      "size": 239,
+      "sha256": "3f7a4b0239861015fa057757544ee6015cdc6c93592725cbc8f5fa15bf5a9c12"
+    },
+    "/tmp/os2026-p33/accepted-data/refs/accepted-ghep-small/eigenvalues.npy": {
+      "size": 32896,
+      "sha256": "a736b29eff52210e3ed38cbed50d0bdf618a7e330c8d4a076259b8f033d70bfb"
+    },
+    "/tmp/os2026-p33/accepted-data/refs/accepted-ghep-small/ref.json": {
+      "size": 239,
+      "sha256": "3f7a4b0239861015fa057757544ee6015cdc6c93592725cbc8f5fa15bf5a9c12"
+    },
+    "/tmp/os2026-p33/accepted-data/refs/accepted-hep-large/eigenvalues.npy": {
+      "size": 32896,
+      "sha256": "1e85c44bc0ec49c80c0ab8fcf6ee0a6e6ff4272a74f10595fffc57ee6edae586"
+    },
+    "/tmp/os2026-p33/accepted-data/refs/accepted-hep-large/ref.json": {
+      "size": 239,
+      "sha256": "3f7a4b0239861015fa057757544ee6015cdc6c93592725cbc8f5fa15bf5a9c12"
+    },
+    "/tmp/os2026-p33/accepted-data/refs/accepted-hep-small/eigenvalues.npy": {
+      "size": 32896,
+      "sha256": "8f7a9449f3f9391a1ce440f6c8c59a0c598c15aaf3e6fb11c868df7403a765fc"
+    },
+    "/tmp/os2026-p33/accepted-data/refs/accepted-hep-small/ref.json": {
+      "size": 239,
+      "sha256": "3f7a4b0239861015fa057757544ee6015cdc6c93592725cbc8f5fa15bf5a9c12"
+    },
+    "/tmp/os2026-p33/contract-data-v2/cases/backend-result-recovery/A.npz": {
+      "size": 2753880,
+      "sha256": "26d6779273c87779b8b46d4982f17dc54f55d124bbec10dff1291a563fd70396"
+    },
+    "/tmp/os2026-p33/contract-data-v2/cases/backend-result-recovery/config.json": {
+      "size": 123,
+      "sha256": "726fe73374f8a579c5bdfa9de7b0e5898cbfcea18b1945abf41eff5ea8b7ec09"
+    },
+    "/tmp/os2026-p33/contract-data-v2/cases/backend-result-recovery/meta.json": {
+      "size": 513,
+      "sha256": "52da42531150acf28dc1ed5312373e790f2d076bf66b71efa27097ba6339802f"
+    },
+    "/tmp/os2026-p33/contract-data-v2/cases/counter-fallback-allocation/A.npz": {
+      "size": 2753880,
+      "sha256": "26d6779273c87779b8b46d4982f17dc54f55d124bbec10dff1291a563fd70396"
+    },
+    "/tmp/os2026-p33/contract-data-v2/cases/counter-fallback-allocation/config.json": {
+      "size": 124,
+      "sha256": "5601cf6d8830311742405b2d800f04d529e60ec4d0e09ec70e2c38c5c2e1f252"
+    },
+    "/tmp/os2026-p33/contract-data-v2/cases/counter-fallback-allocation/meta.json": {
+      "size": 511,
+      "sha256": "19daef6315c5532aa94b9e0c319a644358f459d4500585044f788f292e3fc42e"
+    },
+    "/tmp/os2026-p33/contract-data-v2/cases/counter-fallback-factor/A.npz": {
+      "size": 2753880,
+      "sha256": "26d6779273c87779b8b46d4982f17dc54f55d124bbec10dff1291a563fd70396"
+    },
+    "/tmp/os2026-p33/contract-data-v2/cases/counter-fallback-factor/config.json": {
+      "size": 124,
+      "sha256": "497db6f05e64241418b0833cfb6dfeb456dbb75752b74106d4ad9e969b5b4f69"
+    },
+    "/tmp/os2026-p33/contract-data-v2/cases/counter-fallback-factor/meta.json": {
+      "size": 507,
+      "sha256": "ca5699111da759fa088aee7b0231c1b4a7c7da7087463efc2cc50227cdcbedfa"
+    },
+    "/tmp/os2026-p33/contract-data-v2/cases/counter-fallback-memory/A.npz": {
+      "size": 2753880,
+      "sha256": "26d6779273c87779b8b46d4982f17dc54f55d124bbec10dff1291a563fd70396"
+    },
+    "/tmp/os2026-p33/contract-data-v2/cases/counter-fallback-memory/config.json": {
+      "size": 123,
+      "sha256": "d9477298b409a320b866377268a074bbe06773b9e667bc1f2b153485905458d1"
+    },
+    "/tmp/os2026-p33/contract-data-v2/cases/counter-fallback-memory/meta.json": {
+      "size": 507,
+      "sha256": "46deaf0661197a6fdfdbe084d35f107ac76313a6627b62d9607170d57367c0ea"
+    },
+    "/tmp/os2026-p33/contract-data-v2/cases/exact-quarter-ghep/A.npz": {
+      "size": 46160,
+      "sha256": "352e0f8cea2788dbe9cb16975065408e89b41abde82f24be1f72467e1aa44321"
+    },
+    "/tmp/os2026-p33/contract-data-v2/cases/exact-quarter-ghep/B.npz": {
+      "size": 15914,
+      "sha256": "470e0b6989409afe2b39b921d45e8876851e923c4a761865bc07c6bcd9b68cc8"
+    },
+    "/tmp/os2026-p33/contract-data-v2/cases/exact-quarter-ghep/config.json": {
+      "size": 92,
+      "sha256": "6d0ce4789ab582f7a24ffe859798de638d9bdea682883603fbca14d1cd112876"
+    },
+    "/tmp/os2026-p33/contract-data-v2/cases/exact-quarter-ghep/meta.json": {
+      "size": 399,
+      "sha256": "761ba58cbc55dbe7188b61ebb53365e2b1e31767e8aa750325584279a17bcf8e"
+    },
+    "/tmp/os2026-p33/contract-data-v2/cases/exact-zero-hep/A.npz": {
+      "size": 45215,
+      "sha256": "75841a2c2a7b23ca8120ce75b26286bff683c4489c866692a301a327139bc9a6"
+    },
+    "/tmp/os2026-p33/contract-data-v2/cases/exact-zero-hep/config.json": {
+      "size": 91,
+      "sha256": "971e1dab0742c9cdd1632d15f3e923b59ba6f9ab5aa5264ada1c852edf9e14a3"
+    },
+    "/tmp/os2026-p33/contract-data-v2/cases/exact-zero-hep/meta.json": {
+      "size": 376,
+      "sha256": "c8235301f9d59bc0cf7adf62539e234115ac05387dda0870f139fcd44772f6f2"
+    },
+    "/tmp/os2026-p33/contract-data-v2/cases/new-cluster-ghep/A.npz": {
+      "size": 3968995,
+      "sha256": "027cdd063cb4db45de177748bac6ec047ed298aa8cadf479cde701b2077ac7a0"
+    },
+    "/tmp/os2026-p33/contract-data-v2/cases/new-cluster-ghep/B.npz": {
+      "size": 444979,
+      "sha256": "4d94f7d11525b10b2e402bdf99235c2f578d899fc7b1eceac3ee83f9c2fff251"
+    },
+    "/tmp/os2026-p33/contract-data-v2/cases/new-cluster-ghep/config.json": {
+      "size": 91,
+      "sha256": "3053682ee18f200c0833021bd4a603a0dee5d821d310450e3a5ea5414fe2ed96"
+    },
+    "/tmp/os2026-p33/contract-data-v2/cases/new-cluster-ghep/meta.json": {
+      "size": 527,
+      "sha256": "403495628d59a5aaec18bb82bf5f6636c7e8571003ab473b26c83596b84c4139"
+    },
+    "/tmp/os2026-p33/contract-data-v2/cases/new-cluster-hep/A.npz": {
+      "size": 2753880,
+      "sha256": "26d6779273c87779b8b46d4982f17dc54f55d124bbec10dff1291a563fd70396"
+    },
+    "/tmp/os2026-p33/contract-data-v2/cases/new-cluster-hep/config.json": {
+      "size": 91,
+      "sha256": "fb7dc5dbf4d75ce6c7da9cbc00538e5faaff4a48753b12922eb519951b5debc5"
+    },
+    "/tmp/os2026-p33/contract-data-v2/cases/new-cluster-hep/meta.json": {
+      "size": 507,
+      "sha256": "f89f21da361558d8a07dceb2567010c3b472a490b9a7886916e92e62ef5bf474"
+    },
+    "/tmp/os2026-p33/contract-data-v2/cases/new-near-hep/A.npz": {
+      "size": 7383347,
+      "sha256": "84eeffd52a6bb5262efec2365b21da97fe37db732170619d664310f89e473a44"
+    },
+    "/tmp/os2026-p33/contract-data-v2/cases/new-near-hep/config.json": {
+      "size": 106,
+      "sha256": "512f79b447014272c8f45f769c06a5a5cdb5f05691eb2ae5ee9ec3d26e07fed1"
+    },
+    "/tmp/os2026-p33/contract-data-v2/cases/new-near-hep/meta.json": {
+      "size": 584,
+      "sha256": "160814342ec2527b9ccf8015809d6ea80f1aea022afedfef03d45d9993765272"
+    },
+    "/tmp/os2026-p33/contract-data-v2/refs/backend-result-recovery/eigenvalues.npy": {
+      "size": 56128,
+      "sha256": "22d3f007e112a580f543d0b7f0baf837464d98577c135e2071f228c4bd42dc9c"
+    },
+    "/tmp/os2026-p33/contract-data-v2/refs/backend-result-recovery/ref.json": {
+      "size": 196,
+      "sha256": "8d80096c059c46a2bd1c5171e488ef25e4da26ed39a5aa0e5a9f4966bb917759"
+    },
+    "/tmp/os2026-p33/contract-data-v2/refs/counter-fallback-allocation/eigenvalues.npy": {
+      "size": 56128,
+      "sha256": "22d3f007e112a580f543d0b7f0baf837464d98577c135e2071f228c4bd42dc9c"
+    },
+    "/tmp/os2026-p33/contract-data-v2/refs/counter-fallback-allocation/ref.json": {
+      "size": 196,
+      "sha256": "8d80096c059c46a2bd1c5171e488ef25e4da26ed39a5aa0e5a9f4966bb917759"
+    },
+    "/tmp/os2026-p33/contract-data-v2/refs/counter-fallback-factor/eigenvalues.npy": {
+      "size": 56128,
+      "sha256": "22d3f007e112a580f543d0b7f0baf837464d98577c135e2071f228c4bd42dc9c"
+    },
+    "/tmp/os2026-p33/contract-data-v2/refs/counter-fallback-factor/ref.json": {
+      "size": 196,
+      "sha256": "8d80096c059c46a2bd1c5171e488ef25e4da26ed39a5aa0e5a9f4966bb917759"
+    },
+    "/tmp/os2026-p33/contract-data-v2/refs/counter-fallback-memory/eigenvalues.npy": {
+      "size": 56128,
+      "sha256": "22d3f007e112a580f543d0b7f0baf837464d98577c135e2071f228c4bd42dc9c"
+    },
+    "/tmp/os2026-p33/contract-data-v2/refs/counter-fallback-memory/ref.json": {
+      "size": 196,
+      "sha256": "8d80096c059c46a2bd1c5171e488ef25e4da26ed39a5aa0e5a9f4966bb917759"
+    },
+    "/tmp/os2026-p33/contract-data-v2/refs/exact-quarter-ghep/eigenvalues.npy": {
+      "size": 32896,
+      "sha256": "e40445ea632ceb90f13cbb44b1c3b634a37eff62b501fc70d7f0bdb718824181"
+    },
+    "/tmp/os2026-p33/contract-data-v2/refs/exact-quarter-ghep/ref.json": {
+      "size": 259,
+      "sha256": "e4bc4d583c3f1faf9a82d054f7426f692917dffad9d7b84258b3eb9177279287"
+    },
+    "/tmp/os2026-p33/contract-data-v2/refs/exact-zero-hep/eigenvalues.npy": {
+      "size": 32896,
+      "sha256": "1831ef1afea73fd44b5299a1b6214bd2cec7a91044f943692f42751bc91f272d"
+    },
+    "/tmp/os2026-p33/contract-data-v2/refs/exact-zero-hep/ref.json": {
+      "size": 259,
+      "sha256": "e4bc4d583c3f1faf9a82d054f7426f692917dffad9d7b84258b3eb9177279287"
+    },
+    "/tmp/os2026-p33/contract-data-v2/refs/new-cluster-ghep/eigenvalues.npy": {
+      "size": 72128,
+      "sha256": "4453e59ab45f68635923939350f786c366ad6acc4d8deaf46ceb89dad25b316b"
+    },
+    "/tmp/os2026-p33/contract-data-v2/refs/new-cluster-ghep/ref.json": {
+      "size": 196,
+      "sha256": "7e3d27cc657be54eca60b3140a68ae7c8cd65d643788cbac58a141ea59b09cea"
+    },
+    "/tmp/os2026-p33/contract-data-v2/refs/new-cluster-hep/eigenvalues.npy": {
+      "size": 56128,
+      "sha256": "22d3f007e112a580f543d0b7f0baf837464d98577c135e2071f228c4bd42dc9c"
+    },
+    "/tmp/os2026-p33/contract-data-v2/refs/new-cluster-hep/ref.json": {
+      "size": 196,
+      "sha256": "8d80096c059c46a2bd1c5171e488ef25e4da26ed39a5aa0e5a9f4966bb917759"
+    },
+    "/tmp/os2026-p33/contract-data-v2/refs/new-near-hep/eigenvalues.npy": {
+      "size": 144128,
+      "sha256": "03d87bd4a42f66fa2500cf3150542b04f30d798e03a0dbb43f476b92e8042eac"
+    },
+    "/tmp/os2026-p33/contract-data-v2/refs/new-near-hep/ref.json": {
+      "size": 197,
+      "sha256": "9e026c60445fe65b5b0db6150b41475175f4afc5957b41fe75ded4874a14ade4"
+    },
+    "/tmp/os2026-p34/holdout-data/cases/holdout-00-blocks-real-hep/A.npz": {
+      "size": 21555,
+      "sha256": "6f7a48163e594c78fd0d135250498c66ff46470dcbd517cb6254d0e97f834320"
+    },
+    "/tmp/os2026-p34/holdout-data/cases/holdout-00-blocks-real-hep/config.json": {
+      "size": 90,
+      "sha256": "1e4ce4334049000b09fe5208ad30ea670614b4b2bb0d2f697973a298bb64fcfd"
+    },
+    "/tmp/os2026-p34/holdout-data/cases/holdout-00-blocks-real-hep/meta.json": {
+      "size": 502,
+      "sha256": "493acc89082e5c6f6d7bcf86ba171ce0d071223ce47f3a6ae822e90e62832d2f"
+    },
+    "/tmp/os2026-p34/holdout-data/cases/holdout-01-blocks-real-hep/A.npz": {
+      "size": 42407,
+      "sha256": "6c6725f808a8a6e08faaa17c83a0c5e333864a1dc6cfdd22bbb0596b5ea2ecde"
+    },
+    "/tmp/os2026-p34/holdout-data/cases/holdout-01-blocks-real-hep/config.json": {
+      "size": 91,
+      "sha256": "971e1dab0742c9cdd1632d15f3e923b59ba6f9ab5aa5264ada1c852edf9e14a3"
+    },
+    "/tmp/os2026-p34/holdout-data/cases/holdout-01-blocks-real-hep/meta.json": {
+      "size": 503,
+      "sha256": "745f7926c661cc9f9a79def6e77bb112a1eead868893a4ffae65913d47ffe16c"
+    },
+    "/tmp/os2026-p34/holdout-data/cases/holdout-02-blocks-real-ghep/A.npz": {
+      "size": 62430,
+      "sha256": "6f91f86f695442e143c5dcc510b9ed83288ffffc3565d920afd5dbc8cbbecdb1"
+    },
+    "/tmp/os2026-p34/holdout-data/cases/holdout-02-blocks-real-ghep/B.npz": {
+      "size": 22264,
+      "sha256": "7921fede7e149731277d77720198bf1fcc7495d6252f24f7cba1e5aa0ae2e750"
+    },
+    "/tmp/os2026-p34/holdout-data/cases/holdout-02-blocks-real-ghep/config.json": {
+      "size": 92,
+      "sha256": "19c290d02ef1ef5974f58d2fb5b7244d8f292aa163a0d3b02a15c236b375deb7"
+    },
+    "/tmp/os2026-p34/holdout-data/cases/holdout-02-blocks-real-ghep/meta.json": {
+      "size": 524,
+      "sha256": "92bb8fdd1eb93c347aa6f350fc08c0069886f7807ec87b139c64ff3d401c6067"
+    },
+    "/tmp/os2026-p34/holdout-data/cases/holdout-03-blocks-real-ghep/A.npz": {
+      "size": 21840,
+      "sha256": "371b63a4e554cf970cc7a9f34be65eb66ab10caf933eff0fe99a676427819eba"
+    },
+    "/tmp/os2026-p34/holdout-data/cases/holdout-03-blocks-real-ghep/B.npz": {
+      "size": 8218,
+      "sha256": "91c3ca9f02c8f76945490a85556a62f9ed427752c292fb1b088a80c3836b0038"
+    },
+    "/tmp/os2026-p34/holdout-data/cases/holdout-03-blocks-real-ghep/config.json": {
+      "size": 92,
+      "sha256": "ff480139a6a994f162f0d0f1a7dcf31b4f8bdaaa66ce0b04f843971a64a3bfa0"
+    },
+    "/tmp/os2026-p34/holdout-data/cases/holdout-03-blocks-real-ghep/meta.json": {
+      "size": 524,
+      "sha256": "563412c0da3e60b462fb11c3928674553d333881a9096886027ca766aada1b3d"
+    },
+    "/tmp/os2026-p34/holdout-data/cases/holdout-04-blocks-complex-hep/A.npz": {
+      "size": 45244,
+      "sha256": "fcb52760c76694d900b5ef65c56fd385d43d81b2bd7ba6c868a8557992323fe9"
+    },
+    "/tmp/os2026-p34/holdout-data/cases/holdout-04-blocks-complex-hep/config.json": {
+      "size": 90,
+      "sha256": "1e4ce4334049000b09fe5208ad30ea670614b4b2bb0d2f697973a298bb64fcfd"
+    },
+    "/tmp/os2026-p34/holdout-data/cases/holdout-04-blocks-complex-hep/meta.json": {
+      "size": 508,
+      "sha256": "87a948be2c4826e73a1a45044d43987b6ae0550ee23ddf95a930c3722d712112"
+    },
+    "/tmp/os2026-p34/holdout-data/cases/holdout-05-blocks-complex-hep/A.npz": {
+      "size": 67685,
+      "sha256": "73f396e44992f80e5c3745a15d48e22509fbbbe7820193f7fe731fc839ab49ed"
+    },
+    "/tmp/os2026-p34/holdout-data/cases/holdout-05-blocks-complex-hep/config.json": {
+      "size": 91,
+      "sha256": "971e1dab0742c9cdd1632d15f3e923b59ba6f9ab5aa5264ada1c852edf9e14a3"
+    },
+    "/tmp/os2026-p34/holdout-data/cases/holdout-05-blocks-complex-hep/meta.json": {
+      "size": 509,
+      "sha256": "fb7575ab036994526679af9c1340663e51a4605aa60c16f1c693ed47e4b91389"
+    },
+    "/tmp/os2026-p34/holdout-data/cases/holdout-06-blocks-complex-ghep/A.npz": {
+      "size": 23451,
+      "sha256": "80c7ae9228f2ed542cac4d860432f87d28004b6236c8fb280c775213a205d8e0"
+    },
+    "/tmp/os2026-p34/holdout-data/cases/holdout-06-blocks-complex-ghep/B.npz": {
+      "size": 8194,
+      "sha256": "9f5e8b5bb62ce2785a436a2e437858971b94e745239ea88ead6c841a7d0664c1"
+    },
+    "/tmp/os2026-p34/holdout-data/cases/holdout-06-blocks-complex-ghep/config.json": {
+      "size": 92,
+      "sha256": "19c290d02ef1ef5974f58d2fb5b7244d8f292aa163a0d3b02a15c236b375deb7"
+    },
+    "/tmp/os2026-p34/holdout-data/cases/holdout-06-blocks-complex-ghep/meta.json": {
+      "size": 530,
+      "sha256": "209e05fdfe991470e63fe890203dbbc98328155210efbdfb61447a0ef1100c2e"
+    },
+    "/tmp/os2026-p34/holdout-data/cases/holdout-07-blocks-complex-ghep/A.npz": {
+      "size": 46034,
+      "sha256": "b7f31b90b7116008cba45979ff7ac204f538618f09f328aa4e4ebeeab46e46b2"
+    },
+    "/tmp/os2026-p34/holdout-data/cases/holdout-07-blocks-complex-ghep/B.npz": {
+      "size": 15251,
+      "sha256": "bd4c98f18c9242d74be4d961d5d8583303cd0fd11be46096be3ef59c984bf923"
+    },
+    "/tmp/os2026-p34/holdout-data/cases/holdout-07-blocks-complex-ghep/config.json": {
+      "size": 92,
+      "sha256": "ff480139a6a994f162f0d0f1a7dcf31b4f8bdaaa66ce0b04f843971a64a3bfa0"
+    },
+    "/tmp/os2026-p34/holdout-data/cases/holdout-07-blocks-complex-ghep/meta.json": {
+      "size": 530,
+      "sha256": "7b0793daf45e1c54c4a110e1c5f9ed2ab37b25bbbb924f1a01fdb2caf5f85adb"
+    },
+    "/tmp/os2026-p34/holdout-data/cases/holdout-08-coupled-real-hep/A.npz": {
+      "size": 669985,
+      "sha256": "354f9d261f3eaca44e46ca8fc858e2e6750b9db496f88ff2cfe2379c9d1ad1bd"
+    },
+    "/tmp/os2026-p34/holdout-data/cases/holdout-08-coupled-real-hep/config.json": {
+      "size": 90,
+      "sha256": "1e4ce4334049000b09fe5208ad30ea670614b4b2bb0d2f697973a298bb64fcfd"
+    },
+    "/tmp/os2026-p34/holdout-data/cases/holdout-08-coupled-real-hep/meta.json": {
+      "size": 503,
+      "sha256": "b229d133da8665b2db3e9363a03ce5de930aec1d03ab70caf10903f2c4622aa7"
+    },
+    "/tmp/os2026-p34/holdout-data/cases/holdout-09-coupled-real-hep/A.npz": {
+      "size": 194588,
+      "sha256": "d1c13077e750055e762d259d436b2bc42ef69656879d7f8ca6b1e22dc2d37bcf"
+    },
+    "/tmp/os2026-p34/holdout-data/cases/holdout-09-coupled-real-hep/config.json": {
+      "size": 91,
+      "sha256": "971e1dab0742c9cdd1632d15f3e923b59ba6f9ab5aa5264ada1c852edf9e14a3"
+    },
+    "/tmp/os2026-p34/holdout-data/cases/holdout-09-coupled-real-hep/meta.json": {
+      "size": 504,
+      "sha256": "8df515a8c1cd299f1416aa3fc3d964fd73274c98a72fc179341f67da5dfd4fd7"
+    },
+    "/tmp/os2026-p34/holdout-data/cases/holdout-10-coupled-real-ghep/A.npz": {
+      "size": 520939,
+      "sha256": "b3e6c1c765657e7eac0f2d331bc18ffec1696f7a87bd31c0a4295fe622b4a34b"
+    },
+    "/tmp/os2026-p34/holdout-data/cases/holdout-10-coupled-real-ghep/B.npz": {
+      "size": 121052,
+      "sha256": "e8441dd75cecf94dc9851acb75684e31011b1456b1d5449d5e32f2e23530ba46"
+    },
+    "/tmp/os2026-p34/holdout-data/cases/holdout-10-coupled-real-ghep/config.json": {
+      "size": 92,
+      "sha256": "19c290d02ef1ef5974f58d2fb5b7244d8f292aa163a0d3b02a15c236b375deb7"
+    },
+    "/tmp/os2026-p34/holdout-data/cases/holdout-10-coupled-real-ghep/meta.json": {
+      "size": 526,
+      "sha256": "3fdc8cf8e5ac0f2dfa388c7b31ca2c95e685696c71f8b7f3e0bb85e0f785ab87"
+    },
+    "/tmp/os2026-p34/holdout-data/cases/holdout-11-coupled-real-ghep/A.npz": {
+      "size": 804516,
+      "sha256": "1afad1387cefb4c1e0beb066c52819548afacc9ea72b0be1486358a9cd4a601b"
+    },
+    "/tmp/os2026-p34/holdout-data/cases/holdout-11-coupled-real-ghep/B.npz": {
+      "size": 186329,
+      "sha256": "9012b710eab0dda90f966ce481a14fd97e13061365b83f464aa7a454e92fdd15"
+    },
+    "/tmp/os2026-p34/holdout-data/cases/holdout-11-coupled-real-ghep/config.json": {
+      "size": 92,
+      "sha256": "ff480139a6a994f162f0d0f1a7dcf31b4f8bdaaa66ce0b04f843971a64a3bfa0"
+    },
+    "/tmp/os2026-p34/holdout-data/cases/holdout-11-coupled-real-ghep/meta.json": {
+      "size": 526,
+      "sha256": "7af950597fa3d343da8ffca1cf2e197a5bf0af8735a1e52ae467f9b03587c007"
+    },
+    "/tmp/os2026-p34/holdout-data/cases/holdout-12-coupled-complex-hep/A.npz": {
+      "size": 371069,
+      "sha256": "a39aab5d327630abb6534b7ff41ac252b5bb14d7361e2d935328b4a23b7e3578"
+    },
+    "/tmp/os2026-p34/holdout-data/cases/holdout-12-coupled-complex-hep/config.json": {
+      "size": 90,
+      "sha256": "1e4ce4334049000b09fe5208ad30ea670614b4b2bb0d2f697973a298bb64fcfd"
+    },
+    "/tmp/os2026-p34/holdout-data/cases/holdout-12-coupled-complex-hep/meta.json": {
+      "size": 509,
+      "sha256": "72e8e690de7d393707781e2557e0d4c8f11199abcd6724f3bdbedb75971f1d8a"
+    },
+    "/tmp/os2026-p34/holdout-data/cases/holdout-13-coupled-complex-hep/A.npz": {
+      "size": 770170,
+      "sha256": "bdeaff75cf71fdcad5f48377edeaacfef7a7935ab9189c272bcddc83779ec65d"
+    },
+    "/tmp/os2026-p34/holdout-data/cases/holdout-13-coupled-complex-hep/config.json": {
+      "size": 91,
+      "sha256": "971e1dab0742c9cdd1632d15f3e923b59ba6f9ab5aa5264ada1c852edf9e14a3"
+    },
+    "/tmp/os2026-p34/holdout-data/cases/holdout-13-coupled-complex-hep/meta.json": {
+      "size": 510,
+      "sha256": "abcf724547def917c97e8d3dae98c7af6f8f047c453cefab28443c4deb35401d"
+    },
+    "/tmp/os2026-p34/holdout-data/cases/holdout-14-coupled-complex-ghep/A.npz": {
+      "size": 1463143,
+      "sha256": "93ca1e39768fee99f7f4ff12621e2eb49a37bdc04814efb572739a54158b28b2"
+    },
+    "/tmp/os2026-p34/holdout-data/cases/holdout-14-coupled-complex-ghep/B.npz": {
+      "size": 299383,
+      "sha256": "cb4c61ac61697d9189348c1b912525d80ac18070fe6c8797eaa756f0f9e920c5"
+    },
+    "/tmp/os2026-p34/holdout-data/cases/holdout-14-coupled-complex-ghep/config.json": {
+      "size": 92,
+      "sha256": "19c290d02ef1ef5974f58d2fb5b7244d8f292aa163a0d3b02a15c236b375deb7"
+    },
+    "/tmp/os2026-p34/holdout-data/cases/holdout-14-coupled-complex-ghep/meta.json": {
+      "size": 532,
+      "sha256": "64e07865c0c6a3cfcb3649852a04840f8cb636ac49ab6deab23814e351aeda1f"
+    },
+    "/tmp/os2026-p34/holdout-data/cases/holdout-15-coupled-complex-ghep/A.npz": {
+      "size": 448482,
+      "sha256": "b3290605caa1872f02996f7ee89bf6e3640a3167c13bd217af11161af3d13407"
+    },
+    "/tmp/os2026-p34/holdout-data/cases/holdout-15-coupled-complex-ghep/B.npz": {
+      "size": 90172,
+      "sha256": "f6f29a0769cbb89d200437c40383f4fab4ae23a279ccfcfc40c453972df93ede"
+    },
+    "/tmp/os2026-p34/holdout-data/cases/holdout-15-coupled-complex-ghep/config.json": {
+      "size": 92,
+      "sha256": "ff480139a6a994f162f0d0f1a7dcf31b4f8bdaaa66ce0b04f843971a64a3bfa0"
+    },
+    "/tmp/os2026-p34/holdout-data/cases/holdout-15-coupled-complex-ghep/meta.json": {
+      "size": 531,
+      "sha256": "bcf69a936c15d63d55e64cb0cee19efd36f4aacefbf6c5112ea6202d2b0086b4"
+    },
+    "/tmp/os2026-p34/holdout-data/refs/holdout-00-blocks-real-hep/eigenvalues.npy": {
+      "size": 16512,
+      "sha256": "a1b3a7700ff65fdef1fdb3ced424a822f9f6c0a8b3901129c08276eda9ac2681"
+    },
+    "/tmp/os2026-p34/holdout-data/refs/holdout-00-blocks-real-hep/ref.json": {
+      "size": 219,
+      "sha256": "64fabbc3e34dbf6efa67eaa2764a1494c0f73bb8b9efd8ced01a233423ce8a13"
+    },
+    "/tmp/os2026-p34/holdout-data/refs/holdout-01-blocks-real-hep/eigenvalues.npy": {
+      "size": 32896,
+      "sha256": "8056020ce6b01fb7f7bbd39f2cdc3299ae1879e80b2d51344257aeb051ca1c07"
+    },
+    "/tmp/os2026-p34/holdout-data/refs/holdout-01-blocks-real-hep/ref.json": {
+      "size": 219,
+      "sha256": "902ce6391ddad2e7c954d829e15bd599ab8bb67f8919919d4c3b5f4ac989650c"
+    },
+    "/tmp/os2026-p34/holdout-data/refs/holdout-02-blocks-real-ghep/eigenvalues.npy": {
+      "size": 49280,
+      "sha256": "d1ddfa9d6180b228a7e44072fbefb6e053f5f8fb79ea2a85cbc314aa419463ff"
+    },
+    "/tmp/os2026-p34/holdout-data/refs/holdout-02-blocks-real-ghep/ref.json": {
+      "size": 219,
+      "sha256": "d95371054f5c23d0662b03a96f3018647e6162deccde0e833e96c40834583a8a"
+    },
+    "/tmp/os2026-p34/holdout-data/refs/holdout-03-blocks-real-ghep/eigenvalues.npy": {
+      "size": 16512,
+      "sha256": "67d5878ab0e8609d1b9210ecd7de39118dea89235eb8897ecd0ba86fe3574cfa"
+    },
+    "/tmp/os2026-p34/holdout-data/refs/holdout-03-blocks-real-ghep/ref.json": {
+      "size": 219,
+      "sha256": "64fabbc3e34dbf6efa67eaa2764a1494c0f73bb8b9efd8ced01a233423ce8a13"
+    },
+    "/tmp/os2026-p34/holdout-data/refs/holdout-04-blocks-complex-hep/eigenvalues.npy": {
+      "size": 32896,
+      "sha256": "3bfbc340bdf638a7bc03f8f2e39c8bf112139e52e491f15a055f3bc5b8fd75f4"
+    },
+    "/tmp/os2026-p34/holdout-data/refs/holdout-04-blocks-complex-hep/ref.json": {
+      "size": 219,
+      "sha256": "902ce6391ddad2e7c954d829e15bd599ab8bb67f8919919d4c3b5f4ac989650c"
+    },
+    "/tmp/os2026-p34/holdout-data/refs/holdout-05-blocks-complex-hep/eigenvalues.npy": {
+      "size": 49280,
+      "sha256": "a11f3f49812747e120309ffc08173d9b2953f5c08d22d6a27f29c7fa273f7901"
+    },
+    "/tmp/os2026-p34/holdout-data/refs/holdout-05-blocks-complex-hep/ref.json": {
+      "size": 219,
+      "sha256": "d95371054f5c23d0662b03a96f3018647e6162deccde0e833e96c40834583a8a"
+    },
+    "/tmp/os2026-p34/holdout-data/refs/holdout-06-blocks-complex-ghep/eigenvalues.npy": {
+      "size": 16512,
+      "sha256": "ee32ba61dfd5709ea51985c61940d0c78e6f91b76188c1f970411dd12d9848a9"
+    },
+    "/tmp/os2026-p34/holdout-data/refs/holdout-06-blocks-complex-ghep/ref.json": {
+      "size": 219,
+      "sha256": "64fabbc3e34dbf6efa67eaa2764a1494c0f73bb8b9efd8ced01a233423ce8a13"
+    },
+    "/tmp/os2026-p34/holdout-data/refs/holdout-07-blocks-complex-ghep/eigenvalues.npy": {
+      "size": 32896,
+      "sha256": "49e7afbfd303e2201bc296eb497c2439cc663752de91bc415feee2822ff74547"
+    },
+    "/tmp/os2026-p34/holdout-data/refs/holdout-07-blocks-complex-ghep/ref.json": {
+      "size": 219,
+      "sha256": "902ce6391ddad2e7c954d829e15bd599ab8bb67f8919919d4c3b5f4ac989650c"
+    },
+    "/tmp/os2026-p34/holdout-data/refs/holdout-08-coupled-real-hep/eigenvalues.npy": {
+      "size": 49280,
+      "sha256": "a10f9e78184365c66dfce344170817a07361145d176f38cadc35b3dfcc16a386"
+    },
+    "/tmp/os2026-p34/holdout-data/refs/holdout-08-coupled-real-hep/ref.json": {
+      "size": 219,
+      "sha256": "d95371054f5c23d0662b03a96f3018647e6162deccde0e833e96c40834583a8a"
+    },
+    "/tmp/os2026-p34/holdout-data/refs/holdout-09-coupled-real-hep/eigenvalues.npy": {
+      "size": 16512,
+      "sha256": "d3fb7fcf484030e401db57b48cdf27cab8787ff1d2cc1125993121790b972291"
+    },
+    "/tmp/os2026-p34/holdout-data/refs/holdout-09-coupled-real-hep/ref.json": {
+      "size": 219,
+      "sha256": "64fabbc3e34dbf6efa67eaa2764a1494c0f73bb8b9efd8ced01a233423ce8a13"
+    },
+    "/tmp/os2026-p34/holdout-data/refs/holdout-10-coupled-real-ghep/eigenvalues.npy": {
+      "size": 32896,
+      "sha256": "b16dee148e35c791fedc750dfc15c647b1310928f552748db5e853e5743f3b42"
+    },
+    "/tmp/os2026-p34/holdout-data/refs/holdout-10-coupled-real-ghep/ref.json": {
+      "size": 219,
+      "sha256": "902ce6391ddad2e7c954d829e15bd599ab8bb67f8919919d4c3b5f4ac989650c"
+    },
+    "/tmp/os2026-p34/holdout-data/refs/holdout-11-coupled-real-ghep/eigenvalues.npy": {
+      "size": 49280,
+      "sha256": "1c0276f4c2ddf178716708b459fb58119aa389517fff9f5404f3cfb63cf07e17"
+    },
+    "/tmp/os2026-p34/holdout-data/refs/holdout-11-coupled-real-ghep/ref.json": {
+      "size": 219,
+      "sha256": "d95371054f5c23d0662b03a96f3018647e6162deccde0e833e96c40834583a8a"
+    },
+    "/tmp/os2026-p34/holdout-data/refs/holdout-12-coupled-complex-hep/eigenvalues.npy": {
+      "size": 16512,
+      "sha256": "a1b3a7700ff65fdef1fdb3ced424a822f9f6c0a8b3901129c08276eda9ac2681"
+    },
+    "/tmp/os2026-p34/holdout-data/refs/holdout-12-coupled-complex-hep/ref.json": {
+      "size": 219,
+      "sha256": "64fabbc3e34dbf6efa67eaa2764a1494c0f73bb8b9efd8ced01a233423ce8a13"
+    },
+    "/tmp/os2026-p34/holdout-data/refs/holdout-13-coupled-complex-hep/eigenvalues.npy": {
+      "size": 32896,
+      "sha256": "8056020ce6b01fb7f7bbd39f2cdc3299ae1879e80b2d51344257aeb051ca1c07"
+    },
+    "/tmp/os2026-p34/holdout-data/refs/holdout-13-coupled-complex-hep/ref.json": {
+      "size": 219,
+      "sha256": "902ce6391ddad2e7c954d829e15bd599ab8bb67f8919919d4c3b5f4ac989650c"
+    },
+    "/tmp/os2026-p34/holdout-data/refs/holdout-14-coupled-complex-ghep/eigenvalues.npy": {
+      "size": 49280,
+      "sha256": "d1ddfa9d6180b228a7e44072fbefb6e053f5f8fb79ea2a85cbc314aa419463ff"
+    },
+    "/tmp/os2026-p34/holdout-data/refs/holdout-14-coupled-complex-ghep/ref.json": {
+      "size": 219,
+      "sha256": "d95371054f5c23d0662b03a96f3018647e6162deccde0e833e96c40834583a8a"
+    },
+    "/tmp/os2026-p34/holdout-data/refs/holdout-15-coupled-complex-ghep/eigenvalues.npy": {
+      "size": 16512,
+      "sha256": "67d5878ab0e8609d1b9210ecd7de39118dea89235eb8897ecd0ba86fe3574cfa"
+    },
+    "/tmp/os2026-p34/holdout-data/refs/holdout-15-coupled-complex-ghep/ref.json": {
+      "size": 219,
+      "sha256": "64fabbc3e34dbf6efa67eaa2764a1494c0f73bb8b9efd8ced01a233423ce8a13"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-00-blocks-real-hep/A.npz": {
+      "size": 79283,
+      "sha256": "9b8087a8196a7426f2421791a82a8e3bb021fe454dab9e44014fc1173a7c1bca"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-00-blocks-real-hep/config.json": {
+      "size": 106,
+      "sha256": "f4e60b5bd6b8e5149753120d8728b91e25e3b38ce2fed4e9020bec55f317495f"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-00-blocks-real-hep/meta.json": {
+      "size": 516,
+      "sha256": "04c1cb68cfc6b6b4df44c0416e39916595625c136ae88d45a9413ad861d06a15"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-01-blocks-real-hep/A.npz": {
+      "size": 117075,
+      "sha256": "38b4d7dc38f48591bc8f9cbf760b8a5ab6df9f8bb0a626ba6acb2b4a3daffb68"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-01-blocks-real-hep/config.json": {
+      "size": 94,
+      "sha256": "a447e6b161606dfedb8cec1f8df808f9e55bb8e6c2dd705eeed66ad2865a23df"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-01-blocks-real-hep/meta.json": {
+      "size": 505,
+      "sha256": "a765ec6695c68042d42c30ac6ac442652d0a2662bdf98fe49dc4280eb3222298"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-02-blocks-real-ghep/A.npz": {
+      "size": 135355,
+      "sha256": "022b08610773e58b075b5c29179142418165ed65ed347d506d6e635f091bdd6a"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-02-blocks-real-ghep/B.npz": {
+      "size": 57079,
+      "sha256": "0658ef92d1ab303ddb4afed9c0d26e4e9761c638d15e17dc1ee05cc41c84312e"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-02-blocks-real-ghep/config.json": {
+      "size": 94,
+      "sha256": "353d5403dcf5729ab391126dab3c1112a50eb2603186dae254c12b1d7943d68d"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-02-blocks-real-ghep/meta.json": {
+      "size": 527,
+      "sha256": "e0b4fa556150ff805f1a8fea053bb0573e2f75b87646eb358449062f1325925c"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-03-blocks-real-ghep/A.npz": {
+      "size": 85444,
+      "sha256": "f7d7b11a99105bbd1ea99c81ee29e39ce0759b2f789e1be39c86c34e60830b8c"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-03-blocks-real-ghep/B.npz": {
+      "size": 29159,
+      "sha256": "3a662e38f670604177a349451053427f84f9f0d14c6960b8190eb7e784f9fe6a"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-03-blocks-real-ghep/config.json": {
+      "size": 94,
+      "sha256": "f5ede7a130b5e193d231863ce9d046c8d5d3a9fd20b05e69a93d17d391565a04"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-03-blocks-real-ghep/meta.json": {
+      "size": 523,
+      "sha256": "d3a9328a825eeeeb991b982ddc8d29de1cc7339af4b5664b56335906ba1d1fbc"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-04-blocks-complex-hep/A.npz": {
+      "size": 131583,
+      "sha256": "7c0a4b02e3d8343e67d495f7c36c33685346b41715d91bc80ce1f23a2e7feabb"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-04-blocks-complex-hep/config.json": {
+      "size": 106,
+      "sha256": "f4e60b5bd6b8e5149753120d8728b91e25e3b38ce2fed4e9020bec55f317495f"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-04-blocks-complex-hep/meta.json": {
+      "size": 524,
+      "sha256": "f50175ca75562a6ccf8a1531841d94441f8eb6ae401c897041f4919f016d708e"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-05-blocks-complex-hep/A.npz": {
+      "size": 173072,
+      "sha256": "fb61896715b98d14117cb6ab51f38f90e37d00ec000271759efb386142b19640"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-05-blocks-complex-hep/config.json": {
+      "size": 94,
+      "sha256": "a447e6b161606dfedb8cec1f8df808f9e55bb8e6c2dd705eeed66ad2865a23df"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-05-blocks-complex-hep/meta.json": {
+      "size": 511,
+      "sha256": "76c129b90fa504ec02aa15ffa0682e30a287e741975086d6e431e7ab4a1883d4"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-06-blocks-complex-ghep/A.npz": {
+      "size": 79230,
+      "sha256": "9f5e24e268c1d3956db39ab59ee25d9925b8efcb396208c20337ff4d4b1d3eea"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-06-blocks-complex-ghep/B.npz": {
+      "size": 29155,
+      "sha256": "ff342903c0650b3986b56bc6e7dc4abdfff890bc0140a3a35e587dc741df7fb0"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-06-blocks-complex-ghep/config.json": {
+      "size": 94,
+      "sha256": "353d5403dcf5729ab391126dab3c1112a50eb2603186dae254c12b1d7943d68d"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-06-blocks-complex-ghep/meta.json": {
+      "size": 530,
+      "sha256": "a3288f598e99f3d918c96f3f339fc195b9edfb0b47fe05251264d7a60d167b08"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-07-blocks-complex-ghep/A.npz": {
+      "size": 137069,
+      "sha256": "a65e9c8bfb89dca937eb78eab2079a82cd0a989e562347912f4cf9963a88aa9b"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-07-blocks-complex-ghep/B.npz": {
+      "size": 43151,
+      "sha256": "88de1ba3de676cf86dc88ce73ce80537f3e35fdce40e6275284b2395d1cfc5a2"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-07-blocks-complex-ghep/config.json": {
+      "size": 94,
+      "sha256": "f5ede7a130b5e193d231863ce9d046c8d5d3a9fd20b05e69a93d17d391565a04"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-07-blocks-complex-ghep/meta.json": {
+      "size": 532,
+      "sha256": "af5b211d4b6da46cb47739f375425bc645f0ceb8ae61ff91abcfde27757f3752"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-08-coupled-real-hep/A.npz": {
+      "size": 1912916,
+      "sha256": "8c3e80692f0ac8dc00830f8dd5da0a6aabcccca018d6970709214bb0e86e287b"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-08-coupled-real-hep/config.json": {
+      "size": 106,
+      "sha256": "f4e60b5bd6b8e5149753120d8728b91e25e3b38ce2fed4e9020bec55f317495f"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-08-coupled-real-hep/meta.json": {
+      "size": 519,
+      "sha256": "d9426d8ea8847e0066c626739a69ad067e9c571db6bf47c7ef4b1b0b0db07406"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-09-coupled-real-hep/A.npz": {
+      "size": 903912,
+      "sha256": "f98fd39fa1089dcdc8061837cc51ee880d584bfccfafaa0ec0be7127bc20a2c8"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-09-coupled-real-hep/config.json": {
+      "size": 94,
+      "sha256": "a447e6b161606dfedb8cec1f8df808f9e55bb8e6c2dd705eeed66ad2865a23df"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-09-coupled-real-hep/meta.json": {
+      "size": 504,
+      "sha256": "8af45f56ce1006192530568e4d82295d52bc8fa896e73a632933fa93f8f947b7"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-10-coupled-real-ghep/A.npz": {
+      "size": 1720418,
+      "sha256": "716720ba2594f0feb0851dce773ac00bff51961218742b29642ad864f3108281"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-10-coupled-real-ghep/B.npz": {
+      "size": 398687,
+      "sha256": "1e4cbf510ed614f3a46d1ac6e1bdf69f93c0f09216eddd944f20a6dfe113a15b"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-10-coupled-real-ghep/config.json": {
+      "size": 94,
+      "sha256": "353d5403dcf5729ab391126dab3c1112a50eb2603186dae254c12b1d7943d68d"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-10-coupled-real-ghep/meta.json": {
+      "size": 528,
+      "sha256": "1b0f1d2d366ca79e34f9614fa37074a50f0d2ccab716edbec8523d00c453ab58"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-11-coupled-real-ghep/A.npz": {
+      "size": 2337879,
+      "sha256": "f5b3ef7bae37a7ddbdd88bec006ac44ee4ec6a693888664210417b726156f5b7"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-11-coupled-real-ghep/B.npz": {
+      "size": 542272,
+      "sha256": "852057ab2f2bbd7639df32a3de7f60189bd7ad3c3726ee31b7673917ec679606"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-11-coupled-real-ghep/config.json": {
+      "size": 94,
+      "sha256": "f5ede7a130b5e193d231863ce9d046c8d5d3a9fd20b05e69a93d17d391565a04"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-11-coupled-real-ghep/meta.json": {
+      "size": 527,
+      "sha256": "962a0b5c3cd5e20862fbf1ae86b261e93e1b51136e9bbe58b4e2e5e85a5b13aa"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-12-coupled-complex-hep/A.npz": {
+      "size": 1607087,
+      "sha256": "5e7740a21a625e94ba54be932e110da8d3a1f1294d0997bea321ea34a2480919"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-12-coupled-complex-hep/config.json": {
+      "size": 106,
+      "sha256": "f4e60b5bd6b8e5149753120d8728b91e25e3b38ce2fed4e9020bec55f317495f"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-12-coupled-complex-hep/meta.json": {
+      "size": 523,
+      "sha256": "de6427653bd9a4a032a86bce6319815f6b8116f6d64c00fecd51f2cecf0e5d0f"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-13-coupled-complex-hep/A.npz": {
+      "size": 2455442,
+      "sha256": "8143101a1a01a9404841f8fa1f31dde8bcfbbb3640f39b72ee3b04ee064a53a2"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-13-coupled-complex-hep/config.json": {
+      "size": 94,
+      "sha256": "a447e6b161606dfedb8cec1f8df808f9e55bb8e6c2dd705eeed66ad2865a23df"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-13-coupled-complex-hep/meta.json": {
+      "size": 512,
+      "sha256": "389fe61384b9a52fbd0906d8dd538f258b8056ea1dbfbe579566696f096889d6"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-14-coupled-complex-ghep/A.npz": {
+      "size": 4073085,
+      "sha256": "169f75431291102cf88a6b3b43bb50768c25bf01593779166333a6f60bae9d66"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-14-coupled-complex-ghep/B.npz": {
+      "size": 837539,
+      "sha256": "a1655169c531a9cd362061e8d50f7abdfc5423baf22dfa87ca643d38820a2d1c"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-14-coupled-complex-ghep/config.json": {
+      "size": 94,
+      "sha256": "353d5403dcf5729ab391126dab3c1112a50eb2603186dae254c12b1d7943d68d"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-14-coupled-complex-ghep/meta.json": {
+      "size": 534,
+      "sha256": "a71572ab34ecc5e89b1d320f8ab3c87c810b9cf488bd4eea5f4ca805d986dfee"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-15-coupled-complex-ghep/A.npz": {
+      "size": 1978365,
+      "sha256": "b27286b22a05db2922be3c7ffb1147b0492c72c82d8c54d3756df08fc08d1c07"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-15-coupled-complex-ghep/B.npz": {
+      "size": 402419,
+      "sha256": "e4aaf9177236d6ed4e0ec1a5d94f47b1f2166460ff13c7deca93a17672da6022"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-15-coupled-complex-ghep/config.json": {
+      "size": 94,
+      "sha256": "f5ede7a130b5e193d231863ce9d046c8d5d3a9fd20b05e69a93d17d391565a04"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-15-coupled-complex-ghep/meta.json": {
+      "size": 532,
+      "sha256": "dca5194a3943c8f4730e34d3415610849f570b40c7e5e4b8acb3cdc5222bb734"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-16-blocks-real-hep/A.npz": {
+      "size": 121342,
+      "sha256": "49ce24215d2c6af0027c6d24a8aedcd6bf068ae81f1e275d074e7e3fa50865c8"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-16-blocks-real-hep/config.json": {
+      "size": 106,
+      "sha256": "f4e60b5bd6b8e5149753120d8728b91e25e3b38ce2fed4e9020bec55f317495f"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-16-blocks-real-hep/meta.json": {
+      "size": 519,
+      "sha256": "1fc2799f1c8bd41bd690340500d0dc4ff8a344523ac3fad7c26bcf1a267832f9"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-17-blocks-real-hep/A.npz": {
+      "size": 157408,
+      "sha256": "16aa16bc049188437f279679f1264a742b0b31ae483be07051d6a8a2b09f567e"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-17-blocks-real-hep/config.json": {
+      "size": 94,
+      "sha256": "a447e6b161606dfedb8cec1f8df808f9e55bb8e6c2dd705eeed66ad2865a23df"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-17-blocks-real-hep/meta.json": {
+      "size": 506,
+      "sha256": "090f4aa4c5036334d7e3950aba8b506cd2ba1f45679a9d18773f5b98fdda2109"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-18-blocks-real-ghep/A.npz": {
+      "size": 71117,
+      "sha256": "f4fca02bbc4250567893da11664f92b09b29ef4b001340a91d26b66fb6746421"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-18-blocks-real-ghep/B.npz": {
+      "size": 29153,
+      "sha256": "e7c601f4b9a8b103b13cf6bbc61154d96fb4021fb2df1cd7bb3a0b6379465557"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-18-blocks-real-ghep/config.json": {
+      "size": 94,
+      "sha256": "353d5403dcf5729ab391126dab3c1112a50eb2603186dae254c12b1d7943d68d"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-18-blocks-real-ghep/meta.json": {
+      "size": 525,
+      "sha256": "321407f1b1ed5b63e2780b67bf9f76aa5777b54ce0126de7927717314a1e455c"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-19-blocks-real-ghep/A.npz": {
+      "size": 128550,
+      "sha256": "aaed457ad603d1566a535e6cd752ae2c1f2e8a0ef41de98af53cb607b775b4e5"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-19-blocks-real-ghep/B.npz": {
+      "size": 43161,
+      "sha256": "33c231a544762b07faa818872157c43199988dbd18da46401b2ce2aea7ddf79b"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-19-blocks-real-ghep/config.json": {
+      "size": 94,
+      "sha256": "f5ede7a130b5e193d231863ce9d046c8d5d3a9fd20b05e69a93d17d391565a04"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-19-blocks-real-ghep/meta.json": {
+      "size": 527,
+      "sha256": "d96a1ad3b8a6a6a15e34921261c9c3c79f37a1fe4196c91825058ed3db318c5a"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-20-blocks-complex-hep/A.npz": {
+      "size": 175736,
+      "sha256": "0d4fdf070b9a92168e6b17ac1a37a6fd1973063dd3b372d9a63067ed346f0f0c"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-20-blocks-complex-hep/config.json": {
+      "size": 106,
+      "sha256": "f4e60b5bd6b8e5149753120d8728b91e25e3b38ce2fed4e9020bec55f317495f"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-20-blocks-complex-hep/meta.json": {
+      "size": 525,
+      "sha256": "bf71f1f550138f5b959f2928fe7a8f5f4dda79a1d575e726f958b8bfc5b0702f"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-21-blocks-complex-hep/A.npz": {
+      "size": 77546,
+      "sha256": "70f073705213f14f56196b9e76a5926be9ebb6629215152694a893d3d1362b37"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-21-blocks-complex-hep/config.json": {
+      "size": 94,
+      "sha256": "a447e6b161606dfedb8cec1f8df808f9e55bb8e6c2dd705eeed66ad2865a23df"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-21-blocks-complex-hep/meta.json": {
+      "size": 510,
+      "sha256": "62bb7bb3b6b9ccb43e87fb01aee8f6e2ab5f811e8bd497d5ee9d93d699de99f6"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-22-blocks-complex-ghep/A.npz": {
+      "size": 124965,
+      "sha256": "6361167e1cf0f5d7450bbc26f28c2f574654aace982b0153a3b7bee81978e8c2"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-22-blocks-complex-ghep/B.npz": {
+      "size": 43150,
+      "sha256": "0e143469cfb45f314306b56bcd1f4dfb94d7d07f2cac7a01b917e588cc4f948c"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-22-blocks-complex-ghep/config.json": {
+      "size": 94,
+      "sha256": "353d5403dcf5729ab391126dab3c1112a50eb2603186dae254c12b1d7943d68d"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-22-blocks-complex-ghep/meta.json": {
+      "size": 534,
+      "sha256": "4abcc82881b589472023579fb02dbb2a140b71b7dd077d65c989c3a2e4455a0b"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-23-blocks-complex-ghep/A.npz": {
+      "size": 182490,
+      "sha256": "fc2bedf3d73c145bceaa0f6135874950644d59c61b9cbdff50d0d49c1d4fde6c"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-23-blocks-complex-ghep/B.npz": {
+      "size": 57125,
+      "sha256": "e2450597c47fc5bb97992efe5e110e81f9ba7d8b64b6220b542e6da87bfd1fe7"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-23-blocks-complex-ghep/config.json": {
+      "size": 94,
+      "sha256": "f5ede7a130b5e193d231863ce9d046c8d5d3a9fd20b05e69a93d17d391565a04"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-23-blocks-complex-ghep/meta.json": {
+      "size": 533,
+      "sha256": "5a2d177c8cf008409d98b2c84620800c825b63cee9e9152feaf8192e4f1506f7"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-24-coupled-real-hep/A.npz": {
+      "size": 906551,
+      "sha256": "a0d112cc34ce41d6c64233cbbcbc4cb1c9dd30995fc1b130f09a0d8dcef90178"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-24-coupled-real-hep/config.json": {
+      "size": 106,
+      "sha256": "f4e60b5bd6b8e5149753120d8728b91e25e3b38ce2fed4e9020bec55f317495f"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-24-coupled-real-hep/meta.json": {
+      "size": 518,
+      "sha256": "6637265efe5d8048b91543e51ea877c31292b4f538c722a18c990bb58031947b"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-25-coupled-real-hep/A.npz": {
+      "size": 1404839,
+      "sha256": "688ee9ccf2f96495f0eb9b46ef31af0e8d22e767dba10be41f1a1924d565753c"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-25-coupled-real-hep/config.json": {
+      "size": 94,
+      "sha256": "a447e6b161606dfedb8cec1f8df808f9e55bb8e6c2dd705eeed66ad2865a23df"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-25-coupled-real-hep/meta.json": {
+      "size": 507,
+      "sha256": "3db379c25c7c9941f05f49732798715740c4872db3cebde3aa4c499e5360e1d1"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-26-coupled-real-ghep/A.npz": {
+      "size": 2330715,
+      "sha256": "ba81de9da3af808b343389d7ed478e4c068370fc64ea9053eb2fa3845d7ad485"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-26-coupled-real-ghep/B.npz": {
+      "size": 537071,
+      "sha256": "f706bf6ebd7424fef511c4964acb9580be7d63e969d426711eeddce5ba292404"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-26-coupled-real-ghep/config.json": {
+      "size": 94,
+      "sha256": "353d5403dcf5729ab391126dab3c1112a50eb2603186dae254c12b1d7943d68d"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-26-coupled-real-ghep/meta.json": {
+      "size": 529,
+      "sha256": "24f6a84e7f1bb9a33179b7d365c0a773be2687e5393f2d0ccb51b65ef1c5b717"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-27-coupled-real-ghep/A.npz": {
+      "size": 1113402,
+      "sha256": "d3dac37f4f370065386c66b936ed57ec98fcdf3720e96f6517bc3267a0822894"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-27-coupled-real-ghep/B.npz": {
+      "size": 260239,
+      "sha256": "476aa7a4ce18b267f446a0c21b930c2057b6f866d62140f0186a464ffdd5cfa0"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-27-coupled-real-ghep/config.json": {
+      "size": 94,
+      "sha256": "f5ede7a130b5e193d231863ce9d046c8d5d3a9fd20b05e69a93d17d391565a04"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-27-coupled-real-ghep/meta.json": {
+      "size": 527,
+      "sha256": "b8d7ace00b14432187e8f60bbc2f78afeedd3642e9822b8c41dde8a66a6e6666"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-28-coupled-complex-hep/A.npz": {
+      "size": 2457741,
+      "sha256": "bd81357b2c0283bb14844e44d26dba329003ac1c1f8b0ef41d987ae949c4902e"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-28-coupled-complex-hep/config.json": {
+      "size": 106,
+      "sha256": "f4e60b5bd6b8e5149753120d8728b91e25e3b38ce2fed4e9020bec55f317495f"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-28-coupled-complex-hep/meta.json": {
+      "size": 526,
+      "sha256": "307b72e5f98a61b597a2362f97adb7e9b0fc053b97169acaf115c1f4e206f254"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-29-coupled-complex-hep/A.npz": {
+      "size": 3314954,
+      "sha256": "6835abae4e6724f7c00c640fa2a544f6016f3282c46e7ad7d00ef51209c61e2e"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-29-coupled-complex-hep/config.json": {
+      "size": 94,
+      "sha256": "a447e6b161606dfedb8cec1f8df808f9e55bb8e6c2dd705eeed66ad2865a23df"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-29-coupled-complex-hep/meta.json": {
+      "size": 513,
+      "sha256": "ffb411c79f30f82dfe5b3469b906fef9ea01bdbe9da0d1ba206bd07a0707ca18"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-30-coupled-complex-ghep/A.npz": {
+      "size": 1975007,
+      "sha256": "f34b9f3b02eac40a4d892eb105f953e281548c6ea56338feaba82ab0dd629d65"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-30-coupled-complex-ghep/B.npz": {
+      "size": 403041,
+      "sha256": "ee69f587ee35371dfd35e1903e6cddf7ff0f617cf3b85668ecd84336c61cef78"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-30-coupled-complex-ghep/config.json": {
+      "size": 94,
+      "sha256": "353d5403dcf5729ab391126dab3c1112a50eb2603186dae254c12b1d7943d68d"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-30-coupled-complex-ghep/meta.json": {
+      "size": 534,
+      "sha256": "53a46c6ec7282b8658d373023d595de24aab55c631b5c6a7ec5d4e5e52fc2443"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-31-coupled-complex-ghep/A.npz": {
+      "size": 3022813,
+      "sha256": "b79bbfe310c4778b03a099d8069419e3a471f78bc485b6052577cbc00466376c"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-31-coupled-complex-ghep/B.npz": {
+      "size": 622140,
+      "sha256": "40baca81ce0e852111f70a2f0bd6a00d7016e1c91b5aa9c7a2269855dd44fefa"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-31-coupled-complex-ghep/config.json": {
+      "size": 94,
+      "sha256": "f5ede7a130b5e193d231863ce9d046c8d5d3a9fd20b05e69a93d17d391565a04"
+    },
+    "/tmp/os2026-p34/fresh-data/cases/fresh-31-coupled-complex-ghep/meta.json": {
+      "size": 534,
+      "sha256": "233eb70716e417cb8524b65076d4368284549e1a020f53745c47c0ba115d5444"
+    },
+    "/tmp/os2026-p34/fresh-data/refs/fresh-00-blocks-real-hep/eigenvalues.npy": {
+      "size": 65664,
+      "sha256": "9a2acd9143ccaacb57e5fae58fef368aabc8eb8188f5fad6256ed1e42b539ba2"
+    },
+    "/tmp/os2026-p34/fresh-data/refs/fresh-00-blocks-real-hep/ref.json": {
+      "size": 219,
+      "sha256": "cf9c427a1bc38aaac7053f8c92f4babce6967495f240a5b54dd47be73d91c91c"
+    },
+    "/tmp/os2026-p34/fresh-data/refs/fresh-01-blocks-real-hep/eigenvalues.npy": {
+      "size": 98432,
+      "sha256": "cf0a8fe52d7b6423df1176f83623790e8924823d40f0ef8d89650de7b6ebc8a9"
+    },
+    "/tmp/os2026-p34/fresh-data/refs/fresh-01-blocks-real-hep/ref.json": {
+      "size": 220,
+      "sha256": "19e0e5e251058505a749cc4fc14ed8325bc06a148256c304c563fa1a0f12cb26"
+    },
+    "/tmp/os2026-p34/fresh-data/refs/fresh-02-blocks-real-ghep/eigenvalues.npy": {
+      "size": 131200,
+      "sha256": "2b2e341992ca697172740056e3c791bbbc714073b158aedecff2bed6eef9de15"
+    },
+    "/tmp/os2026-p34/fresh-data/refs/fresh-02-blocks-real-ghep/ref.json": {
+      "size": 220,
+      "sha256": "da64137dee1c7493e1282f6e321c0ff601be6368c2b5e290f6b9a91dbf6a97c3"
+    },
+    "/tmp/os2026-p34/fresh-data/refs/fresh-03-blocks-real-ghep/eigenvalues.npy": {
+      "size": 65664,
+      "sha256": "281827f5c8f4d6c9fb21264e923bef7e77901f15250fe30228b9812c7c96bb14"
+    },
+    "/tmp/os2026-p34/fresh-data/refs/fresh-03-blocks-real-ghep/ref.json": {
+      "size": 219,
+      "sha256": "cf9c427a1bc38aaac7053f8c92f4babce6967495f240a5b54dd47be73d91c91c"
+    },
+    "/tmp/os2026-p34/fresh-data/refs/fresh-04-blocks-complex-hep/eigenvalues.npy": {
+      "size": 98432,
+      "sha256": "493c35fcecf6e627b1283992ec96d679dfccbbc9e0400e6425ecbe7298920e69"
+    },
+    "/tmp/os2026-p34/fresh-data/refs/fresh-04-blocks-complex-hep/ref.json": {
+      "size": 220,
+      "sha256": "19e0e5e251058505a749cc4fc14ed8325bc06a148256c304c563fa1a0f12cb26"
+    },
+    "/tmp/os2026-p34/fresh-data/refs/fresh-05-blocks-complex-hep/eigenvalues.npy": {
+      "size": 131200,
+      "sha256": "dcbdd37dca1cd47d4114a0d39d37b7e0382687b36e255f9c672b990d1de2d341"
+    },
+    "/tmp/os2026-p34/fresh-data/refs/fresh-05-blocks-complex-hep/ref.json": {
+      "size": 220,
+      "sha256": "da64137dee1c7493e1282f6e321c0ff601be6368c2b5e290f6b9a91dbf6a97c3"
+    },
+    "/tmp/os2026-p34/fresh-data/refs/fresh-06-blocks-complex-ghep/eigenvalues.npy": {
+      "size": 65664,
+      "sha256": "5dac3893015b35f7e5558aec55b40d7830b03b4c19b2da439cf14cf8166ea321"
+    },
+    "/tmp/os2026-p34/fresh-data/refs/fresh-06-blocks-complex-ghep/ref.json": {
+      "size": 219,
+      "sha256": "cf9c427a1bc38aaac7053f8c92f4babce6967495f240a5b54dd47be73d91c91c"
+    },
+    "/tmp/os2026-p34/fresh-data/refs/fresh-07-blocks-complex-ghep/eigenvalues.npy": {
+      "size": 98432,
+      "sha256": "5ef5ed1cb05df13ddfade399361ae0cd903e532a79cba5540ef47494c58fff5f"
+    },
+    "/tmp/os2026-p34/fresh-data/refs/fresh-07-blocks-complex-ghep/ref.json": {
+      "size": 220,
+      "sha256": "19e0e5e251058505a749cc4fc14ed8325bc06a148256c304c563fa1a0f12cb26"
+    },
+    "/tmp/os2026-p34/fresh-data/refs/fresh-08-coupled-real-hep/eigenvalues.npy": {
+      "size": 131200,
+      "sha256": "b897614ea1a9052c94986464358091ecce87c2fb324cfd2d4d33f2b17ff7c54d"
+    },
+    "/tmp/os2026-p34/fresh-data/refs/fresh-08-coupled-real-hep/ref.json": {
+      "size": 220,
+      "sha256": "da64137dee1c7493e1282f6e321c0ff601be6368c2b5e290f6b9a91dbf6a97c3"
+    },
+    "/tmp/os2026-p34/fresh-data/refs/fresh-09-coupled-real-hep/eigenvalues.npy": {
+      "size": 65664,
+      "sha256": "a2c443c186b65f4632b26a5435174a1c30469b7a0a69024c00d59616ad570de7"
+    },
+    "/tmp/os2026-p34/fresh-data/refs/fresh-09-coupled-real-hep/ref.json": {
+      "size": 219,
+      "sha256": "cf9c427a1bc38aaac7053f8c92f4babce6967495f240a5b54dd47be73d91c91c"
+    },
+    "/tmp/os2026-p34/fresh-data/refs/fresh-10-coupled-real-ghep/eigenvalues.npy": {
+      "size": 98432,
+      "sha256": "659c865b711fe5c8fb4648bf24dcf67b8839373825435299cd025f98daf38b44"
+    },
+    "/tmp/os2026-p34/fresh-data/refs/fresh-10-coupled-real-ghep/ref.json": {
+      "size": 220,
+      "sha256": "19e0e5e251058505a749cc4fc14ed8325bc06a148256c304c563fa1a0f12cb26"
+    },
+    "/tmp/os2026-p34/fresh-data/refs/fresh-11-coupled-real-ghep/eigenvalues.npy": {
+      "size": 131200,
+      "sha256": "aa5b0e29d5d17f09f2d4e810f9d323edc6ea4635d38d81b4d31a9cc446fc5cb0"
+    },
+    "/tmp/os2026-p34/fresh-data/refs/fresh-11-coupled-real-ghep/ref.json": {
+      "size": 220,
+      "sha256": "da64137dee1c7493e1282f6e321c0ff601be6368c2b5e290f6b9a91dbf6a97c3"
+    },
+    "/tmp/os2026-p34/fresh-data/refs/fresh-12-coupled-complex-hep/eigenvalues.npy": {
+      "size": 65664,
+      "sha256": "9a2acd9143ccaacb57e5fae58fef368aabc8eb8188f5fad6256ed1e42b539ba2"
+    },
+    "/tmp/os2026-p34/fresh-data/refs/fresh-12-coupled-complex-hep/ref.json": {
+      "size": 219,
+      "sha256": "cf9c427a1bc38aaac7053f8c92f4babce6967495f240a5b54dd47be73d91c91c"
+    },
+    "/tmp/os2026-p34/fresh-data/refs/fresh-13-coupled-complex-hep/eigenvalues.npy": {
+      "size": 98432,
+      "sha256": "cf0a8fe52d7b6423df1176f83623790e8924823d40f0ef8d89650de7b6ebc8a9"
+    },
+    "/tmp/os2026-p34/fresh-data/refs/fresh-13-coupled-complex-hep/ref.json": {
+      "size": 220,
+      "sha256": "19e0e5e251058505a749cc4fc14ed8325bc06a148256c304c563fa1a0f12cb26"
+    },
+    "/tmp/os2026-p34/fresh-data/refs/fresh-14-coupled-complex-ghep/eigenvalues.npy": {
+      "size": 131200,
+      "sha256": "2b2e341992ca697172740056e3c791bbbc714073b158aedecff2bed6eef9de15"
+    },
+    "/tmp/os2026-p34/fresh-data/refs/fresh-14-coupled-complex-ghep/ref.json": {
+      "size": 220,
+      "sha256": "da64137dee1c7493e1282f6e321c0ff601be6368c2b5e290f6b9a91dbf6a97c3"
+    },
+    "/tmp/os2026-p34/fresh-data/refs/fresh-15-coupled-complex-ghep/eigenvalues.npy": {
+      "size": 65664,
+      "sha256": "281827f5c8f4d6c9fb21264e923bef7e77901f15250fe30228b9812c7c96bb14"
+    },
+    "/tmp/os2026-p34/fresh-data/refs/fresh-15-coupled-complex-ghep/ref.json": {
+      "size": 219,
+      "sha256": "cf9c427a1bc38aaac7053f8c92f4babce6967495f240a5b54dd47be73d91c91c"
+    },
+    "/tmp/os2026-p34/fresh-data/refs/fresh-16-blocks-real-hep/eigenvalues.npy": {
+      "size": 98432,
+      "sha256": "3b25409cad88a88ef6023357bf9346f86c091e33129ed96a1bd03ba808bd5f64"
+    },
+    "/tmp/os2026-p34/fresh-data/refs/fresh-16-blocks-real-hep/ref.json": {
+      "size": 220,
+      "sha256": "19e0e5e251058505a749cc4fc14ed8325bc06a148256c304c563fa1a0f12cb26"
+    },
+    "/tmp/os2026-p34/fresh-data/refs/fresh-17-blocks-real-hep/eigenvalues.npy": {
+      "size": 131200,
+      "sha256": "af12a10028147e9e79d3a3bbae8600c77f80492a23ac896f146b6429a08f7426"
+    },
+    "/tmp/os2026-p34/fresh-data/refs/fresh-17-blocks-real-hep/ref.json": {
+      "size": 220,
+      "sha256": "da64137dee1c7493e1282f6e321c0ff601be6368c2b5e290f6b9a91dbf6a97c3"
+    },
+    "/tmp/os2026-p34/fresh-data/refs/fresh-18-blocks-real-ghep/eigenvalues.npy": {
+      "size": 65664,
+      "sha256": "20c90113a48f54f20a50da1bbcbb43a57350f5e8a9f8d0f4e149de147e0412ec"
+    },
+    "/tmp/os2026-p34/fresh-data/refs/fresh-18-blocks-real-ghep/ref.json": {
+      "size": 219,
+      "sha256": "cf9c427a1bc38aaac7053f8c92f4babce6967495f240a5b54dd47be73d91c91c"
+    },
+    "/tmp/os2026-p34/fresh-data/refs/fresh-19-blocks-real-ghep/eigenvalues.npy": {
+      "size": 98432,
+      "sha256": "e3818045d77556de73befcb869f8f9483b08626feb2a5ada07159c8c7eae74b1"
+    },
+    "/tmp/os2026-p34/fresh-data/refs/fresh-19-blocks-real-ghep/ref.json": {
+      "size": 220,
+      "sha256": "19e0e5e251058505a749cc4fc14ed8325bc06a148256c304c563fa1a0f12cb26"
+    },
+    "/tmp/os2026-p34/fresh-data/refs/fresh-20-blocks-complex-hep/eigenvalues.npy": {
+      "size": 131200,
+      "sha256": "2903c8fae7a7c7159ab215178db0cecc9a9c7ba8b794a8873673060b86644dc8"
+    },
+    "/tmp/os2026-p34/fresh-data/refs/fresh-20-blocks-complex-hep/ref.json": {
+      "size": 220,
+      "sha256": "da64137dee1c7493e1282f6e321c0ff601be6368c2b5e290f6b9a91dbf6a97c3"
+    },
+    "/tmp/os2026-p34/fresh-data/refs/fresh-21-blocks-complex-hep/eigenvalues.npy": {
+      "size": 65664,
+      "sha256": "552c11916f4aaf4ba6ff20e81dac3d07bb76db4f38e0e10aab7cd5d2a676e3e5"
+    },
+    "/tmp/os2026-p34/fresh-data/refs/fresh-21-blocks-complex-hep/ref.json": {
+      "size": 219,
+      "sha256": "cf9c427a1bc38aaac7053f8c92f4babce6967495f240a5b54dd47be73d91c91c"
+    },
+    "/tmp/os2026-p34/fresh-data/refs/fresh-22-blocks-complex-ghep/eigenvalues.npy": {
+      "size": 98432,
+      "sha256": "2da23cb013ee7c0853e2a42c534dd2b295d328e2f08cd18cb47604034100fdfa"
+    },
+    "/tmp/os2026-p34/fresh-data/refs/fresh-22-blocks-complex-ghep/ref.json": {
+      "size": 220,
+      "sha256": "19e0e5e251058505a749cc4fc14ed8325bc06a148256c304c563fa1a0f12cb26"
+    },
+    "/tmp/os2026-p34/fresh-data/refs/fresh-23-blocks-complex-ghep/eigenvalues.npy": {
+      "size": 131200,
+      "sha256": "90ac67421de682d0dcf35da02e4c2dbc75b9f721cbc95819e804103c86cafc8b"
+    },
+    "/tmp/os2026-p34/fresh-data/refs/fresh-23-blocks-complex-ghep/ref.json": {
+      "size": 220,
+      "sha256": "da64137dee1c7493e1282f6e321c0ff601be6368c2b5e290f6b9a91dbf6a97c3"
+    },
+    "/tmp/os2026-p34/fresh-data/refs/fresh-24-coupled-real-hep/eigenvalues.npy": {
+      "size": 65664,
+      "sha256": "c522a4855137a6ec8a9080a0f2a4d69b11a453a088cdeadefa6be9cf6ac717fc"
+    },
+    "/tmp/os2026-p34/fresh-data/refs/fresh-24-coupled-real-hep/ref.json": {
+      "size": 219,
+      "sha256": "cf9c427a1bc38aaac7053f8c92f4babce6967495f240a5b54dd47be73d91c91c"
+    },
+    "/tmp/os2026-p34/fresh-data/refs/fresh-25-coupled-real-hep/eigenvalues.npy": {
+      "size": 98432,
+      "sha256": "ebe50dc69771b2d3ba16ecf695a92e206c75a995697b8686e69810960f95d277"
+    },
+    "/tmp/os2026-p34/fresh-data/refs/fresh-25-coupled-real-hep/ref.json": {
+      "size": 220,
+      "sha256": "19e0e5e251058505a749cc4fc14ed8325bc06a148256c304c563fa1a0f12cb26"
+    },
+    "/tmp/os2026-p34/fresh-data/refs/fresh-26-coupled-real-ghep/eigenvalues.npy": {
+      "size": 131200,
+      "sha256": "1a86095904fbce4f64a8eb32024b43c4f1a17cd2f97ad3e7d7cad42f91756fec"
+    },
+    "/tmp/os2026-p34/fresh-data/refs/fresh-26-coupled-real-ghep/ref.json": {
+      "size": 220,
+      "sha256": "da64137dee1c7493e1282f6e321c0ff601be6368c2b5e290f6b9a91dbf6a97c3"
+    },
+    "/tmp/os2026-p34/fresh-data/refs/fresh-27-coupled-real-ghep/eigenvalues.npy": {
+      "size": 65664,
+      "sha256": "7d7d6a4883cef60ae553a7ebb86787beb35a524a3429a718d3965d1d59b1fe36"
+    },
+    "/tmp/os2026-p34/fresh-data/refs/fresh-27-coupled-real-ghep/ref.json": {
+      "size": 219,
+      "sha256": "cf9c427a1bc38aaac7053f8c92f4babce6967495f240a5b54dd47be73d91c91c"
+    },
+    "/tmp/os2026-p34/fresh-data/refs/fresh-28-coupled-complex-hep/eigenvalues.npy": {
+      "size": 98432,
+      "sha256": "3b25409cad88a88ef6023357bf9346f86c091e33129ed96a1bd03ba808bd5f64"
+    },
+    "/tmp/os2026-p34/fresh-data/refs/fresh-28-coupled-complex-hep/ref.json": {
+      "size": 220,
+      "sha256": "19e0e5e251058505a749cc4fc14ed8325bc06a148256c304c563fa1a0f12cb26"
+    },
+    "/tmp/os2026-p34/fresh-data/refs/fresh-29-coupled-complex-hep/eigenvalues.npy": {
+      "size": 131200,
+      "sha256": "af12a10028147e9e79d3a3bbae8600c77f80492a23ac896f146b6429a08f7426"
+    },
+    "/tmp/os2026-p34/fresh-data/refs/fresh-29-coupled-complex-hep/ref.json": {
+      "size": 220,
+      "sha256": "da64137dee1c7493e1282f6e321c0ff601be6368c2b5e290f6b9a91dbf6a97c3"
+    },
+    "/tmp/os2026-p34/fresh-data/refs/fresh-30-coupled-complex-ghep/eigenvalues.npy": {
+      "size": 65664,
+      "sha256": "20c90113a48f54f20a50da1bbcbb43a57350f5e8a9f8d0f4e149de147e0412ec"
+    },
+    "/tmp/os2026-p34/fresh-data/refs/fresh-30-coupled-complex-ghep/ref.json": {
+      "size": 219,
+      "sha256": "cf9c427a1bc38aaac7053f8c92f4babce6967495f240a5b54dd47be73d91c91c"
+    },
+    "/tmp/os2026-p34/fresh-data/refs/fresh-31-coupled-complex-ghep/eigenvalues.npy": {
+      "size": 98432,
+      "sha256": "e3818045d77556de73befcb869f8f9483b08626feb2a5ada07159c8c7eae74b1"
+    },
+    "/tmp/os2026-p34/fresh-data/refs/fresh-31-coupled-complex-ghep/ref.json": {
+      "size": 220,
+      "sha256": "19e0e5e251058505a749cc4fc14ed8325bc06a148256c304c563fa1a0f12cb26"
+    },
+    "/tmp/os2026-p34/validation-data/cases/validation-00-coupled-real-hep/A.npz": {
+      "size": 307961,
+      "sha256": "2252215d526bc571a47875d9c3fc1a8093c76d481163eb897a0d444880590cc9"
+    },
+    "/tmp/os2026-p34/validation-data/cases/validation-00-coupled-real-hep/config.json": {
+      "size": 100,
+      "sha256": "5cf723c4faa8202912720eb475ba29b8ab790d854db0d5dfa8cad8a9ee522277"
+    },
+    "/tmp/os2026-p34/validation-data/cases/validation-00-coupled-real-hep/meta.json": {
+      "size": 515,
+      "sha256": "165424704f2eaf14badf17d15dad8196c4ea0e6e92465a23f6698c305a813571"
+    },
+    "/tmp/os2026-p34/validation-data/cases/validation-01-coupled-complex-hep/A.npz": {
+      "size": 1399559,
+      "sha256": "af3548fbad95962f92218987048e116036b4db93b799bc466cb5cf9ef22d2260"
+    },
+    "/tmp/os2026-p34/validation-data/cases/validation-01-coupled-complex-hep/config.json": {
+      "size": 100,
+      "sha256": "8e2cb40235727a9566478d8d52f5dcbddbe7a9dba7110e5995ba0b8703536538"
+    },
+    "/tmp/os2026-p34/validation-data/cases/validation-01-coupled-complex-hep/meta.json": {
+      "size": 521,
+      "sha256": "fade199fca8405a78f4841daa0196b33aad3731187e09ba91d502b17687e276c"
+    },
+    "/tmp/os2026-p34/validation-data/cases/validation-02-coupled-real-ghep/A.npz": {
+      "size": 1254607,
+      "sha256": "5eccb44778c7031dfe71655703636588fd07ac1139223ba6ca73ecca0c3f1c05"
+    },
+    "/tmp/os2026-p34/validation-data/cases/validation-02-coupled-real-ghep/B.npz": {
+      "size": 292683,
+      "sha256": "85c76219020a4d4c7b11e8c2af698bfcbbaffba80fd767775dd45d18e4f61ae0"
+    },
+    "/tmp/os2026-p34/validation-data/cases/validation-02-coupled-real-ghep/config.json": {
+      "size": 92,
+      "sha256": "b38ea6b1117296d584fd3e008f2fa04df3b25f05654e6bdbfd67dc6b24ad69fa"
+    },
+    "/tmp/os2026-p34/validation-data/cases/validation-02-coupled-real-ghep/meta.json": {
+      "size": 529,
+      "sha256": "1a39994b28c4ef53e9aa5da02d8b9ba34245923b6e8b1d0471ed1749be98fe32"
+    },
+    "/tmp/os2026-p34/validation-data/cases/validation-03-coupled-complex-ghep/A.npz": {
+      "size": 693771,
+      "sha256": "51f087dc1de17f8c36c2c1ca62c4fc2b96a817446c5248215ebfa4414e4360d3"
+    },
+    "/tmp/os2026-p34/validation-data/cases/validation-03-coupled-complex-ghep/B.npz": {
+      "size": 138230,
+      "sha256": "494e1371a39b82ee1f02f691ed631e56d1c4d600b14e95bee1e40e811f8bfd6a"
+    },
+    "/tmp/os2026-p34/validation-data/cases/validation-03-coupled-complex-ghep/config.json": {
+      "size": 92,
+      "sha256": "d32557ce6d6d05f33f515a73738676ee1273fb9228669e25cf4a4b4fe6a310d8"
+    },
+    "/tmp/os2026-p34/validation-data/cases/validation-03-coupled-complex-ghep/meta.json": {
+      "size": 533,
+      "sha256": "24fef621f875680864cb4237c912d446c18f3ab2c6a7c88e5f55d496c62dd9d3"
+    },
+    "/tmp/os2026-p34/validation-data/cases/validation-04-coupled-real-hep/A.npz": {
+      "size": 784682,
+      "sha256": "58e6daf5298bf3e3cb48931b2b52a0bd7e61a0ab2af155637d99d2aa3a71f7fd"
+    },
+    "/tmp/os2026-p34/validation-data/cases/validation-04-coupled-real-hep/config.json": {
+      "size": 92,
+      "sha256": "5662e9d8084a223c48c66f620e44a7acd37312b6622653a7833f28caeb135fb1"
+    },
+    "/tmp/os2026-p34/validation-data/cases/validation-04-coupled-real-hep/meta.json": {
+      "size": 506,
+      "sha256": "3d91e2078d46e4d5699707c72f8f50a66d2b504fb4c6f7f9c3945b6e5f10ef17"
+    },
+    "/tmp/os2026-p34/validation-data/cases/validation-05-coupled-complex-hep/A.npz": {
+      "size": 1823124,
+      "sha256": "f52d00424f71f177e6a1dc505700f3f33668643c0f49e025dd37201d4df9809c"
+    },
+    "/tmp/os2026-p34/validation-data/cases/validation-05-coupled-complex-hep/config.json": {
+      "size": 92,
+      "sha256": "5cbea16a0350cb6a8a126092c27ffdb8fcde82508326d2cbc2036007f9b6d9ea"
+    },
+    "/tmp/os2026-p34/validation-data/cases/validation-05-coupled-complex-hep/meta.json": {
+      "size": 513,
+      "sha256": "6f622f83f050f5346b31403dace0ac94e7e18b93b032a866997e579b25af56a4"
+    },
+    "/tmp/os2026-p34/validation-data/cases/validation-06-coupled-real-ghep/A.npz": {
+      "size": 376838,
+      "sha256": "6183329f5c44fa49d32e953927f610e2186de8d29780a6931c998fd514746344"
+    },
+    "/tmp/os2026-p34/validation-data/cases/validation-06-coupled-real-ghep/B.npz": {
+      "size": 88218,
+      "sha256": "2309ccc2d44299dd8414fe5759e34f4349aa67471328dcc1cbbaf44bb69d379e"
+    },
+    "/tmp/os2026-p34/validation-data/cases/validation-06-coupled-real-ghep/config.json": {
+      "size": 92,
+      "sha256": "b38ea6b1117296d584fd3e008f2fa04df3b25f05654e6bdbfd67dc6b24ad69fa"
+    },
+    "/tmp/os2026-p34/validation-data/cases/validation-06-coupled-real-ghep/meta.json": {
+      "size": 527,
+      "sha256": "2a136fb0205ee7284e4091f4110c98a0395265903b6f8aa84846dc16ac3173f8"
+    },
+    "/tmp/os2026-p34/validation-data/cases/validation-07-coupled-complex-ghep/A.npz": {
+      "size": 1711175,
+      "sha256": "c18e439aa986a584a6461780f1a07971120e36556c746419b883807871fae7c9"
+    },
+    "/tmp/os2026-p34/validation-data/cases/validation-07-coupled-complex-ghep/B.npz": {
+      "size": 350807,
+      "sha256": "1e5c7153cf1e87aacbd8230a4516dff69993662cefc2230598beb18224c65022"
+    },
+    "/tmp/os2026-p34/validation-data/cases/validation-07-coupled-complex-ghep/config.json": {
+      "size": 92,
+      "sha256": "d32557ce6d6d05f33f515a73738676ee1273fb9228669e25cf4a4b4fe6a310d8"
+    },
+    "/tmp/os2026-p34/validation-data/cases/validation-07-coupled-complex-ghep/meta.json": {
+      "size": 534,
+      "sha256": "4f9ffcf4d97ef60a020f0ca2078ad06a94696281209fee0ca31fa0a645ddb677"
+    },
+    "/tmp/os2026-p34/validation-data/refs/validation-00-coupled-real-hep/eigenvalues.npy": {
+      "size": 24704,
+      "sha256": "ad8c6171135650777913bb6b420315c8cdac74e8a5b0c8b4b1a3c60ad05b270f"
+    },
+    "/tmp/os2026-p34/validation-data/refs/validation-00-coupled-real-hep/ref.json": {
+      "size": 219,
+      "sha256": "4f4cffa869724274d7f327ecf638079e5d6fce9aa212d61847b6104ecf5a0231"
+    },
+    "/tmp/os2026-p34/validation-data/refs/validation-01-coupled-complex-hep/eigenvalues.npy": {
+      "size": 57472,
+      "sha256": "613f0ff7059a1e4d0bd12b115763951b9abdee0abc7f8ea7022f1947adfd8ea0"
+    },
+    "/tmp/os2026-p34/validation-data/refs/validation-01-coupled-complex-hep/ref.json": {
+      "size": 219,
+      "sha256": "b706861c89867ec80b631e5f54d5ac9cb8c4a51b368fe302d937574c843161e0"
+    },
+    "/tmp/os2026-p34/validation-data/refs/validation-02-coupled-real-ghep/eigenvalues.npy": {
+      "size": 73856,
+      "sha256": "f44b752fbbef22afb0cc4c0bc8ad4db61e04269dc2ea6c6e02178c882c41bf24"
+    },
+    "/tmp/os2026-p34/validation-data/refs/validation-02-coupled-real-ghep/ref.json": {
+      "size": 219,
+      "sha256": "37f5746111e637c2e670e48e4e6c1d6a6cc973c4f72aa93acbc8837192401e2c"
+    },
+    "/tmp/os2026-p34/validation-data/refs/validation-03-coupled-complex-ghep/eigenvalues.npy": {
+      "size": 24704,
+      "sha256": "f6e61044b7717828d33d6a88a2f7c04c313447aabd0eabb6f910b05da780bb16"
+    },
+    "/tmp/os2026-p34/validation-data/refs/validation-03-coupled-complex-ghep/ref.json": {
+      "size": 219,
+      "sha256": "4f4cffa869724274d7f327ecf638079e5d6fce9aa212d61847b6104ecf5a0231"
+    },
+    "/tmp/os2026-p34/validation-data/refs/validation-04-coupled-real-hep/eigenvalues.npy": {
+      "size": 57472,
+      "sha256": "48419da754ec30763a83d3fcebea50247aaa4364dc9c2f89dd75ce5e9ce73a30"
+    },
+    "/tmp/os2026-p34/validation-data/refs/validation-04-coupled-real-hep/ref.json": {
+      "size": 219,
+      "sha256": "b706861c89867ec80b631e5f54d5ac9cb8c4a51b368fe302d937574c843161e0"
+    },
+    "/tmp/os2026-p34/validation-data/refs/validation-05-coupled-complex-hep/eigenvalues.npy": {
+      "size": 73856,
+      "sha256": "51db1084c885d0314340e6f55148ed8d29e45fbff45196e39d1bab0574650820"
+    },
+    "/tmp/os2026-p34/validation-data/refs/validation-05-coupled-complex-hep/ref.json": {
+      "size": 219,
+      "sha256": "37f5746111e637c2e670e48e4e6c1d6a6cc973c4f72aa93acbc8837192401e2c"
+    },
+    "/tmp/os2026-p34/validation-data/refs/validation-06-coupled-real-ghep/eigenvalues.npy": {
+      "size": 24704,
+      "sha256": "47716d20b3134d33d0fdd6b378ac91d4d7692cae2b8f5856ab97c413a0095037"
+    },
+    "/tmp/os2026-p34/validation-data/refs/validation-06-coupled-real-ghep/ref.json": {
+      "size": 219,
+      "sha256": "4f4cffa869724274d7f327ecf638079e5d6fce9aa212d61847b6104ecf5a0231"
+    },
+    "/tmp/os2026-p34/validation-data/refs/validation-07-coupled-complex-ghep/eigenvalues.npy": {
+      "size": 57472,
+      "sha256": "8d87358f35daf6c24799e47f71f4f33cba21cc9bc6022952dfa5d1e1d35a5f25"
+    },
+    "/tmp/os2026-p34/validation-data/refs/validation-07-coupled-complex-ghep/ref.json": {
+      "size": 219,
+      "sha256": "b706861c89867ec80b631e5f54d5ac9cb8c4a51b368fe302d937574c843161e0"
+    },
+    "/share/home/linzihan/os2026/data/cases/syn-ghep-zero-cluster-complex-1e4/config.json": {
+      "size": 91,
+      "sha256": "577e4136bcd5e8de93cfcc3165f0d30a7f25b5fdf6406a51db99ad1b96c733d1"
+    },
+    "/share/home/linzihan/os2026/data/cases/syn-ghep-zero-cluster-complex-1e4/B.npz": {
+      "size": 753275,
+      "sha256": "dc5338ebed25909a37bd0653384e30ff1b56dcc5a479f34793d4712345b471fb"
+    },
+    "/share/home/linzihan/os2026/data/cases/syn-ghep-zero-cluster-complex-1e4/meta.json": {
+      "size": 1207,
+      "sha256": "1a86b1088c39003a0534f1f32e1582504df399003460b14f5a9d7fa6eaae2a0e"
+    },
+    "/share/home/linzihan/os2026/data/cases/syn-ghep-zero-cluster-complex-1e4/A.npz": {
+      "size": 4766017,
+      "sha256": "bbeaafde120984ed9dbd38dee2204a252a2ad33938d6afdadf5c5a6c807e6a1e"
+    },
+    "/share/home/linzihan/os2026/data/refs/syn-ghep-zero-cluster-complex-1e4/ref.json": {
+      "size": 265,
+      "sha256": "7ff162e9a8a7840918a603643efc2049e63beaacc3f2dac0b210e61596c9d3b1"
+    },
+    "/share/home/linzihan/os2026/data/refs/syn-ghep-zero-cluster-complex-1e4/eigenvalues.npy": {
+      "size": 80128,
+      "sha256": "5413449a64c0073b73b047342d0b3192f61ba18106237f064a313f3bde15f4fb"
+    },
+    "/share/home/linzihan/os2026/data/cases/syn-multiplicity-complex-1e4/config.json": {
+      "size": 107,
+      "sha256": "ebcf0fe08f61dd952874b55b9cb0680b5b3e1e442016d9b2792235d20de56cd1"
+    },
+    "/share/home/linzihan/os2026/data/cases/syn-multiplicity-complex-1e4/meta.json": {
+      "size": 940,
+      "sha256": "6a3d6812ea8db536d33ce2500bebffb920ea1af5b7b8d1c04c5869294c36fbba"
+    },
+    "/share/home/linzihan/os2026/data/cases/syn-multiplicity-complex-1e4/A.npz": {
+      "size": 4000597,
+      "sha256": "1530a8d1ec4d3ccc05cd1041ede5e5d70c71479273426e76734fa27aed45c367"
+    },
+    "/share/home/linzihan/os2026/data/refs/syn-multiplicity-complex-1e4/ref.json": {
+      "size": 292,
+      "sha256": "a63564436c09a41408a5c4e240ee7a9293d659ec44d4da8e5553eb689077bf74"
+    },
+    "/share/home/linzihan/os2026/data/refs/syn-multiplicity-complex-1e4/eigenvalues.npy": {
+      "size": 80128,
+      "sha256": "780a025c72f67bb6a18b041a3359bac9c484dfc472ab0def3f316651177595a1"
+    },
+    "/share/home/linzihan/os2026/data/cases/syn-near-singular-complex-1e4/config.json": {
+      "size": 107,
+      "sha256": "56f18938c9155b9ccf38049aecce036466048e62454d6990ad335ed7e96c0c6c"
+    },
+    "/share/home/linzihan/os2026/data/cases/syn-near-singular-complex-1e4/meta.json": {
+      "size": 975,
+      "sha256": "2997607c0b3cc390990c382291dfb835093814672b69733f2bc774ab251a5d3e"
+    },
+    "/share/home/linzihan/os2026/data/cases/syn-near-singular-complex-1e4/A.npz": {
+      "size": 4001712,
+      "sha256": "885858ff2a236bd6a45da25449e1e1a5d46d819470a32677e04fb1e843af1730"
+    },
+    "/share/home/linzihan/os2026/data/refs/syn-near-singular-complex-1e4/ref.json": {
+      "size": 292,
+      "sha256": "a63564436c09a41408a5c4e240ee7a9293d659ec44d4da8e5553eb689077bf74"
+    },
+    "/share/home/linzihan/os2026/data/refs/syn-near-singular-complex-1e4/eigenvalues.npy": {
+      "size": 80128,
+      "sha256": "ff27585bd024aca1f43597c07ae0587f41443be6597f6f7172ba37e93f7ea1e8"
+    },
+    "/share/home/linzihan/os2026/data/cases/syn-near-singular-complex-1e5/config.json": {
+      "size": 106,
+      "sha256": "baaa6f9f5403f94baf6332ea6a99924f5fdb7721989d73faa1aba6ba3ebcfaeb"
+    },
+    "/share/home/linzihan/os2026/data/cases/syn-near-singular-complex-1e5/meta.json": {
+      "size": 978,
+      "sha256": "2dd97186af7321ddc984578d3d3bbff4edaf99b95dd1c6174daa761e9ca30fcb"
+    },
+    "/share/home/linzihan/os2026/data/cases/syn-near-singular-complex-1e5/A.npz": {
+      "size": 42649583,
+      "sha256": "504f7f8c89ec1c43b86e2bfacbcc4132ebb72c4b73c697f4a36f2b8f9c6dee6f"
+    },
+    "/share/home/linzihan/os2026/data/refs/syn-near-singular-complex-1e5/ref.json": {
+      "size": 293,
+      "sha256": "3680e53d0749c94de887f8db471412ed2af91cb9063f536b8fa9e12edf223e46"
+    },
+    "/share/home/linzihan/os2026/data/refs/syn-near-singular-complex-1e5/eigenvalues.npy": {
+      "size": 800128,
+      "sha256": "2ed51e3be8cd6588f63f3cb44e97639ef3e428b822793da16d4b806bb6d77643"
+    },
+    "/share/home/linzihan/os2026/data/cases/syn-wide-range-complex-1e4/config.json": {
+      "size": 91,
+      "sha256": "251c63d14c8b71697961a604538c6ddf9468593d01f0c905c6822ec068720395"
+    },
+    "/share/home/linzihan/os2026/data/cases/syn-wide-range-complex-1e4/meta.json": {
+      "size": 957,
+      "sha256": "18034980dc536388606e65189448b8c8c7966165fb5034db38d9f7866bb3c773"
+    },
+    "/share/home/linzihan/os2026/data/cases/syn-wide-range-complex-1e4/A.npz": {
+      "size": 4073124,
+      "sha256": "7e29ec8f846b785bb4f46a642a2b131f289e6380e6e25a7b7073b5e2cbc7c3af"
+    },
+    "/share/home/linzihan/os2026/data/refs/syn-wide-range-complex-1e4/ref.json": {
+      "size": 292,
+      "sha256": "a63564436c09a41408a5c4e240ee7a9293d659ec44d4da8e5553eb689077bf74"
+    },
+    "/share/home/linzihan/os2026/data/refs/syn-wide-range-complex-1e4/eigenvalues.npy": {
+      "size": 80128,
+      "sha256": "af2aad1ad22fcb983571365a3d855caffd2f6611908def2f0cbdda3f4a45ae15"
+    },
+    "/share/home/linzihan/os2026/data/cases/syn-zero-cluster-complex-1e4/config.json": {
+      "size": 91,
+      "sha256": "b98b325ec1a4e5ca3b1696c91a88da5ce0ca7f621c8d942da47141123083989d"
+    },
+    "/share/home/linzihan/os2026/data/cases/syn-zero-cluster-complex-1e4/meta.json": {
+      "size": 1010,
+      "sha256": "fad8cb2684180ccc291337cb1816ebc6fadabe72b46674a99b0531c4f9f7aab3"
+    },
+    "/share/home/linzihan/os2026/data/cases/syn-zero-cluster-complex-1e4/A.npz": {
+      "size": 3999858,
+      "sha256": "6a46338767684fb6ee5731a766dce61d5e474c82772a6da42af587a051662143"
+    },
+    "/share/home/linzihan/os2026/data/refs/syn-zero-cluster-complex-1e4/ref.json": {
+      "size": 292,
+      "sha256": "a63564436c09a41408a5c4e240ee7a9293d659ec44d4da8e5553eb689077bf74"
+    },
+    "/share/home/linzihan/os2026/data/refs/syn-zero-cluster-complex-1e4/eigenvalues.npy": {
+      "size": 80128,
+      "sha256": "7a33d4bad7648b7799913e95cc3cd37d69eff61a3a01cf268558df87e2ccf815"
+    },
+    "/share/home/linzihan/os2026/data/cases/yee-bloch-1e4/config.json": {
+      "size": 106,
+      "sha256": "de982201d3d6a1041ccd13e5869203d87845f556a33fde925b9e5ba27eb0f094"
+    },
+    "/share/home/linzihan/os2026/data/cases/yee-bloch-1e4/meta.json": {
+      "size": 997,
+      "sha256": "3da199c5ca22c9d8d2d6e8d055388d00ed1fc2c3397be83a115c73c05d0b206d"
+    },
+    "/share/home/linzihan/os2026/data/cases/yee-bloch-1e4/A.npz": {
+      "size": 210065,
+      "sha256": "7917fe08362c1e8d430a9dc6c0859905ecbbf0e17ad8421ede984287a0019d83"
+    },
+    "/share/home/linzihan/os2026/data/refs/yee-bloch-1e4/ref.json": {
+      "size": 264,
+      "sha256": "3b7b1abc4ed2e6bd659e8e411ecf14ac520dcc1938d5aa343cd02fb14cef1b50"
+    },
+    "/share/home/linzihan/os2026/data/refs/yee-bloch-1e4/eigenvalues.npy": {
+      "size": 80768,
+      "sha256": "711bc15d08ae786e2df82482580ba32be9e8535f7e955c6f21de8dd96007a556"
+    },
+    "/share/home/linzihan/os2026/data/cases/yee-photonic-rods-1e4/config.json": {
+      "size": 106,
+      "sha256": "e88a717aa645caff9d4f62428c9ed61e5e4a0803ca3bfcf656a1a4b662bdf20b"
+    },
+    "/share/home/linzihan/os2026/data/cases/yee-photonic-rods-1e4/meta.json": {
+      "size": 979,
+      "sha256": "e2d69ddd259b6ed6b33ecd333334f43b6eb0514b96ad02b20583832777512c9c"
+    },
+    "/share/home/linzihan/os2026/data/cases/yee-photonic-rods-1e4/A.npz": {
+      "size": 224493,
+      "sha256": "00bedc939a9a04576d5bb4ce3ddebe01c287ab63af4a22ebb9fe3f27fd3bc591"
+    },
+    "/share/home/linzihan/os2026/data/refs/yee-photonic-rods-1e4/ref.json": {
+      "size": 296,
+      "sha256": "cca90915953c055c03e14dc1e68a8bc70c341c657580d327b7392d2a75482054"
+    },
+    "/share/home/linzihan/os2026/data/refs/yee-photonic-rods-1e4/eigenvectors.npy": {
+      "size": 3240128,
+      "sha256": "01b28dc994b1ee1d7a9ca37fc997666842bffaae03a9d85ded78b32b75c787f9"
+    },
+    "/share/home/linzihan/os2026/data/refs/yee-photonic-rods-1e4/eigenvalues.npy": {
+      "size": 288,
+      "sha256": "f15d46066eafb2b5587d7112f67a3e9ce9e72884cd0594d48f71931d1eb2bcff"
+    },
+    "/share/home/linzihan/os2026/data/cases/yee-photonic-spheres-1e4/config.json": {
+      "size": 106,
+      "sha256": "ad436f39fd71719445e2222e58805cfc3eac01c851eb07723d41c3ff7e09c364"
+    },
+    "/share/home/linzihan/os2026/data/cases/yee-photonic-spheres-1e4/B.npz": {
+      "size": 30373,
+      "sha256": "0c2e36eea9a86f64cea3bfde74d0b0252497ca3a525eccae2abd1d89c0bffc6e"
+    },
+    "/share/home/linzihan/os2026/data/cases/yee-photonic-spheres-1e4/meta.json": {
+      "size": 1119,
+      "sha256": "0fe2ae169863790215cfa9cebd855e6d34125c0560cc4ed3fc8843205c989e48"
+    },
+    "/share/home/linzihan/os2026/data/cases/yee-photonic-spheres-1e4/A.npz": {
+      "size": 222995,
+      "sha256": "ad91014da0461bbdce622abb76cc9dc2e23c141986ed613314416f2961e51374"
+    },
+    "/share/home/linzihan/os2026/data/refs/yee-photonic-spheres-1e4/ref.json": {
+      "size": 292,
+      "sha256": "be0213f379828faac56263a338feafa22ad32242017173f821bdb77fbdf379df"
+    },
+    "/share/home/linzihan/os2026/data/refs/yee-photonic-spheres-1e4/eigenvectors.npy": {
+      "size": 3240128,
+      "sha256": "fd2f24e92e561224d78057d1674a77669671c081e4cb21d51e1c1669e3a4a601"
+    },
+    "/share/home/linzihan/os2026/data/refs/yee-photonic-spheres-1e4/eigenvalues.npy": {
+      "size": 288,
+      "sha256": "24dc49f80c603aa21ad999ac6317344873985a45b66e4371d1df99cf2493545d"
+    }
+  }
+}

@@ -1,0 +1,113 @@
+{
+ "tag": "cmp-p10-nearest-yee-tight",
+ "cores": "8-15,16-23",
+ "ncores": 16,
+ "solvers": [
+  "hsolve-mpi",
+  "slepc"
+ ],
+ "slepc_profile": "best",
+ "slepc_ranks": 1,
+ "reps": 3,
+ "target_override": null,
+ "evaluated": true,
+ "rows": [
+  {
+   "case": "yee-pec-box-1e6",
+   "n": 1027733,
+   "problem": "GHEP",
+   "target": {
+    "mode": "nearest",
+    "sigma": 52.898884876721574,
+    "k": 10
+   },
+   "target_desc": "k=10 @ 52.9",
+   "k": 10,
+   "norms": {
+    "norm2_a": 1182.6925579960362,
+    "norm2_b": 0.011273172632633756,
+    "scale": 104912.13046559397,
+    "time_s": 19.690643582958728
+   },
+   "solvers": {
+    "hsolve-mpi": {
+     "reps": 3,
+     "valid_runs": 3,
+     "ok": true,
+     "solver_s": 56.319649768,
+     "solver_s_min": 55.089619624,
+     "solver_s_max": 56.368602188,
+     "solver_s_all": [
+      55.089619624,
+      56.368602188,
+      56.319649768
+     ],
+     "solver_s_scope": "report time_total_s",
+     "wall_s": 58.861,
+     "peak_rss_gib": 24.66,
+     "solver_peak_gib": 11.480216979980469,
+     "max_eta": 4.2508843926616655e-11,
+     "completeness": [
+      "complete"
+     ],
+     "pairs": 10,
+     "phases": {
+      "analysis_s": 2.734211532,
+      "numeric_s": 15.09053748,
+      "factorizations": 1.0,
+      "solves": 120.0,
+      "solve_s": 10.984102972,
+      "ortho_s": null,
+      "iterate_s": 13.546758512999997,
+      "verify_s": 0.27874577099999787
+     },
+     "errors": [],
+     "invalid_reasons": [],
+     "config": "hsolve-mpirun --ranks 3; default solver config",
+     "config_source": "explicit P10 comparison variant; exact certificate, original tolerance",
+     "config_scope": "case",
+     "set_err_vs_ref": 2.782266480466443e-17,
+     "set_diff_vs_slepc": 1.8589704509017123e-16
+    },
+    "slepc": {
+     "reps": 3,
+     "valid_runs": 3,
+     "ok": true,
+     "solver_s": 50.4915,
+     "solver_s_min": 49.942499999999995,
+     "solver_s_max": 51.7177,
+     "solver_s_all": [
+      49.942499999999995,
+      50.4915,
+      51.7177
+     ],
+     "solver_s_scope": "log_view setup+solve+vectors",
+     "wall_s": 53.956,
+     "peak_rss_gib": 16.228,
+     "solver_peak_gib": 16.066585540771484,
+     "max_eta": 8.367368861750679e-14,
+     "completeness": [
+      "complete"
+     ],
+     "pairs": 10,
+     "phases": {
+      "analysis_s": 6.5333,
+      "numeric_s": 17.679,
+      "factorizations": 1.0,
+      "solves": 89.0,
+      "solve_s": 25.073,
+      "ortho_s": 0.80033,
+      "iterate_s": null,
+      "verify_s": null
+     },
+     "errors": [],
+     "invalid_reasons": [],
+     "config": "4x4/core eps_ncv=3k eps_nev=k+2 eps_tol=1e-12 st_mat_mumps_cntl_7=1e-12 st_mat_mumps_icntl_28=2 st_mat_mumps_icntl_29=2 st_mat_mumps_icntl_35=2",
+     "config_source": "case profile yee-pec-box-1e6",
+     "config_scope": "case",
+     "set_err_vs_ref": 1.615215447323269e-16
+    }
+   }
+  }
+ ]
+}

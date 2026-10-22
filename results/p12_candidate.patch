@@ -1,0 +1,303 @@
+--- a/docs/DESIGN.md
++++ b/docs/DESIGN.md
+@@ -300,6 +300,13 @@
+ - `release_factors()`（非纯虚，默认返回 false；MUMPS：JOB=−4）：释放数值因子与工作区、保留分析。
+   之后 `solve` 抛 Internal、`inertia().valid = false`（valid ⇔ solve 可用，ShiftInvertOperator 与
+   driver 都以它判断），计数与 `stats()` 仍描述被释放的那次分解——需要时先拷贝 `inertia()`。
++- `SparseFactorization::count(α, β)`（P12）：返回一次数值分解的惯性，允许丢弃因子，后续求解必须重新
++  `factorize`。MUMPS 5.8.2 的双精度、无 BLR、内存内主对象复用已有分析，在 JOB=2 期间临时设置
++  KEEP(201)=−1 / KEEP(251)=1，省去因子存储；这些是该版本分析 ICNTL(31)=1 后使用的存储标志。
++  分解时重算工作内存，原分析估计继续作保守预留。成功或失败后恢复存储模式，`inertia().valid=false`，
++  返回值保留计数的有效性；失败清理工作区，主元选择、缩放与零主元检测不变。其它版本 / 模式走普通
++  分解加释放。`has_inertia_only_count()` 供 driver 判断是否能省去独立计数器的分析；nearest 的
++  `inertia_counter=auto` 且主因子不再需要时采用它，显式 on、区间复用因子和 MPI helper 计数仍按原策略。
+ - `InertiaCounter<T>(analysed_source, options)`：在已分析主对象的模式上计 ν(αA + βB)，**不动主对象**
+   （主因子保持有效，证书后不必在工作位移重分解）。机制：自有的只计惯性 MUMPS 实例（ICNTL(31)=1），
+   用主对象的主元顺序分析（PERM_IN，不再做一次填充排序）；`count(α, β, detection, precision)`、
+@@ -1060,7 +1067,9 @@
+    - **计数来源 `CountSource`**（P4）：主分解对象（在计数点重分解，之后持有 K(s)，Ctx::held——单边切片
+      可直接复用为位移），或 InertiaCounter（首次计数时按主分析的主元顺序建立；只计惯性的分解，实测
+      便宜 10–23%，不动主因子）。规则：
+-     - nearest 证书（每轮两次计数、主因子精确）：`counter_pays` 时用计数器——2·0.13·model_factor_s >
++     - nearest 证书（每轮两次计数、主因子精确）：P12 的 `auto` 优先使用主对象支持的
++       `has_inertia_only_count()`，保留分析并丢弃计数因子，省去单独计数器的分析；不支持时沿用
++       `counter_pays` 规则——2·0.13·model_factor_s >
+        model_analysis_s（计数器的分析约等于一次 AMD 分析；三维填充是，低填充的二维 / 复数嵌入否，与
+        实测净节省的正负一致）；`inertia_counter = on / off` 覆盖。用计数器时**每次计数前释放主因子**
+        （`MainFactors::Release`：证书之后只有重跑才要主因子，重跑在 σ 重分解一次——与主对象计数相同），
+--- a/include/hsolve/factor.hpp
++++ b/include/hsolve/factor.hpp
+@@ -369,6 +369,19 @@
+   ///   any other negative INFO: FactorizationFailed (message carries INFO(1), INFO(2)).
+   [[nodiscard]] virtual bool factorize(double alpha, double beta) = 0;
+ 
++  /// Count the inertia without needing a subsequent solve at this shift. The returned value
++  /// has the same singularity/precision contract as factorize() + inertia(). The backend may
++  /// discard the factors; call factorize() again before solving. The symbolic analysis remains.
++  virtual Inertia count(double alpha, double beta) {
++    static_cast<void>(factorize(alpha, beta));
++    const Inertia result = inertia();
++    release_factors();
++    return result;
++  }
++  /// True when count() can discard factors during factorization using this object's existing
++  /// analysis. A driver that no longer needs the main factors can then avoid a separate counter.
++  virtual bool has_inertia_only_count() const { return false; }
++
+   /// Solve K X = B in place; b is n x nrhs column-major with ldb >= n. Multiple right-hand sides
+   /// are solved in one MUMPS call (block triangular solves). Throws Internal without a valid
+   /// factorization, InvalidInput for nrhs < 0 or ldb < n, OutOfMemoryBudget / FactorizationFailed
+--- a/src/driver/definite.cpp
++++ b/src/driver/definite.cpp
+@@ -489,8 +489,9 @@
+     select_and_verify();
+   }
+   InertiaCertificate& cert = rep.certificate;
+-  const bool on_counter = want_cert && counter_pays(cfg, fac.estimate(), mumps_input_size(pencil),
+-                                                    fac.options().threads, 2);
++  const bool count_in_place = cfg.inertia_counter == Toggle::Auto && fac.has_inertia_only_count();
++  const bool on_counter = want_cert && !count_in_place &&
++                         counter_pays(cfg, fac.estimate(), mumps_input_size(pencil), fac.options().threads, 2);
+   CountSource<T> counts(fac, pencil, on_counter, MainFactors::Release);
+   NearestCertifier<T> fast(c, pencil, fac, sigma, detection_off, scale, n2a, n2b, timings);
+   // A count or rerun factorization that fails (MUMPS out of memory or another MUMPS error) never
+--- a/src/driver/internal.hpp
++++ b/src/driver/internal.hpp
+@@ -347,7 +347,8 @@
+ 
+ /// Where the Sylvester counts of a solve path come from (DESIGN §3.6-8):
+ ///   * the main factorization object, refactorized at each count point: it then holds K(s)
+-///     (Ctx::held), which a Krylov run at s reuses (one-sided slice anchors);
++///     (Ctx::held), which a Krylov run at s reuses (one-sided slice anchors). MainFactors::Release
++///     permits count() to discard them instead, leaving Ctx::held empty;
+ ///   * an InertiaCounter, built at the first count from the main analysis' pivot order
+ ///     (factor.hpp): inertia-only factorizations (measured 10-23% cheaper) that do not touch the
+ ///     main factors; MainFactors says whether those are released before a count (then they are
+@@ -375,7 +376,8 @@
+ class CountSource {
+  public:
+   /// prefer_counter: count on the counter even with an exact main factor (see counter_pays()).
+-  /// main: what counter counts do with the main factors (no effect on main-object counts).
++  /// main: what counter counts do with the main factors. Release also permits main-object
++  /// counts to discard their factors; a later solve must refactorize.
+   CountSource(SparseFactorization<T>& fac, const ShiftedPencil<T>& pencil, bool prefer_counter,
+               MainFactors main = MainFactors::KeepWithinCap);
+   ~CountSource();
+--- a/src/driver/steps.cpp
++++ b/src/driver/steps.cpp
+@@ -414,13 +414,14 @@
+   fac_.set_null_pivot_detection(detection);
+   Inertia in;
+   try {
+-    if (fac_.factorize(1.0, -s)) in = fac_.inertia();
++    if (main_ == MainFactors::Release) in = fac_.count(1.0, -s);
++    else if (fac_.factorize(1.0, -s)) in = fac_.inertia();
+   } catch (...) {
+     fac_.set_null_pivot_detection(true);
+     throw;
+   }
+   fac_.set_null_pivot_detection(true);
+-  if (in.valid) c.held = FactorHeld{s, !detection};
++  if (in.valid && main_ != MainFactors::Release) c.held = FactorHeld{s, !detection};
+   return in;
+ }
+ 
+--- a/src/factor/mumps_api.hpp
++++ b/src/factor/mumps_api.hpp
+@@ -202,8 +202,8 @@
+   int& icntl(int i) { return s_->icntl[i - 1]; }
+   U& cntl(int i) { return s_->cntl[i - 1]; }
+   /// MUMPS' internal KEEP array (exposed by [sd]mumps_c.h; set by JOB=-1, read at analysis and
+-  /// factorization). Written only for the block sizes above (Blocking) and by measurement code
+-  /// (MumpsControlOverrides).
++  /// factorization). Written for the block sizes above (Blocking), the version-guarded storage
++  /// switch in MumpsFactorization::count(), and measurement code (MumpsControlOverrides).
+   int& keep(int i) { return s_->keep[i - 1]; }
+   int keep(int i) const { return s_->keep[i - 1]; }
+   int infog(int i) const { return s_->infog[i - 1]; }
+@@ -212,6 +212,7 @@
+   /// factorization under the L0-OpenMP layer, 0 without one - dfac_b.F).
+   double dkeep(int i) const { return static_cast<double>(s_->dkeep[i - 1]); }
+   Struc& raw() { return *s_; }
++  const Struc& raw() const { return *s_; }
+ 
+   /// Run one job under call_mutex(); returns INFOG(1) (negative: error, positive: warning).
+   int run(int job) {
+--- a/src/factor/mumps_factorization.cpp
++++ b/src/factor/mumps_factorization.cpp
+@@ -393,6 +393,51 @@
+ }
+ 
+ template <class T, class U>
++bool MumpsFactorization<T, U>::has_inertia_only_count() const {
++  return std::is_same_v<U, double> && !options_.out_of_core && !blr_at_analysis_ &&
++         !discard_at_analysis_ && std::strcmp(mumps_.raw().version_number, "5.8.2") == 0;
++}
++
++template <class T, class U>
++Inertia MumpsFactorization<T, U>::count(double alpha, double beta) {
++  // In 5.8.2 dana_driver sets KEEP(201)=-1 / KEEP(251)=1 for
++  // ICNTL(31)=1. For full-rank symmetric factorization these change storage only;
++  // dfac_driver recomputes working-memory needs for the selected mode at JOB=2.
++  // A retaining analysis has conservative (larger) memory estimates. Restrict this
++  // optimization to the audited version and in-core double precision, with no BLR.
++  if (!has_inertia_only_count())
++    return SparseFactorization<T>::count(alpha, beta);
++  HS_ASSERT(pencil_ != nullptr, "SparseFactorization::count() before a successful analyze()");
++  if (!std::isfinite(alpha) || !std::isfinite(beta))
++    HS_THROW(InvalidInput, "SparseFactorization::count: non-finite alpha/beta");
++  release_factors();
++  const int storage = mumps_.keep(201), discard = mumps_.keep(251);
++  const bool allow_ooc = options_.ooc_on_memory_error;
++  mumps_.keep(201) = -1;
++  mumps_.keep(251) = 1;
++  options_.ooc_on_memory_error = false;
++  auto restore = [&] {
++    mumps_.keep(201) = storage;
++    mumps_.keep(251) = discard;
++    options_.ooc_on_memory_error = allow_ooc;
++    holds_factors_ = false;
++    factorized_ = false;
++    inertia_.valid = false;
++  };
++  try {
++    static_cast<void>(factorize(alpha, beta));
++    const Inertia result = inertia_;
++    restore();
++    return result;
++  } catch (...) {
++    // A failed numeric phase may still own workspace. Preserve the original error.
++    mumps_.run(kFreeFactors);
++    restore();
++    throw;
++  }
++}
++
++template <class T, class U>
+ bool MumpsFactorization<T, U>::release_factors() {
+   if (pencil_ == nullptr || !holds_factors_) return false;
+   const int info1 = mumps_.run(kFreeFactors);
+--- a/src/factor/mumps_factorization.hpp
++++ b/src/factor/mumps_factorization.hpp
+@@ -24,6 +24,8 @@
+   void analyze(const ShiftedPencil<T>& pencil, double alpha, double beta) override;
+   FactorEstimate estimate() const override;
+   bool factorize(double alpha, double beta) override;
++  Inertia count(double alpha, double beta) override;
++  bool has_inertia_only_count() const override;
+   void solve(T* b, index_t nrhs, index_t ldb) override;
+   Inertia inertia() const override { return inertia_; }
+   void set_out_of_core(bool on) override { options_.out_of_core = on; }
+--- a/tests/cpp/test_certcost_faults.cpp
++++ b/tests/cpp/test_certcost_faults.cpp
+@@ -507,7 +507,11 @@
+     const auto w = spectrum();
+     EXPECT_EQ(in.neg, std::count_if(w.begin(), w.end(), [](double l) { return l < 0.5; }));
+     EXPECT_FALSE(src.uses_counter());
+-    EXPECT_EQ(ctx.held.shift, 0.5);
++    EXPECT_TRUE(std::isnan(ctx.held.shift));  // Release counts do not promise usable factors
++    EXPECT_FALSE(fac->inertia().valid);
++    ASSERT_TRUE(fac->factorize(1.0, -kSigma));
++    std::vector<T> rhs(a.nrows, T(1));
++    EXPECT_NO_THROW(fac->solve(rhs.data(), 1, a.nrows));
+   }
+ }
+ 
+--- a/tests/cpp/test_factor_counter.cpp
++++ b/tests/cpp/test_factor_counter.cpp
+@@ -562,6 +562,95 @@
+   EXPECT_EQ(f->stats().analyses, 1);
+ }
+ 
++// A main object can count without retaining factors, then refactorize and solve with the
++// same analysis. Exercise L0 and deterministic modes and both real/embedded complex storage.
++TYPED_TEST(FactorDiscard, CountThenSolveReusesAnalysis) {
++  using T = TypeParam;
++  const index_t nx = 50, ny = 40, n = nx * ny;
++  const auto a = hs::test::laplacian_2d<T>(nx, ny);
++  const auto w = hs::test::laplacian_2d_eigenvalues(nx, ny);
++  const auto shifts = mid_gap_shifts(w, 4, 1e-6);
++  ShiftedPencil<T> pencil(a, nullptr);
++  for (bool deterministic : {false, true}) {
++    FactorOptions options;
++    options.deterministic = deterministic;
++    auto f = hs::make_mumps_factorization<T>(options);
++    f->analyze(pencil, 1.0, -shifts[0]);
++    ASSERT_TRUE(f->factorize(1.0, -shifts[0]));
++    std::vector<T> reference(n, T(1));
++    f->solve(reference.data(), 1, n);
++    for (double shift : shifts) {
++      const auto counted = f->count(1.0, -shift);
++      ASSERT_TRUE(counted.valid) << shift;
++      EXPECT_EQ(counted.neg, count_below(w, shift));
++      EXPECT_EQ(counted.zero, 0);
++      EXPECT_EQ(f->stats().factor_entries, 0);
++      EXPECT_FALSE(f->inertia().valid);
++      EXPECT_FALSE(f->release_factors());
++      std::vector<T> rhs(n, T(1));
++      EXPECT_EQ(error_code_of([&] { f->solve(rhs.data(), 1, n); }), hs::Error::Code::Internal);
++    }
++    const auto singular = f->count(1.0, -w[n / 3]);
++    EXPECT_FALSE(singular.valid);
++    ASSERT_TRUE(f->factorize(1.0, -shifts[0]));
++    std::vector<T> actual(n, T(1));
++    f->solve(actual.data(), 1, n);
++    for (index_t i = 0; i < n; ++i)
++      EXPECT_NEAR(std::abs(actual[i] - reference[i]), 0.0, 1e-10 * (1.0 + std::abs(reference[i])));
++    EXPECT_EQ(f->stats().analyses, 1);
++  }
++}
++
++TYPED_TEST(FactorDiscard, FailedCountRestoresFactorizationMode) {
++  using T = TypeParam;
++  const auto a = hs::test::laplacian_2d<T>(100, 100);
++  ShiftedPencil<T> pencil(a, nullptr);
++  FactorOptions options;
++  options.ooc_on_memory_error = false;
++  auto f = hs::make_mumps_factorization<T>(options);
++  f->analyze(pencil, 1.0, 0.5);
++  f->set_max_memory_mb(1.0);
++  EXPECT_EQ(error_code_of([&] { f->count(1.0, 0.5); }), hs::Error::Code::OutOfMemoryBudget);
++  EXPECT_FALSE(f->inertia().valid);
++  f->set_max_memory_mb(0.0);
++  ASSERT_TRUE(f->count(1.0, 0.5).valid);
++  ASSERT_TRUE(f->factorize(1.0, 0.5));
++  std::vector<T> rhs(a.nrows, T(1));
++  EXPECT_NO_THROW(f->solve(rhs.data(), 1, a.nrows));
++  EXPECT_GT(f->stats().factor_entries, 0);
++  EXPECT_EQ(f->stats().analyses, 1);
++}
++
++TYPED_TEST(FactorDiscard, MainCountsMatchGeneralizedDenseReferenceAndSaddleInertia) {
++  using T = TypeParam;
++  const auto a = hs::test::random_hermitian<T>(300, 0.03, 11);
++  const auto b = hs::test::random_hpd<T>(300, 0.02, 12);
++  const auto w = hs::test::dense_eigenvalues(a, &b);
++  ShiftedPencil<T> pencil(a, &b);
++  auto f = hs::make_mumps_factorization<T>();
++  f->analyze(pencil, 1.0, -0.3);
++  for (double shift : mid_gap_shifts(w, 8, 1e-6)) {
++    const auto in = f->count(1.0, -shift);
++    ASSERT_TRUE(in.valid) << shift;
++    EXPECT_EQ(in.neg, count_below(w, shift));
++  }
++  const auto ib = f->count(0.0, 1.0);
++  EXPECT_TRUE(ib.valid && ib.neg == 0 && ib.zero == 0 && ib.pos == 300);
++  EXPECT_FALSE(f->count(0.0, 0.0).valid);
++
++  const auto saddle = as_scalar<T>(saddle_point(20, 60, 3, 7));
++  ShiftedPencil<T> saddle_pencil(saddle, nullptr);
++  f->analyze(saddle_pencil, 1.0, 0.0);
++  for (int i = 0; i < 3; ++i) {
++    const auto in = f->count(1.0, 0.0);
++    ASSERT_TRUE(in.valid);
++    EXPECT_EQ(in.neg, 60);
++    EXPECT_EQ(in.zero, 0);
++    EXPECT_EQ(in.pos, saddle.nrows - 60);
++    EXPECT_EQ(f->stats().factor_entries, 0);
++  }
++}
++
+ // compute_inertia discards its factors: same counts as before.
+ TYPED_TEST(FactorDiscard, ComputeInertiaIsUnchanged) {
+   using T = TypeParam;

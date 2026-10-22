@@ -1,0 +1,76 @@
+--- a/src/blas/simd_kernels.hpp
++++ b/src/blas/simd_kernels.hpp
+@@ -456,6 +456,62 @@
+   }
+ }
+ 
++// Private P22: extend only 33..64-row column substitution. No 64-bit shift by 64.
++template <bool Unit, int NC, int NR, class Vec = V>
++HS_SIMD void trsm_col_register64(bool upper, fint m, const double* a, fint lda, double* b, fint ldb) {
++  if constexpr (Vec::W == 8) {
++    typename Vec::reg rhs[NC][NR];
++    const unsigned long long all = m == 64 ? ~0ULL : (1ULL << m) - 1;
++#pragma GCC unroll 2
++    for (int q = 0; q < NC; ++q) {
++#pragma GCC unroll 8
++      for (int r = 0; r < NR; ++r)
++        rhs[q][r] = _mm512_maskz_loadu_pd(static_cast<__mmask8>(all >> (8 * r)),
++                                          b + static_cast<idx>(q) * ldb + 8 * r);
++    }
++    for (fint step = 0; step < m; ++step) {
++      const fint j = upper ? m - 1 - step : step;
++      const double* aj = a + static_cast<idx>(j) * lda;
++      const __m512i lane = _mm512_set1_epi64(j % 8);
++      typename Vec::reg xs[NC];
++#pragma GCC unroll 2
++      for (int q = 0; q < NC; ++q) {
++        typename Vec::reg current = rhs[q][0];
++#pragma GCC unroll 8
++        for (int r = 1; r < NR; ++r)
++          if (j >= 8 * r) current = rhs[q][r];
++        xs[q] = _mm512_permutexvar_pd(lane, current);
++        if constexpr (!Unit) {
++          const double x = _mm_cvtsd_f64(_mm512_castpd512_pd128(xs[q])) / aj[j];
++          xs[q] = _mm512_set1_pd(x);
++#pragma GCC unroll 8
++          for (int r = 0; r < NR; ++r)
++            if (j / 8 == r)
++              rhs[q][r] =
++                  _mm512_mask_mov_pd(rhs[q][r], static_cast<__mmask8>(1U << (j % 8)), xs[q]);
++        }
++      }
++      const unsigned long long active =
++          upper ? ((1ULL << j) - 1) : (j == 63 ? 0ULL : (all & ~((1ULL << (j + 1)) - 1)));
++#pragma GCC unroll 8
++      for (int r = 0; r < NR; ++r) {
++        const __mmask8 mask = static_cast<__mmask8>(active >> (8 * r));
++        if (!mask) continue;
++        const __m512d av = _mm512_maskz_loadu_pd(mask, aj + 8 * r);
++#pragma GCC unroll 2
++        for (int q = 0; q < NC; ++q) rhs[q][r] = _mm512_mask3_fnmadd_pd(av, xs[q], rhs[q][r], mask);
++      }
++    }
++#pragma GCC unroll 2
++    for (int q = 0; q < NC; ++q) {
++#pragma GCC unroll 8
++      for (int r = 0; r < NR; ++r)
++        _mm512_mask_storeu_pd(b + static_cast<idx>(q) * ldb + 8 * r,
++                              static_cast<__mmask8>(all >> (8 * r)), rhs[q][r]);
++    }
++  }
++}
++
+ template <bool Unit, int NC>
+ HS_SIMD void trsm_col_short(bool upper, fint m, const double* a, fint lda, double* b, fint ldb) {
+   if constexpr (V::W == 8) {
+@@ -463,6 +519,10 @@
+     if (m <= 16) return trsm_col_register<Unit, NC, 2>(upper, m, a, lda, b, ldb);
+     if (m <= 24) return trsm_col_register<Unit, NC, 3>(upper, m, a, lda, b, ldb);
+     if (m <= 32) return trsm_col_register<Unit, NC, 4>(upper, m, a, lda, b, ldb);
++    if (m <= 40) return trsm_col_register64<Unit, NC, 5>(upper, m, a, lda, b, ldb);
++    if (m <= 48) return trsm_col_register64<Unit, NC, 6>(upper, m, a, lda, b, ldb);
++    if (m <= 56) return trsm_col_register64<Unit, NC, 7>(upper, m, a, lda, b, ldb);
++    if (m <= 64) return trsm_col_register64<Unit, NC, 8>(upper, m, a, lda, b, ldb);
+   }
+   double* bc[NC];
+   for (int q = 0; q < NC; ++q) bc[q] = b + static_cast<idx>(q) * ldb;

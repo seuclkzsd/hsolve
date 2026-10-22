@@ -1,0 +1,2352 @@
+// The HEP / GHEP path (B Hermitian positive definite): shift-invert thick-restart Lanczos in the
+// B inner product, Rayleigh-Ritz on the original pencil, residual rescue and the inertia
+// certificate with deflated reruns (docs/DESIGN.md §3.6).
+//
+// Two drivers share the building blocks:
+//   * nearest k (one shift at sigma, LargestMagnitude; certificate window pushed into gaps);
+//   * windows - interval [lower, upper], smallest k (-inf, U], largest k [L, +inf) - solved by
+//     spectrum slicing. Every slice end is an exact Sylvester count on the ONE analysis, so each
+//     slice knows how many eigenvalues it holds; a run converges exactly that many, is certified on
+//     its own (deflated reruns on a deficit), and the slices are merged with a rank-revealing
+//     de-duplication at the cuts. Slice shifts: the centre (LargestMagnitude) for interior slices;
+//     one-sided at a slice end (SmallestAlgebraic: the eigenvalues below the shift, or
+//     LargestAlgebraic: above) when nothing lies beyond the other end (spectrum end) or the other
+//     end borders the excluded zero band. One-sided runs at a count point reuse its factorization;
+//     a count point on an eigenvalue (a user bound, say) is no shift: such a slice takes the centre,
+//     an open one a shift mid-way in the certified gap beside that point.
+//     Smallest / largest locate the window end U (L) by inertia search: counts are exact for B HPD.
+//     The zero band (zero_filter_tol) is cut out of every window between two counted points.
+//   * Clusters that counts cannot split (a multiple eigenvalue straddling the wanted count): the
+//     search stops after a few bisections and returns a point mid-way in the certified gap beside
+//     the cluster, on the side that keeps it in the window (largest k: below it). A smallest /
+//     largest window whose k-th eigenvalue lies in a large cluster of numerically equal
+//     eigenvalues (a null space) asks only for the copies still needed, verified by two counts.
+//   * Every computed block passes a rank-revealing Rayleigh-Ritz, so counts of found pairs are
+//     counts of distinct B-orthonormal vectors. A slice missing pairs reruns deflated while the
+//     reruns find new ones, with its own shift on a multiple eigenvalue among the found pairs
+//     (single-vector Krylov sees further copies only where the multiplet dominates).
+// A nearest target whose selection or certificate window reaches the zero band is handed to the
+// windows as [sigma - r, sigma + r] minus the band, r grown from the plain run's Ritz hints until
+// the counts hold k eigenvalues outside the band (a single shift there converges null-space copies).
+// Counts that no source can make (CountFailure, P8; DESIGN §3.6-8): the nearest certificate returns
+// its converged pairs uncertified; a window target ends with the error while it counts its window
+// ends and cuts (nothing is solved yet), and from its first slice on loses only the slice whose
+// count failed (an anchor's gap point, a partial cluster's verification): the other slices' pairs
+// are returned with the certificate "not completed".
+#include <algorithm>
+#include <cmath>
+#include <deque>
+#include <limits>
+#include <memory>
+#include <new>
+#include <numeric>
+#include <string>
+#include <type_traits>
+#include <vector>
+
+#include "driver/certificate.hpp"
+#include "driver/helpers.hpp"
+#include "driver/internal.hpp"
+#include "driver/projection.hpp"
+#include "eigen/block_lanczos.hpp"
+#include "eigen/separable_curl.hpp"
+#ifndef P38_PARTIAL_BLOCH
+#define P38_PARTIAL_BLOCH 0
+#endif
+#if P38_PARTIAL_BLOCH
+#if P38_PARTIAL_BLOCH == 2
+#include "/tmp/os2026-p38/adaptive_bloch.hpp"
+#else
+#include "/tmp/os2026-p38/partial_bloch.hpp"
+#endif
+#endif
+#include "hsolve/eigen.hpp"
+#include "hsolve/error.hpp"
+#include "hsolve/operator.hpp"
+#include "hsolve/util.hpp"
+#include "linalg/dense_ops.hpp"
+
+namespace hs::driver {
+
+namespace {
+
+/// Pairs with a backward error above this are not counted as found (ghost / unconverged Ritz
+/// pairs); between tol and this they count but are reported as not accepted.
+constexpr double kTrustworthy = 1e-6;
+/// Rayleigh-Ritz drops directions whose B-Gram eigenvalue is below this fraction of the largest:
+/// columns that are (numerically) the same vector - an eigenvector computed twice, or columns that
+/// residual correction drove onto the same eigenvector - so that a count of computed pairs is a
+/// count of distinct B-orthonormal vectors (DESIGN §3.6-8).
+constexpr double kDependentGram = 1e-8;
+
+// Residual correction x <- x - K^{-1}(A x - rho B x), rho = Rayleigh quotient, for the columns whose
+// backward error exceeds tol (DESIGN §3.6-7). With an exact K this is inverse iteration; for any
+// approximate K its fixed points are exact eigenpairs of (A, B).
+template <class T>
+index_t rescue_pairs(SparseFactorization<T>& fac, const CsrMatrix<T>& a, const CsrMatrix<T>* b, Block<T>& blk,
+                     const std::vector<index_t>& cols, double n2a, double n2b, double tol) {
+  const index_t n = blk.x.rows();
+  index_t rescued = 0;
+  DenseMatrix<T> correction(n, 1), acorrection, bcorrection;
+  linalg::OrthoOptions projection_options;
+  projection_options.reorth = linalg::Reorth::Always;
+  for (index_t j : cols) {
+    for (int it = 0; it < 3; ++it) {
+      const T* x = blk.x.col(j);
+      const T* ax = blk.ax.col(j);
+      const T* bx = blk.bx.col(j);
+      const double rho = std::real(linalg::dot(n, x, ax)) / std::real(linalg::dot(n, x, bx));
+      const double before = driver::pair_metrics(ax, bx, x, n, rho, n2a, n2b).backward_error;
+      T* r = correction.data();
+      for (index_t i = 0; i < n; ++i) r[i] = ax[i] - T(rho) * bx[i];
+      fac.solve(r, 1, n);
+      // Keep the correction outside the current B-orthonormal Ritz subspace.
+      // Inverse iteration near a multiple eigenvalue can otherwise amplify a
+      // rounding component along an already found vector and collapse rank.
+      if (b) driver::apply_block(b, correction, bcorrection);
+      linalg::orthogonalize_cgs2<T>(n, blk.size(), blk.x.data(), n,
+          b ? blk.bx.data() : nullptr, n, r, b ? bcorrection.data() : nullptr,
+          nullptr, nullptr, projection_options);
+      // Reuse the correction and its B product for the trial vector. The
+      // original block is untouched until the trial passes the residual check.
+      for (index_t i = 0; i < n; ++i) r[i] = x[i] - r[i];
+      auto& xc = correction;
+      auto& axc = acorrection;
+      auto& bxc = bcorrection;
+      driver::apply_block(&a, xc, axc);
+      driver::apply_block(b, xc, bxc);
+      const double bn2 = std::real(linalg::dot(n, xc.data(), bxc.data()));
+      if (!(bn2 > 0) || !std::isfinite(bn2)) break;
+      const double bn = std::sqrt(bn2);
+      for (index_t i = 0; i < n; ++i) { xc(i,0) /= bn; axc(i,0) /= bn; bxc(i,0) /= bn; }
+      const double candidate_lambda = std::real(linalg::dot(n, xc.data(), axc.data())) /
+                                      std::real(linalg::dot(n, xc.data(), bxc.data()));
+      const double after = driver::pair_metrics(axc.data(), bxc.data(), xc.data(), n,
+                                               candidate_lambda, n2a, n2b).backward_error;
+      const bool accepted = std::isfinite(candidate_lambda) && std::isfinite(after) && after < before;
+      if (!accepted) break;
+      std::copy_n(xc.data(), n, blk.x.col(j));
+      std::copy_n(axc.data(), n, blk.ax.col(j));
+      std::copy_n(bxc.data(), n, blk.bx.col(j));
+      blk.lambda[j] = candidate_lambda;
+      if (after <= tol) break;
+    }
+    ++rescued;
+  }
+  return rescued;
+}
+
+template <class T>
+struct DefiniteRun {
+  Block<T> all;                    ///< every Ritz pair returned (after Rayleigh-Ritz), lambda ascending
+  std::vector<double> ritz_hints;  ///< all Ritz values of the final Krylov bases mapped to lambda
+  index_t restarts = 0;
+  index_t applies = 0;
+  bool converged = false;
+};
+
+const char* which_name(Which w) {
+  switch (w) {
+    case Which::LargestMagnitude: return "largest_magnitude";
+    case Which::LargestAlgebraic: return "largest_algebraic";
+    case Which::SmallestAlgebraic: return "smallest_algebraic";
+  }
+  return "unknown";
+}
+
+// One shift-invert Lanczos run at the shift the factorization currently holds, optionally deflated,
+// with Krylov blocks of p vectors (KrylovSchurOptions::block_size; p = 1: single vector).
+// theta = 1/(lambda - sigma): LargestMagnitude = nearest sigma, SmallestAlgebraic = the eigenvalues
+// just below sigma, LargestAlgebraic = just above. lead > 0: the run may end once the lead best
+// ranked of the nev pairs have converged (KrylovSchurOptions::lead_nev).
+template <class T>
+void lanczos_run(Ctx& c, SparseFactorization<T>& fac, const ShiftedPencil<T>& pencil, double sigma, Which which,
+                 index_t nev, index_t p, const DenseMatrix<T>* deflation, DefiniteRun<T>& out, index_t lead = 0,
+                 bool test_original_residual = false) {
+  const CsrMatrix<T>& a = pencil.a();
+  const CsrMatrix<T>* b = pencil.b();
+  DriverShiftInvert<T> op(c.cfg, fac, pencil, sigma);  // inexact factors: refined and checked
+  std::unique_ptr<CsrOperator<T>> b_op;
+  if (b) b_op = std::make_unique<CsrOperator<T>>(*b);
+  KrylovSchurOptions<T> ko;
+  ko.nev = nev;
+  ko.ncv = c.cfg.ncv;
+  ko.max_restarts = c.cfg.max_restarts;
+  ko.tol = c.cfg.tol * c.cfg.inner_tol_factor;
+  ko.seed = c.cfg.seed + static_cast<std::uint64_t>(out.restarts);  // fresh start for reruns
+  ko.deflation = deflation;
+  ko.block_size = std::max<index_t>(p, 1);
+  ko.lead_nev = lead < nev ? lead : 0;
+  HermitianEigResult<T> res;
+  // Shift-invert residuals can be much stricter than the requested backward error of
+  // (A, B). Test the actual Ritz vectors before spending further solves on that gap.
+  // Only the first, exact-factor block run uses this shortcut. Its existing memory plan
+  // reserves 4*nev columns beside the basis; this probe needs 3*nev (X, AX, BX).
+  eigen_detail::OriginalResidualTest<T> original;
+  index_t original_probes = 0;
+  bool original_accepted = false;
+  original.probe_tol = std::sqrt(ko.tol);
+  original.accept = [&](const DenseMatrix<T>& x, const std::vector<double>& theta) {
+    ++original_probes;
+    DenseMatrix<T> ax, bx;
+    driver::apply_block(&a, x, ax);
+    driver::apply_block(b, x, bx);
+    bool accepted = true;
+#pragma omp parallel for reduction(&& : accepted) schedule(static)
+    for (index_t j = 0; j < x.cols(); ++j) {
+      const double lambda = theta[j] != 0.0 ? sigma + 1.0 / theta[j] : kInf;
+      const auto pm = pair_metrics(ax.col(j), bx.col(j), x.col(j), x.rows(), lambda,
+                                   c.rep.norm2_a, c.rep.norm2_b);
+      accepted = accepted && std::isfinite(lambda) && pm.backward_error <= 0.5 * c.cfg.tol;
+    }
+    original_accepted = accepted;
+    if (!accepted) original.probe_tol *= 0.1;
+    return accepted;
+  };
+  {
+    PhaseScope phase(c.clock, Phase::Iterate);
+    if (test_original_residual && ko.block_size > 1 && !deflation && !inexact_factor(fac.options())) {
+      eigen_detail::LanczosTimings unused;
+      res = eigen_detail::block_lanczos_krylov_schur_timed<T>(
+          op, b_op.get(), which, ko, unused, eigen_detail::BlockTuning{}, nullptr, &original);
+    } else {
+      res = lanczos_krylov_schur<T>(op, b_op.get(), which, ko);
+    }
+  }
+  out.restarts += res.restarts;
+  out.applies += res.op_applies;
+  out.converged = res.converged;
+  event(c, "lanczos", {{"sigma", sigma}, {"which", std::string(which_name(which))},
+                       {"nev", static_cast<std::int64_t>(nev)},
+                       {"lead", static_cast<std::int64_t>(ko.lead_nev)},
+                       {"block_size", static_cast<std::int64_t>(ko.block_size)},
+                       {"nconv", static_cast<std::int64_t>(res.nconv)},
+                       {"restarts", static_cast<std::int64_t>(res.restarts)},
+                       {"op_applies", static_cast<std::int64_t>(res.op_applies)},
+                       {"deflated", static_cast<std::int64_t>(deflation ? deflation->cols() : 0)},
+                       {"original_residual_probes", static_cast<std::int64_t>(original_probes)},
+                       {"original_residual_accepted", original_accepted},
+                       {"max_estimate", res.history.empty() ? 0.0 : res.history.back().max_estimate}});
+  if (!res.converged) {
+    // Where the restarts stalled: the first restarts, then every 4^j-th, and the last one.
+    const std::size_t len = res.history.size();
+    for (std::size_t i = 0; i < len; i = (i < 4 || i + 1 == len) ? i + 1 : std::min(4 * i, len - 1)) {
+      const RestartRecord& h = res.history[i];
+      event(c, "lanczos_history", {{"restart", static_cast<std::int64_t>(h.restart)},
+                                   {"nconv", static_cast<std::int64_t>(h.nconv)}, {"max_estimate", h.max_estimate},
+                                   {"op_applies", static_cast<std::int64_t>(h.op_applies)}});
+    }
+  }
+  for (double th : res.ritz_all)
+    if (th != 0.0) out.ritz_hints.push_back(sigma + 1.0 / th);
+  // Append the new vectors (all nev, converged first) to the candidate block.
+  Block<T> blk;
+  blk.x = std::move(res.vectors);
+  for (double th : res.theta) blk.lambda.push_back(th != 0.0 ? sigma + 1.0 / th : kInf);
+  recompute_products(a, b, blk);
+  if (out.all.size() == 0) {
+    out.all = std::move(blk);
+  } else {
+    out.all.lambda.insert(out.all.lambda.end(), blk.lambda.begin(), blk.lambda.end());
+    append_columns(out.all.x, blk.x);
+    append_columns(out.all.ax, blk.ax);
+    append_columns(out.all.bx, blk.bx);
+  }
+  const index_t m0 = out.all.size();
+  const index_t r = driver::rayleigh_ritz_definite(out.all.x, out.all.ax, out.all.bx, out.all.lambda, kDependentGram);
+  if (r < m0) event(c, "dependent_dropped", {{"columns", static_cast<std::int64_t>(m0 - r)}});
+}
+
+/// Keeps finite pairs within cutoff_factor * tol. A nearest rerun replaces
+/// every unaccepted pair, so it passes 1; the window path retains its factor 10.
+/// Compact in ascending source order, without allocating another dense block.
+template <class T>
+void keep_converged(DefiniteRun<T>& run, double n2a, double n2b, double tol, double cutoff_factor = 10.0) {
+  const index_t n = run.all.x.rows();
+  index_t kept = 0;
+  for (index_t j = 0; j < run.all.size(); ++j) {
+    const auto pm =
+        driver::pair_metrics(run.all.ax.col(j), run.all.bx.col(j), run.all.x.col(j), n, run.all.lambda[j], n2a, n2b);
+    if (!std::isfinite(run.all.lambda[j]) || !(pm.backward_error <= cutoff_factor * tol)) continue;
+    if (kept != j) {
+      std::copy_n(run.all.x.col(j), n, run.all.x.col(kept));
+      std::copy_n(run.all.ax.col(j), n, run.all.ax.col(kept));
+      std::copy_n(run.all.bx.col(j), n, run.all.bx.col(kept));
+      run.all.lambda[kept] = run.all.lambda[j];
+    }
+    ++kept;
+  }
+  run.all.x.resize_cols(kept); run.all.ax.resize_cols(kept); run.all.bx.resize_cols(kept);
+  run.all.lambda.resize(static_cast<std::size_t>(kept));
+}
+
+// Residual metrics of every column (DESIGN §4.5). Columns in parallel; each column's sums run in
+// one thread in index order, so the result does not depend on the thread count.
+template <class T>
+std::vector<PairMetrics> block_metrics(const Block<T>& blk, double n2a, double n2b) {
+  const index_t n = blk.x.rows(), m = blk.size();
+  std::vector<PairMetrics> out(static_cast<std::size_t>(m));
+#pragma omp parallel for schedule(static)
+  for (index_t j = 0; j < m; ++j)
+    out[static_cast<std::size_t>(j)] =
+        driver::pair_metrics(blk.ax.col(j), blk.bx.col(j), blk.x.col(j), n, blk.lambda[j], n2a, n2b);
+  return out;
+}
+
+/// Columns of x reordered in place so that new column j = old column perm[j] (perm a permutation
+/// of 0..m-1), using one n-vector of workspace (cycle following).
+template <class T>
+void permute_columns(DenseMatrix<T>& x, const std::vector<index_t>& perm) {
+  const index_t n = x.rows(), m = static_cast<index_t>(perm.size());
+  std::vector<char> done(static_cast<std::size_t>(m), 0);
+  std::vector<T> tmp(static_cast<std::size_t>(n));
+  for (index_t start = 0; start < m; ++start) {
+    if (done[start] || perm[start] == start) {
+      done[start] = 1;
+      continue;
+    }
+    std::copy(x.col(start), x.col(start) + n, tmp.data());
+    index_t j = start;
+    while (true) {
+      done[j] = 1;
+      const index_t src = perm[j];
+      if (src == start) {
+        std::copy(tmp.begin(), tmp.end(), x.col(j));
+        break;
+      }
+      std::copy(x.col(src), x.col(src) + n, x.col(j));
+      j = src;
+    }
+  }
+}
+
+/// Metrics of sel; pairs above tol get residual correction with the factorization that
+/// prepare() makes the object hold (that of the run's shift; called only when a pair needs it),
+/// then a rank-revealing Rayleigh-Ritz over sel (lambda ascending afterwards; columns that the
+/// correction drove onto the same eigenvector are merged) and fresh metrics.
+template <class T, class Prepare>
+void verify_and_rescue(Ctx& c, SparseFactorization<T>& fac, const ShiftedPencil<T>& pencil, Block<T>& sel,
+                       std::vector<PairMetrics>& metrics, double n2a, double n2b, Prepare&& prepare) {
+  metrics = block_metrics(sel, n2a, n2b);
+  std::vector<index_t> failing;
+  for (index_t j = 0; j < sel.size(); ++j)
+    if (metrics[j].backward_error > c.cfg.tol) failing.push_back(j);
+  if (failing.empty()) return;
+  prepare();
+  if (!fac.inertia().valid) return;
+  // Recheck the whole Ritz block between bounded correction passes. A
+  // decreasing residual can still need more than the original three steps.
+  for (int pass = 0; pass < 3 && !failing.empty(); ++pass) {
+    double before = 0.0;
+    for (const auto& pm : metrics) before = std::max(before, pm.backward_error);
+    const index_t r = rescue_pairs(fac, pencil.a(), pencil.b(), sel, failing, n2a, n2b, c.cfg.tol);
+    const index_t m0 = sel.size();
+    const index_t kept = driver::rayleigh_ritz_definite(sel.x, sel.ax, sel.bx, sel.lambda, kDependentGram);
+    metrics = block_metrics(sel, n2a, n2b);
+    failing.clear();
+    double after = 0.0;
+    for (index_t j = 0; j < sel.size(); ++j) {
+      after = std::max(after, metrics[j].backward_error);
+      if (metrics[j].backward_error > c.cfg.tol) failing.push_back(j);
+    }
+    event(c, "rescue",
+          {{"pairs", static_cast<std::int64_t>(r)}, {"dependent_dropped", static_cast<std::int64_t>(m0 - kept)},
+           {"pass", static_cast<std::int64_t>(pass)}, {"max_before", before}, {"max_after", after}});
+    if (!(after < before)) break;
+  }
+}
+
+// Indices of the pairs selected for the nearest target, in output order (nearest first).
+std::vector<index_t> select_nearest(const std::vector<double>& lambda, double sigma, index_t k, double zero_tol,
+                                    index_t& zero_dropped) {
+  std::vector<index_t> idx;
+  zero_dropped = 0;
+  for (index_t i = 0; i < static_cast<index_t>(lambda.size()); ++i) {
+    if (!std::isfinite(lambda[i])) continue;
+    if (zero_tol >= 0.0 && std::abs(lambda[i]) <= zero_tol) {
+      ++zero_dropped;
+      continue;
+    }
+    idx.push_back(i);
+  }
+  std::stable_sort(idx.begin(), idx.end(),
+                   [&](index_t p, index_t q) { return std::abs(lambda[p] - sigma) < std::abs(lambda[q] - sigma); });
+  if (static_cast<index_t>(idx.size()) > k) idx.resize(static_cast<std::size_t>(k));
+  return idx;
+}
+
+// Closest hint strictly beyond `edge` in direction dir (+1 above, -1 below); NaN if none.
+double nearest_beyond(const std::vector<double>& hints, double edge, double dir, double eps) {
+  double best = std::numeric_limits<double>::quiet_NaN();
+  for (double h : hints) {
+    if (!std::isfinite(h) || dir * (h - edge) <= eps) continue;
+    if (std::isnan(best) || dir * (h - best) < 0) best = h;
+  }
+  return best;
+}
+
+template <class T>
+void add_pair_reports(SolveReport& rep, const std::vector<double>& lambda, const std::vector<PairMetrics>& metrics,
+                      double tol, bool& all_ok) {
+  for (std::size_t j = 0; j < metrics.size(); ++j) {
+    PairReport p;
+    p.lambda_re = lambda[j];
+    p.abs_residual = metrics[j].abs_residual;
+    p.rel_residual = metrics[j].rel_residual;
+    p.backward_error = metrics[j].backward_error;
+    p.accepted = metrics[j].backward_error <= tol;
+    all_ok = all_ok && p.accepted;
+    rep.pairs.push_back(p);
+  }
+}
+
+// =============================================================================== nearest k
+
+// First radius of the windowed nearest solve, from the distances of the hints (Ritz values of the
+// plain run, converged or not) outside the band: mid-way between the k-th nearest and the next
+// distinct one, so that the window ends - which may become one-sided shifts - keep half that gap
+// from the hinted eigenvalues (a radius just beyond the k-th left the shift 1e-6 relative from
+// it: far pairs at eta ~7e-11 on yee-pec-box-1e4, sigma = 1, k = 6); 1.25 times the k-th without
+// a further hint, twice the farthest if there are fewer than k.
+double radius_from_hints(std::vector<double> hints, double sigma, index_t k, double band) {
+  std::vector<double> d;
+  for (double h : hints)
+    if (std::isfinite(h) && std::abs(h) > band) d.push_back(std::abs(h - sigma));
+  std::sort(d.begin(), d.end());
+  const double floor_r = std::max(std::abs(sigma) + 2.0 * band, 4.0 * band);
+  if (static_cast<index_t>(d.size()) < k) return std::max(d.empty() ? 0.0 : 2.0 * d.back(), floor_r);
+  const double dk = d[static_cast<std::size_t>(k - 1)];
+  double r = 1.25 * dk;
+  for (std::size_t j = static_cast<std::size_t>(k); j < d.size(); ++j)
+    if (d[j] > dk * (1.0 + 1e-6)) {
+      r = 0.5 * (dk + d[j]);
+      break;
+    }
+  return std::max(r, floor_r);
+}
+
+// Nearest k with one shift at sigma. With a zero band (zero_filter_tol) that reaches the selection
+// or the certificate window, the band's cluster competes for the run's pairs (a null space of
+// dimension d supplies copy after copy) and inertia counts in the window include it: then
+// *band_radius receives a first radius for the windowed solve and the result is discarded.
+template <class T>
+Solution<T> solve_nearest(Ctx& c, const ShiftedPencil<T>& pencil, SparseFactorization<T>& fac, double n2a, double n2b,
+                          double scale, double* band_radius) {
+  const SolverConfig& cfg = c.cfg;
+  SolveReport& rep = c.rep;
+  const index_t n = pencil.order();
+  const Target& t = cfg.target;
+  const index_t k = t.k;
+  if (k > n) HS_THROW(InvalidInput, "target.k = " << k << " exceeds the matrix order " << n);
+
+  bool detection_off = false;
+  CertificateTimings timings;
+  double sigma = t.sigma;
+  const index_t nev = std::min<index_t>(n, k);
+  index_t p = 1;
+  DefiniteRun<T> run;
+  bool structured = false;
+  bool partial_bloch = false;
+  if (cfg.method == Method::Auto && cfg.certificate == CertificateMode::Exact &&
+      cfg.inertia_check != Toggle::Off && !inexact_factor(fac.options())) {
+    std::string why;
+    PhaseScope phase(c.clock, Phase::Iterate);
+    // AX/BX, RR replacements, selection, and the small projected eigensystems beside X.
+    const double reserve = sizeof(T) * (6.0 * n * static_cast<double>(k) + 64.0 * k * static_cast<double>(k));
+    const double allowance = 0.95 * std::max(0.0, budget_left(c)) - reserve;
+    try {
+      structured = eigen_detail::separable_curl_candidates(
+          pencil.a(), pencil.b(), t.sigma, k, allowance, run.all.x, run.all.lambda, run.ritz_hints, why);
+#if P38_PARTIAL_BLOCH
+      if constexpr(is_complex_v<T>) {
+        if(!structured) {
+          partial_bloch = p38::candidates(pencil.a(),pencil.b(),cfg,allowance,run.all.x,run.all.lambda,run.ritz_hints,why);
+          structured = partial_bloch;
+        }
+      }
+#endif
+      if (structured) {
+        recompute_products(pencil.a(), pencil.b(), run.all);
+        bool finite_products = true;
+#pragma omp parallel for reduction(&& : finite_products) schedule(static)
+        for (index_t j = 0; j < k; ++j)
+          for (index_t i = 0; i < n; ++i)
+            finite_products = finite_products && std::isfinite(std::real(run.all.ax(i, j))) &&
+                              std::isfinite(std::imag(run.all.ax(i, j))) &&
+                              std::isfinite(std::real(run.all.bx(i, j))) &&
+                              std::isfinite(std::imag(run.all.bx(i, j)));
+        if (!finite_products) {
+          structured = false;
+          why += "; nonfinite original-pencil products";
+        }
+      }
+      if (structured) {
+        const index_t rank = driver::rayleigh_ritz_definite(
+            run.all.x, run.all.ax, run.all.bx, run.all.lambda, kDependentGram);
+        structured = rank == k;
+        for (const auto& metric : block_metrics(run.all, n2a, n2b))
+          structured = structured && std::isfinite(metric.backward_error) &&
+                       metric.backward_error <= 0.5 * cfg.tol;
+        if (!structured) why += "; original residual or rank rejected";
+      }
+    } catch (const std::bad_alloc&) {
+      structured = false;
+      why = "candidate workspace allocation failed";
+    } catch (const Error& error) {
+      if (error.code() != Error::Code::NotConverged && error.code() != Error::Code::OutOfMemoryBudget) throw;
+      structured = false;
+      why = std::string("candidate verification failed: ") + error.what();
+    }
+    if (c.log) c.log->event("structured_candidate", {{"accepted", structured}, {"reason", why},
+        {"columns", static_cast<std::int64_t>(run.all.size())}}, structured ? 1 : 2);
+    if (!structured) run = DefiniteRun<T>{};
+    else {
+      run.converged = true;
+      rep.candidate_source = partial_bloch ? "partial_bloch_translation" : (is_complex_v<T> ? "separable_bloch_curl" : "separable_cartesian_curl");
+    }
+  }
+  if (!structured) {
+    // Factorization at the shift (near-singular handling in factorize_near). Its time and the solve
+    // calls of the Krylov run are measured for the auto choice of the completeness check.
+    const FactorStats before_factor = fac.stats();
+    sigma = factorize_near(c, fac, t.sigma, scale, detection_off);
+    rep.sigma_used = sigma;
+    const FactorStats& fs = fac.stats();
+    if (fs.factorizations > before_factor.factorizations)
+      timings.factorize_s = (fs.factorize_s - before_factor.factorize_s) /
+                            static_cast<double>(fs.factorizations - before_factor.factorizations);
+    event(c, "factorization", {{"sigma", sigma}, {"factor_s", fs.factorize_s}, {"entries", static_cast<std::int64_t>(fs.factor_entries)},
+                               {"mb", fs.factor_mb_used}, {"mb_allocated", fs.factor_mb_allocated},
+                               {"delayed_pivots", static_cast<std::int64_t>(fs.delayed_pivots)}});
+
+    // Converge exactly the k wanted pairs (most wanted by |theta| = nearest to sigma). Asking for
+    // extra pairs only costs iterations: completeness is the certificate's job, not a safety margin.
+    // Block width: the blocktune rule on the run's shape, with the entries of the factorization the
+    // run's solves use (block_size_for; reserved up to its widest width before the analysis).
+    eigen_detail::ShiftInvertShape shape;
+    shape.n = n;
+    shape.nev = nev;
+    shape.factor_entries = static_cast<double>(fs.factor_entries);
+    shape.nnz_b = pencil.b() ? static_cast<double>(pencil.b()->nnz()) : 0.0;
+    shape.complex_scalars = is_complex_v<T>;
+    // Candidate block X, AX, BX (3 nev) and the returned vectors (nev) next to the basis. The memory
+    // plan reserved the P4 width: an auto width beyond it is halved back to it without a warning.
+    const index_t p_rule = block_size_for(c.cfg, shape);
+    p = fit_block_size<T>(c, n, nev, 0, 4 * nev, p_rule,
+                                        c.cfg.block_size > 0 ? p_rule : std::min(p_rule, reserved_block_size(c.cfg)));
+    rep.block_size = p;
+    const FactorStats before_run = fac.stats();
+    lanczos_run(c, fac, pencil, sigma, Which::LargestMagnitude, nev, p, static_cast<const DenseMatrix<T>*>(nullptr),
+                run, 0, true);
+    if (fac.stats().solves > before_run.solves) {
+      const auto calls = static_cast<double>(fac.stats().solves - before_run.solves);
+      timings.solve_call_s = (fac.stats().solve_s - before_run.solve_s) / calls;
+      timings.rhs_per_call = static_cast<double>(fac.stats().rhs_solved - before_run.rhs_solved) / calls;
+    }
+    if (!run.converged) warn(c, "Krylov-Schur did not converge all requested pairs within max_restarts");
+
+  } else {
+    rep.sigma_used = sigma;
+    rep.block_size = 0;
+  }
+
+  const double zero_tol = cfg.zero_filter_tol >= 0 ? cfg.zero_filter_tol * scale : -1.0;
+  Block<T> sel;
+  std::vector<PairMetrics> metrics;
+  bool working_shift_initialized = !structured;
+  auto prepare_working_factors = [&]() {
+    if (!working_shift_initialized) {
+      // Structured candidates skipped the initial factorization. The original target may
+      // itself be an eigenvalue, so a later rescue/rerun must establish a usable shift first.
+      sigma = factorize_near(c, fac, t.sigma, scale, detection_off);
+      rep.sigma_used = sigma;
+      working_shift_initialized = true;
+    } else {
+      refactorize_at(c, fac, sigma, detection_off);
+    }
+  };
+  auto select_and_verify = [&]() {
+    index_t zero_dropped = 0;
+    sel = take_columns(run.all, select_nearest(run.all.lambda, t.sigma, k, zero_tol, zero_dropped));
+    rep.zero_modes_filtered = zero_dropped;
+    // rescue solves with K(sigma)
+    verify_and_rescue(c, fac, pencil, sel, metrics, n2a, n2b, prepare_working_factors);
+    index_t zd = 0;  // restore the target order (Rayleigh-Ritz sorts ascending)
+    const auto order = select_nearest(sel.lambda, t.sigma, sel.size(), -1.0, zd);
+    std::vector<PairMetrics> m2;
+    std::vector<double> l2;
+    for (index_t j : order) {
+      m2.push_back(metrics[j]);
+      l2.push_back(sel.lambda[j]);
+    }
+    if (static_cast<index_t>(order.size()) == sel.size()) {  // a permutation: reorder in place
+      permute_columns(sel.x, order);
+      permute_columns(sel.ax, order);
+      permute_columns(sel.bx, order);
+      sel.lambda = std::move(l2);
+    } else {
+      sel = take_columns(sel, order);
+    }
+    metrics = std::move(m2);
+  };
+  select_and_verify();
+  auto hand_over = [&]() {
+    std::vector<double> hints = run.ritz_hints;
+    hints.insert(hints.end(), run.all.lambda.begin(), run.all.lambda.end());
+    *band_radius = radius_from_hints(hints, t.sigma, k, zero_tol);
+    rep.restarts = run.restarts;
+    rep.op_applies = run.applies;
+    return Solution<T>{};
+  };
+  if (zero_tol >= 0) {
+    double r = 0.0;
+    for (double l : sel.lambda) r = std::max(r, std::abs(l - t.sigma));
+    if (rep.zero_modes_filtered > 0 || sel.size() < k || std::abs(t.sigma) - r <= zero_tol) return hand_over();
+  }
+
+  // Completeness check (DESIGN §3.6-8; method by SolverConfig::certificate, certificate.hpp),
+  // with up to two deflated reruns when pairs are missing. The exact certificate's two counts per
+  // round come from an InertiaCounter when that pays (counter_pays). The main factors at sigma are
+  // released before the counter counts (MainFactors::Release): after the rescue above they are
+  // needed only for a rerun, which refactorizes once - as main-object counts would - and the
+  // counts never hold both in memory. The randomized check runs on the factors held at sigma.
+  const bool want_cert = cfg.inertia_check != Toggle::Off && cfg.certificate != CertificateMode::Off;
+  if (want_cert && cfg.certificate_fault_drop > 0) {
+    // Fault injection (tests and measurements): the check must find these pairs missing.
+    const std::vector<double> removed =
+        drop_found_pairs(run.all, run.ritz_hints, sel.lambda, t.sigma, cfg.certificate_fault_drop);
+    std::string list;
+    for (double l : removed) list += (list.empty() ? "" : ", ") + fmt(l);
+    warn(c, "certificate_fault_drop: " + std::to_string(removed.size()) +
+                " found pair(s) removed before the completeness check (" + list + ")");
+    select_and_verify();
+  }
+  InertiaCertificate& cert = rep.certificate;
+  const bool count_in_place = cfg.inertia_counter == Toggle::Auto && fac.has_inertia_only_count();
+  const bool on_counter = want_cert && !count_in_place &&
+                         counter_pays(cfg, fac.estimate(), mumps_input_size(pencil), fac.options().threads, 2);
+  CountSource<T> counts(fac, pencil, on_counter, MainFactors::Release);
+  NearestCertifier<T> fast(c, pencil, fac, sigma, detection_off, scale, n2a, n2b, timings);
+  // A count or rerun factorization that fails (MUMPS out of memory or another MUMPS error) never
+  // ends the solve: counts move to the other source (CountSource), and when no count can be made,
+  // or the deflated rerun cannot refactorize at sigma, the pairs found so far are returned with
+  // the certificate not completed (success = false; DESIGN §3.6-8).
+  bool not_completed = false;
+  auto found_in = [&](double lo, double hi) {
+    index_t found = 0;
+    for (double l : run.all.lambda)
+      if (std::isfinite(l) && l >= lo && l <= hi && !(zero_tol >= 0 && std::abs(l) <= zero_tol)) ++found;
+    return found;
+  };
+  bool tighten_window = false;
+  bool capped_rerun_used = false;
+  for (int round = 0; want_cert && round < 3; ++round) {
+    if (sel.size() == 0) break;
+    const double tiny = 1e-12 * std::max(scale, std::abs(t.sigma));
+    std::vector<double> hints = run.ritz_hints;
+    hints.insert(hints.end(), run.all.lambda.begin(), run.all.lambda.end());
+    auto push_out = [&](double edge, double dir) {
+      const double nb = nearest_beyond(hints, edge, dir, tiny);
+      const double gap_default = std::max(1e-3 * std::abs(edge - t.sigma), 1e-8 * std::max(scale, 1e-300));
+      if (!tighten_window) return std::isnan(nb) ? edge + dir * gap_default : 0.5 * (edge + nb);
+      // After an oversized missing count, a remote hint must not expand the
+      // window across hundreds of unwanted eigenvalues. Use at most the existing
+      // no-hint margin; still take the midpoint when a nearer hint exists.
+      const double margin = std::isnan(nb) ? gap_default : std::min(gap_default, 0.5 * std::abs(nb - edge));
+      return edge + dir * margin;
+    };
+    double r = 0.0;
+    for (double l : sel.lambda) r = std::max(r, std::abs(l - t.sigma));
+    double a_end = push_out(t.sigma - r, -1.0);
+    double b_end = push_out(t.sigma + r, +1.0);
+    if (zero_tol >= 0 && a_end <= zero_tol && b_end >= -zero_tol) return hand_over();  // window meets the band
+    index_t missing = 0;
+    index_t zd = 0;
+    // Fewer than k selected pairs (fault injection, pairs left unconverged, a rescue merging
+    // columns): every check covers only the found pairs' window / disc, which may end before the
+    // k-th nearest eigenvalue - a passed check then still reruns for the pairs short.
+    const index_t accepted_pairs = static_cast<index_t>(std::count_if(metrics.begin(), metrics.end(),
+        [&](const PairMetrics& pm) { return std::isfinite(pm.backward_error) && pm.backward_error <= cfg.tol; }));
+    const index_t short_by = std::min<index_t>(k, n) - accepted_pairs;
+    auto rerun_short = [&]() {
+      if (sel.size() < std::min<index_t>(k, n))
+        warn(c, "certificate: only " + std::to_string(sel.size()) + " of " + std::to_string(k) +
+                    " pairs selected; deflated rerun for the nearest ones beyond");
+      else
+        warn(c, "certificate: only " + std::to_string(accepted_pairs) + " of " + std::to_string(k) +
+                    " pairs meet the original residual tolerance; deflated rerun for the unaccepted pairs");
+      return short_by;
+    };
+    const RoundPairs<T> pairs{run.all, &sel, select_nearest(run.all.lambda, t.sigma, k, zero_tol, zd)};
+    const CheckOutcome quick = fast.check({t.sigma, r, a_end, b_end}, pairs, round);
+    if (quick.verdict == CheckOutcome::Verdict::Passed) {
+      if (short_by == 0 || round == 2) break;
+      missing = rerun_short();
+    } else if (quick.verdict == CheckOutcome::Verdict::Missing && round < 2) {
+      // Still missing after the last rerun: the exact counts give the final verdict (below).
+      missing = std::max(quick.missing, short_by);
+      warn(c, "certificate: the " + cert.method + " check finds " + std::to_string(quick.missing) +
+                  " eigenvalue(s) missing near sigma; deflated rerun");
+    } else {
+      // Exact counts: on the certifier's InertiaCounter when its single counts built one (no
+      // second analysis; a window it counted to check single counts is not counted again).
+      index_t nu_a = 0, nu_b = 0;
+      bool on_certifier = false;
+      const index_t helper_counts = c.rep.parallel.helper_counts;
+      try {
+        on_certifier = fast.exact_counts(a_end, b_end, nu_a, nu_b);
+        if (!on_certifier) {
+          // The certifier's InertiaCounter (same pivot order) did not fit: neither would another.
+          if (fast.counter_memory_failure())
+            counts.avoid_counter(c, "the certifier's InertiaCounter on the same pivot order failed (" +
+                                        fast.counter_failure() + ")");
+          const double step = 1e-9 * std::max(scale, std::abs(t.sigma));
+          // Multi-process solves: nu(a) and nu(b) on two helper processes at once (DESIGN §3.9);
+          // otherwise both here, one after the other.
+          if (!concurrent_counts(c, counts, a_end, b_end, step, nu_a, nu_b, timings.factorize_s)) {
+            nu_a = count_below(c, counts, a_end, -1.0, step, nullptr, /*s_is_gap=*/true);
+            nu_b = count_below(c, counts, b_end, +1.0, step, nullptr, /*s_is_gap=*/true);
+          }
+        }
+      } catch (const CountFailure& e) {
+        const index_t found = found_in(a_end, b_end);
+        fast.record_not_completed(a_end, b_end, found, e.what());
+        not_completed = true;
+        event(c, "certificate_counts_failed", {{"round", static_cast<std::int64_t>(round)}, {"lower", a_end},
+                                               {"upper", b_end}, {"found", static_cast<std::int64_t>(found)},
+                                               {"code", std::string(to_string(e.code()))},
+                                               {"reason", std::string(e.what())}});
+        warn(c, "certificate not completed: no inertia count possible (" + std::string(e.what()) + "); the " +
+                    std::to_string(sel.size()) + " converged pair(s) are returned uncertified");
+        break;
+      }
+      cert.performed = true;
+      cert.lower = a_end;
+      cert.upper = b_end;
+      cert.count_inertia = nu_b - nu_a;
+      const index_t found = found_in(a_end, b_end);
+      cert.count_found = found;
+      cert.passed = cert.count_inertia == cert.count_found;  // the window stays clear of the zero band
+      const index_t by_helpers = c.rep.parallel.helper_counts - helper_counts;
+      fast.record_exact(count_sources(by_helpers, on_certifier || counts.uses_counter()));
+      if (by_helpers > 0)
+        cert.statement += "; " + std::to_string(by_helpers) + " of the 2 counts made by helper processes (their "
+                          "InertiaCounters on the leader's pivot order)";
+      event(c, "certificate", {{"round", static_cast<std::int64_t>(round)}, {"lower", a_end}, {"upper", b_end},
+                               {"count_inertia", static_cast<std::int64_t>(cert.count_inertia)},
+                               {"count_found", static_cast<std::int64_t>(found)}, {"passed", cert.passed},
+                               {"short_by", static_cast<std::int64_t>(short_by)}});
+      if (cert.count_inertia < cert.count_found || round == 2) break;
+      if (cert.passed) {
+        if (short_by == 0) break;
+        missing = rerun_short();
+      } else {
+        missing = std::max(cert.count_inertia - cert.count_found, short_by);
+        warn(c, "certificate: " + std::to_string(cert.count_inertia - cert.count_found) +
+                    " eigenvalue(s) missing in the window; deflated rerun");
+      }
+    }
+    // Preserve wide gaps for the fast certificate methods. Only retry a
+    // narrower window after a count requests more than another full k pairs.
+    // This retry changes no vectors and does not consume a Krylov rerun.
+    if (!tighten_window && missing > std::max<index_t>(k, 1)) {
+      tighten_window = true;
+      event(c, "certificate_window_tightened", {{"round", static_cast<std::int64_t>(round)},
+          {"missing", static_cast<std::int64_t>(missing)}, {"requested", static_cast<std::int64_t>(k)}});
+      --round;
+      continue;
+    }
+    // Inaccurate selected Ritz values can put hundreds of unwanted values
+    // inside the certificate window. Try one bounded nearest rerun before
+    // requesting that whole window. Re-select and certify the result normally;
+    // subsequent reruns retain the full count requirement, including clusters
+    // wider than k. This extra attempt does not consume a normal rerun.
+    const bool capped_this_round = !capped_rerun_used && short_by > 0 &&
+                                   missing > std::max<index_t>(k, 1);
+    if (capped_this_round) {
+      event(c, "certificate_rerun_capped", {{"round", static_cast<std::int64_t>(round)},
+          {"window_missing", static_cast<std::int64_t>(missing)},
+          {"requested", static_cast<std::int64_t>(k)}});
+      capped_rerun_used = true;
+      missing = std::max<index_t>(k, 1);
+    }
+    // Compact the unselected columns first, then copy the corrected selected
+    // columns into the remaining storage. This preserves the P34 column order
+    // without keeping a second full X/AX/BX block alive during Rayleigh-Ritz.
+    if (sel.size() > static_cast<index_t>(pairs.selected_columns.size()))
+      HS_THROW(Internal, "corrected block has more columns than its source selection");
+    std::vector<char> replaced(static_cast<std::size_t>(run.all.size()), 0);
+    for (index_t q : pairs.selected_columns) replaced[static_cast<std::size_t>(q)] = 1;
+    index_t kept = 0;
+    for (index_t q = 0; q < run.all.size(); ++q) {
+      if (replaced[static_cast<std::size_t>(q)]) continue;
+      if (kept != q) {
+        std::copy_n(run.all.x.col(q), n, run.all.x.col(kept));
+        std::copy_n(run.all.ax.col(q), n, run.all.ax.col(kept));
+        std::copy_n(run.all.bx.col(q), n, run.all.bx.col(kept));
+        run.all.lambda[kept] = run.all.lambda[q];
+      }
+      ++kept;
+    }
+    for (index_t q = 0; q < sel.size(); ++q, ++kept) {
+      std::copy_n(sel.x.col(q), n, run.all.x.col(kept));
+      std::copy_n(sel.ax.col(q), n, run.all.ax.col(kept));
+      std::copy_n(sel.bx.col(q), n, run.all.bx.col(kept));
+      run.all.lambda[kept] = sel.lambda[q];
+    }
+    run.all.x.resize_cols(kept); run.all.ax.resize_cols(kept); run.all.bx.resize_cols(kept);
+    run.all.lambda.resize(static_cast<std::size_t>(kept));
+    driver::rayleigh_ritz_definite(run.all.x, run.all.ax, run.all.bx, run.all.lambda, kDependentGram);
+    keep_converged(run, n2a, n2b, cfg.tol, 1.0);
+    event(c, "corrected_deflation", {{"columns", static_cast<std::int64_t>(run.all.size())},
+                                     {"selected", static_cast<std::int64_t>(sel.size())}});
+    // The missing pairs are the nearest sigma beyond the deflated ones: the rerun asks for two
+    // more, which shape its basis and are kept when they converge, but it ends once the missing
+    // ones have (lead; the next round checks the window again). A pair beyond them may lie in a
+    // cluster wider than the inner tolerance and never converge: yee-pec-box-1e5, k = 10, one
+    // copy of the double eigenvalue 59.986 removed - the rerun's third pair is a vector of the
+    // 35475-fold curl-curl null space (|theta| = 1/sigma, its Ritz values at lambda ~ 4e-9),
+    // whose estimate stalled at 3e-10 |theta| against the inner tolerance 1e-11 at widths 4 and
+    // 8 (deterministic run, 4 threads, max_restarts 60: 1236 / 1976 applications; with lead 40 /
+    // 72); reruns of width 2 got under it after 154 and 218 applications (with lead: 20). In the
+    // measurement slot (16 threads, 5 interleaved runs per width) the rerun now ends after one
+    // restart at widths 4 and 8, whole solve 4.65 .. 4.81 s (the review: 1000 restarts, ~200 s).
+    const index_t nev_rerun = std::min<index_t>(n - run.all.size(), missing + 2);
+    if (nev_rerun < 1) break;
+    std::string why;
+    try {
+      if (fault(cfg, kFaultRefactorization))
+        throw_injected_fault(cfg, kFaultRefactorization, "refactorization at sigma for the deflated rerun");
+      prepare_working_factors();
+    } catch (const Error& e) {
+      if (!count_failure(e)) throw;
+      why = std::string(to_string(e.code())) + ": " + e.what();
+    } catch (const std::bad_alloc&) {
+      why = "allocation failure (std::bad_alloc)";
+    }
+    if (!why.empty()) {
+      event(c, "rerun_failed", {{"round", static_cast<std::int64_t>(round)}, {"reason", why}});
+      warn(c, "certificate: the deflated rerun for " + std::to_string(missing) +
+                  " missing pair(s) is not possible (the refactorization at sigma failed: " + why +
+                  "); the pairs found so far are returned");
+      cert.statement += "; the deflated rerun for the missing pair(s) failed (refactorization at sigma: " + why + ")";
+      break;
+    }
+    DenseMatrix<T> defl = run.all.x;
+    const index_t d = defl.cols();
+    const index_t p_rerun =
+        fit_block_size<T>(c, n, nev_rerun, d, 3 * d + 4 * nev_rerun, rerun_block_size(cfg, p, missing));
+    lanczos_run(c, fac, pencil, sigma, Which::LargestMagnitude, nev_rerun, p_rerun, &defl, run, missing);
+    select_and_verify();
+    if (capped_this_round) --round;
+  }
+  if (cert.performed && cert.passed && sel.size() < std::min<index_t>(k, n))
+    cert.statement += "; but only " + std::to_string(sel.size()) + " of " + std::to_string(k) +
+                      " pairs were found: the window covers the found pairs, not the k-th nearest eigenvalue";
+  if (cert.performed && !cert.passed && !not_completed) {
+    if (cert.count_inertia < 0)
+      warn(c, "certificate failed: the " + cert.method + " check still finds eigenvalues missing near sigma");
+    else if (cert.count_inertia < cert.count_found)
+      warn(c, "certificate: more computed eigenvalues than inertia allows (duplicates/ghosts) in [" + fmt(cert.lower) +
+                  ", " + fmt(cert.upper) + "]");
+    else
+      warn(c, "certificate failed: inertia " + std::to_string(cert.count_inertia) + " vs found " +
+                  std::to_string(cert.count_found));
+  }
+  if (!want_cert) cert.note = "disabled by configuration";
+
+  Solution<T> sol;
+  sol.eigenvalues = sel.lambda;
+  sol.eigenvectors = std::move(sel.x);
+  bool all_ok = static_cast<index_t>(sol.eigenvalues.size()) == k;
+  if (!all_ok) warn(c, "only " + std::to_string(sol.eigenvalues.size()) + " of " + std::to_string(k) + " pairs found");
+  add_pair_reports<T>(rep, sol.eigenvalues, metrics, cfg.tol, all_ok);
+  rep.success = all_ok && (!cert.performed || cert.passed);
+  rep.restarts = run.restarts;
+  rep.op_applies = run.applies;
+  return sol;
+}
+
+// ======================================================================== windows and slices
+
+/// A point with its exact Sylvester count nu(s) = #{eigenvalues < s}; s = -inf (nu = 0) and
+/// s = +inf (nu = n) stand for open window ends. A point inside a certified gap (between two
+/// counted points with equal counts) carries that count without a factorization of its own.
+struct CountPoint {
+  double s = 0.0;
+  index_t nu = 0;
+  bool detection_off = false;  ///< counted without null-pivot detection (dense cluster)
+  bool near = false;           ///< K(s) was singular before s moved off an eigenvalue (or s hugs an
+                               ///< unsplittable cluster): a valid count, but no place for a shift
+};
+
+/// Part of a target window with exact counts at both ends. want >= 0: the slice is a cluster of
+/// numerically equal eigenvalues (smallest / largest k ending inside it) of which any `want`
+/// are a valid answer; focus is a point of the cluster's tight bracket.
+struct Slice {
+  CountPoint lo, hi;
+  index_t want = -1;
+  double focus = std::numeric_limits<double>::quiet_NaN();
+  index_t count() const { return hi.nu - lo.nu; }
+  index_t required() const { return want >= 0 ? want : count(); }
+};
+
+/// Result of an inertia search. cluster: eigenvalues too close to be split by counts straddle the
+/// requested count range; (cl_lo, cl_hi) is their tight bracket (cl_lo.nu < g_lo, cl_hi.nu > g_hi,
+/// every eigenvalue counted between them lies in (cl_lo.s, cl_hi.s)) and p lies in the gap beside
+/// the cluster on the requested side.
+struct Search {
+  CountPoint p;
+  bool cluster = false;
+  CountPoint cl_lo, cl_hi;
+  static Search at(const CountPoint& q) {
+    Search r;
+    r.p = q;
+    return r;
+  }
+};
+
+/// Side of an unsplittable cluster an inertia search returns: Above (the window must contain the
+/// cluster: smallest k, slice cuts) or Below (largest k).
+enum class Side { Above, Below };
+
+enum class Anchor { Centre, Lower, Upper };
+
+/// Bracket of a cluster that counts cannot split: narrower than this fraction of the bracket in
+/// which the same two counts were first seen (the eigenvalues between them are then >= 32x
+/// denser than that bracket suggested; five bisections), or than width_min().
+constexpr double kClusterShrink = 1.0 / 32.0;
+/// Smallest / largest: a cluster at the k-th position with more than max(this, k) copies beyond
+/// the k needed is solved partially (any `want` copies of numerically equal eigenvalues).
+constexpr index_t kPartialClusterMin = 16;
+/// Numerically equal: all eigenvalues of a partial cluster within this relative width.
+constexpr double kEqualWidth = 1e-8;
+/// Deflated reruns of a slice: at most this many beyond the initial deficit, and stop after
+/// kStallRounds rounds without a new pair.
+constexpr int kExtraRerunRounds = 4;
+constexpr int kMaxRerunRounds = 32;
+constexpr int kStallRounds = 2;
+/// Rerun shift of a multiple eigenvalue: this fraction of the gap to its nearest neighbour away.
+constexpr double kMultipletOffset = 0.01;
+/// Multi-process solves: the smallest slice a window is cut into so that every helper gets one
+/// (the cost model's own minimum, steps.cpp kMinSlice).
+constexpr index_t kHelperMinSlice = 16;
+
+/// Pairs accepted from all slices, eigenvalue order maintained per slice.
+template <class T>
+struct Pool {
+  DenseMatrix<T> x;  ///< n x capacity, the first `used` columns hold the pairs
+  index_t used = 0;
+  std::vector<double> lambda;
+  std::vector<PairMetrics> metrics;
+  std::vector<index_t> slice;  ///< producing slice of each pair
+};
+
+/// A target window: [lo, hi] with exact counts; want >= 0 marks a partial cluster (see Slice).
+using Window = Slice;
+
+template <class T>
+class WindowSolver {
+ public:
+  WindowSolver(Ctx& c, const ShiftedPencil<T>& pencil, SparseFactorization<T>& fac, double n2a, double n2b,
+               double scale, const SpectrumEstimate& est)
+      : c_(c),
+        pencil_(pencil),
+        fac_(fac),
+        counts_(fac, pencil, c.cfg.inertia_counter == Toggle::On),
+        n2a_(n2a),
+        n2b_(n2b),
+        scale_(scale),
+        est_(est),
+        n_(pencil.order()) {
+    cost_ = make_cost_model(fac.estimate(), n_, fac.options().threads, is_complex_v<T>);
+  }
+
+  Solution<T> solve();
+  /// Nearest target with a zero band: the k nearest sigma outside the band, from windows
+  /// [sigma - r, sigma + r] minus the band; r0 (> 0) is the first radius tried.
+  void set_nearest_radius(double r0) { nearest_r0_ = r0; }
+  /// Helper process side (slice_on_helper, DESIGN §3.9): one slice the leader planned, solved on
+  /// this object's factorization by run_slice; its pairs, report and warnings.
+  SliceReply<T> run_remote(const SliceTask& t);
+
+ private:
+
+  // ---- counts and cuts
+  CountPoint count(double s, double outward);
+  void remember(const CountPoint& p);
+  CountPoint minus_inf() const { return {-kInf, 0, false, false}; }
+  CountPoint plus_inf() const { return {kInf, n_, false, false}; }
+  double width_min(double x, double y) const {
+    return 1e-8 * std::max({scale_, std::abs(x), std::abs(y)});
+  }
+  double expansion_step() const;
+  Search find_count(const CountPoint& a, const CountPoint& b, index_t g_lo, index_t g, index_t g_hi, double start,
+                    Side side, double guess = std::numeric_limits<double>::quiet_NaN());
+  CountPoint gap_point(const CountPoint& p, double dir, const CountPoint& limit);
+  std::vector<Slice> plan(const Window& w);
+  Anchor anchor_of(const Slice& s) const;
+  // ---- runs
+  bool run_slice(const Slice& s, index_t id);
+  /// Every slice of slices_: by solve_here(i, full) on the leader, and - in a multi-process solve
+  /// - by the helpers that the memory budget leaves room for (DESIGN §3.9).
+  template <class Here>
+  void solve_slices(Here& solve_here);
+  /// Helpers that may take slices now (0: none), and the memory one helper's slice may take.
+  int slice_helpers(double& need_bytes, double& share_bytes);
+  /// Usable helpers when there are at least two and the options allow slices on them (else 0).
+  int slice_helpers_usable() const;
+  /// The cost rule of slices on helpers (Toggle::Auto): one slice of c pairs (the slicing cost
+  /// model) outweighs a helper's preparation; otherwise false and why.
+  bool helper_slices_pay(index_t c, std::string& why) const;
+  /// Memory one helper's slice of at most cmax pairs needs (bytes; slice_helpers()).
+  double helper_slice_bytes(index_t cmax) const;
+  /// Memory of the leader's main factors if it holds them (bytes; released before helpers work).
+  double main_factor_bytes() const;
+  void parallel_note(const std::string& why);
+  SliceTask task_of(std::size_t i, double need_bytes, double share_bytes) const;
+  void merge_remote(std::size_t i, int h, SliceReply<T>& r);
+  double multiplet_shift(const Block<T>& sel, const Slice& s, std::vector<double>& tried) const;
+  double multiplet_rerun_shift(double mean, const Block<T>& sel, const Slice& s) const;
+  bool cluster_verified(const Slice& s, const std::vector<double>& lambda, double& mean, double& delta);
+  void reserve_pool(index_t pairs);
+  void append_to_pool(const Block<T>& blk, const std::vector<PairMetrics>& m, index_t id);
+  void compact_pool(const std::vector<char>& drop);
+  index_t deduplicate();
+  bool in_band(double l) const { return band_ >= 0.0 && l > band_lo_ && l < band_hi_; }
+  double factorize_anchor(const CountPoint& p, bool& detection_off);
+
+  Ctx& c_;
+  const ShiftedPencil<T>& pencil_;
+  SparseFactorization<T>& fac_;
+  /// Counts on the main object by default: a count point can then serve as a one-sided shift
+  /// without refactorization (anchors), which an InertiaCounter count cannot.
+  CountSource<T> counts_;
+  double n2a_, n2b_, scale_;
+  SpectrumEstimate est_;
+  index_t n_;
+  CostModel cost_;
+  index_t c_target_ = 0, c_max_ = 0;
+  double band_ = -1.0;                ///< zero band half-width (zero_filter_tol * scale), < 0: none
+  double band_lo_ = 0.0, band_hi_ = 0.0;  ///< the band as counted: (band_lo_, band_hi_) is excluded
+  std::vector<CountPoint> known_;     ///< every count evaluated (or certified), ascending in s
+  std::vector<Slice> slices_;
+  std::vector<SliceReport> reports_;  ///< per slice
+  Pool<T> pool_;
+  index_t restarts_ = 0, applies_ = 0;
+  double nearest_r0_ = -1.0;
+};
+
+template <class T>
+void WindowSolver<T>::remember(const CountPoint& p) {
+  auto it = std::lower_bound(known_.begin(), known_.end(), p.s, [](const CountPoint& q, double v) { return q.s < v; });
+  if (it != known_.end() && it->s == p.s) {
+    *it = p;
+  } else {
+    known_.insert(it, p);
+  }
+}
+
+template <class T>
+CountPoint WindowSolver<T>::count(double s, double outward) {
+  for (const auto& p : known_)
+    if (p.s == s) return p;
+  const double step = 1e-10 * std::max(scale_, std::abs(s));
+  bool off = false, near = false;
+  const index_t nu = count_below(c_, counts_, s, outward, step, &off, false, &near);
+  const CountPoint p{s, nu, off, near};
+  remember(p);
+  event(c_, "count", {{"s", s}, {"nu", static_cast<std::int64_t>(nu)}, {"near_eigenvalue", near}});
+  return p;
+}
+
+template <class T>
+double WindowSolver<T>::expansion_step() const {
+  double d = 1e-6 * std::max(scale_, 1e-300);
+  if (est_.valid) {
+    d = std::max({d, est_.lo2 - est_.lo1, est_.hi1 - est_.hi2, 1e-3 * (est_.hi1 - est_.lo1)});
+  }
+  return d;
+}
+
+// A point p in (a, b) with g_lo <= nu(p) <= g_hi, aiming at g (a.nu < g_lo <= g <= g_hi < b.nu).
+// Brackets from the known counts are narrowed by count interpolation (regula falsi with the
+// Illinois modification: the end retained twice in a row gets half the weight; steps kept 5%
+// inside the bracket) - by bisection after a count that equals one of the bracket's end counts,
+// a sign that the eigenvalues between are not spread as interpolation assumes; an open end is
+// found by geometric expansion from the finite point (start, or the bracket end that overshot).
+// Eigenvalues too close together to be split by counts (the bracket of the same two counts shrank
+// by kClusterShrink, or to width_min) end the search: the result is then a point in the gap
+// beside that cluster on the requested side (gap_point), never one hugging it - such a point
+// would be a poor shift, and reaching it took ~20 more counts.
+template <class T>
+Search WindowSolver<T>::find_count(const CountPoint& a, const CountPoint& b, index_t g_lo, index_t g, index_t g_hi,
+                                   double start, Side side, double guess) {
+  int same_side = 0, last_side = 0;
+  double lft_weight = 1.0, rgt_weight = 1.0;  // Illinois weights of the retained ends
+  index_t expansions = 0;
+  index_t pair_lo = -1, pair_hi = -1;
+  double pair_width = kInf;  // bracket width when its two end counts were first seen
+  bool bisect = false;       // the last count repeated an end count of the bracket
+  CountPoint lft = a, rgt = b;
+  auto bracket = [&]() -> const CountPoint* {
+    lft = a;
+    rgt = b;
+    const CountPoint* best = nullptr;
+    for (const auto& p : known_) {
+      if (!(p.s > a.s && p.s < b.s)) continue;
+      if (p.nu >= g_lo && p.nu <= g_hi) {
+        if (!best || std::abs(p.nu - g) < std::abs(best->nu - g)) best = &p;
+      } else if (p.nu < g_lo) {
+        lft = p;  // ascending: the last one is the largest
+      } else if (rgt.s == b.s) {
+        rgt = p;  // the first one above g_hi
+      }
+    }
+    return best;
+  };
+  auto beside_cluster = [&]() {
+    Search r;
+    r.cluster = true;
+    r.cl_lo = lft;
+    r.cl_hi = rgt;
+    r.p = side == Side::Above ? gap_point(rgt, +1.0, b) : gap_point(lft, -1.0, a);
+    event(c_, "count_cluster", {{"lower", lft.s}, {"upper", rgt.s},
+                                {"eigenvalues", static_cast<std::int64_t>(rgt.nu - lft.nu)}, {"point", r.p.s}});
+    return r;
+  };
+  for (int it = 0; it < 40; ++it) {
+    if (const CountPoint* best = bracket()) return Search::at(*best);
+    const bool lf = std::isfinite(lft.s), rf = std::isfinite(rgt.s);
+    if (lf && rf) {
+      if (lft.nu != pair_lo || rgt.nu != pair_hi) {
+        pair_lo = lft.nu;
+        pair_hi = rgt.nu;
+        pair_width = rgt.s - lft.s;
+      }
+      if (rgt.s - lft.s <= std::max(width_min(lft.s, rgt.s), kClusterShrink * pair_width)) return beside_cluster();
+    }
+    double s = 0.0;
+    const double d = expansion_step() * std::pow(4.0, static_cast<double>(expansions));
+    if (std::isfinite(guess) && guess > lft.s && guess < rgt.s) {
+      s = guess;  // caller's estimate (local eigenvalue density), tried once
+      guess = std::numeric_limits<double>::quiet_NaN();
+    } else if (!lf && !rf) {
+      s = start;
+    } else if (!lf) {  // expand downward from the point that overshot
+      s = rgt.s - d;
+      ++expansions;
+    } else if (!rf) {
+      s = lft.s + d;
+      ++expansions;
+    } else if (bisect) {
+      s = 0.5 * (lft.s + rgt.s);
+    } else {
+      const double fl = lft_weight * (static_cast<double>(lft.nu) - static_cast<double>(g));  // < 0
+      const double fr = rgt_weight * (static_cast<double>(rgt.nu) - static_cast<double>(g));  // > 0
+      const double frac = std::clamp(-fl / (fr - fl), 0.05, 0.95);
+      s = lft.s + frac * (rgt.s - lft.s);
+    }
+    const CountPoint p = count(s, +1.0);
+    bisect = lf && rf && (p.nu == lft.nu || p.nu == rgt.nu);
+    const int sd = p.nu < g_lo ? -1 : (p.nu > g_hi ? +1 : 0);
+    same_side = (sd != 0 && sd == last_side) ? same_side + 1 : 1;
+    last_side = sd;
+    // Illinois: a new left end twice in a row halves the weight of the retained right end, and
+    // vice versa; a switch of sides resets both.
+    if (same_side >= 2 && sd < 0) rgt_weight *= 0.5;
+    if (same_side >= 2 && sd > 0) lft_weight *= 0.5;
+    if (same_side == 1) lft_weight = rgt_weight = 1.0;
+  }
+  if (const CountPoint* best = bracket()) return Search::at(*best);
+  if (!std::isfinite(lft.s) || !std::isfinite(rgt.s))
+    HS_THROW(NotConverged, "inertia search found no point with " << g << " eigenvalues below it");
+  return beside_cluster();  // out of iterations: treat the bracket as unsplittable
+}
+
+// A point beside p on side dir (+1: above p, -1: below), in the same spectral gap (count p.nu),
+// strictly between p and limit: the middle of the part of the gap that known counts certify (they
+// share p's count, so no eigenvalue lies between them). Without such a point, up to three counts
+// at p + dir * delta (delta: half the distance to the next known count, else the expansion step,
+// quartered while the count differs) certify one. Each half of a certified gap keeps the point
+// away from both the eigenvalues at p's side and the next ones beyond. If no gap is found, p is
+// returned flagged near.
+template <class T>
+CountPoint WindowSolver<T>::gap_point(const CountPoint& p, double dir, const CountPoint& limit) {
+  CountPoint far = p, next = limit;
+  auto consider = [&](const CountPoint& q) {  // q beyond p, in order of distance; false: stop
+    if (q.nu != p.nu) {
+      next = q;
+      return false;
+    }
+    far = q;
+    return true;
+  };
+  if (dir > 0) {
+    for (const auto& q : known_)
+      if (q.s > p.s && q.s < limit.s && !consider(q)) break;
+  } else {
+    for (auto it = known_.rbegin(); it != known_.rend(); ++it)
+      if (it->s < p.s && it->s > limit.s && !consider(*it)) break;
+  }
+  if (next.s == limit.s && std::isfinite(limit.s) && limit.nu == p.nu) far = limit;  // the gap reaches limit
+  auto middle = [&](double x) {
+    const CountPoint m{0.5 * (p.s + x), p.nu, false, false};
+    remember(m);
+    return m;
+  };
+  if (far.s != p.s) return middle(far.s);
+  double delta = std::isfinite(next.s) ? 0.5 * std::abs(next.s - p.s) : expansion_step();
+  for (int t = 0; t < 3; ++t) {
+    const CountPoint q = count(p.s + dir * delta, dir);
+    if (q.nu == p.nu && dir * (q.s - p.s) > 0) return middle(q.s);
+    delta *= 0.25;
+  }
+  CountPoint out = p;
+  out.near = true;
+  return out;
+}
+
+// Cuts window w into slices of at most c_max_ eigenvalues (aiming at c_target_), marching upward
+// from the finite lower end (an open lower end first gets its own leftmost slice). A partial
+// cluster window is one slice.
+template <class T>
+std::vector<Slice> WindowSolver<T>::plan(const Window& w) {
+  const CountPoint& a = w.lo;
+  const CountPoint& b = w.hi;
+  if (w.want >= 0) return {Slice{a, b, w.want, w.focus}};
+  std::vector<CountPoint> cuts{a};
+  CountPoint cur = a;
+  auto next_cut = [&](index_t remaining) {
+    const index_t step = remaining <= 2 * c_target_ ? (remaining + 1) / 2 : c_target_;
+    const index_t g_lo = cur.nu + std::max<index_t>(1, step / 2);
+    const index_t g_hi = cur.nu + std::min(c_max_, remaining - 1);
+    const double start = std::isfinite(cur.s) ? cur.s : (est_.valid ? est_.lo1 : b.s);
+    // First guess from the local eigenvalue density: that of the previous slice, else the average
+    // over what is left of the window (open ends: up to the estimated end of the spectrum).
+    double guess = std::numeric_limits<double>::quiet_NaN();
+    const double from = std::isfinite(cur.s) ? cur.s : (est_.valid ? est_.lo1 : kInf);
+    const double to = std::isfinite(b.s) ? b.s : (est_.valid ? est_.hi1 : kInf);
+    if (cuts.size() >= 2 && std::isfinite(cuts[cuts.size() - 2].s) && std::isfinite(cur.s) &&
+        cur.nu > cuts[cuts.size() - 2].nu) {
+      const CountPoint& prev = cuts[cuts.size() - 2];
+      guess = cur.s + (cur.s - prev.s) * static_cast<double>(step) / static_cast<double>(cur.nu - prev.nu);
+    } else if (std::isfinite(from) && std::isfinite(to) && to > from) {
+      guess = from + (to - from) * static_cast<double>(step) / static_cast<double>(b.nu - cur.nu);
+    }
+    return find_count(cur, b, g_lo, cur.nu + step, std::max(g_lo, g_hi), start, Side::Above, guess).p;
+  };
+  while (b.nu - cur.nu > c_max_) {
+    const CountPoint p = next_cut(b.nu - cur.nu);
+    if (p.nu <= cur.nu || !(p.s < b.s)) break;
+    cuts.push_back(p);
+    cur = p;
+  }
+  cuts.push_back(b);
+  std::vector<Slice> out;
+  for (std::size_t i = 0; i + 1 < cuts.size(); ++i)
+    if (cuts[i + 1].nu > cuts[i].nu) out.push_back({cuts[i], cuts[i + 1]});
+  return out;
+}
+
+// Shift placement (see the file comment): one-sided toward the side that holds nothing or borders
+// the zero band, else the centre. A finite end flagged near (an eigenvalue on it, e.g. a user
+// bound) is no anchor: such a slice takes the centre shift; an open slice moves its shift into the
+// gap beside that end (run_slice).
+template <class T>
+Anchor WindowSolver<T>::anchor_of(const Slice& s) const {
+  if (!std::isfinite(s.hi.s)) return Anchor::Lower;  // windows have at least one finite end
+  if (!std::isfinite(s.lo.s)) return Anchor::Upper;
+  // Next to the band: the shift at the far end, away from the band's cluster.
+  if (band_ >= 0 && s.hi.s == band_lo_) return s.lo.near ? Anchor::Centre : Anchor::Lower;
+  if (band_ >= 0 && s.lo.s == band_hi_) return s.hi.near ? Anchor::Centre : Anchor::Upper;
+  // Nothing below (above): a centre shift could be far from all of the slice's eigenvalues.
+  if (s.lo.nu == 0) return s.hi.near ? Anchor::Centre : Anchor::Upper;
+  if (s.hi.nu == n_) return s.lo.near ? Anchor::Centre : Anchor::Lower;
+  return Anchor::Centre;
+}
+
+template <class T>
+void WindowSolver<T>::reserve_pool(index_t pairs) {
+  pool_.x.resize(n_, std::max<index_t>(pairs, 1));
+  pool_.used = 0;
+}
+
+template <class T>
+void WindowSolver<T>::append_to_pool(const Block<T>& blk, const std::vector<PairMetrics>& m, index_t id) {
+  for (index_t j = 0; j < blk.size(); ++j) {
+    if (pool_.used == pool_.x.cols()) pool_.x.resize_cols(std::max<index_t>(2 * pool_.used, pool_.used + 16));
+    std::copy(blk.x.col(j), blk.x.col(j) + n_, pool_.x.col(pool_.used));
+    ++pool_.used;
+    pool_.lambda.push_back(blk.lambda[j]);
+    pool_.metrics.push_back(m[j]);
+    pool_.slice.push_back(id);
+  }
+}
+
+// Removes the flagged pool columns (keeps the column order of the survivors).
+template <class T>
+void WindowSolver<T>::compact_pool(const std::vector<char>& drop) {
+  index_t w = 0;
+  for (index_t q = 0; q < pool_.used; ++q) {
+    if (drop[q]) continue;
+    if (w != q) {
+      std::copy(pool_.x.col(q), pool_.x.col(q) + n_, pool_.x.col(w));
+      pool_.lambda[w] = pool_.lambda[q];
+      pool_.metrics[w] = pool_.metrics[q];
+      pool_.slice[w] = pool_.slice[q];
+    }
+    ++w;
+  }
+  pool_.used = w;
+  pool_.lambda.resize(static_cast<std::size_t>(w));
+  pool_.metrics.resize(static_cast<std::size_t>(w));
+  pool_.slice.resize(static_cast<std::size_t>(w));
+}
+
+// A multiple eigenvalue among the pairs found inside the slice (two or more within kEqualWidth,
+// not tried before): its copies sit at one theta, and a single-vector Krylov run at a shift next to
+// it - where it dominates the operator - recovers the missing copies through rounding, while a run
+// at a distant shift does not (multiplet_rerun_shift). Returns its mean, or NaN.
+template <class T>
+double WindowSolver<T>::multiplet_shift(const Block<T>& sel, const Slice& s, std::vector<double>& tried) const {
+  std::vector<double> l;
+  for (double x : sel.lambda)
+    if (x >= s.lo.s && x <= s.hi.s) l.push_back(x);
+  std::sort(l.begin(), l.end());
+  double best = std::numeric_limits<double>::quiet_NaN();
+  std::size_t best_size = 1;
+  for (std::size_t i = 0; i < l.size();) {
+    std::size_t j = i + 1;
+    while (j < l.size() && l[j] - l[j - 1] <= kEqualWidth * std::max({scale_, std::abs(l[j])})) ++j;
+    const double mean = std::accumulate(l.begin() + static_cast<std::ptrdiff_t>(i),
+                                        l.begin() + static_cast<std::ptrdiff_t>(j), 0.0) /
+                        static_cast<double>(j - i);
+    bool seen = false;
+    for (double t : tried) seen = seen || std::abs(t - mean) <= kEqualWidth * std::max(scale_, std::abs(mean));
+    if (j - i > best_size && !seen) {
+      best_size = j - i;
+      best = mean;
+    }
+    i = j;
+  }
+  return best;
+}
+
+// The shift of a multiplet's rerun: kMultipletOffset of the way from the multiplet (mean) to its
+// nearest other found eigenvalue (or the slice end) on the side with the larger gap. There the
+// multiplet dominates the operator ~1/kMultipletOffset times, so rounding supplies its missing
+// copies; a shift right on it (1e-8 relative) also resolves the spread of a numerically multiple
+// cluster (a null space: eigenvalues ~1e-14 scale apart) into distinct theta that must converge
+// one by one - measured on yee-pec-box-1e4 smallest 10: 215 solves on the multiplet, 87 at 1%;
+// exact multiplets (bench_slicing_fix_probe lap4, cluster_mid, mult) took +3..8% solves.
+template <class T>
+double WindowSolver<T>::multiplet_rerun_shift(double mean, const Block<T>& sel, const Slice& s) const {
+  double gl = kInf, gr = kInf;
+  for (double x : sel.lambda) {
+    const double d = x - mean;
+    if (std::abs(d) <= kEqualWidth * std::max(scale_, std::abs(mean))) continue;  // a copy
+    if (d > 0) {
+      gr = std::min(gr, d);
+    } else {
+      gl = std::min(gl, -d);
+    }
+  }
+  if (!std::isfinite(gl) && std::isfinite(s.lo.s)) gl = mean - s.lo.s;
+  if (!std::isfinite(gr) && std::isfinite(s.hi.s)) gr = s.hi.s - mean;
+  const double gap = std::isfinite(gr) && (gr >= gl || !std::isfinite(gl)) ? gr : -gl;
+  return std::isfinite(gap) ? mean + kMultipletOffset * gap : mean;
+}
+
+// A partial cluster slice's copies (lambda, inside the slice) prove the whole cluster numerically
+// equal when two counts at their mean -+ Delta (Delta = 16x their spread, >= 1e-9 relative, at
+// most kEqualWidth relative) hold all of its eigenvalues: then any `want` of them are a valid answer.
+template <class T>
+bool WindowSolver<T>::cluster_verified(const Slice& s, const std::vector<double>& lambda, double& mean,
+                                       double& delta) {
+  if (lambda.empty()) return false;
+  const auto [mn, mx] = std::minmax_element(lambda.begin(), lambda.end());
+  mean = std::accumulate(lambda.begin(), lambda.end(), 0.0) / static_cast<double>(lambda.size());
+  const double rel = std::max(scale_, std::abs(mean));
+  delta = std::max(16.0 * (*mx - *mn), 1e-9 * rel);
+  if (delta > kEqualWidth * rel) return false;
+  const CountPoint lo = count(mean - delta, -1.0);
+  const CountPoint hi = count(mean + delta, +1.0);
+  return lo.nu == s.lo.nu && hi.nu == s.hi.nu;
+}
+
+// One slice: shift, Krylov run for exactly its count (or the copies wanted of a partial cluster),
+// verification, certificate with deflated reruns. Pairs within an ambiguity margin delta outside
+// the slice are kept too (an eigenvalue that close to a cut may be computed on the other side of
+// it); deduplicate() resolves them. Returns false only for a partial cluster that turned out not
+// to be numerically equal (the caller then solves it in full).
+template <class T>
+bool WindowSolver<T>::run_slice(const Slice& s, index_t id) {
+  const SolverConfig& cfg = c_.cfg;
+  const index_t count = s.count();
+  const bool partial = s.want >= 0;
+  double sigma = 0.0;
+  bool detection_off = false;
+  Which which = Which::LargestMagnitude;
+  if (partial) {  // a shift at the cluster's bracket: the cluster dominates, rounding brings out copies
+    sigma = factorize_near(c_, fac_, s.focus, scale_, detection_off, /*on_eigenvalue=*/true);
+  } else {
+    switch (anchor_of(s)) {
+      case Anchor::Centre:
+        sigma = factorize_near(c_, fac_, 0.5 * (s.lo.s + s.hi.s), scale_, detection_off);
+        break;
+      case Anchor::Upper: {  // eigenvalues below the shift: theta < 0, most negative = nearest below
+        const CountPoint p = s.hi.near ? gap_point(s.hi, +1.0, plus_inf()) : s.hi;
+        sigma = factorize_anchor(p, detection_off);
+        which = Which::SmallestAlgebraic;
+        break;
+      }
+      case Anchor::Lower: {  // eigenvalues above the shift: theta > 0, largest = nearest above
+        const CountPoint p = s.lo.near ? gap_point(s.lo, -1.0, minus_inf()) : s.lo;
+        sigma = factorize_anchor(p, detection_off);
+        which = Which::LargestAlgebraic;
+        break;
+      }
+    }
+  }
+  if (static_cast<index_t>(reports_.size()) <= id) reports_.resize(static_cast<std::size_t>(id + 1));
+  SliceReport& sr = reports_[static_cast<std::size_t>(id)];
+  sr = SliceReport{};
+  sr.lower = s.lo.s;
+  sr.upper = s.hi.s;
+  sr.sigma = sigma;
+  sr.which = which_name(which);
+  sr.count_inertia = count;
+
+  const double d_lo = std::isfinite(s.lo.s) ? 1e-9 * std::max(scale_, std::abs(s.lo.s)) : 0.0;
+  const double d_hi = std::isfinite(s.hi.s) ? 1e-9 * std::max(scale_, std::abs(s.hi.s)) : 0.0;
+  DefiniteRun<T> run;
+  Block<T> sel;
+  std::vector<PairMetrics> metrics;
+  index_t inside = 0, near_in = 0, near_out = 0;
+  auto select = [&]() {
+    std::vector<index_t> idx;
+    for (index_t j = 0; j < run.all.size(); ++j) {
+      const double l = run.all.lambda[j];
+      if (std::isfinite(l) && l >= s.lo.s - d_lo && l <= s.hi.s + d_hi && !in_band(l)) idx.push_back(j);
+    }
+    sel = take_columns(run.all, idx);
+    verify_and_rescue(c_, fac_, pencil_, sel, metrics, n2a_, n2b_,
+                      [&]() { refactorize_at(c_, fac_, sigma, detection_off); });
+    // Drop ghosts (Ritz pairs that are no eigenpairs at all) and count.
+    std::vector<index_t> keep;
+    inside = near_in = near_out = 0;
+    for (index_t j = 0; j < sel.size(); ++j) {
+      if (!(metrics[j].backward_error <= std::max(kTrustworthy, cfg.tol))) continue;  // ghost / NaN
+      const double l = sel.lambda[j];
+      if (l < s.lo.s - d_lo || l > s.hi.s + d_hi || in_band(l)) continue;  // moved away by the rescue
+      keep.push_back(j);
+      if (l >= s.lo.s && l <= s.hi.s) {
+        ++inside;
+        if (l < s.lo.s + d_lo || l > s.hi.s - d_hi) ++near_in;
+      } else {
+        ++near_out;
+      }
+    }
+    std::vector<PairMetrics> mk;
+    for (index_t j : keep) mk.push_back(metrics[j]);
+    sel = take_columns(sel, keep);
+    metrics = std::move(mk);
+  };
+  // Pairs still missing by the slice's count (partial cluster: by its want), up to the pairs
+  // within delta of its ends.
+  auto missing = [&]() {
+    return partial ? std::max<index_t>(0, s.want - inside) : count - inside - near_out;
+  };
+  sr.nev = std::min(n_, s.required());
+  // The P4 width: the blocktune rule was calibrated on nearest-target runs, not per-slice nev.
+  const index_t p = fit_block_size<T>(c_, n_, sr.nev, 0, 4 * sr.nev, block_size_for(c_.cfg, sr.nev));
+  if (id == 0) c_.rep.block_size = p;
+  lanczos_run(c_, fac_, pencil_, sigma, which, sr.nev, p, static_cast<const DenseMatrix<T>*>(nullptr), run);
+  select();
+  // Certificate of the slice: deflated reruns while pairs are missing and the reruns find new
+  // ones. A multiple eigenvalue among the found pairs gets its own shift (multiplet_shift).
+  std::vector<double> tried;
+  int stalls = 0;
+  const int max_rounds = static_cast<int>(std::min<index_t>(kMaxRerunRounds, missing() + kExtraRerunRounds));
+  for (int round = 0; missing() > 0 && round < max_rounds && stalls < kStallRounds; ++round) {
+    const index_t miss = missing();
+    keep_converged(run, n2a_, n2b_, cfg.tol);
+    const index_t nev_rerun = std::min<index_t>(n_ - run.all.size(), miss + 2);
+    if (nev_rerun < 1) break;
+    const double m_sigma = multiplet_shift(sel, s, tried);
+    event(c_, "slice_rerun", {{"slice", static_cast<std::int64_t>(id)}, {"missing", static_cast<std::int64_t>(miss)},
+                              {"multiplet", m_sigma}});
+    DenseMatrix<T> defl = run.all.x;
+    const index_t d = defl.cols();
+    const index_t p_rerun =
+        fit_block_size<T>(c_, n_, nev_rerun, d, 3 * d + 4 * nev_rerun, rerun_block_size(cfg, p, miss));
+    if (std::isfinite(m_sigma)) {
+      tried.push_back(m_sigma);
+      bool off = false;
+      const double ms = factorize_near(c_, fac_, multiplet_rerun_shift(m_sigma, sel, s), scale_, off,
+                                       /*on_eigenvalue=*/true);
+      lanczos_run(c_, fac_, pencil_, ms, Which::LargestMagnitude, nev_rerun, p_rerun, &defl, run);
+    } else {
+      refactorize_at(c_, fac_, sigma, detection_off);
+      lanczos_run(c_, fac_, pencil_, sigma, which, nev_rerun, p_rerun, &defl, run);
+    }
+    ++sr.reruns;
+    select();
+    stalls = missing() < miss ? 0 : stalls + 1;
+  }
+  if (partial) {
+    // Any `want` copies of a numerically equal cluster: verified by two counts, then trimmed.
+    std::vector<double> l;
+    std::vector<index_t> in_cl;
+    for (index_t j = 0; j < sel.size(); ++j)
+      if (sel.lambda[j] >= s.lo.s && sel.lambda[j] <= s.hi.s) {
+        l.push_back(sel.lambda[j]);
+        in_cl.push_back(j);
+      }
+    double mean = 0.0, delta = 0.0;
+    if (inside < s.want || !cluster_verified(s, l, mean, delta)) {
+      restarts_ += run.restarts;
+      applies_ += run.applies;
+      return false;
+    }
+    warn(c_, "the target ends inside a cluster of " + std::to_string(count) + " numerically equal eigenvalues " +
+                 fmt(mean) + " +- " + fmt(delta) + ": " + std::to_string(s.want) +
+                 " of its copies are returned (a null space? see zero_filter_tol)");
+    in_cl.resize(static_cast<std::size_t>(s.want));
+    std::vector<PairMetrics> mk;
+    for (index_t j : in_cl) mk.push_back(metrics[j]);
+    sel = take_columns(sel, in_cl);
+    metrics = std::move(mk);
+    inside = s.want;
+    near_in = near_out = 0;
+  }
+  sr.count_found = inside;
+  sr.passed = partial ? inside == s.want : (inside - near_in <= count && count <= inside + near_out);
+  sr.restarts = run.restarts;
+  sr.op_applies = run.applies;
+  restarts_ += run.restarts;
+  applies_ += run.applies;
+  event(c_, "slice", {{"slice", static_cast<std::int64_t>(id)}, {"lower", s.lo.s}, {"upper", s.hi.s}, {"sigma", sigma},
+                      {"which", std::string(sr.which)}, {"count", static_cast<std::int64_t>(count)},
+                      {"want", static_cast<std::int64_t>(s.want)}, {"found", static_cast<std::int64_t>(inside)},
+                      {"passed", sr.passed}, {"reruns", static_cast<std::int64_t>(sr.reruns)},
+                      {"restarts", static_cast<std::int64_t>(run.restarts)},
+                      {"op_applies", static_cast<std::int64_t>(run.applies)}});
+  if (!sr.passed)
+    warn(c_, "slice [" + fmt(s.lo.s) + ", " + fmt(s.hi.s) + "]: inertia " + std::to_string(s.required()) +
+                 " vs found " + std::to_string(inside));
+  append_to_pool(sel, metrics, id);
+  return true;
+}
+
+// Factorization at a slice end used as a one-sided shift: the count's own factorization when the
+// object still holds it, else a refactorization with the same null-pivot setting; if that is
+// flagged singular now (last-bit differences of the parallel factorization), the shift moves a
+// little like any near-singular shift.
+template <class T>
+double WindowSolver<T>::factorize_anchor(const CountPoint& p, bool& detection_off) {
+  detection_off = p.detection_off;
+  if (try_refactorize_at(c_, fac_, p.s, p.detection_off)) return p.s;
+  warn(c_, "one-sided shift " + fmt(p.s) + " refactorized as a near-singular shift");
+  return factorize_near(c_, fac_, p.s, scale_, detection_off);
+}
+
+// Pairs from different slices with eigenvalues within 2 delta of each other may be the same
+// eigenvector found twice (near a cut). Such a group is replaced by a B-orthonormal basis of its
+// span (eigenvalues of the B-Gram matrix below 1e-4 of the largest: dependent copies) followed
+// by Rayleigh-Ritz. Returns the number of pairs removed.
+template <class T>
+index_t WindowSolver<T>::deduplicate() {
+  const index_t m = pool_.used;
+  std::vector<index_t> order(static_cast<std::size_t>(m));
+  std::iota(order.begin(), order.end(), index_t{0});
+  std::stable_sort(order.begin(), order.end(), [&](index_t p, index_t q) { return pool_.lambda[p] < pool_.lambda[q]; });
+  std::vector<char> drop(static_cast<std::size_t>(m), 0);
+  index_t removed = 0;
+  for (index_t i = 0; i < m;) {
+    index_t j = i + 1;
+    bool multi = false;  // members from more than one slice
+    while (j < m) {
+      const double l0 = pool_.lambda[order[j - 1]], l1 = pool_.lambda[order[j]];
+      if (l1 - l0 > 2e-9 * std::max({scale_, std::abs(l0), std::abs(l1)})) break;
+      for (index_t q = i; q < j && !multi; ++q) multi = pool_.slice[order[q]] != pool_.slice[order[j]];
+      ++j;
+    }
+    if (multi) {
+      const index_t g = j - i;
+      Block<T> grp;
+      grp.x.resize(n_, g);
+      for (index_t q = 0; q < g; ++q) {
+        std::copy(pool_.x.col(order[i + q]), pool_.x.col(order[i + q]) + n_, grp.x.col(q));
+        grp.lambda.push_back(pool_.lambda[order[i + q]]);
+      }
+      recompute_products(pencil_.a(), pencil_.b(), grp);
+      const index_t r = driver::rayleigh_ritz_definite(grp.x, grp.ax, grp.bx, grp.lambda, 1e-4);
+      if (r < g) {
+        const auto mr = block_metrics(grp, n2a_, n2b_);
+        for (index_t q = 0; q < g; ++q) {
+          const index_t col = order[i + q];
+          if (q < r) {
+            std::copy(grp.x.col(q), grp.x.col(q) + n_, pool_.x.col(col));
+            pool_.lambda[col] = grp.lambda[q];
+            pool_.metrics[col] = mr[q];
+          } else {
+            drop[col] = 1;
+          }
+        }
+        removed += g - r;
+      }
+    }
+    i = j;
+  }
+  if (removed > 0) compact_pool(drop);
+  return removed;
+}
+
+// ---- multi-process solves (DESIGN §3.9): slices on helper processes
+
+template <class T>
+int WindowSolver<T>::slice_helpers_usable() const {
+  if (!c_.helpers || !c_.helpers->shared() || c_.helpers->options().helper_slices == Toggle::Off) return 0;
+  int usable = 0;
+  for (int h = 1; h <= c_.helpers->size(); ++h) usable += c_.helpers->usable(h) ? 1 : 0;
+  return usable >= 2 ? usable : 0;
+}
+
+// One slice's predicted work (the slicing cost model: its factorization and pairs) must outweigh
+// what a helper needs before it can start (its analysis and the messages).
+template <class T>
+bool WindowSolver<T>::helper_slices_pay(index_t c, std::string& why) const {
+  if (c_.helpers->options().helper_slices != Toggle::Auto) return true;
+  const index_t cc = std::max<index_t>(1, c);
+  const double work = cost_.t_factor + static_cast<double>(cc) * cost_.per_pair(cc);
+  const double prep = helper_preparation_s(mumps_input_size(pencil_), fac_.estimate(), 1);
+  if (work >= prep) return true;
+  why = "spectrum slices on the leader: too small for the helpers (a slice ~" + fmt(work) + " s, their preparation ~" +
+        fmt(prep) + " s)";
+  return false;
+}
+
+// A helper's slice: its factorization (the main analysis' in-core estimate - a helper analyses the
+// same pivot order), MUMPS' analysis data (~15% of it) and its Krylov work of up to cmax pairs (7
+// n-vectors per pair, as the leader's own slice plan, solve() step 2).
+template <class T>
+double WindowSolver<T>::helper_slice_bytes(index_t cmax) const {
+  return 1.15 * fac_.estimate().incore_mb * 1e6 + 7.0 * static_cast<double>(n_) * sizeof(T) * static_cast<double>(cmax);
+}
+
+template <class T>
+double WindowSolver<T>::main_factor_bytes() const {
+  return fac_.inertia().valid ? fac_.stats().factor_mb_used * 1e6 : 0.0;
+}
+
+template <class T>
+void WindowSolver<T>::parallel_note(const std::string& why) {
+  auto& notes = c_.rep.parallel.notes;
+  if (std::find(notes.begin(), notes.end(), why) == notes.end()) notes.push_back(why);
+}
+
+// Helpers that take slices, and the memory one helper's slice may take (helper_slice_bytes). As many
+// helpers as such slices fit in what the budget leaves once the leader's main factors are released
+// (it computes nothing while helpers work, and refactorizes if it must solve a slice itself) - at
+// least two: one helper alone, on its socket's cores, would be slower than the leader on all of them.
+// The fit is predicted before anything is sent (the helpers' copies of the problem:
+// helper_footprint_bytes), and checked again once they have the problem (memory_in_use counts what
+// they then hold); declined then, the helpers drop it and the leader keeps its factors. Each helper
+// gets an equal share of what is left (share_bytes): its slices' Krylov bases need the room the
+// leader's would have had (yee-pec-cube-32 [40, 400], slices of 104 and 167 pairs: with just
+// need_bytes the helper halved its block width to 1 and missed 4 pairs).
+template <class T>
+int WindowSolver<T>::slice_helpers(double& need_bytes, double& share_bytes) {
+  need_bytes = share_bytes = 0.0;
+  if (slices_.size() < 2) return 0;
+  int usable = slice_helpers_usable();
+  if (usable == 0) return 0;
+  std::string why;
+  if (!helper_slices_pay(c_target_, why)) {
+    parallel_note(why);
+    return 0;
+  }
+  Helpers& hp = *c_.helpers;
+  const double need = helper_slice_bytes(c_max_);
+  const double main = main_factor_bytes();
+  auto fit_note = [&](int take, int of, double avail, const char* how) {
+    parallel_note("spectrum slices: " + std::to_string(take) + " of " + std::to_string(of) +
+                  " helper(s) used - a helper's slice needs " + fmt(need / 1e6) + " MB, the budget leaves " +
+                  fmt(std::max(avail, 0.0) / 1e6) + " MB" + how);
+  };
+  {
+    const double avail = 0.9 * (budget_left(c_) + main - usable * helper_footprint_bytes(pencil_));
+    if (slice_helpers_fitting(avail, need, usable) == 0) {
+      fit_note(0, usable, avail, " (predicted; nothing sent)");
+      return 0;
+    }
+  }
+  {
+    PhaseScope phase(c_.clock, Phase::Iterate);
+    hp.prepare(c_);  // the helpers get the problem now (the leader waits)
+  }
+  usable = slice_helpers_usable();
+  double avail = 0.9 * (budget_left(c_) + main);  // charged with what the helpers now hold
+  int take = slice_helpers_fitting(avail, need, usable);
+  if (take > 0 && fac_.inertia().valid && fac_.release_factors()) {
+    c_.held = FactorHeld{};
+    avail = 0.9 * budget_left(c_);
+    take = slice_helpers_fitting(avail, need, take);
+  }
+  if (take < usable) fit_note(take, usable, avail, "");
+  if (take == 0) {
+    PhaseScope phase(c_.clock, Phase::Iterate);
+    hp.drop(c_, "slices on the leader");
+    return 0;
+  }
+  need_bytes = need;
+  share_bytes = avail / take;
+  return take;
+}
+
+template <class T>
+SliceTask WindowSolver<T>::task_of(std::size_t i, double need_bytes, double share_bytes) const {
+  const Slice& s = slices_[i];
+  SliceTask t;
+  t.id = static_cast<index_t>(i);
+  t.lo_s = s.lo.s;
+  t.lo_nu = s.lo.nu;
+  t.lo_off = s.lo.detection_off;
+  t.lo_near = s.lo.near;
+  t.hi_s = s.hi.s;
+  t.hi_nu = s.hi.nu;
+  t.hi_off = s.hi.detection_off;
+  t.hi_near = s.hi.near;
+  t.want = s.want;
+  t.focus = s.focus;
+  t.band = band_;
+  t.band_lo = band_lo_;
+  t.band_hi = band_hi_;
+  // MUMPS' working memory: the share less the slice's Krylov work, at least the factorization's need.
+  const double krylov = 7.0 * static_cast<double>(n_) * sizeof(T) * static_cast<double>(c_max_);
+  t.cap_mb = std::max(need_bytes - krylov, share_bytes - krylov) / 1e6;
+  const double cap = fac_.options().max_memory_mb;
+  if (cap > 0) t.cap_mb = std::min(t.cap_mb, cap);
+  t.budget_gb = std::max(need_bytes, share_bytes) / 1073741824.0;  // beside what the helper holds
+  return t;
+}
+
+template <class T>
+void WindowSolver<T>::merge_remote(std::size_t i, int h, SliceReply<T>& r) {
+  if (reports_.size() <= i) reports_.resize(i + 1);
+  reports_[i] = r.report;
+  Block<T> blk;
+  blk.lambda = r.lambda;
+  blk.x = std::move(r.x);
+  append_to_pool(blk, r.metrics, static_cast<index_t>(i));
+  restarts_ += r.restarts;
+  applies_ += r.applies;
+  if (i == 0 && r.block_size > 0) c_.rep.block_size = r.block_size;
+  for (const std::string& w : r.warnings) warn(c_, "helper " + std::to_string(h) + ": " + w);
+  ++c_.rep.parallel.helper_slices;
+  event(c_, "helper_slice", {{"helper", static_cast<std::int64_t>(h)}, {"slice", static_cast<std::int64_t>(i)},
+                             {"found", static_cast<std::int64_t>(r.report.count_found)}, {"passed", r.report.passed},
+                             {"seconds", r.seconds}, {"helper_rss_mb", r.rss_bytes / 1e6}});
+}
+
+// The helpers - one per socket, each on its socket's cores - solve the slices, as many at once as
+// slice_helpers() allows, each getting the next slice when it is done; the leader, whose threads
+// span every socket, only waits meanwhile (charged to Iterate): nothing runs on oversubscribed cores.
+// A helper that fails is not used again and its slice, like a helper's partial cluster that is not
+// numerically equal (solved in full, as the single-process path would), is solved by the leader
+// once the helpers are done. Without two helpers for it the leader solves every slice itself. The
+// pool keeps every pair with its slice id, so deduplicate() and the certificate see what the
+// single-process path sees.
+template <class T>
+template <class Here>
+void WindowSolver<T>::solve_slices(Here& solve_here) {
+  double need = 0.0, share = 0.0;
+  const int take = slice_helpers(need, share);
+  auto* hp = dynamic_cast<HelpersOf<T>*>(c_.helpers);
+  if (take == 0 || hp == nullptr) {
+    for (std::size_t i = 0; i < slices_.size(); ++i) solve_here(i, false);
+    return;
+  }
+  std::deque<std::size_t> queue;
+  for (std::size_t i = 0; i < slices_.size(); ++i) queue.push_back(i);
+  std::vector<std::ptrdiff_t> on_helper(static_cast<std::size_t>(hp->size()) + 1, -1);
+  std::vector<std::pair<std::size_t, bool>> leader;  // (slice, in full) left to the leader
+  int handed = 0;
+  auto active = [&]() {
+    int k = 0;
+    for (std::ptrdiff_t v : on_helper) k += v >= 0 ? 1 : 0;
+    return k;
+  };
+  auto hand_out = [&]() {
+    for (int h = 1; h <= hp->size() && !queue.empty() && active() < take; ++h) {
+      if (!hp->usable(h) || on_helper[static_cast<std::size_t>(h)] >= 0) continue;
+      const std::size_t i = queue.front();
+      queue.pop_front();
+      hp->post_slice(c_, h, task_of(i, need, share));
+      on_helper[static_cast<std::size_t>(h)] = static_cast<std::ptrdiff_t>(i);
+      ++handed;
+    }
+  };
+  hand_out();
+  while (active() > 0) {
+    SliceReply<T> r;
+    int h = 0;
+    {
+      PhaseScope phase(c_.clock, Phase::Iterate);
+      h = hp->wait_slice(c_, r);
+    }
+    const auto i = static_cast<std::size_t>(on_helper[static_cast<std::size_t>(h)]);
+    on_helper[static_cast<std::size_t>(h)] = -1;
+    if (!r.error.ok) {
+      const std::string why = std::string(to_string(r.error.code)) + ": " + r.error.what;
+      hp->abandon(h, "slice failed: " + why);
+      ++c_.rep.parallel.fallbacks;
+      warn(c_, "multi-process solve: helper " + std::to_string(h) + " could not solve slice [" + fmt(slices_[i].lo.s) +
+                   ", " + fmt(slices_[i].hi.s) + "] (" + why + "); the leader solves it");
+      leader.push_back({i, false});
+    } else if (!r.completed) {
+      leader.push_back({i, true});  // a partial cluster that is not numerically equal: all of it
+    } else {
+      merge_remote(i, h, r);
+    }
+    hand_out();
+  }
+  // The helpers' batch is done: they drop the problem and their last factors before the leader
+  // solves what is left (or goes on), which then has the budget hs::solve would have.
+  {
+    PhaseScope phase(c_.clock, Phase::Iterate);
+    hp->drop(c_, "helper slices done");
+  }
+  // Slices no helper could take (all failed) and those handed back.
+  for (std::size_t i : queue) leader.push_back({i, false});
+  for (const auto& [i, full] : leader) solve_here(i, full);
+  event(c_, "slices_parallel", {{"slices", static_cast<std::int64_t>(slices_.size())},
+                                {"on_helpers", static_cast<std::int64_t>(handed)},
+                                {"on_leader", static_cast<std::int64_t>(leader.size())},
+                                {"helpers", static_cast<std::int64_t>(take)}, {"need_mb", need / 1e6},
+                                {"share_mb", share / 1e6}});
+}
+
+template <class T>
+SliceReply<T> WindowSolver<T>::run_remote(const SliceTask& t) {
+  band_ = t.band;
+  band_lo_ = t.band_lo;
+  band_hi_ = t.band_hi;
+  const Slice s{{t.lo_s, t.lo_nu, t.lo_off, t.lo_near}, {t.hi_s, t.hi_nu, t.hi_off, t.hi_near}, t.want, t.focus};
+  // The slice's ends are certified counts (the leader's): gap_point and the anchors use them.
+  if (std::isfinite(s.lo.s)) remember(s.lo);
+  if (std::isfinite(s.hi.s)) remember(s.hi);
+  c_max_ = std::max<index_t>(c_max_, s.count());
+  reserve_pool(s.count() + 12);
+  const std::size_t warned = c_.rep.warnings.size();
+  SliceReply<T> r;
+  r.completed = run_slice(s, t.id);
+  if (r.completed) {
+    r.report = reports_[static_cast<std::size_t>(t.id)];
+    r.lambda.assign(pool_.lambda.begin(), pool_.lambda.begin() + pool_.used);
+    r.metrics.assign(pool_.metrics.begin(), pool_.metrics.begin() + pool_.used);
+    pool_.x.resize_cols(pool_.used);
+    r.x = std::move(pool_.x);
+  }
+  r.restarts = restarts_;
+  r.applies = applies_;
+  r.block_size = c_.rep.block_size;
+  r.warnings.assign(c_.rep.warnings.begin() + static_cast<std::ptrdiff_t>(warned), c_.rep.warnings.end());
+  return r;
+}
+
+template <class T>
+Solution<T> WindowSolver<T>::solve() {
+  const SolverConfig& cfg = c_.cfg;
+  SolveReport& rep = c_.rep;
+  const Target& t = cfg.target;
+  const TargetMode mode = t.mode;
+  band_ = cfg.zero_filter_tol >= 0 ? cfg.zero_filter_tol * scale_ : -1.0;
+  band_lo_ = -band_;
+  band_hi_ = band_;
+  if (mode != TargetMode::Interval && t.k > n_)
+    HS_THROW(InvalidInput, "target.k = " << t.k << " exceeds the matrix order " << n_);
+
+  // Slice size: the cost model's optimum (or the user's), capped below by the memory budget.
+  c_target_ = cfg.slice_size > 0 ? cfg.slice_size : cost_.best_slice();
+  c_max_ = cfg.slice_size > 0 ? cfg.slice_size : c_target_ + c_target_ / 4;
+  event(c_, "slicing_model", {{"t_factor_s", cost_.t_factor}, {"t_solve_s", cost_.t_solve},
+                              {"slice_target", static_cast<std::int64_t>(c_target_)},
+                              {"slice_max", static_cast<std::int64_t>(c_max_)}});
+
+  // ---- 1. Target windows with exact counts at their ends. The zero band (|lambda| <= band) is
+  //         cut out between two counted points, so filtering and counting agree exactly.
+  std::vector<Window> windows;
+  const index_t k = t.k;
+  bool short_warned = false;  // "fewer eigenvalues than k" already explained
+  auto band_edges = [&]() {
+    const CountPoint neg = count(-band_, +1.0);  // moved into the band if singular
+    const CountPoint pos = count(band_, -1.0);
+    band_lo_ = neg.s;
+    band_hi_ = pos.s;
+    rep.zero_modes_filtered = pos.nu - neg.nu;
+    return std::make_pair(neg, pos);
+  };
+  if (mode == TargetMode::Interval) {
+    const CountPoint lo = count(t.lower, -1.0);
+    const CountPoint hi = count(t.upper, +1.0);
+    if (band_ >= 0 && lo.s < band_ && hi.s > -band_) {
+      const auto [neg, pos] = band_edges();
+      if (lo.s < neg.s) windows.push_back({lo, neg});
+      if (hi.s > pos.s) windows.push_back({pos, hi});
+      rep.zero_modes_filtered = std::min(pos.nu, hi.nu) - std::max(neg.nu, lo.nu);
+    } else {
+      windows.push_back({lo, hi});
+    }
+    rep.certificate.lower = lo.s;
+    rep.certificate.upper = hi.s;
+  } else if (mode == TargetMode::Nearest) {
+    // The k nearest sigma outside the band lie in [sigma - r, sigma + r] once that disk holds k
+    // eigenvalues outside the band: grow r from the hint until it does (two counts per radius).
+    if (!(band_ >= 0) || !(nearest_r0_ > 0)) HS_THROW(Internal, "windowed nearest needs a zero band and a radius");
+    const auto [neg, pos] = band_edges();
+    auto outside = [&](const CountPoint& lo, const CountPoint& hi) {
+      index_t tot = hi.nu - lo.nu;
+      const CountPoint& bl = lo.s > neg.s ? lo : neg;
+      const CountPoint& bh = hi.s < pos.s ? hi : pos;
+      if (bh.s > bl.s) tot -= bh.nu - bl.nu;
+      return tot;
+    };
+    double r = nearest_r0_;
+    CountPoint lo{}, hi{};
+    index_t tot = 0;
+    for (int it = 0; it < 40; ++it) {
+      lo = count(t.sigma - r, -1.0);
+      hi = count(t.sigma + r, +1.0);
+      tot = outside(lo, hi);
+      if (tot >= k || (lo.nu == 0 && hi.nu == n_)) break;
+      r *= 2.0;
+    }
+    if (lo.s < neg.s) windows.push_back({lo, hi.s < neg.s ? hi : neg});
+    if (hi.s > pos.s) windows.push_back({lo.s > pos.s ? lo : pos, hi});
+    if (windows.empty()) HS_THROW(Internal, "windowed nearest: the disk lies inside the zero band");
+    rep.zero_modes_filtered = tot >= 0 ? (hi.nu - lo.nu) - tot : 0;
+    rep.certificate.lower = lo.s;
+    rep.certificate.upper = hi.s;
+    if (tot < k) {
+      warn(c_, "only " + std::to_string(tot) + " eigenvalues lie outside the zero band (k = " + std::to_string(k) +
+                   ")");
+      short_warned = true;
+    }
+  } else {
+    // Smallest: window (-inf, U] with nu(U) >= k; largest: [L, +inf) with n - nu(L) >= k. The
+    // search stops refining once the extra pairs cost less than another count (slack). When the
+    // k-th eigenvalue belongs to a cluster that counts cannot split, the window takes the whole
+    // cluster - or, for a large cluster of numerically equal eigenvalues, a partial cluster
+    // window that asks only for the copies still needed (any of them is a valid answer).
+    const bool smallest = mode == TargetMode::Smallest;
+    const index_t slack = std::clamp<index_t>(
+        static_cast<index_t>(cost_.t_factor / std::max(cost_.marginal_pair(std::min(k, c_target_)), 1e-300)), 1,
+        std::max<index_t>(16, k));
+    CountPoint a = minus_inf(), b = plus_inf();
+    index_t need = k;
+    if (band_ >= 0) {
+      const auto [neg, pos] = band_edges();
+      if (smallest) {
+        if (neg.nu >= k) {
+          b = neg;
+        } else {  // all eigenvalues below the band, the rest from above it
+          if (neg.nu > 0) windows.push_back({minus_inf(), neg});
+          a = pos;
+          need = k - neg.nu;
+        }
+      } else {
+        const index_t above = n_ - pos.nu;
+        if (above >= k) {
+          a = pos;
+        } else {
+          if (above > 0) windows.push_back({pos, plus_inf()});
+          b = neg;
+          need = k - above;
+        }
+      }
+      if (need > b.nu - a.nu) {
+        warn(c_, "only " + std::to_string(b.nu - a.nu + k - need) + " eigenvalues lie outside the zero band");
+        short_warned = true;
+        need = b.nu - a.nu;
+      }
+    }
+    if (need > 0 && smallest) {
+      const index_t g_lo = a.nu + need;
+      const index_t g_hi = std::min(g_lo + slack, std::max(g_lo, b.nu - 1));
+      Search r = Search::at(b);
+      if (!(std::isfinite(b.s) && b.nu <= g_lo + slack))
+        r = find_count(a, b, g_lo, std::min(g_lo + slack / 2, g_hi), g_hi,
+                       std::isfinite(a.s) ? a.s : (est_.valid ? est_.lo1 : 0.0), Side::Above);
+      if (r.cluster && r.cl_hi.nu - g_lo > std::max(kPartialClusterMin, need)) {
+        const CountPoint below = gap_point(r.cl_lo, -1.0, a);
+        if (below.nu > a.nu) windows.push_back({a, below});
+        windows.push_back({below, r.p, g_lo - below.nu, 0.5 * (r.cl_lo.s + r.cl_hi.s)});
+      } else {
+        windows.push_back({a, r.p});
+      }
+    } else if (need > 0) {
+      const index_t g_hi = b.nu - need;  // nu(L) <= n - need
+      const index_t g_lo = std::max(g_hi - slack, std::min(g_hi, a.nu + 1));
+      Search r = Search::at(a);
+      if (!(std::isfinite(a.s) && a.nu >= g_hi - slack))
+        r = find_count(a, b, g_lo, std::max(g_hi - slack / 2, g_lo), g_hi,
+                       std::isfinite(b.s) ? b.s : (est_.valid ? est_.hi1 : 0.0), Side::Below);
+      if (r.cluster && g_hi - r.cl_lo.nu > std::max(kPartialClusterMin, need)) {
+        const CountPoint above = gap_point(r.cl_hi, +1.0, b);
+        if (b.nu > above.nu) windows.push_back({above, b});
+        windows.push_back({r.p, above, above.nu - g_hi, 0.5 * (r.cl_lo.s + r.cl_hi.s)});
+      } else {
+        windows.push_back({r.p, b});
+      }
+    }
+    // A window from -inf up to the band (or from the band to +inf) would put a one-sided shift
+    // next to the zero cluster; close it at a point beyond the end of the spectrum instead.
+    for (auto& w : windows) {
+      if (!std::isfinite(w.lo.s) && w.hi.s == band_lo_)
+        w.lo = find_count(minus_inf(), w.hi, 0, 0, 0, est_.valid ? est_.lo1 : w.hi.s, Side::Below).p;
+      if (!std::isfinite(w.hi.s) && w.lo.s == band_hi_)
+        w.hi = find_count(w.lo, plus_inf(), n_, n_, n_, est_.valid ? est_.hi1 : w.lo.s, Side::Above).p;
+    }
+  }
+  std::sort(windows.begin(), windows.end(), [](const Window& p, const Window& q) { return p.lo.s < q.lo.s; });
+  index_t total = 0, required = 0;
+  for (const auto& w : windows) {
+    total += w.count();
+    required += w.required();
+  }
+  event(c_, "windows",
+        {{"windows", static_cast<std::int64_t>(windows.size())}, {"count", static_cast<std::int64_t>(total)},
+         {"required", static_cast<std::int64_t>(required)}});
+
+  InertiaCertificate& cert = rep.certificate;
+  cert.performed = true;
+  if (mode == TargetMode::Smallest) {
+    cert.lower = -kInf;
+    cert.upper = windows.empty() ? -kInf : windows.back().hi.s;
+  } else if (mode == TargetMode::Largest) {
+    cert.lower = windows.empty() ? kInf : windows.front().lo.s;
+    cert.upper = kInf;
+  }
+  cert.count_inertia = required;
+  if (band_ >= 0)
+    cert.note = "zero band (" + fmt(band_lo_) + ", " + fmt(band_hi_) + ") excluded: " +
+                std::to_string(rep.zero_modes_filtered) + " eigenvalue(s) by inertia";
+  for (const auto& w : windows)
+    if (w.want >= 0) {
+      const std::string cl = "cluster [" + fmt(w.lo.s) + ", " + fmt(w.hi.s) + "] of " + std::to_string(w.count()) +
+                             " numerically equal eigenvalues: " + std::to_string(w.want) + " required";
+      cert.note = cert.note.empty() ? cl : cert.note + "; " + cl;
+    }
+  if (rep.zero_modes_filtered > 0)
+    warn(c_, std::to_string(rep.zero_modes_filtered) + " zero modes filtered (|lambda| <= zero_filter_tol*scale)");
+  if (mode != TargetMode::Interval && required < k && !short_warned)
+    warn(c_, "the target window holds only " + std::to_string(required) + " eigenvalue(s), fewer than k = " +
+                 std::to_string(k));
+
+  Solution<T> sol;
+  if (total == 0) {
+    sol.eigenvectors.resize(n_, 0);
+    cert.count_found = 0;
+    cert.passed = true;
+    if (cert.note.empty()) cert.note = "window is empty";
+    rep.success = mode == TargetMode::Interval;
+    return sol;
+  }
+
+  // ---- 2. Memory: the n x required output plus one slice's working set must fit the budget.
+  const double vec = static_cast<double>(n_) * sizeof(T);
+  // + up to 4 pairs per slice found just outside it (see step 3)
+  const double out_bytes = vec * static_cast<double>(required + 4 * (total / std::max<index_t>(c_target_, 1) + 2) + 8);
+  {
+    const double avail = budget_left(c_);
+    if (out_bytes > 0.9 * avail)
+      HS_THROW(OutOfMemoryBudget, "the target holds " << required << " eigenvalues: their eigenvectors need "
+                                                      << out_bytes / 1073741824.0 << " GiB, "
+                                                      << std::max(avail, 0.0) / 1073741824.0
+                                                      << " GiB of the memory budget remain");
+    // Working set of one slice of c pairs: Lanczos basis (~2c) + Rayleigh-Ritz blocks X, AX, BX
+    // and a product temporary (4c) vectors, plus the selected block (c).
+    const double per_pair = 7.0 * vec;
+    const auto fit = static_cast<index_t>((0.9 * avail - out_bytes) / per_pair);
+    if (fit < c_max_) {
+      c_max_ = std::max<index_t>(1, fit);
+      c_target_ = std::max<index_t>(1, std::min(c_target_, c_max_));
+      warn(c_, "slice size capped at " + std::to_string(c_max_) + " pairs by the memory budget");
+    }
+  }
+
+  // Multi-process solves (DESIGN §3.9): with two or more helpers to solve slices at once, a window
+  // of at least two minimum slices is cut into at least as many slices as there are helpers - the
+  // sequential cost model's optimum would leave helpers idle (yee-pec-box-1e5 [40, 400], 108
+  // eigenvalues: one slice). Only when the helpers will take those slices, as slice_helpers()
+  // decides it later - the cost rule, and two of them at once in what the budget leaves, predicted
+  // here: less the output pool reserved below and the helpers' copies of the problem, plus the
+  // leader's main factors -; otherwise the sequential model's slices stay, and the leader solves
+  // them as hs::solve would (no extra cut, no extra slice).
+  if (cfg.slice_size == 0) {
+    const int usable = slice_helpers_usable();
+    if (usable >= 2 && total >= 2 * kHelperMinSlice) {
+      const index_t per = std::max<index_t>(kHelperMinSlice, (total + usable - 1) / usable);
+      if (per < c_target_) {
+        const index_t per_max = std::min(c_max_, per + per / 4);
+        const double need = helper_slice_bytes(per_max);
+        const double avail =
+            0.9 * (budget_left(c_) - out_bytes + main_factor_bytes() - usable * helper_footprint_bytes(pencil_));
+        std::string why;
+        if (!helper_slices_pay(per, why)) {
+          parallel_note(why);
+        } else if (slice_helpers_fitting(avail, need, usable) == 0) {
+          parallel_note("spectrum slices on the leader, as for one process: two helpers' slices of " +
+                        std::to_string(per_max) + " pairs (" + fmt(need / 1e6) + " MB each) would exceed the " +
+                        fmt(std::max(avail, 0.0) / 1e6) + " MB the budget leaves (predicted)");
+          event(c_, "slice_size_helpers_skipped",
+                {{"helpers", static_cast<std::int64_t>(usable)}, {"target", static_cast<std::int64_t>(per)},
+                 {"need_mb", need / 1e6}, {"avail_mb", avail / 1e6}});
+        } else {
+          event(c_, "slice_size_helpers", {{"helpers", static_cast<std::int64_t>(usable)},
+                                           {"model_target", static_cast<std::int64_t>(c_target_)},
+                                           {"target", static_cast<std::int64_t>(per)}});
+          c_target_ = per;
+          c_max_ = per_max;
+        }
+      }
+    }
+  }
+
+  // ---- 3. Slices, runs, merge. The pool holds the output plus the few pairs per slice found just
+  //         outside it (resolved by deduplicate()), reserved once: growing it would copy it.
+  for (const auto& w : windows) {
+    const auto s = plan(w);
+    slices_.insert(slices_.end(), s.begin(), s.end());
+  }
+  reserve_pool(required + 4 * static_cast<index_t>(slices_.size()) + 8);
+  event(c_, "slices", {{"slices", static_cast<std::int64_t>(slices_.size())}});
+  counts_.arm_late_faults();
+  // From here on a count that no source can make (CountFailure: the gap point of a one-sided
+  // anchor, the verification of a partial cluster) ends only the slice that needs it: the other
+  // slices are solved, the report says which were not completed (DESIGN §3.6-8).
+  std::string not_completed, count_failure;
+  // One slice on the leader. full: the slice is a partial cluster that a run (here or on a helper)
+  // found not numerically equal - solve all of its eigenvalues.
+  auto solve_here = [&](std::size_t i, bool full) {
+    try {
+      if (!full && run_slice(slices_[i], static_cast<index_t>(i))) return;
+      // A partial cluster that is not numerically equal: all of its eigenvalues are needed - one
+      // slice (counts cannot split it), whose output and working set must fit the budget.
+      Slice& s = slices_[i];
+      const double need_bytes = 8.0 * static_cast<double>(n_) * sizeof(T) * static_cast<double>(s.count());
+      const double avail = budget_left(c_);
+      if (need_bytes > 0.9 * avail)
+        HS_THROW(OutOfMemoryBudget, "the target ends inside a cluster of "
+                                        << s.count() << " eigenvalues in [" << s.lo.s << ", " << s.hi.s
+                                        << "] that are not numerically equal: " << need_bytes / 1073741824.0
+                                        << " GiB needed (zero_filter_tol?)");
+      warn(c_, "cluster [" + fmt(s.lo.s) + ", " + fmt(s.hi.s) + "] is not numerically multiple: all " +
+                   std::to_string(s.count()) + " of its eigenvalues computed");
+      for (auto& w : windows)
+        if (w.lo.s == s.lo.s && w.hi.s == s.hi.s) w.want = -1;
+      required += s.count() - s.want;
+      cert.count_inertia = required;
+      s.want = -1;
+      run_slice(s, static_cast<index_t>(i));
+    } catch (const CountFailure& e) {
+      const Slice& s = slices_[i];
+      if (static_cast<index_t>(reports_.size()) <= static_cast<index_t>(i)) reports_.resize(i + 1);
+      SliceReport& sr = reports_[i];
+      sr.lower = s.lo.s;
+      sr.upper = s.hi.s;
+      sr.count_inertia = s.count();
+      sr.count_found = 0;
+      sr.passed = false;
+      const std::string range = "[" + fmt(s.lo.s) + ", " + fmt(s.hi.s) + "]";
+      not_completed += (not_completed.empty() ? "" : ", ") + range;
+      count_failure = e.what();
+      event(c_, "slice_not_completed", {{"slice", static_cast<std::int64_t>(i)}, {"lower", s.lo.s}, {"upper", s.hi.s},
+                                        {"required", static_cast<std::int64_t>(s.required())},
+                                        {"code", std::string(to_string(e.code()))}, {"reason", count_failure}});
+      warn(c_, "slice " + range + " not completed: no inertia count possible (" + count_failure + "); its " +
+                   std::to_string(s.required()) + " eigenvalue(s) are not returned");
+    }
+  };
+  solve_slices(solve_here);
+  const index_t removed = deduplicate();
+  if (removed > 0) event(c_, "deduplicate", {{"removed", static_cast<std::int64_t>(removed)}});
+  rep.slices = reports_;
+
+  // ---- 4. Global certificate: distinct pairs per window vs its inertia count (partial cluster:
+  //         at least the copies required, of which exactly that many are kept).
+  auto window_of = [&](double l) -> index_t {
+    if (in_band(l)) return -1;
+    for (std::size_t w = 0; w < windows.size(); ++w)
+      if (l >= windows[w].lo.s && l <= windows[w].hi.s) return static_cast<index_t>(w);
+    return -1;
+  };
+  std::vector<index_t> in, found(windows.size(), 0);
+  for (index_t j = 0; j < pool_.used; ++j) {
+    const index_t w = window_of(pool_.lambda[j]);
+    if (w < 0) continue;
+    const Window& win = windows[static_cast<std::size_t>(w)];
+    if (win.want >= 0 && found[static_cast<std::size_t>(w)] >= win.want) continue;
+    ++found[static_cast<std::size_t>(w)];
+    in.push_back(j);
+  }
+  cert.count_found = static_cast<index_t>(in.size());
+  cert.passed = true;
+  for (std::size_t w = 0; w < windows.size(); ++w) cert.passed = cert.passed && found[w] == windows[w].required();
+  event(c_, "certificate", {{"lower", cert.lower}, {"upper", cert.upper},
+                            {"count_inertia", static_cast<std::int64_t>(cert.count_inertia)},
+                            {"count_found", static_cast<std::int64_t>(cert.count_found)}, {"passed", cert.passed}});
+  const bool completed = cert.passed || not_completed.empty();
+  if (!completed)
+    warn(c_, "certificate not completed: no inertia count possible for the slice(s) " + not_completed + "; the " +
+                 std::to_string(cert.count_found) + " pair(s) of the completed slices are returned");
+  else if (!cert.passed)
+    warn(c_, "certificate failed: inertia " + std::to_string(cert.count_inertia) + " vs found " +
+                 std::to_string(cert.count_found) + " over " + std::to_string(slices_.size()) + " slice(s)");
+  if (slices_.size() > 1) {
+    const std::string sl = std::to_string(slices_.size()) + " slices";
+    cert.note = cert.note.empty() ? sl : sl + "; " + cert.note;
+  }
+  if (!completed) {
+    // As the nearest target's uncompleted certificate (FORMATS §3): the note leads with "not
+    // completed"; the method and statement are set here (solve_definite's finish() keeps them).
+    cert.method = certificate_method_name(CertificateMethod::Exact);
+    cert.rigorous = false;
+    cert.failure_probability = 1.0;
+    cert.note = "not completed: no inertia count possible for the slice(s) " + not_completed +
+                (cert.note.empty() ? std::string() : "; " + cert.note);
+    cert.statement = "double-precision Sylvester counts at every window end and slice cut: " +
+                     std::to_string(cert.count_inertia) + " eigenvalue(s) required, " +
+                     std::to_string(cert.count_found) +
+                     " distinct found pair(s); NOT completed: the slice(s) " + not_completed +
+                     " could not be solved - a count they needed was not possible (" + count_failure +
+                     ") - and their eigenvalues are not returned; the pairs returned are those of the completed "
+                     "slices, each checked against the counts at its ends (report.slices)";
+  }
+
+  // ---- 5. Output: target order and selection, applied to the pool in place.
+  std::stable_sort(in.begin(), in.end(), [&](index_t p, index_t q) { return pool_.lambda[p] < pool_.lambda[q]; });
+  if (mode == TargetMode::Largest) std::reverse(in.begin(), in.end());
+  if (mode == TargetMode::Nearest)
+    std::stable_sort(in.begin(), in.end(), [&](index_t p, index_t q) {
+      return std::abs(pool_.lambda[p] - t.sigma) < std::abs(pool_.lambda[q] - t.sigma);
+    });
+  if (mode != TargetMode::Interval && static_cast<index_t>(in.size()) > k) in.resize(static_cast<std::size_t>(k));
+  std::vector<index_t> perm = in;
+  {
+    std::vector<char> taken(static_cast<std::size_t>(pool_.used), 0);
+    for (index_t j : in) taken[j] = 1;
+    for (index_t j = 0; j < pool_.used; ++j)
+      if (!taken[j]) perm.push_back(j);
+  }
+  pool_.x.resize_cols(pool_.used);
+  permute_columns(pool_.x, perm);
+  pool_.x.resize_cols(static_cast<index_t>(in.size()));
+  sol.eigenvectors = std::move(pool_.x);
+  std::vector<PairMetrics> metrics;
+  for (index_t j : in) {
+    sol.eigenvalues.push_back(pool_.lambda[j]);
+    metrics.push_back(pool_.metrics[j]);
+  }
+  const index_t expected = mode == TargetMode::Interval ? total : std::min(k, required);
+  const index_t want_out = mode == TargetMode::Interval ? total : k;
+  bool all_ok = static_cast<index_t>(sol.eigenvalues.size()) == want_out;
+  if (static_cast<index_t>(sol.eigenvalues.size()) != expected)
+    warn(c_, "only " + std::to_string(sol.eigenvalues.size()) + " of " + std::to_string(expected) + " pairs found");
+  add_pair_reports<T>(rep, sol.eigenvalues, metrics, cfg.tol, all_ok);
+  rep.success = all_ok && cert.passed;
+  rep.restarts = restarts_;
+  rep.op_applies = applies_;
+  if (!rep.slices.empty()) rep.sigma_used = rep.slices.front().sigma;
+  return sol;
+}
+
+}  // namespace
+
+template <class T>
+Solution<T> solve_definite(Ctx& c, const ShiftedPencil<T>& pencil, SparseFactorization<T>& fac, double n2a,
+                           double n2b, double scale, double sigma0, const SpectrumEstimate& spectrum) {
+  c.rep.sigma_requested = sigma0;
+  // Work not inside a Factor / Iterate scope (refinement, residuals, rescue, certificate
+  // bookkeeping) is verification.
+  PhaseScope phase(c.clock, Phase::Verify);
+  // Report: the checks' wall time (all rounds; the Certificate phase of this path), and the
+  // exact counts of window targets, which set no method of their own.
+  const auto finish = [&](Solution<T>&& sol) {
+    InertiaCertificate& cert = c.rep.certificate;
+    cert.seconds = c.clock.seconds(Phase::Certificate);
+    if (cert.performed && cert.method == "none") {
+      cert.method = certificate_method_name(CertificateMethod::Exact);
+      cert.rigorous = cert.passed;
+      cert.failure_probability = cert.passed ? 0.0 : 1.0;
+      cert.statement = "double-precision Sylvester counts at every window end and slice cut: " +
+                       std::to_string(cert.count_inertia) + " eigenvalue(s) required, " +
+                       std::to_string(cert.count_found) + " distinct found pair(s)" +
+                       (cert.passed ? std::string(": every required eigenvalue is found") : std::string());
+    }
+    return std::move(sol);
+  };
+  if (c.cfg.target.mode == TargetMode::Nearest) {
+    double r0 = -1.0;
+    Solution<T> sol = solve_nearest(c, pencil, fac, n2a, n2b, scale, &r0);
+    if (!(r0 > 0)) return finish(std::move(sol));
+    // The zero band interferes: k nearest outside it from windows [sigma - r, sigma + r] minus the
+    // band (slices with shifts kept away from the band), r from inertia counts.
+    warn(c, "zero band |lambda| <= " + fmt(c.cfg.zero_filter_tol * scale) +
+                " reaches the nearest window: windowed solve with radius from inertia counts");
+    if (c.cfg.certificate == CertificateMode::Randomized)
+      warn(c, "certificate=randomized not used: the windowed solve counts exactly (its count points are shifts)");
+    const index_t restarts = c.rep.restarts, applies = c.rep.op_applies;
+    const index_t solves = c.rep.certificate.solves;
+    c.rep.pairs.clear();
+    c.rep.certificate = InertiaCertificate{};
+    c.rep.certificate.solves = solves;
+    c.rep.zero_modes_filtered = 0;
+    WindowSolver<T> ws(c, pencil, fac, n2a, n2b, scale, spectrum);
+    ws.set_nearest_radius(r0);
+    sol = ws.solve();
+    c.rep.restarts += restarts;
+    c.rep.op_applies += applies;
+    return finish(std::move(sol));
+  }
+  if (c.cfg.inertia_check == Toggle::Off)
+    warn(c, "inertia_check=off ignored: interval / smallest / largest targets are built on inertia counts");
+  else if (c.cfg.certificate == CertificateMode::Off)
+    warn(c, "certificate=off ignored: interval / smallest / largest targets are built on inertia counts");
+  else if (c.cfg.certificate == CertificateMode::Randomized)
+    warn(c, "certificate=randomized applies to nearest targets: interval / smallest / largest targets count "
+            "exactly (their count points are slice cuts and shifts)");
+  WindowSolver<T> ws(c, pencil, fac, n2a, n2b, scale, spectrum);
+  return finish(ws.solve());
+}
+
+// A helper process's slice (DESIGN §3.9): the leader's planned slice solved by the same run_slice,
+// on the helper's main object (analysed on the leader's pivot order) and its own counts (gap points
+// of one-sided anchors, partial-cluster checks). Phases as on the leader; its time is the helper's.
+template <class T>
+SliceReply<T> slice_on_helper(Ctx& c, const ShiftedPencil<T>& pencil, SparseFactorization<T>& fac,
+                              const ProblemInfo& info, const SliceTask& t) {
+  Timer timer;
+  if (fault(c.cfg, kFaultHelperTasks)) throw_injected_fault(c.cfg, kFaultHelperTasks, "slice on a helper process");
+  if (t.cap_mb > 0) fac.set_max_memory_mb(t.cap_mb);
+  const SpectrumEstimate est{info.lo1, info.lo2, info.hi1, info.hi2, info.spectrum_valid};
+  PhaseScope phase(c.clock, Phase::Verify);
+  WindowSolver<T> ws(c, pencil, fac, info.n2a, info.n2b, info.scale, est);
+  SliceReply<T> r = ws.run_remote(t);
+  r.seconds = timer.seconds();
+  r.rss_bytes = static_cast<double>(current_rss_bytes());
+  return r;
+}
+
+#define HS_INSTANTIATE_SOLVE_DEFINITE(T)                                                                  \
+  template Solution<T> solve_definite<T>(Ctx&, const ShiftedPencil<T>&, SparseFactorization<T>&, double, \
+                                         double, double, double, const SpectrumEstimate&);               \
+  template SliceReply<T> slice_on_helper<T>(Ctx&, const ShiftedPencil<T>&, SparseFactorization<T>&,      \
+                                            const ProblemInfo&, const SliceTask&);
+HS_FOR_EACH_SCALAR(HS_INSTANTIATE_SOLVE_DEFINITE)
+#undef HS_INSTANTIATE_SOLVE_DEFINITE
+
+}  // namespace hs::driver

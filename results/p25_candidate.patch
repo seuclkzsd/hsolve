@@ -1,0 +1,839 @@
+--- a/src/driver/definite.cpp
++++ b/src/driver/definite.cpp
+@@ -34,6 +34,8 @@
+ // count failed (an anchor's gap point, a partial cluster's verification): the other slices' pairs
+ // are returned with the certificate "not completed".
+ #include <algorithm>
++#include <cstdlib>
++#include "structured.hpp"
+ #include <cmath>
+ #include <deque>
+ #include <limits>
+@@ -386,48 +388,75 @@
+   const index_t k = t.k;
+   if (k > n) HS_THROW(InvalidInput, "target.k = " << k << " exceeds the matrix order " << n);
+ 
+-  // Factorization at the shift (near-singular handling in factorize_near). Its time and the solve
+-  // calls of the Krylov run are measured for the auto choice of the completeness check.
+   bool detection_off = false;
+   CertificateTimings timings;
+-  const FactorStats before_factor = fac.stats();
+-  const double sigma = factorize_near(c, fac, t.sigma, scale, detection_off);
+-  rep.sigma_used = sigma;
+-  const FactorStats& fs = fac.stats();
+-  if (fs.factorizations > before_factor.factorizations)
+-    timings.factorize_s = (fs.factorize_s - before_factor.factorize_s) /
+-                          static_cast<double>(fs.factorizations - before_factor.factorizations);
+-  event(c, "factorization", {{"sigma", sigma}, {"factor_s", fs.factorize_s}, {"entries", static_cast<std::int64_t>(fs.factor_entries)},
+-                             {"mb", fs.factor_mb_used}, {"mb_allocated", fs.factor_mb_allocated},
+-                             {"delayed_pivots", static_cast<std::int64_t>(fs.delayed_pivots)}});
+-
+-  // Converge exactly the k wanted pairs (most wanted by |theta| = nearest to sigma). Asking for
+-  // extra pairs only costs iterations: completeness is the certificate's job, not a safety margin.
++  double sigma = t.sigma;
+   const index_t nev = std::min<index_t>(n, k);
+-  // Block width: the blocktune rule on the run's shape, with the entries of the factorization the
+-  // run's solves use (block_size_for; reserved up to its widest width before the analysis).
+-  eigen_detail::ShiftInvertShape shape;
+-  shape.n = n;
+-  shape.nev = nev;
+-  shape.factor_entries = static_cast<double>(fs.factor_entries);
+-  shape.nnz_b = pencil.b() ? static_cast<double>(pencil.b()->nnz()) : 0.0;
+-  shape.complex_scalars = is_complex_v<T>;
+-  // Candidate block X, AX, BX (3 nev) and the returned vectors (nev) next to the basis. The memory
+-  // plan reserved the P4 width: an auto width beyond it is halved back to it without a warning.
+-  const index_t p_rule = block_size_for(c.cfg, shape);
+-  const index_t p = fit_block_size<T>(c, n, nev, 0, 4 * nev, p_rule,
+-                                      c.cfg.block_size > 0 ? p_rule : std::min(p_rule, reserved_block_size(c.cfg)));
+-  rep.block_size = p;
++  index_t p = 1;
+   DefiniteRun<T> run;
+-  const FactorStats before_run = fac.stats();
+-  lanczos_run(c, fac, pencil, sigma, Which::LargestMagnitude, nev, p, static_cast<const DenseMatrix<T>*>(nullptr),
+-              run, 0, true);
+-  if (fac.stats().solves > before_run.solves) {
+-    const auto calls = static_cast<double>(fac.stats().solves - before_run.solves);
+-    timings.solve_call_s = (fac.stats().solve_s - before_run.solve_s) / calls;
+-    timings.rhs_per_call = static_cast<double>(fac.stats().rhs_solved - before_run.rhs_solved) / calls;
+-  }
+-  if (!run.converged) warn(c, "Krylov-Schur did not converge all requested pairs within max_restarts");
++  bool structured = false;
++  const char* enabled = std::getenv("P25_STRUCTURE");
++  if (enabled && std::string(enabled) == "1" && cfg.certificate == CertificateMode::Exact && cfg.inertia_check != Toggle::Off) {
++    std::string why;
++    PhaseScope phase(c.clock, Phase::Iterate);
++    structured = p25::candidates(pencil.a(), pencil.b(), t.sigma, k, run.all.x, run.all.lambda, run.ritz_hints, why);
++    if (structured) {
++      recompute_products(pencil.a(), pencil.b(), run.all);
++      const index_t rank = driver::rayleigh_ritz_definite(run.all.x, run.all.ax, run.all.bx, run.all.lambda, kDependentGram);
++      structured = rank == k;
++      for (const auto& metric : block_metrics(run.all, n2a, n2b))
++        structured = structured && std::isfinite(metric.backward_error) && metric.backward_error <= 0.5 * cfg.tol;
++      if (!structured) why += "; original residual or rank rejected";
++    }
++    event(c, "structured_candidate", {{"accepted", structured}, {"reason", why},
++      {"columns", static_cast<std::int64_t>(run.all.size())}});
++    if (!structured) run = DefiniteRun<T>{};
++    else run.converged = true;
++  }
++  if (!structured) {
++    // Factorization at the shift (near-singular handling in factorize_near). Its time and the solve
++    // calls of the Krylov run are measured for the auto choice of the completeness check.
++    const FactorStats before_factor = fac.stats();
++    sigma = factorize_near(c, fac, t.sigma, scale, detection_off);
++    rep.sigma_used = sigma;
++    const FactorStats& fs = fac.stats();
++    if (fs.factorizations > before_factor.factorizations)
++      timings.factorize_s = (fs.factorize_s - before_factor.factorize_s) /
++                            static_cast<double>(fs.factorizations - before_factor.factorizations);
++    event(c, "factorization", {{"sigma", sigma}, {"factor_s", fs.factorize_s}, {"entries", static_cast<std::int64_t>(fs.factor_entries)},
++                               {"mb", fs.factor_mb_used}, {"mb_allocated", fs.factor_mb_allocated},
++                               {"delayed_pivots", static_cast<std::int64_t>(fs.delayed_pivots)}});
++
++    // Converge exactly the k wanted pairs (most wanted by |theta| = nearest to sigma). Asking for
++    // extra pairs only costs iterations: completeness is the certificate's job, not a safety margin.
++    // Block width: the blocktune rule on the run's shape, with the entries of the factorization the
++    // run's solves use (block_size_for; reserved up to its widest width before the analysis).
++    eigen_detail::ShiftInvertShape shape;
++    shape.n = n;
++    shape.nev = nev;
++    shape.factor_entries = static_cast<double>(fs.factor_entries);
++    shape.nnz_b = pencil.b() ? static_cast<double>(pencil.b()->nnz()) : 0.0;
++    shape.complex_scalars = is_complex_v<T>;
++    // Candidate block X, AX, BX (3 nev) and the returned vectors (nev) next to the basis. The memory
++    // plan reserved the P4 width: an auto width beyond it is halved back to it without a warning.
++    const index_t p_rule = block_size_for(c.cfg, shape);
++    p = fit_block_size<T>(c, n, nev, 0, 4 * nev, p_rule,
++                                        c.cfg.block_size > 0 ? p_rule : std::min(p_rule, reserved_block_size(c.cfg)));
++    rep.block_size = p;
++    const FactorStats before_run = fac.stats();
++    lanczos_run(c, fac, pencil, sigma, Which::LargestMagnitude, nev, p, static_cast<const DenseMatrix<T>*>(nullptr),
++                run, 0, true);
++    if (fac.stats().solves > before_run.solves) {
++      const auto calls = static_cast<double>(fac.stats().solves - before_run.solves);
++      timings.solve_call_s = (fac.stats().solve_s - before_run.solve_s) / calls;
++      timings.rhs_per_call = static_cast<double>(fac.stats().rhs_solved - before_run.rhs_solved) / calls;
++    }
++    if (!run.converged) warn(c, "Krylov-Schur did not converge all requested pairs within max_restarts");
++
++  } else {
++    rep.sigma_used = sigma;
++    rep.block_size = 0;
++  }
+ 
+   const double zero_tol = cfg.zero_filter_tol >= 0 ? cfg.zero_filter_tol * scale : -1.0;
+   Block<T> sel;
+--- /dev/null
++++ b/experiments/p25/structured.hpp
+@@ -0,0 +1,215 @@
++// P25 private prototype. Matrix-only separable Cartesian curl-curl candidates.
++// This is not a completeness certificate: the driver retains actual AX/BX, rank-revealing
++// Rayleigh-Ritz, original backward-error acceptance and double Sylvester counts.
++#pragma once
++#include <algorithm>
++#include <array>
++#include <cmath>
++#include <cstdint>
++#include <limits>
++#include <string>
++#include <type_traits>
++#include <utility>
++#include <vector>
++#include "hsolve/dense.hpp"
++#include "hsolve/sparse.hpp"
++
++namespace hs::p25 {
++struct Model {
++  std::array<index_t, 3> cells{}, lengths{}, offsets{};
++  std::array<double, 3> mass{}, alpha{};
++  std::array<std::array<index_t, 3>, 3> shape{};
++  index_t index(int d, const std::array<index_t, 3>& p) const {
++    return offsets[d] + (p[0] * shape[d][1] + p[1]) * shape[d][2] + p[2];
++  }
++};
++
++inline bool recognize(const CsrMatrix<double>& a, const CsrMatrix<double>* b, Model& m, std::string& why) {
++  why = "first row";
++  const index_t n = a.nrows;
++  if (n < 36 || a.rowptr[1] != 7 || a.colind[0] != 0 || a.colind[1] != 1) return false;
++  const index_t c = a.colind[2], lx = a.colind[3], ly = a.colind[5] - lx, lz = n - lx - ly;
++  if (c < 2 || std::min({lx, ly, lz}) < 1 || (lx - ly) % c || lz % (c + 1)) return false;
++  const index_t delta = (lx - ly) / c, prod = lz / (c + 1);
++  const index_t disc = delta * delta + 4 * prod;
++  const index_t q = static_cast<index_t>(std::sqrt(static_cast<long double>(disc)));
++  const index_t nx = (q - delta) / 2 + 1, ny = nx + delta, nz = c + 1;
++  why = "dimensions";
++  if (q * q != disc || std::min({nx, ny, nz}) < 3) return false;
++  auto product = [&](index_t x, index_t y, index_t z) {
++    if (x > n / y || x * y > n / z) return index_t{0};
++    return x * y * z;
++  };
++  if (product(nx, ny - 1, nz - 1) != lx || product(nx - 1, ny, nz - 1) != ly ||
++      product(nx - 1, ny - 1, nz) != lz) return false;
++  m.cells = {nx, ny, nz}; m.lengths = {lx, ly, lz}; m.offsets = {0, lx, lx + ly};
++  for (int d = 0; d < 3; ++d)
++    for (int j = 0; j < 3; ++j) m.shape[d][j] = m.cells[j] - (j == d ? 0 : 1);
++  why = "diagonal block-constant mass";
++  if (b && (b->nrows != n || b->nnz() != n)) return false;
++  for (int d = 0; d < 3; ++d) {
++    m.mass[d] = b ? b->values[m.offsets[d]] : 1.0;
++    if (!std::isfinite(m.mass[d]) || m.mass[d] <= 0) return false;
++    if (b) {
++      for (index_t i = m.offsets[d]; i < m.offsets[d] + m.lengths[d]; ++i)
++        if (b->rowptr[i] != i || b->rowptr[i + 1] != i + 1 || b->colind[i] != i || b->values[i] != m.mass[d])
++          return false;
++    }
++  }
++  auto at = [&](index_t row, index_t col) {
++    auto begin = a.colind.begin() + a.rowptr[row], end = a.colind.begin() + a.rowptr[row + 1];
++    auto it = std::lower_bound(begin, end, col);
++    return it == end || *it != col ? 0.0 : a.values[it - a.colind.begin()];
++  };
++  m.alpha = {-at(lx, lx + ny * c) / m.mass[1], -at(0, c) / m.mass[0], -at(0, 1) / m.mass[0]};
++  why = "positive finite coefficients";
++  for (double alpha : m.alpha) if (!std::isfinite(alpha) || alpha <= 0) return false;
++  std::array<std::array<double, 3>, 3> cross{};
++  std::array<double, 3> diagonal{};
++  double largest = 0;
++  for (int d = 0; d < 3; ++d) {
++    for (int e = 0; e < 3; ++e) {
++      if (e == d) continue;
++      diagonal[d] += 2 * m.alpha[e] * m.mass[d];
++      cross[d][e] = static_cast<double>(-std::sqrt(static_cast<long double>(m.alpha[d]) * m.alpha[e] * m.mass[d] * m.mass[e]));
++      if (!std::isfinite(cross[d][e])) return false;
++      largest = std::max(largest, std::abs(cross[d][e]));
++    }
++    if (!std::isfinite(diagonal[d])) return false;
++    largest = std::max(largest, diagonal[d]);
++  }
++  const double threshold = 128 * std::numeric_limits<double>::epsilon() * largest;
++  bool match = true;
++#pragma omp parallel for reduction(&& : match) schedule(static)
++  for (index_t row = 0; row < n; ++row) {
++    const int d = row < lx ? 0 : row < lx + ly ? 1 : 2;
++    const index_t local = row - m.offsets[d];
++    const std::array<index_t, 3> pos{local / (m.shape[d][1] * m.shape[d][2]),
++                                    local / m.shape[d][2] % m.shape[d][1], local % m.shape[d][2]};
++    std::array<std::pair<index_t, double>, 13> expected{};
++    int count = 0;
++    expected[count++] = {row, diagonal[d]};
++    for (int e = 0; e < 3; ++e) {
++      if (d == e) continue;
++      for (int sign : {-1, 1}) {
++        auto p = pos; p[e] += sign;
++        if (p[e] >= 0 && p[e] < m.shape[d][e])
++          expected[count++] = {m.index(d, p), -m.alpha[e] * m.mass[d]};
++      }
++      // D_d maps nodes -> cells: row i has +node_i and -node_(i-1).
++      // D_e^T maps cells -> nodes: row j has +cell_j and -cell_(j+1).
++      for (int u : {0, 1}) for (int v : {0, 1}) {
++        auto p = pos; p[d] -= u; p[e] += v;
++        if (p[d] >= 0 && p[d] < m.shape[e][d])
++          expected[count++] = {m.index(e, p), cross[d][e] * (u == v ? 1 : -1)};
++      }
++    }
++    std::sort(expected.begin(), expected.begin() + count);
++    if (a.rowptr[row + 1] - a.rowptr[row] != count) { match = false; continue; }
++    for (int j = 0; j < count; ++j) {
++      const index_t at = a.rowptr[row] + j;
++      match = match && a.colind[at] == expected[j].first && std::isfinite(a.values[at]) &&
++              std::abs(a.values[at] - expected[j].second) <= threshold;
++    }
++  }
++  why = match ? "matrix stencil verified" : "full stencil mismatch";
++  return match;
++}
++
++struct Mode { std::array<index_t, 3> m{}; double lambda = 0; int multiplicity = 0; };
++inline std::array<double, 3> cross_product(const std::array<double, 3>& a, const std::array<double, 3>& b) {
++  return {a[1]*b[2]-a[2]*b[1], a[2]*b[0]-a[0]*b[2], a[0]*b[1]-a[1]*b[0]};
++}
++inline void normalize(std::array<double, 3>& v) {
++  const double norm = std::hypot(v[0], v[1], v[2]);
++  for (auto& x : v) x /= norm;
++}
++
++template<class T>
++bool candidates(const CsrMatrix<T>& a, const CsrMatrix<T>* b, double sigma, index_t k,
++                DenseMatrix<T>& x, std::vector<double>& lambda, std::vector<double>& hints, std::string& why) {
++  if constexpr (!std::is_same_v<T, double>) {
++    why = "real scalar required"; return false;
++  } else {
++    Model model;
++    if (!recognize(a, b, model, why)) return false;
++    const double pi = std::acos(-1.0);
++    std::array<std::vector<double>, 3> s;
++    for (int d = 0; d < 3; ++d) {
++      s[d].resize(model.cells[d]);
++      for (index_t j = 0; j < model.cells[d]; ++j)
++        s[d][j] = 2 * std::sqrt(model.alpha[d]) * std::sin(j * pi / (2 * model.cells[d]));
++    }
++    std::vector<Mode> modes;
++    modes.reserve(a.nrows / 2);
++    for (index_t i = 0; i < model.cells[0]; ++i)
++      for (index_t j = 0; j < model.cells[1]; ++j)
++        for (index_t l = 0; l < model.cells[2]; ++l) {
++          const int active = (i != 0) + (j != 0) + (l != 0);
++          if (active < 2) continue;
++          const double value = s[0][i]*s[0][i] + s[1][j]*s[1][j] + s[2][l]*s[2][l];
++          if (!std::isfinite(value)) { why = "nonfinite modal value"; return false; }
++          modes.push_back({{i,j,l}, value, active == 3 ? 2 : 1});
++        }
++    std::sort(modes.begin(), modes.end(), [&](const Mode& a, const Mode& b) {
++      const double da = std::abs(a.lambda - sigma), db = std::abs(b.lambda - sigma);
++      return da != db ? da < db : a.m < b.m;
++    });
++    index_t count = 0;
++    std::size_t take = 0;
++    while (take < modes.size() && count < k) count += modes[take++].multiplicity;
++    why = "target touches null space or incomplete multiplet";
++    if (count != k || take == 0) return false;
++    const double radius = std::abs(modes[take - 1].lambda - sigma);
++    const double gap = 512 * std::numeric_limits<double>::epsilon() *
++                       std::max(model.alpha[0] + model.alpha[1] + model.alpha[2], std::abs(sigma));
++    if (std::abs(sigma) <= radius + gap ||
++        (take < modes.size() && std::abs(modes[take].lambda - sigma) <= radius + gap)) return false;
++    struct Column { Mode mode; std::array<double,3> polarization; };
++    std::vector<Column> columns;
++    for (std::size_t j = 0; j < take; ++j) {
++      const Mode& mode = modes[j];
++      std::array<double, 3> v{}, w{s[0][mode.m[0]], s[1][mode.m[1]], s[2][mode.m[2]]};
++      if (mode.multiplicity == 1) {
++        for (int d = 0; d < 3; ++d) if (mode.m[d] == 0) v[d] = 1;
++        columns.push_back({mode, v});
++      } else {
++        int axis = 0;
++        for (int d = 1; d < 3; ++d) if (std::abs(w[d]) < std::abs(w[axis])) axis = d;
++        v[axis] = 1;
++        v = cross_product(w, v); normalize(v); columns.push_back({mode, v});
++        v = cross_product(w, v); normalize(v); columns.push_back({mode, v});
++      }
++    }
++    x = DenseMatrix<T>(a.nrows, k);
++    lambda.resize(k);
++#pragma omp parallel for schedule(static)
++    for (index_t j = 0; j < k; ++j) {
++      const auto& col = columns[j];
++      lambda[j] = col.mode.lambda;
++      for (int orientation = 0; orientation < 3; ++orientation) {
++        std::array<std::vector<double>, 3> basis;
++        for (int d = 0; d < 3; ++d) {
++          const index_t n = model.cells[d], mode = col.mode.m[d], length = model.shape[orientation][d];
++          basis[d].resize(length);
++          for (index_t i = 0; i < length; ++i) {
++            if (d == orientation)
++              basis[d][i] = mode == 0 ? 1 / std::sqrt(static_cast<double>(n)) :
++                             std::sqrt(2.0 / n) * std::cos(mode * pi * (i + .5) / n);
++            else basis[d][i] = std::sqrt(2.0 / n) * std::sin(mode * pi * (i + 1) / n);
++          }
++        }
++        const double weight = col.polarization[orientation] / std::sqrt(model.mass[orientation]);
++        index_t row = model.offsets[orientation];
++        for (double u : basis[0]) for (double v : basis[1]) for (double w : basis[2])
++          x(row++, j) = weight * u * v * w;
++      }
++    }
++    hints.clear(); hints.reserve(modes.size() + 1); hints.push_back(0);
++    for (const auto& mode : modes) hints.push_back(mode.lambda);
++    why = "verified matrix stencil " + std::to_string(model.cells[0]) + "x" +
++          std::to_string(model.cells[1]) + "x" + std::to_string(model.cells[2]);
++    return true;
++  }
++}
++}  // namespace hs::p25
+--- /dev/null
++++ b/experiments/p25/build.py
+@@ -0,0 +1,51 @@
++#!/usr/bin/env python3
++"""Isolated P25 structured candidate link: never changes production source, objects, archives or apps."""
++import hashlib
++import json
++import os
++from pathlib import Path
++import shlex
++import shutil
++import subprocess
++
++repo=Path('/tmp/os2026-p10-repair.9doyhO')
++b=repo/'build/release'
++r=Path('/tmp/os2026-p25')
++(r/'true').mkdir(exist_ok=True)
++tracked=[repo/'src/driver/definite.cpp',b/'CMakeFiles/hsolve.dir/src/driver/definite.cpp.o',b/'libhsolve.a',b/'hsolve',b/'hsolve-mpi']
++def digest(p):return hashlib.sha256(p.read_bytes()).hexdigest()
++before={str(p):digest(p) for p in tracked}
++commands=[]
++def command(target):
++    s=subprocess.run(['ninja','-C',str(b),'-t','commands',target],capture_output=True,text=True,check=True).stdout.splitlines()[-1]
++    a=shlex.split(s)
++    if a[:2]==[':','&&']:
++        assert a[-2:]==['&&',':']
++        a=a[2:-2]
++    assert not any(x in ['&&','||',';'] for x in a),a
++    return a
++def run(a):
++    commands.append(a)
++    (r/'build-true-commands.json').write_text(json.dumps(commands,indent=2)+'\n')
++    subprocess.run(a,cwd=b,check=True)
++a=command('CMakeFiles/hsolve.dir/src/driver/definite.cpp.o')
++for opt,value in [('-o',r/'true/definite.cpp.o'),('-MF',r/'true/definite.cpp.o.d'),('-MT',r/'true/definite.cpp.o'),('-c',r/'definite-structured.cpp')]:
++    assert opt in a
++    a[a.index(opt)+1]=str(value)
++run(a)
++shutil.copy2(b/'libhsolve.a',r/'libhsolve-structured.a')
++run(shlex.split(os.environ.get('AR','ar'))+['r',str(r/'libhsolve-structured.a'),str(r/'true/definite.cpp.o')])
++for name in ['hsolve','hsolve-mpi']:
++    a=command(name)
++    assert a.count('libhsolve.a')==1
++    a[a.index('libhsolve.a')]=str(r/'libhsolve-structured.a')
++    a[a.index('-o')+1]=str(r/(name+'-structured'))
++    for i,x in enumerate(a):
++        if x.startswith('-Wl,--dependency-file='):
++            a[i]='-Wl,--dependency-file='+str(r/(name+'-link.d'))
++    run(a)
++after={str(p):digest(p) for p in tracked}
++assert before==after,'production files changed unexpectedly'
++(r/'build-true-hashes.json').write_text(json.dumps({'production_before':before,'production_after':after,
++    'experimental':{p.name:digest(p) for p in [r/'definite-structured.cpp',r/'structured.hpp',r/'libhsolve-structured.a',r/'hsolve-structured',r/'hsolve-mpi-structured']}},indent=2)+'\n')
++print('Isolated P25 structured candidate build passed; all five production hashes unchanged.')
+--- /dev/null
++++ b/experiments/p25/compare.py
+@@ -0,0 +1,30 @@
++#!/usr/bin/env python3
++import argparse
++import json
++from pathlib import Path
++import sys
++sys.path.insert(0,'/tmp/os2026-p10-repair.9doyhO')
++from tools.bench import compare
++p=argparse.ArgumentParser(add_help=False);p.add_argument('--mpi',action='store_true');extra,rest=p.parse_known_args()
++r=Path('/tmp/os2026-p25')
++variants={'hsolve-full':{},'hsolve-structure':{},'hsolve-p21':{'blr':'on'},'hsolve-fault':{'certificate_fault_drop':1}}
++compare.HSOLVE_VARIANTS.update(variants);compare.SOLVERS=(*variants,'slepc')
++old_command,old_run=compare.hsolve_command,compare.run_once
++def command(c,solver,out,ncores,args,target):
++    a=old_command(c,solver,out,ncores,args,target)
++    if solver=='hsolve-full':a[0]='/tmp/os2026-p20/'+('mpi-bounded' if extra.mpi else 'hsolve-bounded')
++    elif solver=='hsolve-p21':a[0]='/tmp/os2026-p21/'+('mpi-true' if extra.mpi else 'hsolve-true')
++    else:a[0]=str(r/('mpi-structured' if extra.mpi else 'hsolve-structured'))
++    env=['env','-u','P25_STRUCTURE','-u','P21_BLR_OPERATOR','-u','P21_TRUE_RESIDUAL','-u','P23_BATCH_RESCUE',
++         '-u','OMP_WAIT_POLICY','-u','GOMP_SPINCOUNT','LD_PRELOAD=/tmp/os2026-p20/blr_threshold.so','P20_BLR_TOL=3e-10']
++    if solver=='hsolve-p21':env+=['P21_BLR_OPERATOR=unrefined','P21_TRUE_RESIDUAL=1']
++    elif solver!='hsolve-full':env+=['P25_STRUCTURE=1']
++    a+=['--log',str(out.parent/('events-'+out.name+'.jsonl'))]
++    return env+a
++def run(solver,*args,**kw):
++    row=old_run(solver,*args,**kw)
++    if solver in variants:row.update(config=solver,config_scope='class',config_source='P25 matrix-only full stencil recognition; modal candidates; original residual, RR, exact Sylvester counts and fallback retained')
++    with (r/'runs.jsonl').open('a') as f:f.write(json.dumps(row)+'\n')
++    return row
++compare.hsolve_command,compare.run_once=command,run
++raise SystemExit(compare.main(rest))
+--- /dev/null
++++ b/experiments/p25/mpi-structured
+@@ -0,0 +1,2 @@
++#!/usr/bin/env bash
++exec env HSOLVE_MPI=/tmp/os2026-p25/hsolve-mpi-structured /tmp/os2026-p10-repair.9doyhO/build/release/hsolve-mpirun --ranks 3 --interleave-leader -- "$@"
+--- /dev/null
++++ b/experiments/p25/structure_probe.py
+@@ -0,0 +1,123 @@
++"""Private matrix-only candidate constructor; no generator, case metadata or reference access.
++
++Recognition checks every input coefficient against a separable Cartesian curl-curl stencil.
++Returned vectors are candidates only. Production integration must retain original residuals,
++rank-revealing Rayleigh-Ritz, exact Sylvester counts, and fallback.
++"""
++import math
++import time
++import numpy as np
++import scipy.sparse as sp
++
++
++def candidate(a, b, sigma, k, tol):
++    start = time.perf_counter()
++    n = a.shape[0]
++    if a.shape != (n, n) or a.dtype.kind == 'c' or a.indptr[1] != 7:
++        return None, 'first row or scalar type'
++    cols = a.indices[:7]
++    c, lx, ly = int(cols[2]), int(cols[3]), int(cols[5] - cols[3])
++    lz = n - lx - ly
++    if cols[0] != 0 or cols[1] != 1 or c < 2 or min(lx, ly, lz) <= 0 or (lx - ly) % c or lz % (c + 1):
++        return None, 'block inference'
++    delta, prod = (lx - ly) // c, lz // (c + 1)
++    disc = delta * delta + 4 * prod
++    q = math.isqrt(disc)
++    nx = (q - delta) // 2 + 1
++    ny, nz = nx + delta, c + 1
++    if q*q != disc or min(nx, ny, nz) < 3 or (nx*(ny-1)*(nz-1), (nx-1)*ny*(nz-1), (nx-1)*(ny-1)*nz) != (lx, ly, lz):
++        return None, 'dimensions'
++    dims = (nx, ny, nz)
++    sizes = (lx, ly, lz)
++    if b is None:
++        bd = np.ones(n)
++    else:
++        if b.dtype.kind == 'c' or b.shape != a.shape or b.nnz != n or not np.array_equal(b.indices, np.arange(n)) or not np.array_equal(b.indptr, np.arange(n+1)):
++            return None, 'mass pattern'
++        bd = b.data
++    mass = tuple(float(bd[i]) for i in (0, lx, lx+ly))
++    offset = 0
++    for length, value in zip(sizes, mass):
++        if not np.isfinite(value) or value <= 0 or not np.all(bd[offset:offset+length] == value):
++            return None, 'mass values'
++        offset += length
++    alpha = (-float(a[lx, lx + ny*c])/mass[1], -float(a[0,c])/mass[0], -float(a[0,1])/mass[0])
++    if not all(np.isfinite(v) and v > 0 for v in alpha):
++        return None, 'coefficients'
++    d = [sp.diags([np.ones(t-1), -np.ones(t-1)], [0,-1], shape=(t,t-1), format='csr') for t in dims]
++    eye_node = [sp.eye(t-1, format='csr') for t in dims]
++    eye_cell = [sp.eye(t, format='csr') for t in dims]
++    def kron(m):
++        return sp.kron(sp.kron(m[0], m[1], format='csr'), m[2], format='csr')
++    blocks = [[None]*3 for _ in range(3)]
++    for i in range(3):
++        block = None
++        for j in range(3):
++            if i == j:
++                continue
++            factors = [eye_cell[t] if t == i else eye_node[t] for t in range(3)]
++            factors[j] = d[j].T @ d[j]
++            term = alpha[j] * mass[i] * kron(factors)
++            block = term if block is None else block + term
++            factors = [eye_node[t] for t in range(3)]
++            factors[i], factors[j] = d[i], d[j].T
++            blocks[i][j] = -math.sqrt(alpha[i]*alpha[j]*mass[i]*mass[j]) * kron(factors)
++        blocks[i][i] = block
++    model = sp.bmat(blocks, format='csr');model.sort_indices()
++    if not np.array_equal(a.indptr, model.indptr) or not np.array_equal(a.indices, model.indices):
++        return None, 'full pattern'
++    err = np.max(np.abs(a.data-model.data))
++    bound = 128*np.finfo(float).eps*np.max(np.abs(model.data))
++    if not np.isfinite(err) or err > bound:
++        return None, 'full values'
++    recognized = time.perf_counter()
++    indices = np.indices(dims).reshape(3,-1).T
++    active = np.count_nonzero(indices, axis=1)
++    indices = indices[active >= 2]
++    mult = np.where(active[active >= 2] == 3, 2, 1)
++    vals = np.sum(4*np.array(alpha)*np.sin(indices*np.pi/(2*np.array(dims)))**2, axis=1)
++    order = np.argsort(np.abs(vals-sigma), kind='stable')
++    picked, count = [], 0
++    for idx in order:
++        if count >= k:
++            break
++        picked.append(idx);count += int(mult[idx])
++    radius = max(abs(vals[idx]-sigma) for idx in picked)
++    gap = 512*np.finfo(float).eps*max(sum(alpha), abs(sigma))
++    if count != k or abs(sigma) <= radius + gap or (len(picked) < len(order) and abs(vals[order[len(picked)]]-sigma) <= radius + gap):
++        return None, 'target touches null space or incomplete multiplet'
++    x = np.empty((n,k),order='F');lambdas=[];column=0
++    for idx in picked:
++        mode = indices[idx]
++        s = 2*np.sqrt(alpha)*np.sin(mode*np.pi/(2*np.array(dims)))
++        if np.count_nonzero(mode) == 2:
++            vectors = [np.eye(3)[np.flatnonzero(mode==0)[0]]]
++        else:
++            v = np.cross(s, np.eye(3)[np.argmin(np.abs(s))]);v /= np.linalg.norm(v)
++            w = np.cross(s,v);w /= np.linalg.norm(w)
++            vectors = [v,w]
++        for v in vectors:
++            offset=0
++            for orientation in range(3):
++                factors=[]
++                for axis in range(3):
++                    t,m=dims[axis],mode[axis]
++                    if axis==orientation:
++                        f=np.ones(t)/math.sqrt(t) if m==0 else math.sqrt(2/t)*np.cos(m*np.pi*(np.arange(t)+.5)/t)
++                    else:
++                        f=math.sqrt(2/t)*np.sin(m*np.pi*np.arange(1,t)/t)
++                    factors.append(f)
++                x[offset:offset+sizes[orientation],column]=(v[orientation]/math.sqrt(mass[orientation])*factors[0][:,None,None]*factors[1][None,:,None]*factors[2][None,None,:]).ravel()
++                offset+=sizes[orientation]
++            lambdas.append(vals[idx]);column+=1
++    ax=a@x;bx=bd[:,None]*x
++    lambdas=np.sum(x*ax,axis=0)/np.sum(x*bx,axis=0)
++    residual=np.linalg.norm(ax-bx*lambdas,axis=0)
++    # Conservative norm lower bounds: using them makes this residual gate stricter.
++    eta=residual/((np.max(np.abs(a.diagonal()))+np.abs(lambdas)*np.max(bd))*np.linalg.norm(x,axis=0))
++    gram=float(np.max(np.abs(x.T@bx-np.eye(k))))
++    if not np.all(np.isfinite(eta)) or np.max(eta)>tol or gram>128*np.finfo(float).eps*n:
++        return None,'original residual or Gram'
++    return {'dimensions':dims,'alpha':alpha,'mass':mass,'max_stencil_error':float(err),
++            'recognize_s':recognized-start,'total_s':time.perf_counter()-start,
++            'max_eta':float(np.max(eta)),'max_gram_error':gram,'values':lambdas.tolist(),'x':x},''
+--- /dev/null
++++ b/experiments/p25/check_structure.py
+@@ -0,0 +1,48 @@
++import json
++from pathlib import Path
++import sys
++import numpy as np
++import scipy.linalg as la
++import scipy.sparse as sp
++from structure_probe import candidate
++sys.path.insert(0,'/tmp/os2026-p10-repair.9doyhO')
++from tools.gen.yee import YeeGrid, assemble, standard_form
++
++rows=[]
++rng=np.random.default_rng(250016)
++for index in range(12):
++    dims=tuple(int(i) for i in rng.integers(3,9,size=3))
++    lengths=tuple(rng.uniform(.7,1.7,size=3))
++    a,b=assemble(YeeGrid(dims,lengths),eps=float(rng.uniform(.7,2)),mu=float(rng.uniform(.7,2)))
++    if index%2:
++        a,b=standard_form(a,b),None
++    # Test-only independent dense spectrum, never given to the candidate constructor.
++    spectrum=la.eigh(a.toarray(),None if b is None else b.toarray(),eigvals_only=True)
++    positive=spectrum[spectrum>1e-8*max(spectrum)]
++    sigma=float((positive[0]+positive[1])/2)
++    k=3
++    # Include the full k-boundary multiplet in this test request.
++    ranked=np.sort(abs(positive-sigma))
++    while k<len(ranked) and abs(ranked[k]-ranked[k-1])<1e-9*max(spectrum):k+=1
++    result,reason=candidate(a,b,sigma,k,1e-10)
++    assert result is not None,(index,dims,reason)
++    expected=positive[np.argsort(abs(positive-sigma))[:k]]
++    assert np.max(abs(np.sort(result['values'])-np.sort(expected)))<1e-10*max(spectrum)
++    result.pop('x');result.update(test=index,form='HEP' if b is None else 'GHEP',k=k);rows.append(result)
++    changed=a.copy();p=changed.indptr[changed.shape[0]//2];changed.data[p]*=1.0001
++    assert candidate(changed,b,sigma,k,1e-10)[0] is None
++    perm=rng.permutation(a.shape[0]);permuted=a[perm,:][:,perm].tocsr();permuted.sort_indices()
++    bp=None if b is None else b[perm,:][:,perm].tocsr()
++    if bp is not None:bp.sort_indices()
++    assert candidate(permuted,bp,sigma,k,1e-10)[0] is None
++    assert candidate(a,b,0.,k,1e-10)[0] is None
++print(json.dumps({'random_cases':len(rows),'positive_and_negative_checks':len(rows)*4,'rows':rows}),flush=True)
++Path('/tmp/os2026-p25/random-check.json').write_text(json.dumps(rows,indent=2)+'\n')
++for folder in [Path('/share/home/linzihan/os2026/data/cases/yee-pec-box-1e4'),Path('/share/home/linzihan/p7_p7-membudget/data/cases/yee-pec-box-1e6')]:
++    a=sp.load_npz(folder/'A.npz');b=sp.load_npz(folder/'B.npz') if (folder/'B.npz').exists() else None
++    cfg=json.loads((folder/'config.json').read_text());target=cfg['target']
++    result,reason=candidate(a,b,target['sigma'],target['k'],cfg.get('tol',1e-10))
++    if result:result.pop('x')
++    row={'case':folder.name,'candidate':result,'rejection':reason}
++    print(json.dumps(row),flush=True)
++    Path('/tmp/os2026-p25/'+folder.name+'-probe.json').write_text(json.dumps(row,indent=2)+'\n')
+--- /dev/null
++++ b/experiments/p25/generate_checks.py
+@@ -0,0 +1,53 @@
++"""Generate private matrix-property tests; references are used by evaluation only."""
++import json
++from pathlib import Path
++import sys
++import numpy as np
++import scipy.linalg as la
++import scipy.sparse as sp
++sys.path.insert(0,'/tmp/os2026-p10-repair.9doyhO')
++from tools import case
++from tools.gen.yee import YeeGrid, assemble, standard_form
++from tools.gen.synthetic import hermitian_part
++
++root=Path('/tmp/os2026-p25/check-data')
++rng=np.random.default_rng(250017)
++manifest=[]
++for i in range(8):
++    dims=tuple(int(x) for x in rng.integers(3,7,size=3))
++    lengths=tuple(float(x) for x in rng.uniform(.7,1.7,size=3))
++    a,b=assemble(YeeGrid(dims,lengths),eps=float(rng.uniform(.7,2)),mu=float(rng.uniform(.7,2)))
++    if i%2:a,b=standard_form(a,b),None
++    for variant in ['base','perturbed','permuted','mass','partial']:
++        aa,bb=a.copy(),None if b is None else b.copy()
++        expected=True
++        if variant=='perturbed':
++            # Change a symmetric off-diagonal pair; leave row 0 and mass unchanged.
++            row=aa.shape[0]//2
++            col=next(int(c) for c in aa.indices[aa.indptr[row]:aa.indptr[row+1]] if c != row)
++            aa[row,col]*=1.001;aa[col,row]=aa[row,col];expected=False
++        elif variant=='permuted':
++            order=rng.permutation(aa.shape[0]);aa=aa[order,:][:,order].tocsr();aa.sort_indices()
++            if bb is not None:bb=bb[order,:][:,order].tocsr();bb.sort_indices()
++            expected=False
++        elif variant=='mass':
++            if bb is None:bb=sp.eye(aa.shape[0],format='csr')
++            bb.data[bb.shape[0]//2]*=1.001;expected=False
++        spectrum=la.eigh(aa.toarray(),None if bb is None else bb.toarray(),eigvals_only=True)
++        positive=spectrum[spectrum>1e-8*max(abs(spectrum))]
++        sigma=float((positive[0]+positive[1])/2);k=3
++        ranked=np.sort(abs(spectrum-sigma))
++        while k<len(ranked) and abs(ranked[k]-ranked[k-1])<1e-8*max(abs(spectrum)):k+=1
++        if variant=='partial':
++            # Put sigma at the first repeated positive eigenvalue and request one member.
++            repeat=next((j for j in range(len(positive)-1) if abs(positive[j+1]-positive[j])<1e-10*max(spectrum)),None)
++            assert repeat is not None
++            sigma=float(positive[repeat]);k=1;expected=False
++        name=f'p25-random-{i:02d}-{variant}'
++        cfg=case.default_config(sigma,k,tol=1e-10)
++        case.save_case(name,aa,bb,meta={'family':'p25-property-check','problem':'HEP' if bb is None else 'GHEP',
++                                     'description':'Private randomized matrix-property validation'},config=cfg,root=root)
++        case.save_ref(name,spectrum,kind='dense',note='Independent scipy.linalg.eigh, test only',complete=True,window=None,root=root)
++        manifest.append({'case':name,'expected_candidate':expected,'dimensions':dims,'variant':variant,'k':k})
++(root/'manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')
++print(json.dumps({'cases':len(manifest),'accepted_expected':sum(x['expected_candidate'] for x in manifest)}))
+--- /dev/null
++++ b/experiments/p25/random_compare.py
+@@ -0,0 +1,9 @@
++import json
++from pathlib import Path
++import subprocess
++import sys
++manifest=json.loads(Path('/tmp/os2026-p25/check-data/manifest.json').read_text())
++cmd=[sys.executable,'/tmp/os2026-p25/compare.py','--solvers','hsolve-structure','--reps','1','--timeout','60',
++     '--cores','8-15','--mem-gb','12','--root','/tmp/os2026-p25/check-data','--tag','p25-random',
++     '--out-dir','/tmp/os2026-p25']+[x['case'] for x in manifest]
++raise SystemExit(subprocess.run(cmd,check=False).returncode)
+--- /dev/null
++++ b/experiments/p25/audit_checks.py
+@@ -0,0 +1,22 @@
++import json
++from pathlib import Path
++r=Path('/tmp/os2026-p25')
++repo=Path('/tmp/os2026-p10-repair.9doyhO')
++manifest=json.loads((r/'check-data/manifest.json').read_text())
++rows=[]
++for item in manifest:
++    folder=repo/'results/raw/p25-random'/item['case']
++    events=[json.loads(x) for x in (folder/'events-hsolve-structure.jsonl').read_text().splitlines()]
++    probes=[x for x in events if x['event']=='structured_candidate']
++    rep=json.loads((folder/'hsolve-structure/report.json').read_text())
++    ev=json.loads((folder/'hsolve-structure/evaluation.json').read_text())
++    assert probes and probes[0]['accepted']==item['expected_candidate'],(item,probes)
++    assert rep['success'] and ev['verdict']=='pass' and rep['certificate']['passed']
++    if item['expected_candidate']:assert rep['op_applies']==0
++    rows.append({'case':item['case'],'expected_candidate':item['expected_candidate'],
++                 'probe':probes[0],'success':rep['success'],'evaluation':ev['verdict'],
++                 'exact_certificate':rep['certificate']['method']=='exact' and rep['certificate']['passed'],
++                 'op_applies':rep['op_applies']})
++(r/'random-audit.json').write_text(json.dumps(rows,indent=2)+'\n')
++print(json.dumps({'checks':len(rows),'accepted_candidates':sum(x['expected_candidate'] for x in rows),
++                  'recognition_matches_expectation':True,'all_exact_certificates_passed':True}))
+--- /dev/null
++++ b/experiments/p25/smoke.sh
+@@ -0,0 +1,4 @@
++#!/usr/bin/env bash
++set -euo pipefail
++cd /tmp/os2026-p10-repair.9doyhO
++python /tmp/os2026-p25/compare.py --solvers hsolve-full,hsolve-structure --reps 1 --timeout 180 --cores 8-15 --mem-gb 12 --root /share/home/linzihan/os2026/data --tag p25-smoke --out-dir /tmp/os2026-p25 cav2d-rect-pert-1e5 yee-pec-box-1e4 yee-pec-box-1e5 yee-bloch-1e4 syn-near-singular-real-1e4
+--- /dev/null
++++ b/experiments/p25/random.sh
+@@ -0,0 +1,4 @@
++#!/usr/bin/env bash
++set -euo pipefail
++cd /tmp/os2026-p10-repair.9doyhO
++python /tmp/os2026-p25/random_compare.py
+--- /dev/null
++++ b/experiments/p25/fault.sh
+@@ -0,0 +1,4 @@
++#!/usr/bin/env bash
++set -euo pipefail
++cd /tmp/os2026-p10-repair.9doyhO
++python /tmp/os2026-p25/compare.py --solvers hsolve-structure,hsolve-fault --reps 1 --timeout 180 --cores 8-15 --mem-gb 12 --root /share/home/linzihan/os2026/data --tag p25-fault --out-dir /tmp/os2026-p25 yee-pec-box-1e4 yee-pec-box-1e5
+--- /dev/null
++++ b/experiments/p25/million.sh
+@@ -0,0 +1,4 @@
++#!/usr/bin/env bash
++set -euo pipefail
++cd /tmp/os2026-p10-repair.9doyhO
++python /tmp/os2026-p25/compare.py --mpi --solvers hsolve-full,hsolve-structure,hsolve-p21,slepc --reps 1 --timeout 180 --cores 8-15,16-23 --mem-gb 32 --root /share/home/linzihan/p7_p7-membudget/data --slepc-profile best --slepc-profile-file results/p19_slepc_profiles.json --tag p25-million-screen --out-dir /tmp/os2026-p25 yee-pec-box-1e6
+--- /dev/null
++++ b/experiments/p25/confirm.sh
+@@ -0,0 +1,4 @@
++#!/usr/bin/env bash
++set -euo pipefail
++cd /tmp/os2026-p10-repair.9doyhO
++python /tmp/os2026-p25/compare.py --mpi --solvers hsolve-full,hsolve-structure,slepc --reps 3 --timeout 180 --cores 8-15,16-23 --mem-gb 32 --root /share/home/linzihan/p7_p7-membudget/data --slepc-profile best --slepc-profile-file results/p19_slepc_profiles.json --tag p25-million-confirm --out-dir /tmp/os2026-p25 yee-pec-box-1e6
+--- /dev/null
++++ b/experiments/p25/regression.py
+@@ -0,0 +1,34 @@
++import json
++import os
++from pathlib import Path
++import shlex
++import subprocess
++import time
++repo=Path('/tmp/os2026-p10-repair.9doyhO');b=repo/'build/release';r=Path('/tmp/os2026-p25')
++out=r/'regression';out.mkdir(exist_ok=True)
++targets=['test_driver_solve','test_driver_cluster','test_driver_windows','test_certcost_faults',
++         'test_membudget','test_membudget_single','test_parallel_session']
++commands=[]
++for target in targets:
++    command=subprocess.run(['ninja','-C',str(b),'-t','commands',target],capture_output=True,text=True,check=True).stdout.splitlines()[-1]
++    a=shlex.split(command)
++    if a[:2]==[':','&&']:
++        assert a[-2:]==['&&',':'];a=a[2:-2]
++    assert not any(x in ('&&','||',';') for x in a)
++    assert 'libhsolve.a' in a
++    a=[str(r/'libhsolve-structured.a') if x=='libhsolve.a' else x for x in a]
++    a[a.index('-o')+1]=str(out/target)
++    for i,x in enumerate(a):
++        if x.startswith('-Wl,--dependency-file='):a[i]='-Wl,--dependency-file='+str(out/(target+'.d'))
++    commands.append(a)
++    subprocess.run(a,cwd=b,check=True)
++(out/'build-commands.json').write_text(json.dumps(commands,indent=2)+'\n')
++env={**os.environ,'P25_STRUCTURE':'1','OMP_NUM_THREADS':'2','OPENBLAS_NUM_THREADS':'1'}
++results=[]
++for target in targets:
++    start=time.perf_counter()
++    with (out/(target+'.log')).open('w') as log:
++        p=subprocess.run([str(out/target),'--gtest_output=xml:'+str(out/(target+'.xml'))],cwd=b,env=env,stdout=log,stderr=subprocess.STDOUT)
++    row={'target':target,'returncode':p.returncode,'wall_s':time.perf_counter()-start};results.append(row)
++    (out/'summary.json').write_text(json.dumps(results,indent=2)+'\n');print(json.dumps(row),flush=True)
++raise SystemExit(0 if all(x['returncode']==0 for x in results) else 1)
+--- /dev/null
++++ b/experiments/p25/recheck_regression.py
+@@ -0,0 +1,16 @@
++import json
++import os
++from pathlib import Path
++import subprocess
++import time
++r=Path('/tmp/os2026-p25/regression')
++repo=Path('/tmp/os2026-p10-repair.9doyhO')
++test='test_membudget_single'
++rows=[]
++for label,exe,enabled in [('production',repo/'build/release'/test,'0'),('candidate_off',r/test,'0'),('candidate_on',r/test,'1')]:
++    env={**os.environ,'OMP_NUM_THREADS':'2','OPENBLAS_NUM_THREADS':'1','P25_STRUCTURE':enabled}
++    start=time.perf_counter()
++    with (r/(label+'-recheck.log')).open('w') as log:
++        p=subprocess.run([str(exe),'--gtest_output=xml:'+str(r/(label+'-recheck.xml'))],cwd=repo/'build/release',env=env,stdout=log,stderr=subprocess.STDOUT)
++    row={'label':label,'returncode':p.returncode,'wall_s':time.perf_counter()-start};rows.append(row);print(json.dumps(row),flush=True)
++(r/'recheck.json').write_text(json.dumps(rows,indent=2)+'\n')
+--- /dev/null
++++ b/experiments/p25/experiment.txt
+@@ -0,0 +1,40 @@
++P25 — matrix-verified separable Cartesian curl-curl candidate subspace
++
++No case-name or metadata dispatch, reference input, answer table, or full dense matrix in the solver.
++The recognizer derives dimensions from CSR row 0, then verifies every CSR row, column and value.
++B must be positive diagonal and constant within each of the three inferred edge blocks, or I.
++The supported natural ordering has block shapes (Nx,Ny-1,Nz-1), (Nx-1,Ny,Nz-1), (Nx-1,Ny-1,Nz), each dimension >=3.
++Coefficients alpha are derived from actual transverse off-diagonal entries. Expected diagonal,
++same-component neighboring entries and all cross-component +/- entries are checked with a fixed
++128 epsilon * largest expected coefficient gate. Unexpected sparsity or nonuniform values reject.
++This comparison is a candidate-generation gate, NOT a proof of exact separability or completeness.
++
++For node-to-cell difference D with +1 at (j,j), -1 at (j+1,j), the normalized pencil is:
++H_dd = sum_(e!=d) alpha_e D_e^T D_e, acting along transverse node axes;
++H_de = -sqrt(alpha_d alpha_e) D_d D_e^T, identities along the remaining axis.
++For wave numbers m_d in [0,N_d), use normalized node sine and cell cosine bases. In a mode,
++s_d=2 sqrt(alpha_d) sin(m_d*pi/(2*N_d)), and the 3-component block is ||s||^2 I-s s^T.
++Three nonzero wave numbers give two transverse polarizations; exactly two give one polarization
++along the zero wave-number axis. The remaining gradient modes are zero. Construct X in physical
++coordinates by B^-1/2. Only requests whose nearest set excludes the null space and does not split
++an unresolved boundary multiplet use this candidate path. All other requests use the old driver.
++
++After candidate construction, actual A*X and B*X, rank-revealing Rayleigh-Ritz and actual backward
++errors are evaluated. If rank != k or any error > 0.5*original tol, discard candidates and run the
++original factorization/Lanczos path. On acceptance skip only the main numerical factorization and
++Krylov iteration. Symbolic analysis, memory planning, original final verification, exact double
++Sylvester counts, missing-pair reruns and final success criteria remain. The model spectrum is
++only an endpoint hint; it never replaces the actual exact counts. Public final tolerance unchanged.
++
++Private experimental toggle P25_STRUCTURE=1. Built from current P20 production library, not P21.
++Only definite.cpp is replaced in a copied archive. Native and P21 binaries retained for comparison.
++Exact certificate mode required for this private candidate path. No production adoption yet.
++
++Validation:
++Python model: 12 random grids/HEP-GHEP, independent dense eigenspectrum, original residual/Gram;
++negative single-entry changes, random permutations and null-space requests (48 checks).
++C++ complete solve: 8 fresh random grids x 5 variants (base, symmetric coefficient perturbation,
++permutation, nonuniform mass and partial multiplet); independent dense test-only references.
++Existing nonseparable/complex/near-singular cases and two structured sizes, plus missing-pair
++fault injection. Million comparisons use original input, target, tolerance, independent full refs,
++16 physical cores/32 GiB exclusive guard; all other numerical work stopped while measuring.

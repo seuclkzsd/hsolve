@@ -1,0 +1,33 @@
+{
+ "schema_version": 1,
+ "profiles": [
+  {
+   "scope": "case",
+   "name": "yee-bloch-1e4",
+   "mode": "nearest",
+   "cores": 16,
+   "target": null,
+   "config": {
+    "ranks": 4,
+    "threads": 4,
+    "bind": "core",
+    "options": {
+     "eps_ncv": "4k",
+     "st_mat_mumps_icntl_14": "80",
+     "eps_tol": "1e-12",
+     "eps_true_residual": "1"
+    }
+   },
+   "tuned": {
+    "origin": "P29 accuracy correction after repeated validation failures; true residual configuration confirmed in fifteen repetitions under the original 1e-10 acceptance threshold.",
+    "tag": "p29-bloch-verified",
+    "host": "gpu02",
+    "valid": true,
+    "reps": 15,
+    "solver_s": 0.67866948,
+    "max_eta": 1.6829197643802107e-13
+   }
+  }
+ ],
+ "note": "Native complex128 PETSc/SLEPc 3.26 environment from P28, original yee-bloch-1e4 query, 16 physical cores. The archived compare.py supplies the explicit complex Python, mpiexec and LD_LIBRARY_PATH."
+}

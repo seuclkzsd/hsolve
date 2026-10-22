@@ -1,0 +1,160 @@
+--- a/src/ssol_c.F
++++ b/src/ssol_c.F
+@@ -1236,6 +1236,37 @@
+         MYID_NODES = MYID
+       ELSE
+         MYID_NODES = MYID-1
++      ENDIF
++C     hsolve P14 experiment: distribute complete output rows once, so
++C     each thread writes a contiguous range for every right-hand side.
++      IF (NSLAVES.EQ.1.AND.MYID.EQ.MASTER.AND.TYPE_PARAL.EQ.1
++     &    .AND.N.GE.32768) THEN
++!$OMP PARALLEL DO SCHEDULE(STATIC)
++!$OMP& PRIVATE(IPOSINRHSINTR,J,JCOL_RHS)
++        DO I=1,N
++          IPOSINRHSINTR=POSINRHSINTR(I)
++          DO J=1,NRHS
++            IF (KEEP(242).EQ.0) THEN
++              JCOL_RHS=J+JBEG_RHS-1
++            ELSE
++              JCOL_RHS=PERM_RHS(J+JBEG_RHS-1)
++            ENDIF
++            IF (IPOSINRHSINTR.LE.0) THEN
++              RHS(I,JCOL_RHS)=ZERO
++            ELSE IF (LSCAL) THEN
++              RHS(I,JCOL_RHS)=RHSINTR(IPOSINRHSINTR,J)*
++#if defined(USE_OLD_SCALING)
++     &             SCALING(I)
++#else
++     &             SCALING_LOC_BWD(IPOSINRHSINTR)
++#endif
++            ELSE
++              RHS(I,JCOL_RHS)=RHSINTR(IPOSINRHSINTR,J)
++            ENDIF
++          ENDDO
++        ENDDO
++!$OMP END PARALLEL DO
++        RETURN
+       ENDIF
+       IF (NSLAVES.EQ.1 .AND. TYPE_PARAL.EQ.1) THEN
+            IF (LSCAL) THEN 
+--- a/src/dsol_c.F
++++ b/src/dsol_c.F
+@@ -1236,6 +1236,37 @@
+         MYID_NODES = MYID
+       ELSE
+         MYID_NODES = MYID-1
++      ENDIF
++C     hsolve P14 experiment: distribute complete output rows once, so
++C     each thread writes a contiguous range for every right-hand side.
++      IF (NSLAVES.EQ.1.AND.MYID.EQ.MASTER.AND.TYPE_PARAL.EQ.1
++     &    .AND.N.GE.32768) THEN
++!$OMP PARALLEL DO SCHEDULE(STATIC)
++!$OMP& PRIVATE(IPOSINRHSINTR,J,JCOL_RHS)
++        DO I=1,N
++          IPOSINRHSINTR=POSINRHSINTR(I)
++          DO J=1,NRHS
++            IF (KEEP(242).EQ.0) THEN
++              JCOL_RHS=J+JBEG_RHS-1
++            ELSE
++              JCOL_RHS=PERM_RHS(J+JBEG_RHS-1)
++            ENDIF
++            IF (IPOSINRHSINTR.LE.0) THEN
++              RHS(I,JCOL_RHS)=ZERO
++            ELSE IF (LSCAL) THEN
++              RHS(I,JCOL_RHS)=RHSINTR(IPOSINRHSINTR,J)*
++#if defined(USE_OLD_SCALING)
++     &             SCALING(I)
++#else
++     &             SCALING_LOC_BWD(IPOSINRHSINTR)
++#endif
++            ELSE
++              RHS(I,JCOL_RHS)=RHSINTR(IPOSINRHSINTR,J)
++            ENDIF
++          ENDDO
++        ENDDO
++!$OMP END PARALLEL DO
++        RETURN
+       ENDIF
+       IF (NSLAVES.EQ.1 .AND. TYPE_PARAL.EQ.1) THEN
+            IF (LSCAL) THEN 
+--- a/src/csol_c.F
++++ b/src/csol_c.F
+@@ -1236,6 +1236,37 @@
+         MYID_NODES = MYID
+       ELSE
+         MYID_NODES = MYID-1
++      ENDIF
++C     hsolve P14 experiment: distribute complete output rows once, so
++C     each thread writes a contiguous range for every right-hand side.
++      IF (NSLAVES.EQ.1.AND.MYID.EQ.MASTER.AND.TYPE_PARAL.EQ.1
++     &    .AND.N.GE.32768) THEN
++!$OMP PARALLEL DO SCHEDULE(STATIC)
++!$OMP& PRIVATE(IPOSINRHSINTR,J,JCOL_RHS)
++        DO I=1,N
++          IPOSINRHSINTR=POSINRHSINTR(I)
++          DO J=1,NRHS
++            IF (KEEP(242).EQ.0) THEN
++              JCOL_RHS=J+JBEG_RHS-1
++            ELSE
++              JCOL_RHS=PERM_RHS(J+JBEG_RHS-1)
++            ENDIF
++            IF (IPOSINRHSINTR.LE.0) THEN
++              RHS(I,JCOL_RHS)=ZERO
++            ELSE IF (LSCAL) THEN
++              RHS(I,JCOL_RHS)=RHSINTR(IPOSINRHSINTR,J)*
++#if defined(USE_OLD_SCALING)
++     &             SCALING(I)
++#else
++     &             SCALING_LOC_BWD(IPOSINRHSINTR)
++#endif
++            ELSE
++              RHS(I,JCOL_RHS)=RHSINTR(IPOSINRHSINTR,J)
++            ENDIF
++          ENDDO
++        ENDDO
++!$OMP END PARALLEL DO
++        RETURN
+       ENDIF
+       IF (NSLAVES.EQ.1 .AND. TYPE_PARAL.EQ.1) THEN
+            IF (LSCAL) THEN 
+--- a/src/zsol_c.F
++++ b/src/zsol_c.F
+@@ -1236,6 +1236,37 @@
+         MYID_NODES = MYID
+       ELSE
+         MYID_NODES = MYID-1
++      ENDIF
++C     hsolve P14 experiment: distribute complete output rows once, so
++C     each thread writes a contiguous range for every right-hand side.
++      IF (NSLAVES.EQ.1.AND.MYID.EQ.MASTER.AND.TYPE_PARAL.EQ.1
++     &    .AND.N.GE.32768) THEN
++!$OMP PARALLEL DO SCHEDULE(STATIC)
++!$OMP& PRIVATE(IPOSINRHSINTR,J,JCOL_RHS)
++        DO I=1,N
++          IPOSINRHSINTR=POSINRHSINTR(I)
++          DO J=1,NRHS
++            IF (KEEP(242).EQ.0) THEN
++              JCOL_RHS=J+JBEG_RHS-1
++            ELSE
++              JCOL_RHS=PERM_RHS(J+JBEG_RHS-1)
++            ENDIF
++            IF (IPOSINRHSINTR.LE.0) THEN
++              RHS(I,JCOL_RHS)=ZERO
++            ELSE IF (LSCAL) THEN
++              RHS(I,JCOL_RHS)=RHSINTR(IPOSINRHSINTR,J)*
++#if defined(USE_OLD_SCALING)
++     &             SCALING(I)
++#else
++     &             SCALING_LOC_BWD(IPOSINRHSINTR)
++#endif
++            ELSE
++              RHS(I,JCOL_RHS)=RHSINTR(IPOSINRHSINTR,J)
++            ENDIF
++          ENDDO
++        ENDDO
++!$OMP END PARALLEL DO
++        RETURN
+       ENDIF
+       IF (NSLAVES.EQ.1 .AND. TYPE_PARAL.EQ.1) THEN
+            IF (LSCAL) THEN 

@@ -1,0 +1,170 @@
+--- a/band_ldlh.cpp
++++ b/band_ldlh.cpp
+@@ -11,6 +11,9 @@
+ #include <vector>
+ #if defined(__AVX512F__)
+ #include <immintrin.h>
++#endif
++#ifndef P36_SCHUR_SIMD
++#define P36_SCHUR_SIMD 0
+ #endif
+ using Z=std::complex<double>;
+ static double mag(Z x){return std::abs(x.real())+std::abs(x.imag());}
+@@ -37,6 +40,49 @@
+    for(int j=lo;j<hi;++j)if(j!=k&&j!=p){put(k,j,y[j-lo]);put(p,j,x[j-lo]);}
+    put(k,k,app);put(p,p,akk);put(k,p,std::conj(akp));
+  }
++#if defined(__AVX512F__) && P36_SCHUR_SIMD
++ // Four complex rows of one Schur-complement column. Pivot selection and
++ // interchange retain the original scalar path. Diagonal storage stays real.
++ template<bool RankTwo>
++ void update_column(const Pivot& p,int j) {
++   const int start=p.k+p.size;
++   const Z w1=std::conj(get(j,p.k));
++   const Z w2=RankTwo?std::conj(get(j,p.k+1)):Z{};
++   auto scalar=[&](int i) {
++     Z value=get(i,j)-p.l1[i-start]*w1;
++     if constexpr(RankTwo)value-=p.l2[i-start]*w2;
++     put(i,j,value);
++   };
++   // This is unreachable for normal bounded-band updates, but preserves the
++   // scalar out-of-band zero/fill behavior instead of assuming valid storage.
++   if(p.stop-1-j>w) {for(int i=j;i<p.stop;++i)scalar(i);return;}
++   int i=j;
++   if(i<p.stop)scalar(i++);
++   const auto sign_mask=_mm512_set1_epi64(0x7fffffffffffffffLL);
++   const auto finite_limit=_mm512_set1_pd(std::numeric_limits<double>::max());
++   auto magnitude=[&](__m512d x) {return _mm512_castsi512_pd(_mm512_and_si512(_mm512_castpd_si512(x),sign_mask));};
++   auto multiply=[](__m512d x,Z a) {
++     return _mm512_fmaddsub_pd(_mm512_set1_pd(a.real()),x,
++         _mm512_mul_pd(_mm512_set1_pd(a.imag()),_mm512_permute_pd(x,0x55)));
++   };
++   double largest=growth;
++   for(;i+3<p.stop;i+=4) {
++     Z* dst=work.data()+(size_t)j*(w+1)+i-j;
++     const auto left=_mm512_loadu_pd(reinterpret_cast<const double*>(p.l1.data+i-start));
++     auto value=_mm512_sub_pd(_mm512_loadu_pd(reinterpret_cast<const double*>(dst)),multiply(left,w1));
++     if constexpr(RankTwo) {
++       const auto right=_mm512_loadu_pd(reinterpret_cast<const double*>(p.l2.data+i-start));
++       value=_mm512_sub_pd(value,multiply(right,w2));
++     }
++     const auto ab=magnitude(value);
++     if(_mm512_cmp_pd_mask(ab,finite_limit,_CMP_LE_OQ)!=0xff)throw 3;
++     _mm512_storeu_pd(reinterpret_cast<double*>(dst),value);
++     largest=std::max(largest,_mm512_reduce_max_pd(_mm512_add_pd(ab,_mm512_permute_pd(ab,0x55))));
++   }
++   growth=largest;
++   for(;i<p.stop;++i)scalar(i);
++ }
++#endif
+  Factor(int nn,int bw,int cap,const Z* lower,bool keep=true,double null_tol=0):n(nn),w(cap),work((size_t)n*(w+1)),retaining(keep){
+    pool.reserve(keep?(size_t)n*(w+1):(size_t)2*(w+1));if(keep)piv.reserve(n);
+    swap_x.resize(2*w+1);swap_y.resize(2*w+1);
+@@ -61,7 +107,11 @@
+      if(step==2)p.l2={pool.data()+offset+count,count};
+      if(step==1){double d=p.a;if(d==0||!std::isfinite(d))throw 1;neg+=d<0;minpivot=std::min(minpivot,std::abs(d));small_pivots+=std::abs(d)<=null_tol*initial;
+        for(int i=k+1;i<stop;++i)p.l1[i-k-1]=get(i,k)/d;
++#if defined(__AVX512F__) && P36_SCHUR_SIMD
++       for(int j=k+1;j<stop;++j)update_column<false>(p,j);
++#else
+        for(int j=k+1;j<stop;++j)for(int i=j;i<stop;++i)put(i,j,get(i,j)-p.l1[i-k-1]*std::conj(get(j,k)));
++#endif
+      }else{
+        ++twos;p.b=get(k+1,k);p.c=get(k+1,k+1).real();
+        double s=std::max({std::abs(p.a),std::abs(p.c),std::abs(p.b)}),a=p.a/s,c=p.c/s;Z b=p.b/s;double det=a*c-std::norm(b);
+@@ -70,7 +120,11 @@
+        double largest=std::abs((a+c)*.5)+std::hypot((a-c)*.5,std::abs(b));
+        small_pivots+=s*largest<=null_tol*initial;small_pivots+=s*(std::abs(det)/largest)<=null_tol*initial;
+        for(int i=k+2;i<stop;++i){Z u=get(i,k)/s,v=get(i,k+1)/s;p.l1[i-k-2]=(u*c-v*b)/det;p.l2[i-k-2]=(v*a-u*std::conj(b))/det;}
++#if defined(__AVX512F__) && P36_SCHUR_SIMD
++       for(int j=k+2;j<stop;++j)update_column<true>(p,j);
++#else
+        for(int j=k+2;j<stop;++j)for(int i=j;i<stop;++i)put(i,j,get(i,j)-p.l1[i-k-2]*std::conj(get(j,k))-p.l2[i-k-2]*std::conj(get(j,k+1)));
++#endif
+      }
+      if(retaining)piv.push_back(p);k+=step;
+    }fail_k=-1;}catch(int s){status=s;}
+@@ -93,12 +147,10 @@
+   const auto swapped=_mm512_permute_pd(x,0x55);
+   return _mm512_fmaddsub_pd(_mm512_set1_pd(a.real()),x,_mm512_mul_pd(_mm512_set1_pd(a.imag()),swapped));
+ }
+-static void solve4(Factor& f,Z* x){
++static void solve4_rows(Factor& f,Z* rows){
+  if(f.status||!f.retaining)throw std::runtime_error("invalid factor");
+- std::vector<Z> rows((size_t)f.n*4);
+- for(int i=0;i<f.n;++i)for(int r=0;r<4;++r)rows[(size_t)i*4+r]=x[(size_t)r*f.n+i];
+- auto load=[&](int i){return _mm512_loadu_pd(reinterpret_cast<const double*>(rows.data()+(size_t)i*4));};
+- auto store=[&](int i,__m512d v){_mm512_storeu_pd(reinterpret_cast<double*>(rows.data()+(size_t)i*4),v);};
++ auto load=[&](int i){return _mm512_loadu_pd(reinterpret_cast<const double*>(rows+(size_t)i*4));};
++ auto store=[&](int i,__m512d v){_mm512_storeu_pd(reinterpret_cast<double*>(rows+(size_t)i*4),v);};
+  auto swap=[&](int i,int j){auto a=load(i),b=load(j);store(i,b);store(j,a);};
+  for(const auto& p:f.piv){int k=p.k;swap(k+p.size-1,p.swap);auto a=load(k);
+   if(p.size==1){for(int i=k+1;i<p.stop;++i)store(i,_mm512_sub_pd(load(i),mul4(a,p.l1[i-k-1])));}
+@@ -117,6 +169,12 @@
+   else{auto b=load(k+1);for(int i=k+2;i<p.stop;++i){int q=i-k-2;auto v=load(i);a=_mm512_sub_pd(a,mul4(v,std::conj(p.l1[q])));b=_mm512_sub_pd(b,mul4(v,std::conj(p.l2[q])));}store(k,a);store(k+1,b);}
+   swap(k+p.size-1,p.swap);
+  }
++}
++static void solve4(Factor& f,Z* x){
++ if(f.status||!f.retaining)throw std::runtime_error("invalid factor");
++ std::vector<Z> rows((size_t)f.n*4);
++ for(int i=0;i<f.n;++i)for(int r=0;r<4;++r)rows[(size_t)i*4+r]=x[(size_t)r*f.n+i];
++ solve4_rows(f,rows.data());
+  for(int i=0;i<f.n;++i)for(int r=0;r<4;++r)x[(size_t)r*f.n+i]=rows[(size_t)i*4+r];
+ }
+ #endif
+--- a/band_backend.hpp
++++ b/band_backend.hpp
+@@ -1,4 +1,10 @@
+ #pragma once
++#ifndef P36_PACK_RHS
++#define P36_PACK_RHS 0
++#endif
++#ifndef P36_VARIANT
++#define P36_VARIANT "control"
++#endif
+ // Private P33 backend: graph-only dispatch before MUMPS analysis. Exact double
+ // band LDLH, conservative null detection, checked/refined work solves, lazy MUMPS.
+ #include <cstdio>
+@@ -154,6 +160,21 @@
+   void raw_solve(cplx* b, index_t nrhs, index_t ldb) {
+     int n = order();
+ #if defined(__AVX512F__)
++    if constexpr(!use_lu && P36_PACK_RHS) {
++      if(nrhs%4==0) {
++        std::vector<cplx> rows((size_t)n*4);
++        for(index_t col=0;col<nrhs;col+=4) {
++#pragma omp parallel for schedule(static)
++          for(int i=0;i<n;++i)for(int r=0;r<4;++r)
++            rows[(size_t)i*4+r]=b[(col+r)*ldb+order_[i]]*scale_[i];
++          ::solve4_rows(*factor_,rows.data());
++#pragma omp parallel for schedule(static)
++          for(int i=0;i<n;++i)for(int r=0;r<4;++r)
++            b[(col+r)*ldb+order_[i]]=rows[(size_t)i*4+r]*scale_[i];
++        }
++        return;
++      }
++    }
+     if constexpr(use_lu&&lu_simd){
+       if(nrhs%4==0){
+         std::vector<cplx> rows((size_t)n*4);
+--- a/solver.cpp
++++ b/solver.cpp
+@@ -26,7 +26,7 @@
+ #include "hsolve/solver.hpp"
+ #include "hsolve/util.hpp"
+ #include "io/csr_assembly.hpp"
+-#include "/tmp/os2026-p33/band_backend.hpp"
++#include "/tmp/os2026-p36/band_backend.hpp"
+ 
+ namespace hs {
+ 
+@@ -355,7 +355,7 @@
+       driver::PhaseScope phase(clock, driver::Phase::Factor);
+       fac = p33::try_make(pencil, fopts);
+       native_ready = bool(fac);
+-      if (native_ready) event(c, "factor_backend", {{"name", "p33_checked_requested_shift_private"}});
++      if (native_ready) event(c, "factor_backend", {{"name", "p36_checked_" P36_VARIANT}});
+     }
+   }
+   if (native_ready) {

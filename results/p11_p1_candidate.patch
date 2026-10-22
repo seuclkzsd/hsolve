@@ -1,0 +1,362 @@
+--- a/src/eigen/lanczos_detail.hpp
++++ b/src/eigen/lanczos_detail.hpp
+@@ -7,6 +7,9 @@
+ #include "hsolve/eigen.hpp"
+ 
+ namespace hs::eigen_detail {
++
++template <class T>
++struct OriginalResidualTest;
+ 
+ /// Seconds spent in each phase of one lanczos_krylov_schur call (phases do not overlap).
+ struct LanczosTimings {
+@@ -20,9 +23,12 @@
+ 
+ /// Same contract as hs::lanczos_krylov_schur; `timings` is overwritten. Not thread-safe with
+ /// respect to `op` / `b_inner` (they are applied), otherwise reentrant.
++/// The driver-only residual_test may accept the wanted set by its original-problem criterion;
++/// the public entry point leaves it null and retains its transformed-residual contract.
+ template <class T>
+ HermitianEigResult<T> lanczos_krylov_schur_timed(LinearOperator<T>& op, LinearOperator<T>* b_inner,
+                                                  Which which, const KrylovSchurOptions<T>& options,
+-                                                 LanczosTimings& timings);
++                                                 LanczosTimings& timings,
++                                                 const OriginalResidualTest<T>* residual_test = nullptr);
+ 
+ }  // namespace hs::eigen_detail
+--- a/src/eigen/lanczos_krylov_schur.cpp
++++ b/src/eigen/lanczos_krylov_schur.cpp
+@@ -105,7 +105,8 @@
+ class ThickRestartLanczos {
+  public:
+   ThickRestartLanczos(LinearOperator<T>& op, LinearOperator<T>* b_inner, Which which,
+-                      const KrylovSchurOptions<T>& options, eigen_detail::LanczosTimings& timings);
++                      const KrylovSchurOptions<T>& options, eigen_detail::LanczosTimings& timings,
++                      const eigen_detail::OriginalResidualTest<T>* residual_test);
+ 
+   HermitianEigResult<T> run();
+ 
+@@ -119,7 +120,7 @@
+   void normalize(index_t j, double norm);
+   void set_random_vector(index_t j);
+   void expand(index_t first);
+-  void rayleigh_ritz();
++  bool rayleigh_ritz();
+   index_t record_history();
+   void restart(index_t keep);
+   HermitianEigResult<T> finish();
+@@ -129,12 +130,14 @@
+   const Which which_;
+   const KrylovSchurOptions<T>& opt_;
+   eigen_detail::LanczosTimings& time_;
++  const eigen_detail::OriginalResidualTest<T>* residual_test_;
+ 
+   index_t n_ = 0;
+   index_t d_ = 0;  ///< deflation columns
+   index_t nev_ = 0;
+   index_t lead_ = 0;         ///< LanczosSetup::lead
+   index_t ncv_ = 0;          ///< basis size m of every cycle
++  index_t m_ = 0;            ///< populated basis columns (a driver probe may stop a cycle early)
+   bool full_space_ = false;  ///< ncv == n - d: one cycle spans the whole free space (exact)
+   bool store_bv_ = false;
+   linalg::ApplyFn<T> apply_m_;  ///< recompute mode only
+@@ -144,7 +147,7 @@
+   std::vector<T> mw_;              ///< M*w workspace (recompute mode)
+   std::vector<T> coef_;            ///< CGS2 coefficients of the current vector against [D V]
+   DenseMatrix<T> h_;               ///< ncv x ncv projected matrix, both triangles stored
+-  double beta_ = 0.0;              ///< coupling of v_{ncv-1} to the residual vector v_ncv
++  double beta_ = 0.0;              ///< coupling of v_{m-1} to the residual vector v_m
+   std::uint64_t next_stream_ = 0;  ///< fill_random stream: 0 = start vector, then breakdowns
+ 
+   eigen_detail::RitzPairs<T> rr_;  ///< Rayleigh-Ritz results of the current cycle
+@@ -157,8 +160,10 @@
+ template <class T>
+ ThickRestartLanczos<T>::ThickRestartLanczos(LinearOperator<T>& op, LinearOperator<T>* b_inner,
+                                             Which which, const KrylovSchurOptions<T>& options,
+-                                            eigen_detail::LanczosTimings& timings)
+-    : op_(op), b_inner_(b_inner), which_(which), opt_(options), time_(timings) {
++                                            eigen_detail::LanczosTimings& timings,
++                                            const eigen_detail::OriginalResidualTest<T>* residual_test)
++    : op_(op), b_inner_(b_inner), which_(which), opt_(options), time_(timings),
++      residual_test_(residual_test) {
+   const eigen_detail::LanczosSetup setup = eigen_detail::validate_lanczos(op, b_inner, options);
+   n_ = setup.n;
+   d_ = setup.d;
+@@ -281,45 +286,64 @@
+ /// was set by restart()).
+ template <class T>
+ void ThickRestartLanczos<T>::expand(index_t first) {
++  // Bound the number of dense projected eigensolves when a caller requests a large basis.
++  const index_t probe_stride = std::max<index_t>({1, (ncv_ - nev_) / 16, nev_ / 8});
+   for (index_t j = first; j < ncv_; ++j) {
+     {
+       ScopedTimer t(time_.op);
+       op_.apply(vcol(j), n_, vcol(j + 1), n_, 1);
+     }
+-    ScopedTimer t(time_.orthogonalization);
+-    const auto [op_norm, beta] = orthogonalize(j + 1);  // op_norm = ||Op v_j||_M
+-    // Op is M-self-adjoint, so the diagonal coefficient is real up to rounding.
+-    h_(j, j) = T(std::real(coef_[d_ + j]));
+-    const bool last = j + 1 == ncv_;
+-    double coupling = beta;
+-    if (beta <= kBreakdownTol * op_norm) {  // local scale, see "Breakdown" above
+-      coupling = 0.0;
+-      // A full-space cycle needs no vector beyond v_{n-d-1}; otherwise the continuation (or the
+-      // next restart) needs a residual vector, so start an independent Krylov sequence.
+-      if (!(last && full_space_)) set_random_vector(j + 1);
+-    } else {
+-      normalize(j + 1, beta);
++    {
++      ScopedTimer t(time_.orthogonalization);
++      const auto [op_norm, beta] = orthogonalize(j + 1);  // op_norm = ||Op v_j||_M
++      // Op is M-self-adjoint, so the diagonal coefficient is real up to rounding.
++      h_(j, j) = T(std::real(coef_[d_ + j]));
++      const bool last = j + 1 == ncv_;
++      double coupling = beta;
++      if (beta <= kBreakdownTol * op_norm) {  // local scale, see "Breakdown" above
++        coupling = 0.0;
++        // A full-space cycle needs no vector beyond v_{n-d-1}; otherwise the continuation (or the
++        // next restart) needs a residual vector, so start an independent Krylov sequence.
++        if (!(last && full_space_)) set_random_vector(j + 1);
++      } else {
++        normalize(j + 1, beta);
++      }
++      beta_ = coupling;
++      if (!last) {
++        h_(j + 1, j) = T(coupling);
++        h_(j, j + 1) = T(coupling);
++      }
+     }
+-    if (last) {
+-      beta_ = coupling;
+-    } else {
+-      h_(j + 1, j) = T(coupling);
+-      h_(j, j + 1) = T(coupling);
+-    }
+-  }
+-}
+-
+-template <class T>
+-void ThickRestartLanczos<T>::rayleigh_ritz() {
++    m_ = j + 1;
++    // Only an accepted original-problem test may shorten a cycle. A rejected probe leaves
++    // the ordinary recurrence and stopping points unchanged, including full-space solves.
++    if (residual_test_ && !full_space_ && m_ >= nev_ + 2 && m_ < ncv_ &&
++        (m_ - nev_ - 2) % probe_stride == 0 && rayleigh_ritz()) return;
++  }
++}
++
++template <class T>
++bool ThickRestartLanczos<T>::rayleigh_ritz() {
+   ScopedTimer t(time_.rayleigh_ritz);
+-  const index_t m = ncv_;
++  const index_t m = m_;
+   const auto mm = static_cast<fint>(m);
+-  rr_.s = h_;  // H is stored exactly Hermitian (both triangles), so it is its own Hermitian part
++  rr_.s.resize(m, m);
++  for (index_t j = 0; j < m; ++j) std::copy(h_.col(j), h_.col(j) + m, rr_.s.col(j));
+   rr_.theta.assign(static_cast<std::size_t>(m), 0.0);
+   lapack::heev('V', 'L', mm, rr_.s.data(), mm, rr_.theta.data());
+   rr_.est.assign(static_cast<std::size_t>(m), 0.0);
+   for (index_t i = 0; i < m; ++i) rr_.est[i] = beta_ * std::abs(rr_.s(m - 1, i));
+   rr_.classify(opt_.tol, which_);
++  if (!residual_test_ || full_space_) return false;
++  const index_t wanted = lead_ > 0 ? lead_ : nev_;
++  for (index_t l = 0; l < wanted; ++l) {
++    const index_t i = rr_.order[l];
++    if (!(rr_.est[i] <= residual_test_->probe_tol * rr_.ref[i])) return false;
++  }
++  const auto candidates = rr_.result(n_, wanted, vcol(0));
++  if (!residual_test_->accept(candidates.vectors, candidates.theta)) return false;
++  for (index_t l = 0; l < wanted; ++l) rr_.conv[rr_.order[l]] = 1;
++  return true;
+ }
+ 
+ /// Appends the history record of the current Rayleigh-Ritz step; returns the number of converged
+@@ -385,7 +409,7 @@
+   index_t first = 0;
+   for (;;) {
+     expand(first);
+-    rayleigh_ritz();
++    if (m_ == ncv_) rayleigh_ritz();  // an early stop leaves its accepted probe current
+     record_history();
+     if (rr_.done(nev_, lead_) || full_space_ || restarts_ == opt_.max_restarts) break;
+     restart(keep);
+@@ -594,16 +618,18 @@
+ template <class T>
+ HermitianEigResult<T> lanczos_krylov_schur_timed(LinearOperator<T>& op, LinearOperator<T>* b_inner,
+                                                  Which which, const KrylovSchurOptions<T>& options,
+-                                                 LanczosTimings& timings) {
++                                                 LanczosTimings& timings,
++                                                 const OriginalResidualTest<T>* residual_test) {
+   if (options.block_size != 1) {
+     if (options.block_size < 1)
+       HS_THROW(InvalidInput,
+                "lanczos_krylov_schur: block_size must be >= 1, got " << options.block_size);
+-    return block_lanczos_krylov_schur_timed(op, b_inner, which, options, timings);
++    return block_lanczos_krylov_schur_timed(op, b_inner, which, options, timings,
++                                          BlockTuning{}, nullptr, residual_test);
+   }
+   timings = LanczosTimings{};
+   Timer total;
+-  ThickRestartLanczos<T> solver(op, b_inner, which, options, timings);
++  ThickRestartLanczos<T> solver(op, b_inner, which, options, timings, residual_test);
+   HermitianEigResult<T> result = solver.run();
+   timings.total = total.seconds();
+   return result;
+@@ -623,7 +649,7 @@
+                                                          Which, const KrylovSchurOptions<T>&);   \
+   template HermitianEigResult<T> eigen_detail::lanczos_krylov_schur_timed<T>(                    \
+       LinearOperator<T>&, LinearOperator<T>*, Which, const KrylovSchurOptions<T>&,               \
+-      eigen_detail::LanczosTimings&);                                                            \
++      eigen_detail::LanczosTimings&, const eigen_detail::OriginalResidualTest<T>*);               \
+   template eigen_detail::LanczosSetup eigen_detail::validate_lanczos<T>(                         \
+       const LinearOperator<T>&, const LinearOperator<T>*, const KrylovSchurOptions<T>&);         \
+   template void eigen_detail::check_deflation<T>(index_t, index_t, const T*, T*,                 \
+--- a/src/driver/definite.cpp
++++ b/src/driver/definite.cpp
+@@ -149,7 +149,7 @@
+   HermitianEigResult<T> res;
+   // Shift-invert residuals can be much stricter than the requested backward error of
+   // (A, B). Test the actual Ritz vectors before spending further solves on that gap.
+-  // Only the first, exact-factor block run uses this shortcut. Its existing memory plan
++  // Only the first, exact-factor run uses this shortcut. Its existing memory plan
+   // reserves 4*nev columns beside the basis; this probe needs 3*nev (X, AX, BX).
+   eigen_detail::OriginalResidualTest<T> original;
+   index_t original_probes = 0;
+@@ -174,10 +174,10 @@
+   };
+   {
+     PhaseScope phase(c.clock, Phase::Iterate);
+-    if (test_original_residual && ko.block_size > 1 && !deflation && !inexact_factor(fac.options())) {
++    if (test_original_residual && !deflation && !inexact_factor(fac.options())) {
+       eigen_detail::LanczosTimings unused;
+-      res = eigen_detail::block_lanczos_krylov_schur_timed<T>(
+-          op, b_op.get(), which, ko, unused, eigen_detail::BlockTuning{}, nullptr, &original);
++      res = eigen_detail::lanczos_krylov_schur_timed<T>(
++          op, b_op.get(), which, ko, unused, &original);
+     } else {
+       res = lanczos_krylov_schur<T>(op, b_op.get(), which, ko);
+     }
+--- a/tests/cpp/test_block_lanczos.cpp
++++ b/tests/cpp/test_block_lanczos.cpp
+@@ -582,38 +582,79 @@
+   hs::test::DiagonalOperator<T> op(std::vector<T>(diagonal.begin(), diagonal.end()));
+   hs::KrylovSchurOptions<T> opt;
+   opt.nev = 6;
+-  opt.block_size = 2;
+-  opt.tol = 1e-13;
++  for (index_t p : {1, 2}) {
++    SCOPED_TRACE(p);
++    opt.block_size = p;
++    opt.tol = 1e-13;
++    hs::eigen_detail::LanczosTimings timing;
++    const auto baseline = hs::lanczos_krylov_schur<T>(op, nullptr, hs::Which::LargestMagnitude, opt);
++    ASSERT_TRUE(baseline.converged);
++    hs::eigen_detail::OriginalResidualTest<T> test;
++    test.probe_tol = 1e-3;
++    int probes = 0;
++    test.accept = [&](const DenseMatrix<T>&, const std::vector<double>&) { ++probes; return false; };
++    const auto rejected = hs::eigen_detail::lanczos_krylov_schur_timed<T>(
++        op, nullptr, hs::Which::LargestMagnitude, opt, timing, &test);
++    EXPECT_GT(probes, 0);
++    EXPECT_EQ(rejected.op_applies, baseline.op_applies);
++    EXPECT_EQ(rejected.theta, baseline.theta);
++    EXPECT_EQ(rejected.estimate, baseline.estimate);
++    test.accept = [&](const DenseMatrix<T>& x, const std::vector<double>& theta) {
++      for (index_t j = 0; j < x.cols(); ++j) {
++        double r2 = 0.0, x2 = 0.0;
++        for (index_t i = 0; i < n; ++i) {
++          r2 += std::norm((diagonal[i] - theta[j]) * x(i, j));
++          x2 += std::norm(x(i, j));
++        }
++        if (!(std::sqrt(r2 / x2) <= 1e-7)) return false;
++      }
++      return true;
++    };
++    const auto accepted = hs::eigen_detail::lanczos_krylov_schur_timed<T>(
++        op, nullptr, hs::Which::LargestMagnitude, opt, timing, &test);
++    ASSERT_TRUE(accepted.converged);
++    EXPECT_LT(accepted.op_applies, baseline.op_applies);
++    EXPECT_TRUE(test.accept(accepted.vectors, accepted.theta));
++    for (index_t j = 0; j < opt.nev; ++j) EXPECT_NEAR(accepted.theta[j], diagonal[j], 1e-7);
++  }
++}
++
++TYPED_TEST(LanczosBlockOrthoTyped, SingleVectorOriginalTestPreservesFullSpaceAndLeadContracts) {
++  using T = TypeParam;
++  constexpr index_t n = 40;
++  std::vector<T> diagonal(n);
++  for (index_t i = 0; i < n; ++i) diagonal[i] = T(1.0 / (0.5 + static_cast<double>(i)));
++  hs::test::DiagonalOperator<T> op(diagonal);
++  hs::KrylovSchurOptions<T> opt;
++  opt.nev = 6;
++  opt.ncv = n;
++  opt.block_size = 1;
+   hs::eigen_detail::LanczosTimings timing;
+-  const auto baseline = hs::lanczos_krylov_schur<T>(op, nullptr, hs::Which::LargestMagnitude, opt);
+-  ASSERT_TRUE(baseline.converged);
+   hs::eigen_detail::OriginalResidualTest<T> test;
++  test.probe_tol = 1.0;
++  int probes = 0;
++  test.accept = [&](const DenseMatrix<T>&, const std::vector<double>&) { ++probes; return true; };
++  const auto full = hs::eigen_detail::lanczos_krylov_schur_timed<T>(
++      op, nullptr, hs::Which::LargestMagnitude, opt, timing, &test);
++  EXPECT_TRUE(full.converged);
++  EXPECT_EQ(full.op_applies, n);
++  EXPECT_EQ(probes, 0);
++
++  opt.ncv = 0;
++  opt.lead_nev = 2;
+   test.probe_tol = 1e-3;
+-  int probes = 0;
+-  test.accept = [&](const DenseMatrix<T>&, const std::vector<double>&) { ++probes; return false; };
+-  const auto rejected = hs::eigen_detail::block_lanczos_krylov_schur_timed<T>(
+-      op, nullptr, hs::Which::LargestMagnitude, opt, timing, {}, nullptr, &test);
++  test.accept = [&](const DenseMatrix<T>& x, const std::vector<double>& theta) {
++    ++probes;
++    EXPECT_EQ(x.cols(), opt.lead_nev);
++    EXPECT_EQ(theta.size(), static_cast<std::size_t>(opt.lead_nev));
++    return true;
++  };
++  const auto lead = hs::eigen_detail::lanczos_krylov_schur_timed<T>(
++      op, nullptr, hs::Which::LargestMagnitude, opt, timing, &test);
+   EXPECT_GT(probes, 0);
+-  EXPECT_EQ(rejected.op_applies, baseline.op_applies);
+-  EXPECT_EQ(rejected.theta, baseline.theta);
+-  EXPECT_EQ(rejected.estimate, baseline.estimate);
+-  test.accept = [&](const DenseMatrix<T>& x, const std::vector<double>& theta) {
+-    for (index_t j = 0; j < x.cols(); ++j) {
+-      double r2 = 0.0, x2 = 0.0;
+-      for (index_t i = 0; i < n; ++i) {
+-        r2 += std::norm((diagonal[i] - theta[j]) * x(i, j));
+-        x2 += std::norm(x(i, j));
+-      }
+-      if (!(std::sqrt(r2 / x2) <= 1e-7)) return false;
+-    }
+-    return true;
+-  };
+-  const auto accepted = hs::eigen_detail::block_lanczos_krylov_schur_timed<T>(
+-      op, nullptr, hs::Which::LargestMagnitude, opt, timing, {}, nullptr, &test);
+-  ASSERT_TRUE(accepted.converged);
+-  EXPECT_LT(accepted.op_applies, baseline.op_applies);
+-  EXPECT_TRUE(test.accept(accepted.vectors, accepted.theta));
+-  for (index_t j = 0; j < opt.nev; ++j) EXPECT_NEAR(accepted.theta[j], diagonal[j], 1e-7);
++  EXPECT_GE(lead.nconv, opt.lead_nev);
++  EXPECT_LT(lead.op_applies, 22);  // auto basis is nev + 16
++  EXPECT_EQ(lead.vectors.cols(), opt.nev);
+ }
+ 
+ }  // namespace
+--- a/bench/blocktune_sweep.cpp
++++ b/bench/blocktune_sweep.cpp
+@@ -394,7 +394,8 @@
+       };
+       const auto r =
+           c.p == 1 ? hs::eigen_detail::lanczos_krylov_schur_timed<T>(
+-                         op, bop.get(), hs::Which::LargestMagnitude, ko, tm)
++                         op, bop.get(), hs::Which::LargestMagnitude, ko, tm,
++                         args.original_tol > 0.0 ? &original : nullptr)
+                    : hs::eigen_detail::block_lanczos_krylov_schur_timed<T>(
+                          op, bop.get(), hs::Which::LargestMagnitude, ko, tm, c.tuning, nullptr,
+                          args.original_tol > 0.0 ? &original : nullptr);

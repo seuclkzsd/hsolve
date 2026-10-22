@@ -1,0 +1,495 @@
+--- a/README.md
++++ b/README.md
+@@ -36,6 +36,7 @@
+ 
+ **MUMPS 的来源**（P9 集成）：`tools/dev/build.sh` 默认（`HS_MUMPS=source`）由仓库内的官方源码包
+ `third_party/mumps/MUMPS_5.8.2.tar.gz`（sha256 校验，CeCILL-C，离线可构建）加 `patches/mumps-5.8.2-l0-blocking.patch`
++与 `patches/mumps-5.8.2-pivot-extrema.patch`（省去不改变主元极值的原子写入）
+ 编译顺序版 MUMPS 5.8.2（conda-forge 的可移植编译选项，链接环境的 METIS / SCOTCH / OpenBLAS；`tools/dev/mumps_cache.sh`
+ 按源码包、补丁、选项、脚本、编译器与环境的哈希缓存在 `build/deps/`，`HS_MUMPS_CACHE` 可改），所有预设、命令行与
+ Python 模块都链接它（`-DHSOLVE_MUMPS_ROOT`，RPATH 在环境之前），MUMPS 的块参数默认取 P9 的（分解快 5–8%，
+--- a/THIRD_PARTY_NOTICES
++++ b/THIRD_PARTY_NOTICES
+@@ -18,7 +18,7 @@
+           2.3  pybind11 3.1 (Python extension module only)       BSD-3-Clause
+   Part 3  Libraries hsolve links at run time (installed from conda-forge, not in this repository;
+           MUMPS: built from the source tarball in third_party/mumps/ by default)
+-          3.1  MUMPS 5.8.2 (modified by an hsolve patch)          CeCILL-C (parts BSD-3-Clause)
++          3.1  MUMPS 5.8.2 (modified by hsolve patches)          CeCILL-C (parts BSD-3-Clause)
+           3.2  OpenBLAS 0.3.34 (BLAS and LAPACK)                  BSD-3-Clause
+           3.3  METIS 5.1.0 (through MUMPS)                        Apache-2.0
+           3.4  SCOTCH 7.0 (through MUMPS)                         CeCILL-C
+@@ -188,11 +188,11 @@
+   with the notice above (third_party/mumps/LICENSE) and the CeCILL-C text
+   (third_party/mumps/CeCILL-C_V1-en.txt; the French text in the tarball's doc/). hsolve's default
+   build (tools/dev/build.sh -> tools/dev/mumps_cache.sh -> tools/dev/build_mumps.sh) compiles it
+-  modified by patches/mumps-5.8.2-l0-blocking.patch, an hsolve modification of MUMPS distributed
+-  under the same CeCILL-C license (its header states what it changes: two block-size controls
+-  under the L0-OpenMP layer). THE MUMPS LIBRARIES OF hsolve's DEFAULT BUILD ARE THEREFORE A MODIFIED
+-  VERSION OF MUMPS 5.8.2 (modified by that patch); `hsolve --version` names the install, whose
+-  BUILD-INFO.txt lists the patch. HS_MUMPS=env tools/dev/build.sh links the environment's unmodified
++  modified by patches/mumps-5.8.2-l0-blocking.patch and patches/mumps-5.8.2-pivot-extrema.patch,
++  hsolve modifications of MUMPS distributed under the same CeCILL-C license (their headers describe
++  two L0 block-size controls and avoiding redundant atomic writes to pivot extrema). THE MUMPS LIBRARIES OF hsolve's DEFAULT BUILD ARE THEREFORE A MODIFIED
++  VERSION OF MUMPS 5.8.2 (modified by those patches); `hsolve --version` names the install, whose
++  BUILD-INFO.txt lists the patches. HS_MUMPS=env tools/dev/build.sh links the environment's unmodified
+   conda-forge mumps-seq instead.
+ 
+ 3.2 OpenBLAS 0.3.34 (OpenMP build, conda-forge libopenblas) - BLAS and LAPACK
+--- a/bench/factspeed_factor.cpp
++++ b/bench/factspeed_factor.cpp
+@@ -278,6 +278,9 @@
+   return {{"rinfog1", m.rinfog(1)},
+           {"rinfog2", m.rinfog(2)},
+           {"rinfog3", m.rinfog(3)},
++          {"rinfog19", m.rinfog(19)},
++          {"rinfog20", m.rinfog(20)},
++          {"rinfog21", m.rinfog(21)},
+           {"infog9", hs::mumps::decode_count(m.infog(9))},
+           {"infog11", m.infog(11)},
+           {"infog12", m.infog(12)},
+--- a/docs/DESIGN.md
++++ b/docs/DESIGN.md
+@@ -398,8 +398,12 @@
+     main a831d79 的端到端实测见 `results/p9_measurements.md`）。
+     以后这类门槛应消除 SCOTCH 的波动：两个二进制用同一主元顺序，或每个 20 次并按 flops 折算
+     （`tools/bench/factspeed_gate_flops.py`，`results/p9_factspeed.md` §4.5）。
++  - **主元极值更新（P13）**：`patches/mumps-5.8.2-pivot-extrema.patch` 在 L0 并行路径中先原子读取
++    DKEEP(19/20/21)，主元绝对值不能改变极值时跳过原子写；需要写时仍执行原来的原子 min/max。
++    极值在一次分解内单调变化，所以并发更新不会使跳过判断失效。四种精度均应用；串行路径、
++    主元选择、零主元检测与精确惯性不变。默认构建包含该补丁；实验和并发统计检查见 `results/p13_measurements.md`。
+   - **默认构建与回退**（P9 集成，`tools/dev/build.sh`、`tools/dev/mumps_cache.sh`）：`build.sh` 的每个预设先运行
+-    `mumps_cache.sh ensure`（在 guard 下）：默认配置 = `build_mumps.sh` 的可移植默认值（nocona -O2）+ L0 分块补丁，
++    `mumps_cache.sh ensure`（在 guard 下）：默认配置 = `build_mumps.sh` 的可移植默认值（nocona -O2）+ L0 分块补丁 + 主元极值补丁，
+     安装在 `$HS_MUMPS_CACHE/mumps-5.8.2-<key>`（默认 `build/deps/`；集群节点共用 `$HOME/deps/mumps-cache`），key 为
+     源码包与补丁的 sha256、编译选项、两个构建脚本的 sha256、C 与 Fortran 编译器的版本行、环境前缀（库按 RPATH 链接
+     其 METIS/SCOTCH/OpenBLAS）的哈希——这些都不变时直接复用（首次约 1.5 分钟，4 个作业）。并发的构建各在临时目录中
+--- a/tests/cpp/test_membudget_single.cpp
++++ b/tests/cpp/test_membudget_single.cpp
+@@ -60,7 +60,7 @@
+ 
+ template <class T>
+ void expect_valid(const hs::Solution<T>& sol) {
+-  EXPECT_TRUE(sol.report.success);
++  EXPECT_TRUE(sol.report.success) << sol.report.to_json();
+   for (const auto& p : sol.report.pairs) EXPECT_LE(p.backward_error, 1e-10);
+   if (sol.report.certificate.performed) {
+     EXPECT_TRUE(sol.report.certificate.passed);
+@@ -445,7 +445,15 @@
+   const double sigma = w[j] + 0.3 * (w[j + 1] - w[j]);  // not mid-way: equidistant multiplets would tie
+   hs::ShiftedPencil<double> pencil(a, nullptr);
+   const Estimates e = estimates(pencil, sigma);
+-  auto cfg = nearest(sigma, 8, hs::FactorPrecision::Auto);
++  // Include the whole boundary multiplet. Splitting it made the certificate request a
++  // deflated rerun whose additional resident basis sometimes exhausted this deliberately
++  // tight budget; that tests rescue memory, not whether the single factors are usable.
++  std::vector<double> distances;
++  for (double x : w) distances.push_back(std::abs(x - sigma));
++  std::sort(distances.begin(), distances.end());
++  std::size_t k = 8;
++  while (k < distances.size() && distances[k] - distances[k - 1] < 1e-8) ++k;
++  auto cfg = nearest(sigma, static_cast<index_t>(k), hs::FactorPrecision::Auto);
+   cfg.ordering = 0;
+   cfg.memory_budget_gb = 8.0;
+   const auto big = hs::solve(a, nullptr, cfg);
+@@ -467,8 +475,8 @@
+   EXPECT_EQ(small.report.precision.requested, hs::FactorPrecision::Auto);
+   EXPECT_EQ(small.report.precision.used, hs::FactorPrecision::Single) << small.report.precision.decision;
+   EXPECT_FALSE(small.report.factor_options.out_of_core);
+-  EXPECT_FALSE(small.report.precision.fallback) << small.report.precision.fallback_reason;
+-  expect_same(small.eigenvalues, nearest_of(w, sigma, 8), 1e-9);
++  EXPECT_FALSE(small.report.precision.fallback) << small.report.to_json();
++  expect_same(small.eigenvalues, nearest_of(w, sigma, k), 1e-9);
+ }
+ 
+ // Auto takes single factors, whose attempt then fails (sigma 1e-8 ||K|| from an eigenvalue:
+--- a/tests/py/test_mumps_build.py
++++ b/tests/py/test_mumps_build.py
+@@ -1,7 +1,7 @@
+ """The MUMPS the built hsolve executable and Python module load (P9 integration; CMakeLists.txt
+ HSOLVE_MUMPS_ROOT, tools/dev/build.sh HS_MUMPS, docs/DESIGN.md §3.4).
+ 
+-The default build links MUMPS 5.8.2 built from third_party/mumps/ with the L0-blocking patch
++The default build links MUMPS 5.8.2 built from third_party/mumps/ with the L0-blocking and pivot-extrema patches
+ (tools/dev/mumps_cache.sh); HS_MUMPS=env links the environment's conda-forge mumps-seq. Both carry
+ the same library names and sonames, so only the RPATH order decides which one the dynamic loader
+ maps. These tests read the build directory's CMakeCache.txt and check that
+@@ -167,6 +167,7 @@
+     desc = run("describe")
+     assert f"tarball-sha256 {_PINNED}" in desc
+     assert "patch mumps-5.8.2-l0-blocking.patch " in desc and "flags --isa nocona --opt O2" in desc
++    assert "patch mumps-5.8.2-pivot-extrema.patch " in desc
+     # Other compilers (or any other input) give another install.
+     assert run("prefix", HS_MUMPS_CACHE=str(tmp_path), FC=os.environ["CC"]) != prefix
+     assert not any(tmp_path.iterdir()), "prefix / describe must not build"
+--- a/third_party/mumps/README.md
++++ b/third_party/mumps/README.md
+@@ -16,11 +16,13 @@
+ sequential MUMPS with OpenMP, conda-forge's portable compiler flags (`-O2 -march=nocona
+ -mtune=haswell`), against the project environment's METIS, SCOTCH and OpenBLAS, **modified by
+ `patches/mumps-5.8.2-l0-blocking.patch`** (two block-size controls under MUMPS' L0-OpenMP layer,
+-KEEP(498/499), read only when set; results/p9_factspeed.md §3.4). The checksum is verified before
++KEEP(498/499), read only when set; results/p9_factspeed.md §3.4), and
++**`patches/mumps-5.8.2-pivot-extrema.patch`** (atomic reads skip redundant writes to shared pivot
++extrema; results/p13_measurements.md). The checksum is verified before
+ every unpack. `HS_MUMPS=env tools/dev/build.sh` links the environment's unmodified conda-forge
+ `mumps-seq` instead.
+ 
+-The patch is a modification of MUMPS and is distributed under the same CeCILL-C license. Binaries
+-built from it carry the notice in `LICENSE` and the information that MUMPS was modified by that
+-patch (`THIRD_PARTY_NOTICES` §3.1; `hsolve --version` names the MUMPS install, whose
+-`BUILD-INFO.txt` lists the patch).
++The patches are modifications of MUMPS and are distributed under the same CeCILL-C license. Binaries
++built from them carry the notice in `LICENSE` and the information that MUMPS was modified by those
++patches (`THIRD_PARTY_NOTICES` §3.1; `hsolve --version` names the MUMPS install, whose
++`BUILD-INFO.txt` lists the patches).
+--- a/tools/dev/build.sh
++++ b/tools/dev/build.sh
+@@ -4,7 +4,7 @@
+ #
+ # MUMPS (every preset links it; the Python module too) - HS_MUMPS selects which:
+ #   source (default)  MUMPS 5.8.2 built from the repository's tarball (third_party/mumps/) with
+-#                     patches/mumps-5.8.2-l0-blocking.patch, cached by tools/dev/mumps_cache.sh
++#                     the L0-blocking and pivot-extrema patches, cached by tools/dev/mumps_cache.sh
+ #                     (first build ~1.5 min, then reused); hsolve then gives MUMPS the P9 block sizes
+ #                     by default (HS_MUMPS_BLOCKING=mumps restores MUMPS' own at run time)
+ #   env               the environment's conda-forge mumps-seq (the pre-P9 build: MUMPS' block sizes)
+--- a/tools/dev/build_mumps.sh
++++ b/tools/dev/build_mumps.sh
+@@ -7,7 +7,7 @@
+ #
+ # The default build (tools/dev/build.sh) does not call this directly but through
+ # tools/dev/mumps_cache.sh, which builds the default configuration (these defaults plus
+-# patches/mumps-5.8.2-l0-blocking.patch) once per cache key and reuses it. Use this script itself
++# the L0-blocking and pivot-extrema patches) once per cache key and reuses it. Use this script itself
+ # for other configurations (link one with HS_MUMPS=<prefix> tools/dev/build.sh).
+ #
+ #   --isa   -march of every MUMPS object. Default nocona (SSE3; with -mtune=haswell
+--- a/tools/dev/mumps_cache.sh
++++ b/tools/dev/mumps_cache.sh
+@@ -1,6 +1,6 @@
+ #!/usr/bin/env bash
+ # The MUMPS of the default build: MUMPS 5.8.2 from third_party/mumps/, patched with
+-# patches/mumps-5.8.2-l0-blocking.patch, built by tools/dev/build_mumps.sh with its portable defaults
++# the L0-blocking and pivot-extrema patches, built by tools/dev/build_mumps.sh with portable defaults
+ # (nocona -O2: conda-forge's flags) against the project environment - built once per cache key and
+ # then reused (P9 integration; docs/DESIGN.md §3.4, results/p9_factspeed.md).
+ #
+@@ -27,7 +27,8 @@
+ repo="$(cd "$here/../.." && pwd)"
+ ver=5.8.2
+ sha=eb515aa688e6dbab414bb6e889ff4c8b23f1691a843c68da5230a33ac4db7039  # = build_mumps.sh's
+-patches=("$repo/patches/mumps-5.8.2-l0-blocking.patch")
++patches=("$repo/patches/mumps-5.8.2-l0-blocking.patch"
++         "$repo/patches/mumps-5.8.2-pivot-extrema.patch")
+ flags=(--isa nocona --opt O2)
+ 
+ die() {
+--- /dev/null
++++ b/patches/mumps-5.8.2-pivot-extrema.patch
+@@ -0,0 +1,224 @@
++MUMPS 5.8.2: avoid redundant atomic writes to pivot extrema (hsolve P13).
++
++The L0 subtree workers share DKEEP(19:21): minimum pivot, minimum non-null
++pivot, maximum pivot. All callers supply absolute pivot values. These extrema
++move monotonically during factorization. Read each statistic atomically first;
++when the pivot cannot change it, skip the original atomic min/max update.
++A concurrent writer can only strengthen the bound. Writers still use atomic
++min/max (never a plain assignment), so races cannot lose an extreme value.
++Negated comparisons keep unordered values on the original update path.
++The serial path, pivot selection, null detection and arithmetic are unchanged.
++Applies to all four arithmetics; no new KEEP entries or application settings.
++
++Apply after mumps-5.8.2-l0-blocking.patch with tools/dev/build_mumps.sh --patch.
++Validation and timings: results/p13_measurements.md and p13_extrema_probe.cpp.
++This is an hsolve modification of MUMPS, distributed under CeCILL-C.
++
++--- a/src/sfac_front_aux.F
+++++ b/src/sfac_front_aux.F
++@@ -2538,6 +2538,7 @@
++       REAL, INTENT(INOUT) :: DKEEP(230)
++       LOGICAL, INTENT(IN) :: NULLPIVOT
++       INTEGER, INTENT(IN) :: KEEP(500)
+++      REAL :: CURRENT
++       IF (KEEP(405).EQ.0) THEN
++         DKEEP(21) = max(DKEEP(21), DIAG)
++         DKEEP(19) = min(DKEEP(19), DIAG)
++@@ -2545,16 +2546,35 @@
++           DKEEP(20) = min(DKEEP(20), DIAG)
++         ENDIF
++       ELSE
++-!$OMP   ATOMIC UPDATE
++-        DKEEP(21) = max(DKEEP(21), DIAG)
+++C       Extrema only move outwards during factorization. An atomic read
+++C       can skip an update that cannot change them; a concurrent update
+++C       only makes that skip safer. Keep the atomic min/max for writers.
+++C       Negated comparisons retain the update path for unordered values.
+++!$OMP   ATOMIC READ
+++        CURRENT = DKEEP(21)
++ !$OMP   END ATOMIC
++-!$OMP   ATOMIC UPDATE
++-        DKEEP(19) = min(DKEEP(19), DIAG)
+++        IF (.NOT.(DIAG.LE.CURRENT)) THEN
+++!$OMP     ATOMIC UPDATE
+++          DKEEP(21) = max(DKEEP(21), DIAG)
+++!$OMP     END ATOMIC
+++        ENDIF
+++!$OMP   ATOMIC READ
+++        CURRENT = DKEEP(19)
++ !$OMP   END ATOMIC
+++        IF (.NOT.(DIAG.GE.CURRENT)) THEN
+++!$OMP     ATOMIC UPDATE
+++          DKEEP(19) = min(DKEEP(19), DIAG)
+++!$OMP     END ATOMIC
+++        ENDIF
++         IF (.NOT.NULLPIVOT) THEN
++-!$OMP     ATOMIC UPDATE
++-          DKEEP(20) = min(DKEEP(20), DIAG)
+++!$OMP     ATOMIC READ
+++          CURRENT = DKEEP(20)
++ !$OMP     END ATOMIC
+++          IF (.NOT.(DIAG.GE.CURRENT)) THEN
+++!$OMP       ATOMIC UPDATE
+++            DKEEP(20) = min(DKEEP(20), DIAG)
+++!$OMP       END ATOMIC
+++          ENDIF
++         ENDIF
++       ENDIF
++       RETURN
++--- a/src/dfac_front_aux.F
+++++ b/src/dfac_front_aux.F
++@@ -2538,6 +2538,7 @@
++       DOUBLE PRECISION, INTENT(INOUT) :: DKEEP(230)
++       LOGICAL, INTENT(IN) :: NULLPIVOT
++       INTEGER, INTENT(IN) :: KEEP(500)
+++      DOUBLE PRECISION :: CURRENT
++       IF (KEEP(405).EQ.0) THEN
++         DKEEP(21) = max(DKEEP(21), DIAG)
++         DKEEP(19) = min(DKEEP(19), DIAG)
++@@ -2545,16 +2546,35 @@
++           DKEEP(20) = min(DKEEP(20), DIAG)
++         ENDIF
++       ELSE
++-!$OMP   ATOMIC UPDATE
++-        DKEEP(21) = max(DKEEP(21), DIAG)
+++C       Extrema only move outwards during factorization. An atomic read
+++C       can skip an update that cannot change them; a concurrent update
+++C       only makes that skip safer. Keep the atomic min/max for writers.
+++C       Negated comparisons retain the update path for unordered values.
+++!$OMP   ATOMIC READ
+++        CURRENT = DKEEP(21)
++ !$OMP   END ATOMIC
++-!$OMP   ATOMIC UPDATE
++-        DKEEP(19) = min(DKEEP(19), DIAG)
+++        IF (.NOT.(DIAG.LE.CURRENT)) THEN
+++!$OMP     ATOMIC UPDATE
+++          DKEEP(21) = max(DKEEP(21), DIAG)
+++!$OMP     END ATOMIC
+++        ENDIF
+++!$OMP   ATOMIC READ
+++        CURRENT = DKEEP(19)
++ !$OMP   END ATOMIC
+++        IF (.NOT.(DIAG.GE.CURRENT)) THEN
+++!$OMP     ATOMIC UPDATE
+++          DKEEP(19) = min(DKEEP(19), DIAG)
+++!$OMP     END ATOMIC
+++        ENDIF
++         IF (.NOT.NULLPIVOT) THEN
++-!$OMP     ATOMIC UPDATE
++-          DKEEP(20) = min(DKEEP(20), DIAG)
+++!$OMP     ATOMIC READ
+++          CURRENT = DKEEP(20)
++ !$OMP     END ATOMIC
+++          IF (.NOT.(DIAG.GE.CURRENT)) THEN
+++!$OMP       ATOMIC UPDATE
+++            DKEEP(20) = min(DKEEP(20), DIAG)
+++!$OMP       END ATOMIC
+++          ENDIF
++         ENDIF
++       ENDIF
++       RETURN
++--- a/src/cfac_front_aux.F
+++++ b/src/cfac_front_aux.F
++@@ -2527,6 +2527,7 @@
++       REAL, INTENT(INOUT) :: DKEEP(230)
++       LOGICAL, INTENT(IN) :: NULLPIVOT
++       INTEGER, INTENT(IN) :: KEEP(500)
+++      REAL :: CURRENT
++       IF (KEEP(405).EQ.0) THEN
++         DKEEP(21) = max(DKEEP(21), DIAG)
++         DKEEP(19) = min(DKEEP(19), DIAG)
++@@ -2534,16 +2535,35 @@
++           DKEEP(20) = min(DKEEP(20), DIAG)
++         ENDIF
++       ELSE
++-!$OMP   ATOMIC UPDATE
++-        DKEEP(21) = max(DKEEP(21), DIAG)
+++C       Extrema only move outwards during factorization. An atomic read
+++C       can skip an update that cannot change them; a concurrent update
+++C       only makes that skip safer. Keep the atomic min/max for writers.
+++C       Negated comparisons retain the update path for unordered values.
+++!$OMP   ATOMIC READ
+++        CURRENT = DKEEP(21)
++ !$OMP   END ATOMIC
++-!$OMP   ATOMIC UPDATE
++-        DKEEP(19) = min(DKEEP(19), DIAG)
+++        IF (.NOT.(DIAG.LE.CURRENT)) THEN
+++!$OMP     ATOMIC UPDATE
+++          DKEEP(21) = max(DKEEP(21), DIAG)
+++!$OMP     END ATOMIC
+++        ENDIF
+++!$OMP   ATOMIC READ
+++        CURRENT = DKEEP(19)
++ !$OMP   END ATOMIC
+++        IF (.NOT.(DIAG.GE.CURRENT)) THEN
+++!$OMP     ATOMIC UPDATE
+++          DKEEP(19) = min(DKEEP(19), DIAG)
+++!$OMP     END ATOMIC
+++        ENDIF
++         IF (.NOT.NULLPIVOT) THEN
++-!$OMP     ATOMIC UPDATE
++-          DKEEP(20) = min(DKEEP(20), DIAG)
+++!$OMP     ATOMIC READ
+++          CURRENT = DKEEP(20)
++ !$OMP     END ATOMIC
+++          IF (.NOT.(DIAG.GE.CURRENT)) THEN
+++!$OMP       ATOMIC UPDATE
+++            DKEEP(20) = min(DKEEP(20), DIAG)
+++!$OMP       END ATOMIC
+++          ENDIF
++         ENDIF
++       ENDIF
++       RETURN
++--- a/src/zfac_front_aux.F
+++++ b/src/zfac_front_aux.F
++@@ -2527,6 +2527,7 @@
++       DOUBLE PRECISION, INTENT(INOUT) :: DKEEP(230)
++       LOGICAL, INTENT(IN) :: NULLPIVOT
++       INTEGER, INTENT(IN) :: KEEP(500)
+++      DOUBLE PRECISION :: CURRENT
++       IF (KEEP(405).EQ.0) THEN
++         DKEEP(21) = max(DKEEP(21), DIAG)
++         DKEEP(19) = min(DKEEP(19), DIAG)
++@@ -2534,16 +2535,35 @@
++           DKEEP(20) = min(DKEEP(20), DIAG)
++         ENDIF
++       ELSE
++-!$OMP   ATOMIC UPDATE
++-        DKEEP(21) = max(DKEEP(21), DIAG)
+++C       Extrema only move outwards during factorization. An atomic read
+++C       can skip an update that cannot change them; a concurrent update
+++C       only makes that skip safer. Keep the atomic min/max for writers.
+++C       Negated comparisons retain the update path for unordered values.
+++!$OMP   ATOMIC READ
+++        CURRENT = DKEEP(21)
++ !$OMP   END ATOMIC
++-!$OMP   ATOMIC UPDATE
++-        DKEEP(19) = min(DKEEP(19), DIAG)
+++        IF (.NOT.(DIAG.LE.CURRENT)) THEN
+++!$OMP     ATOMIC UPDATE
+++          DKEEP(21) = max(DKEEP(21), DIAG)
+++!$OMP     END ATOMIC
+++        ENDIF
+++!$OMP   ATOMIC READ
+++        CURRENT = DKEEP(19)
++ !$OMP   END ATOMIC
+++        IF (.NOT.(DIAG.GE.CURRENT)) THEN
+++!$OMP     ATOMIC UPDATE
+++          DKEEP(19) = min(DKEEP(19), DIAG)
+++!$OMP     END ATOMIC
+++        ENDIF
++         IF (.NOT.NULLPIVOT) THEN
++-!$OMP     ATOMIC UPDATE
++-          DKEEP(20) = min(DKEEP(20), DIAG)
+++!$OMP     ATOMIC READ
+++          CURRENT = DKEEP(20)
++ !$OMP     END ATOMIC
+++          IF (.NOT.(DIAG.GE.CURRENT)) THEN
+++!$OMP       ATOMIC UPDATE
+++            DKEEP(20) = min(DKEEP(20), DIAG)
+++!$OMP       END ATOMIC
+++          ENDIF
++         ENDIF
++       ENDIF
++       RETURN
+--- /dev/null
++++ b/results/p13_extrema_probe.cpp
+@@ -0,0 +1,78 @@
++// P13 regression probe for the pinned GNU Fortran MUMPS 5.8.2 extrema routine.
++// Compile/run on the cluster; pass the tested MUMPS install's lib directory.
++// Exercises the actual library routine concurrently, including null-only input,
++// repeated values, subnormals, infinities, and resetting statistics between runs.
++#include <dlfcn.h>
++#include <omp.h>
++
++#include <algorithm>
++#include <array>
++#include <cmath>
++#include <iostream>
++#include <limits>
++#include <stdexcept>
++#include <string>
++#include <vector>
++
++template <class T>
++void check(const std::string& dir, char kind) {
++  const std::string name(1, kind);
++  void* lib = dlopen((dir + "/lib" + name + "mumps_seq.so").c_str(), RTLD_NOW | RTLD_LOCAL);
++  if (!lib) throw std::runtime_error(dlerror());
++  using Update = void (*)(const T*, T*, const int*, const int*);
++  const auto update = reinterpret_cast<Update>(dlsym(
++      lib, ("__" + name + "mumps_fac_front_aux_m_MOD_" + name + "mumps_update_minmax_pivot").c_str()));
++  if (!update) throw std::runtime_error(dlerror());
++  constexpr int n = 65536;
++  std::vector<T> values(n);
++  std::vector<int> nulls(n);
++  int checked = 0;
++  for (const int threads : {1, 2, 8}) {
++    for (int round = 0; round < 12; ++round) {
++      const int mode = round % 6;
++      for (int i = 0; i < n; ++i) {
++        values[i] = T(1 + ((i * 8191 + round * 97) % n));
++        nulls[i] = mode == 2 || (mode != 0 && (i + round) % 13 == 0);
++        if (mode == 3) values[i] *= std::numeric_limits<T>::denorm_min();
++        if (mode == 5) values[i] = T(7);  // ties on every thread
++      }
++      if (mode == 1) { values[17] = T(0); nulls[17] = 1; }
++      if (mode == 4) values[n / 2] = std::numeric_limits<T>::infinity();
++      const T huge = std::numeric_limits<T>::max();
++      std::array<T, 3> expected{huge, huge, T(0)};
++      for (int i = 0; i < n; ++i) {
++        expected[0] = std::min(expected[0], values[i]);
++        if (!nulls[i]) expected[1] = std::min(expected[1], values[i]);
++        expected[2] = std::max(expected[2], values[i]);
++      }
++      alignas(64) std::array<T, 230> stats{};
++      std::array<int, 500> keep{};
++      stats[18] = stats[19] = huge;
++      keep[404] = threads == 1 ? 0 : 1;
++#pragma omp parallel for schedule(static, 1) num_threads(threads)
++      for (int i = 0; i < n; ++i) update(&values[i], stats.data(), keep.data(), &nulls[i]);
++      for (int i = 0; i < 3; ++i) {
++        if (stats[18 + i] != expected[i])
++          throw std::runtime_error(name + ": incorrect extrema, threads=" + std::to_string(threads) +
++                                   " round=" + std::to_string(round) + " statistic=" + std::to_string(i));
++      }
++      ++checked;
++    }
++  }
++  std::cout << name << ": " << checked << " parallel/serial cases passed\n";
++  dlclose(lib);
++}
++
++int main(int argc, char** argv) {
++  if (argc != 2) return 2;
++  try {
++    omp_set_dynamic(0);
++    check<float>(argv[1], 's');
++    check<double>(argv[1], 'd');
++    check<float>(argv[1], 'c');
++    check<double>(argv[1], 'z');
++  } catch (const std::exception& e) {
++    std::cerr << e.what() << '\n';
++    return 1;
++  }
++}

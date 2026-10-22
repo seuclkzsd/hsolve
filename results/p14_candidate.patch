@@ -1,0 +1,630 @@
+--- a/README.md
++++ b/README.md
+@@ -36,7 +36,8 @@
+ 
+ **MUMPS 的来源**（P9 集成）：`tools/dev/build.sh` 默认（`HS_MUMPS=source`）由仓库内的官方源码包
+ `third_party/mumps/MUMPS_5.8.2.tar.gz`（sha256 校验，CeCILL-C，离线可构建）加 `patches/mumps-5.8.2-l0-blocking.patch`
+-与 `patches/mumps-5.8.2-pivot-extrema.patch`（省去不改变主元极值的原子写入）
++、`patches/mumps-5.8.2-pivot-extrema.patch`（省去不改变主元极值的原子写入）
++与 `patches/mumps-5.8.2-local-scatter.patch`（并行整理单进程的完整右端向量）
+ 编译顺序版 MUMPS 5.8.2（conda-forge 的可移植编译选项，链接环境的 METIS / SCOTCH / OpenBLAS；`tools/dev/mumps_cache.sh`
+ 按源码包、补丁、选项、脚本、编译器与环境的哈希缓存在 `build/deps/`，`HS_MUMPS_CACHE` 可改），所有预设、命令行与
+ Python 模块都链接它（`-DHSOLVE_MUMPS_ROOT`，RPATH 在环境之前），MUMPS 的块参数默认取 P9 的（分解快 5–8%，
+--- a/THIRD_PARTY_NOTICES
++++ b/THIRD_PARTY_NOTICES
+@@ -188,9 +188,11 @@
+   with the notice above (third_party/mumps/LICENSE) and the CeCILL-C text
+   (third_party/mumps/CeCILL-C_V1-en.txt; the French text in the tarball's doc/). hsolve's default
+   build (tools/dev/build.sh -> tools/dev/mumps_cache.sh -> tools/dev/build_mumps.sh) compiles it
+-  modified by patches/mumps-5.8.2-l0-blocking.patch and patches/mumps-5.8.2-pivot-extrema.patch,
++  modified by patches/mumps-5.8.2-l0-blocking.patch, patches/mumps-5.8.2-pivot-extrema.patch
++  and patches/mumps-5.8.2-local-scatter.patch,
+   hsolve modifications of MUMPS distributed under the same CeCILL-C license (their headers describe
+-  two L0 block-size controls and avoiding redundant atomic writes to pivot extrema). THE MUMPS LIBRARIES OF hsolve's DEFAULT BUILD ARE THEREFORE A MODIFIED
++  two L0 block-size controls, avoiding redundant atomic writes to pivot extrema, and parallel
++  local RHS scatter). THE MUMPS LIBRARIES OF hsolve's DEFAULT BUILD ARE THEREFORE A MODIFIED
+   VERSION OF MUMPS 5.8.2 (modified by those patches); `hsolve --version` names the install, whose
+   BUILD-INFO.txt lists the patches. HS_MUMPS=env tools/dev/build.sh links the environment's unmodified
+   conda-forge mumps-seq instead.
+--- a/bench/factspeed_factor.cpp
++++ b/bench/factspeed_factor.cpp
+@@ -35,6 +35,11 @@
+ // (format at sampler::dump), aggregated and symbolised by tools/bench/factspeed_symbolize.py (nm;
+ // by symbol, category, time window, thread), and the JSON line "samples" a per-job count by object.
+ // CPU time includes system time (page faults count at the faulting instruction).
++// --jobs solve instead runs the whole driver using config.json; only --threads, --reps and
++// --sample-us/--sample-out apply. Each repetition has its own sample tag and emits a full report.
++// This benchmark does not link the CLI's BLAS hook: preload libhsolve_blashook.so when profiling
++// the default CLI kernels. Repeated in-process solves reuse warm allocations/caches; use fresh
++// CLI processes without sampling for performance comparisons and independent tools/eval checks.
+ // Output: one JSON object per line on stdout. Run through tools/run/guard.py (measurement slot for
+ // timings: --exclusive).
+ //
+@@ -116,6 +121,9 @@
+   int sample_us = 0;
+   std::string sample_out;
+ };
++
++// --jobs solve profiles complete solves with the case config; only --threads, --reps,
++// --sample-us/--sample-out apply in this mode. Other factor controls are ignored.
+ 
+ // ---------------------------------------------------------------- SIGPROF sampler
+ // The handler only stores the interrupted RIP (tagged with the current job in the top byte; user
+@@ -309,8 +317,41 @@
+   return p;
+ }
+ 
++// Full-driver profiling: original case configuration, with only the thread count overridden.
++// Sampling excludes input loading and output. Each repetition gets its own tag/time origin.
++template <class T>
++int run_solve(const Args& args, const hs::CsrMatrix<T>& a, const hs::CsrMatrix<T>* b) {
++  if (args.reps < 1 || args.reps > 254) HS_THROW(InvalidInput, "solve profiling needs 1..254 repetitions");
++  std::ifstream file(args.case_dir / "config.json");
++  if (!file) HS_THROW(Io, "cannot open " << (args.case_dir / "config.json"));
++  std::stringstream text;
++  text << file.rdbuf();
++  auto cfg = hs::parse_config(text.str());
++  if (args.threads > 0) cfg.threads = args.threads;
++  if (args.sample_us > 0) sampler::install();
++  std::vector<std::string> tags{"none"};
++  bool ok = true;
++  for (int r = 0; r < args.reps; ++r) {
++    tags.push_back("solve-r" + std::to_string(r));
++    if (args.sample_us > 0) sampler::start(r + 1, args.sample_us);
++    auto sol = hs::solve(a, b, cfg);
++    if (args.sample_us > 0) sampler::stop();
++    auto rec = json::parse(sol.report.to_json());
++    rec.update({{"event", "solve"}, {"rep", r}, {"leader_tid", syscall(SYS_gettid)}});
++    emit(rec);
++    ok = ok && sol.report.success;
++  }
++  if (args.sample_us > 0) {
++    auto rec = sampler::dump(tags, args.sample_out);
++    rec["event"] = "samples";
++    emit(rec);
++  }
++  return ok ? 0 : 1;
++}
++
+ template <class T>
+ int run(const Args& args, const hs::CsrMatrix<T>& a, const hs::CsrMatrix<T>* b) {
++  if (args.jobs == std::vector<std::string>{"solve"}) return run_solve(args, a, b);
+   const hs::ShiftedPencil<T> pencil(a, b);
+   const int threads = args.threads > 0 ? args.threads : omp_get_max_threads();
+   hs::FactorOptions fo;  // the driver's (factor_options_from) for an in-core double solve
+@@ -484,7 +525,7 @@
+     }
+   }
+   if (args.case_dir.empty()) {
+-    std::cerr << "usage: bench_factspeed_factor --case DIR [--lower a --upper b] [--jobs main,a,b] [...]\n";
++    std::cerr << "usage: bench_factspeed_factor --case DIR [--lower a --upper b] [--jobs main,a,b|solve] [...]\n";
+     return 2;
+   }
+   if (args.thp_disable) {
+--- a/docs/DESIGN.md
++++ b/docs/DESIGN.md
+@@ -402,8 +402,12 @@
+     DKEEP(19/20/21)，主元绝对值不能改变极值时跳过原子写；需要写时仍执行原来的原子 min/max。
+     极值在一次分解内单调变化，所以并发更新不会使跳过判断失效。四种精度均应用；串行路径、
+     主元选择、零主元检测与精确惯性不变。默认构建包含该补丁；实验和并发统计检查见 `results/p13_measurements.md`。
++  - **本地右端整理（P14）**：`patches/mumps-5.8.2-local-scatter.patch` 在单个工作进程拥有全部主元行、
++    完全求和的右端行数等于 N 时，用一个 OpenMP 团队并行遍历前沿，将各自的连续右端区间写入 RHSINTR，
++    并省去未使用的 MPI 缓冲区分配。排列与缩放保持原计算，输出区间互不重叠；N < 32768 或前沿数 < 64
++    仍走原路径。四种算术类型均应用，默认构建包含此补丁；实验与逐元素检查见 `results/p14_measurements.md`。
+   - **默认构建与回退**（P9 集成，`tools/dev/build.sh`、`tools/dev/mumps_cache.sh`）：`build.sh` 的每个预设先运行
+-    `mumps_cache.sh ensure`（在 guard 下）：默认配置 = `build_mumps.sh` 的可移植默认值（nocona -O2）+ L0 分块补丁 + 主元极值补丁，
++    `mumps_cache.sh ensure`（在 guard 下）：默认配置 = `build_mumps.sh` 的可移植默认值（nocona -O2）+ L0 分块补丁 + 主元极值补丁 + 本地右端整理补丁，
+     安装在 `$HS_MUMPS_CACHE/mumps-5.8.2-<key>`（默认 `build/deps/`；集群节点共用 `$HOME/deps/mumps-cache`），key 为
+     源码包与补丁的 sha256、编译选项、两个构建脚本的 sha256、C 与 Fortran 编译器的版本行、环境前缀（库按 RPATH 链接
+     其 METIS/SCOTCH/OpenBLAS）的哈希——这些都不变时直接复用（首次约 1.5 分钟，4 个作业）。并发的构建各在临时目录中
+--- a/tests/py/test_mumps_build.py
++++ b/tests/py/test_mumps_build.py
+@@ -1,7 +1,7 @@
+ """The MUMPS the built hsolve executable and Python module load (P9 integration; CMakeLists.txt
+ HSOLVE_MUMPS_ROOT, tools/dev/build.sh HS_MUMPS, docs/DESIGN.md §3.4).
+ 
+-The default build links MUMPS 5.8.2 built from third_party/mumps/ with the L0-blocking and pivot-extrema patches
++The default build links MUMPS 5.8.2 built from third_party/mumps/ with the L0-blocking, pivot-extrema and local-scatter patches
+ (tools/dev/mumps_cache.sh); HS_MUMPS=env links the environment's conda-forge mumps-seq. Both carry
+ the same library names and sonames, so only the RPATH order decides which one the dynamic loader
+ maps. These tests read the build directory's CMakeCache.txt and check that
+@@ -168,6 +168,7 @@
+     assert f"tarball-sha256 {_PINNED}" in desc
+     assert "patch mumps-5.8.2-l0-blocking.patch " in desc and "flags --isa nocona --opt O2" in desc
+     assert "patch mumps-5.8.2-pivot-extrema.patch " in desc
++    assert "patch mumps-5.8.2-local-scatter.patch " in desc
+     # Other compilers (or any other input) give another install.
+     assert run("prefix", HS_MUMPS_CACHE=str(tmp_path), FC=os.environ["CC"]) != prefix
+     assert not any(tmp_path.iterdir()), "prefix / describe must not build"
+--- a/third_party/mumps/README.md
++++ b/third_party/mumps/README.md
+@@ -16,9 +16,11 @@
+ sequential MUMPS with OpenMP, conda-forge's portable compiler flags (`-O2 -march=nocona
+ -mtune=haswell`), against the project environment's METIS, SCOTCH and OpenBLAS, **modified by
+ `patches/mumps-5.8.2-l0-blocking.patch`** (two block-size controls under MUMPS' L0-OpenMP layer,
+-KEEP(498/499), read only when set; results/p9_factspeed.md §3.4), and
++KEEP(498/499), read only when set; results/p9_factspeed.md §3.4),
+ **`patches/mumps-5.8.2-pivot-extrema.patch`** (atomic reads skip redundant writes to shared pivot
+-extrema; results/p13_measurements.md). The checksum is verified before
++extrema; results/p13_measurements.md), and **`patches/mumps-5.8.2-local-scatter.patch`**
++(parallel local RHS scatter when one working process owns all pivot rows; results/p14_measurements.md).
++The checksum is verified before
+ every unpack. `HS_MUMPS=env tools/dev/build.sh` links the environment's unmodified conda-forge
+ `mumps-seq` instead.
+ 
+--- a/tools/dev/build.sh
++++ b/tools/dev/build.sh
+@@ -4,7 +4,7 @@
+ #
+ # MUMPS (every preset links it; the Python module too) - HS_MUMPS selects which:
+ #   source (default)  MUMPS 5.8.2 built from the repository's tarball (third_party/mumps/) with
+-#                     the L0-blocking and pivot-extrema patches, cached by tools/dev/mumps_cache.sh
++#                     the L0-blocking, pivot-extrema and local-scatter patches, cached by tools/dev/mumps_cache.sh
+ #                     (first build ~1.5 min, then reused); hsolve then gives MUMPS the P9 block sizes
+ #                     by default (HS_MUMPS_BLOCKING=mumps restores MUMPS' own at run time)
+ #   env               the environment's conda-forge mumps-seq (the pre-P9 build: MUMPS' block sizes)
+--- a/tools/dev/build_mumps.sh
++++ b/tools/dev/build_mumps.sh
+@@ -7,7 +7,7 @@
+ #
+ # The default build (tools/dev/build.sh) does not call this directly but through
+ # tools/dev/mumps_cache.sh, which builds the default configuration (these defaults plus
+-# the L0-blocking and pivot-extrema patches) once per cache key and reuses it. Use this script itself
++# the L0-blocking, pivot-extrema and local-scatter patches) once per cache key and reuses it. Use this script itself
+ # for other configurations (link one with HS_MUMPS=<prefix> tools/dev/build.sh).
+ #
+ #   --isa   -march of every MUMPS object. Default nocona (SSE3; with -mtune=haswell
+--- a/tools/dev/mumps_cache.sh
++++ b/tools/dev/mumps_cache.sh
+@@ -1,6 +1,6 @@
+ #!/usr/bin/env bash
+ # The MUMPS of the default build: MUMPS 5.8.2 from third_party/mumps/, patched with
+-# the L0-blocking and pivot-extrema patches, built by tools/dev/build_mumps.sh with portable defaults
++# the L0-blocking, pivot-extrema and local-scatter patches, built by tools/dev/build_mumps.sh with portable defaults
+ # (nocona -O2: conda-forge's flags) against the project environment - built once per cache key and
+ # then reused (P9 integration; docs/DESIGN.md §3.4, results/p9_factspeed.md).
+ #
+@@ -28,7 +28,8 @@
+ ver=5.8.2
+ sha=eb515aa688e6dbab414bb6e889ff4c8b23f1691a843c68da5230a33ac4db7039  # = build_mumps.sh's
+ patches=("$repo/patches/mumps-5.8.2-l0-blocking.patch"
+-         "$repo/patches/mumps-5.8.2-pivot-extrema.patch")
++         "$repo/patches/mumps-5.8.2-pivot-extrema.patch"
++         "$repo/patches/mumps-5.8.2-local-scatter.patch")
+ flags=(--isa nocona --opt O2)
+ 
+ die() {
+--- /dev/null
++++ b/patches/mumps-5.8.2-local-scatter.patch
+@@ -0,0 +1,231 @@
++MUMPS 5.8.2: parallel local RHS scatter (hsolve P14).
++
++When one working process owns all N pivot rows (KEEP(89) and the fully
++summed RHS count both equal N), each front owns a disjoint contiguous range
++of RHSINTR. Distribute fronts across one OpenMP team, retaining the original
++row permutation and optional scaling, and avoid unused MPI buffer allocations.
++The metadata helper only reads IW/KEEP/PTRIST/STEP. No reductions, pivot
++choices or solve arithmetic change. The original path handles other layouts,
++small matrices (N < 32768), and trees with fewer than 64 fronts.
++Applies to all four arithmetics; no new KEEP entries or application settings.
++
++Apply after the L0-blocking and pivot-extrema patches with build_mumps.sh.
++Validation and timings: results/p14_measurements.md and p14_scatter_probe.cpp.
++This is an hsolve modification of MUMPS, distributed under CeCILL-C.
++
++--- a/src/ssol_c.F
+++++ b/src/ssol_c.F
++@@ -2119,6 +2119,51 @@
++         MYID_NODES = MYID
++       ELSE
++         MYID_NODES = MYID-1
+++      ENDIF
+++C     hsolve P14: one working process owns all pivot rows. The front
+++C     ranges in RHSINTR are disjoint, so scatter them in one team rather
+++C     than walking the assembly tree serially on every solve. No MPI
+++C     buffer is needed on this path. Keep small/few-front cases below.
+++      IF (NSLAVES.EQ.1.AND.MYID.EQ.MASTER.AND.TYPE_PARAL.EQ.1
+++     &    .AND.KEEP(89).EQ.N.AND.NB_FS_IN_RHSINTR_F.EQ.N
+++     &    .AND.N.GE.32768.AND.KEEP(28).GE.64) THEN
+++!$OMP PARALLEL DO SCHEDULE(STATIC)
+++!$OMP& PRIVATE(NPIV,LIELL,IPOS,J1,INDX,J,JJ,K)
+++        DO ISTEP=1,KEEP(28)
+++          IF (MYID_NODES.NE.MUMPS_PROCNODE(PROCNODE_STEPS(ISTEP),
+++     &        KEEP(199))) CYCLE
+++          CALL MUMPS_SOL_GET_NPIV_LIELL_IPOS(ISTEP,KEEP,
+++     &         NPIV,LIELL,IPOS,IW,LIW,PTRIST,STEP,N)
+++          IF (NPIV.EQ.0) CYCLE
+++          IF (MTYPE.EQ.1.OR.KEEP(50).NE.0) THEN
+++            J1=IPOS+1
+++          ELSE
+++            J1=IPOS+1+LIELL
+++          ENDIF
+++          INDX=POSINRHSINTR_FWD(IW(J1))
+++#if ! defined(USE_OLD_SCALING)
+++          IF (LSCAL) THEN
+++            DO K=1,NRHS
+++              DO JJ=J1,J1+NPIV-1
+++                J=IW(JJ)
+++                RHSINTR(INDX+JJ-J1,K)=RHS(J,K)*
+++     &               SCALING_LOC_FWD(INDX+JJ-J1)
+++              ENDDO
+++            ENDDO
+++          ELSE
+++#endif
+++            DO K=1,NRHS
+++              DO JJ=J1,J1+NPIV-1
+++                J=IW(JJ)
+++                RHSINTR(INDX+JJ-J1,K)=RHS(J,K)
+++              ENDDO
+++            ENDDO
+++#if ! defined(USE_OLD_SCALING)
+++          ENDIF
+++#endif
+++        ENDDO
+++!$OMP END PARALLEL DO
+++        RETURN
++       ENDIF
++       BUF_EFFSIZE = 0
++       BUF_MAXSIZE = max(min(BUF_MAXREF,int(2000000/NRHS)),2000)
++--- a/src/dsol_c.F
+++++ b/src/dsol_c.F
++@@ -2119,6 +2119,51 @@
++         MYID_NODES = MYID
++       ELSE
++         MYID_NODES = MYID-1
+++      ENDIF
+++C     hsolve P14: one working process owns all pivot rows. The front
+++C     ranges in RHSINTR are disjoint, so scatter them in one team rather
+++C     than walking the assembly tree serially on every solve. No MPI
+++C     buffer is needed on this path. Keep small/few-front cases below.
+++      IF (NSLAVES.EQ.1.AND.MYID.EQ.MASTER.AND.TYPE_PARAL.EQ.1
+++     &    .AND.KEEP(89).EQ.N.AND.NB_FS_IN_RHSINTR_F.EQ.N
+++     &    .AND.N.GE.32768.AND.KEEP(28).GE.64) THEN
+++!$OMP PARALLEL DO SCHEDULE(STATIC)
+++!$OMP& PRIVATE(NPIV,LIELL,IPOS,J1,INDX,J,JJ,K)
+++        DO ISTEP=1,KEEP(28)
+++          IF (MYID_NODES.NE.MUMPS_PROCNODE(PROCNODE_STEPS(ISTEP),
+++     &        KEEP(199))) CYCLE
+++          CALL MUMPS_SOL_GET_NPIV_LIELL_IPOS(ISTEP,KEEP,
+++     &         NPIV,LIELL,IPOS,IW,LIW,PTRIST,STEP,N)
+++          IF (NPIV.EQ.0) CYCLE
+++          IF (MTYPE.EQ.1.OR.KEEP(50).NE.0) THEN
+++            J1=IPOS+1
+++          ELSE
+++            J1=IPOS+1+LIELL
+++          ENDIF
+++          INDX=POSINRHSINTR_FWD(IW(J1))
+++#if ! defined(USE_OLD_SCALING)
+++          IF (LSCAL) THEN
+++            DO K=1,NRHS
+++              DO JJ=J1,J1+NPIV-1
+++                J=IW(JJ)
+++                RHSINTR(INDX+JJ-J1,K)=RHS(J,K)*
+++     &               SCALING_LOC_FWD(INDX+JJ-J1)
+++              ENDDO
+++            ENDDO
+++          ELSE
+++#endif
+++            DO K=1,NRHS
+++              DO JJ=J1,J1+NPIV-1
+++                J=IW(JJ)
+++                RHSINTR(INDX+JJ-J1,K)=RHS(J,K)
+++              ENDDO
+++            ENDDO
+++#if ! defined(USE_OLD_SCALING)
+++          ENDIF
+++#endif
+++        ENDDO
+++!$OMP END PARALLEL DO
+++        RETURN
++       ENDIF
++       BUF_EFFSIZE = 0
++       BUF_MAXSIZE = max(min(BUF_MAXREF,int(2000000/NRHS)),2000)
++--- a/src/csol_c.F
+++++ b/src/csol_c.F
++@@ -2119,6 +2119,51 @@
++         MYID_NODES = MYID
++       ELSE
++         MYID_NODES = MYID-1
+++      ENDIF
+++C     hsolve P14: one working process owns all pivot rows. The front
+++C     ranges in RHSINTR are disjoint, so scatter them in one team rather
+++C     than walking the assembly tree serially on every solve. No MPI
+++C     buffer is needed on this path. Keep small/few-front cases below.
+++      IF (NSLAVES.EQ.1.AND.MYID.EQ.MASTER.AND.TYPE_PARAL.EQ.1
+++     &    .AND.KEEP(89).EQ.N.AND.NB_FS_IN_RHSINTR_F.EQ.N
+++     &    .AND.N.GE.32768.AND.KEEP(28).GE.64) THEN
+++!$OMP PARALLEL DO SCHEDULE(STATIC)
+++!$OMP& PRIVATE(NPIV,LIELL,IPOS,J1,INDX,J,JJ,K)
+++        DO ISTEP=1,KEEP(28)
+++          IF (MYID_NODES.NE.MUMPS_PROCNODE(PROCNODE_STEPS(ISTEP),
+++     &        KEEP(199))) CYCLE
+++          CALL MUMPS_SOL_GET_NPIV_LIELL_IPOS(ISTEP,KEEP,
+++     &         NPIV,LIELL,IPOS,IW,LIW,PTRIST,STEP,N)
+++          IF (NPIV.EQ.0) CYCLE
+++          IF (MTYPE.EQ.1.OR.KEEP(50).NE.0) THEN
+++            J1=IPOS+1
+++          ELSE
+++            J1=IPOS+1+LIELL
+++          ENDIF
+++          INDX=POSINRHSINTR_FWD(IW(J1))
+++#if ! defined(USE_OLD_SCALING)
+++          IF (LSCAL) THEN
+++            DO K=1,NRHS
+++              DO JJ=J1,J1+NPIV-1
+++                J=IW(JJ)
+++                RHSINTR(INDX+JJ-J1,K)=RHS(J,K)*
+++     &               SCALING_LOC_FWD(INDX+JJ-J1)
+++              ENDDO
+++            ENDDO
+++          ELSE
+++#endif
+++            DO K=1,NRHS
+++              DO JJ=J1,J1+NPIV-1
+++                J=IW(JJ)
+++                RHSINTR(INDX+JJ-J1,K)=RHS(J,K)
+++              ENDDO
+++            ENDDO
+++#if ! defined(USE_OLD_SCALING)
+++          ENDIF
+++#endif
+++        ENDDO
+++!$OMP END PARALLEL DO
+++        RETURN
++       ENDIF
++       BUF_EFFSIZE = 0
++       BUF_MAXSIZE = max(min(BUF_MAXREF,int(2000000/NRHS)),2000)
++--- a/src/zsol_c.F
+++++ b/src/zsol_c.F
++@@ -2119,6 +2119,51 @@
++         MYID_NODES = MYID
++       ELSE
++         MYID_NODES = MYID-1
+++      ENDIF
+++C     hsolve P14: one working process owns all pivot rows. The front
+++C     ranges in RHSINTR are disjoint, so scatter them in one team rather
+++C     than walking the assembly tree serially on every solve. No MPI
+++C     buffer is needed on this path. Keep small/few-front cases below.
+++      IF (NSLAVES.EQ.1.AND.MYID.EQ.MASTER.AND.TYPE_PARAL.EQ.1
+++     &    .AND.KEEP(89).EQ.N.AND.NB_FS_IN_RHSINTR_F.EQ.N
+++     &    .AND.N.GE.32768.AND.KEEP(28).GE.64) THEN
+++!$OMP PARALLEL DO SCHEDULE(STATIC)
+++!$OMP& PRIVATE(NPIV,LIELL,IPOS,J1,INDX,J,JJ,K)
+++        DO ISTEP=1,KEEP(28)
+++          IF (MYID_NODES.NE.MUMPS_PROCNODE(PROCNODE_STEPS(ISTEP),
+++     &        KEEP(199))) CYCLE
+++          CALL MUMPS_SOL_GET_NPIV_LIELL_IPOS(ISTEP,KEEP,
+++     &         NPIV,LIELL,IPOS,IW,LIW,PTRIST,STEP,N)
+++          IF (NPIV.EQ.0) CYCLE
+++          IF (MTYPE.EQ.1.OR.KEEP(50).NE.0) THEN
+++            J1=IPOS+1
+++          ELSE
+++            J1=IPOS+1+LIELL
+++          ENDIF
+++          INDX=POSINRHSINTR_FWD(IW(J1))
+++#if ! defined(USE_OLD_SCALING)
+++          IF (LSCAL) THEN
+++            DO K=1,NRHS
+++              DO JJ=J1,J1+NPIV-1
+++                J=IW(JJ)
+++                RHSINTR(INDX+JJ-J1,K)=RHS(J,K)*
+++     &               SCALING_LOC_FWD(INDX+JJ-J1)
+++              ENDDO
+++            ENDDO
+++          ELSE
+++#endif
+++            DO K=1,NRHS
+++              DO JJ=J1,J1+NPIV-1
+++                J=IW(JJ)
+++                RHSINTR(INDX+JJ-J1,K)=RHS(J,K)
+++              ENDDO
+++            ENDDO
+++#if ! defined(USE_OLD_SCALING)
+++          ENDIF
+++#endif
+++        ENDDO
+++!$OMP END PARALLEL DO
+++        RETURN
++       ENDIF
++       BUF_EFFSIZE = 0
++       BUF_MAXSIZE = max(min(BUF_MAXREF,int(2000000/NRHS)),2000)
+--- /dev/null
++++ b/results/p14_scatter_probe.cpp
+@@ -0,0 +1,197 @@
++// Exercise the actual GNU Fortran MUMPS 5.8.2 scatter routine using valid front
++// metadata. Run on the cluster with a MUMPS install's lib directory as argv[1].
++// Checks every output entry and padding against an independent permutation.
++#include <dlfcn.h>
++#include <omp.h>
++
++#include <array>
++#include <complex>
++#include <cstring>
++#include <iostream>
++#include <stdexcept>
++#include <string>
++#include <type_traits>
++#include <vector>
++
++template <class T, class R>
++void check(const std::string& dir, char kind) {
++  const std::string name(1, kind);
++  void* lib = dlopen((dir + "/lib" + name + "mumps_seq.so").c_str(), RTLD_NOW | RTLD_LOCAL);
++  if (!lib) throw std::runtime_error(dlerror());
++  using Scatter = void (*)(int*, int*, int*, int*, int*, R*, int*, T*, int*, int*, int*,
++                           T*, int*, int*, int*, int*, int*, int*, long long*, int*, int*,
++                           int*, int*, int*, int*);
++  const auto scatter = reinterpret_cast<Scatter>(dlsym(lib, (name + "mumps_scatter_rhs_").c_str()));
++  if (!scatter) throw std::runtime_error(dlerror());
++  int checked = 0;
++  for (int threads : {1, 2, 8}) {
++    omp_set_num_threads(threads);
++    for (int round = 0; round < 48; ++round) {
++      int n = round % 6 == 0 ? 32767 : (round % 6 == 1 ? 32768 : 65537);
++      int nodes = round % 6 == 2 ? 63 : (round % 6 == 3 ? 64 : 129);
++      int nrhs = std::array<int, 3>{1, 2, 9}[round % 3];
++      int cols = nrhs + 1, ldrhs = n + 3, ldout = n + 7;
++      int mtype = round % 2, scaled = (round / 2) % 2;
++      int slaves = 1, myid = 0, comm = -987654, nbfs = n;
++      std::array<int, 500> keep{};
++      std::array<long long, 150> keep8{};
++      std::array<int, 60> icntl{};
++      std::array<int, 80> info{};
++      const int ixsz = (round / 4) % 2 ? 2 : 0;
++      keep[27] = nodes;
++      keep[45] = 1;
++      keep[49] = (round / 8) % 2 ? 2 : 0;
++      keep[88] = n;
++      keep[198] = 1;
++      keep[221] = ixsz;
++      keep[349] = (round / 16) % 2 ? 2 : 0;
++      keep[15] = sizeof(T);
++      keep[362] = 1024;
++      keep[363] = 512;
++      std::vector<int> ptr(nodes), proc(nodes, 0), step(n, 1), pos(n), selected(n);
++      std::vector<int> iw(2 * n + (12 + ixsz) * nodes, 1);
++      const bool transpose = mtype != 1 && keep[49] == 0;
++      int at = 1, offset = 0;
++      for (int f = 0; f < nodes; ++f) {
++        // Empty interior fronts exercise delayed/zero-pivot front handling.
++        const int piv = f == nodes - 1 ? n - offset : (f % 11 == 3 ? 0 : n / nodes);
++        ptr[f] = at;
++        iw[at + ixsz - 1] = 0;
++        iw[at + 3 + ixsz - 1] = piv;
++        iw[at + 5 + ixsz - 1] = 0;
++        const int first = at + 6 + ixsz;
++        for (int j = 0; j < piv; ++j) {
++          const int local = offset + j;
++          const int row = (local + round * 17) % n;
++          const int col = (n - 1 - local + round * 13) % n;
++          iw[first - 1 + j] = row + 1;
++          iw[first - 1 + piv + j] = col + 1;
++          const int source = transpose ? col : row;
++          pos[source] = local + 1;
++          selected[local] = source;
++        }
++        offset += piv;
++        at += 2 * piv + 12 + ixsz;
++      }
++      // Both root encodings use the same row/column layout as the other fronts.
++      if (round % 3 != 0) {
++        keep[round % 3 == 1 ? 37 : 19] = n;
++        step[n - 1] = nodes;
++      }
++      int liw = static_cast<int>(iw.size());
++      const T sentinel = T(-12345);
++      std::vector<T> rhs(ldrhs * cols, sentinel), out(ldout * cols, sentinel);
++      std::vector<T> expected(out);
++      std::vector<R> scaling(n);
++      for (int i = 0; i < n; ++i) scaling[i] = R(1 << (i % 4)) / R(8);
++      for (int k = 0; k < nrhs; ++k) {
++        for (int i = 0; i < n; ++i) {
++          const R real = R((i * 13 + k * 97) % 2048 - 1024) / R(16);
++          if constexpr (std::is_same_v<T, R>) rhs[i + k * ldrhs] = real;
++          else rhs[i + k * ldrhs] = T(real, R((i * 7 + k) % 128 - 64) / R(32));
++        }
++        for (int i = 0; i < n; ++i) {
++          const T value = rhs[selected[i] + k * ldrhs];
++          expected[i + k * ldout] = scaled ? value * scaling[i] : value;
++        }
++      }
++      scatter(&slaves, &n, &myid, &comm, &scaled, scaling.data(), &mtype, rhs.data(),
++              &ldrhs, &cols, &nrhs, out.data(), &ldout, &cols, pos.data(), &nbfs,
++              ptr.data(), keep.data(), keep8.data(), proc.data(), iw.data(), &liw,
++              step.data(), icntl.data(), info.data());
++      if (info[0] < 0 || std::memcmp(out.data(), expected.data(), out.size() * sizeof(T)))
++        throw std::runtime_error(name + " scatter mismatch: threads=" + std::to_string(threads) +
++                                 " round=" + std::to_string(round));
++      ++checked;
++    }
++  }
++  std::cout << name << ": " << checked << " scatter cases passed (bitwise, including padding)\n";
++  dlclose(lib);
++}
++
++template <class T, class R>
++void check_gather(const std::string& dir, char kind) {
++  const std::string name(1, kind);
++  void* lib = dlopen((dir + "/lib" + name + "mumps_seq.so").c_str(), RTLD_NOW | RTLD_LOCAL);
++  if (!lib) throw std::runtime_error(dlerror());
++  using Gather = void (*)(int*, int*, int*, int*, int*, int*, T*, int*, int*, int*, int*,
++                          int*, long long*, int*, int*, int*, int*, int*, int*, int*, T*, int*,
++                          int*, R*, int*, T*, int*, int*, int*, int*, int*, int*);
++  const auto gather = reinterpret_cast<Gather>(dlsym(lib, (name + "mumps_gather_solution_").c_str()));
++  if (!gather) throw std::runtime_error(dlerror());
++  int checked = 0;
++  for (int threads : {1, 2, 8}) {
++    omp_set_num_threads(threads);
++    for (int round = 0; round < 48; ++round) {
++      int n = std::array<int, 3>{32767, 32768, 65537}[round % 3];
++      int nrhs = std::array<int, 3>{1, 2, 9}[(round / 3) % 3];
++      int cols = nrhs + 3, ldrhs = n + 3, ldinternal = n + 7;
++      int mtype = round % 2, scaled = (round / 2) % 2;
++      int slaves = 1, myid = 0, comm = -987654, jbeg = 2;
++      std::array<int, 500> keep{};
++      std::array<long long, 150> keep8{};
++      keep[45] = 1;
++      keep[241] = (round / 4) % 2;
++      keep[349] = (round / 8) % 2 ? 2 : 0;
++      keep[361] = threads;
++      keep[362] = 1024;
++      std::vector<int> pos(n), perm(cols);
++      const T sentinel = T(-12345);
++      std::vector<T> rhs(ldrhs * cols, sentinel), internal(ldinternal * cols, sentinel);
++      std::vector<T> expected(rhs);
++      std::vector<R> scaling(n);
++      for (int j = 0; j < cols; ++j) perm[j] = cols - j;
++      for (int i = 0; i < n; ++i) {
++        pos[i] = i % 11 == 0 ? -1 : (i % 7 == 0 ? 0 : (i + round * 17) % n + 1);
++        scaling[i] = R(1 << (i % 4)) / R(8);
++      }
++      for (int j = 0; j < nrhs; ++j) {
++        for (int i = 0; i < n; ++i) {
++          const R real = R((i * 13 + j * 97) % 2048 - 1024) / R(16);
++          if constexpr (std::is_same_v<T, R>) internal[i + j * ldinternal] = real;
++          else internal[i + j * ldinternal] = T(real, R((i * 7 + j) % 128 - 64) / R(32));
++        }
++        const int dest = keep[241] ? perm[j + jbeg - 1] - 1 : j + jbeg - 1;
++        for (int i = 0; i < n; ++i) {
++          T value = T(0);
++          if (pos[i] > 0) {
++            value = internal[pos[i] - 1 + j * ldinternal];
++            if (scaled) value *= scaling[pos[i] - 1];
++          }
++          expected[i + dest * ldrhs] = value;
++        }
++      }
++      // The existing single-process branch never inspects distributed metadata.
++      int dummy = 0, one = 1, bytes = sizeof(int);
++      T work{};
++      gather(&slaves, &n, &myid, &comm, &nrhs, &mtype, rhs.data(), &ldrhs, &cols, &jbeg,
++             &dummy, keep.data(), keep8.data(), &dummy, &dummy, &one, &dummy, &dummy,
++             &one, &bytes, &work, &one, &scaled, scaling.data(), &n, internal.data(),
++             &ldinternal, &cols, pos.data(), &n, perm.data(), &cols);
++      if (std::memcmp(rhs.data(), expected.data(), rhs.size() * sizeof(T)))
++        throw std::runtime_error(name + " gather mismatch: threads=" + std::to_string(threads) +
++                                 " round=" + std::to_string(round));
++      ++checked;
++    }
++  }
++  std::cout << name << ": " << checked << " gather cases passed (bitwise, including padding)\n";
++  dlclose(lib);
++}
++
++int main(int argc, char** argv) {
++  if (argc != 2) return 2;
++  try {
++    omp_set_dynamic(0);
++    check<float, float>(argv[1], 's');
++    check<double, double>(argv[1], 'd');
++    check<std::complex<float>, float>(argv[1], 'c');
++    check<std::complex<double>, double>(argv[1], 'z');
++    check_gather<float, float>(argv[1], 's');
++    check_gather<double, double>(argv[1], 'd');
++    check_gather<std::complex<float>, float>(argv[1], 'c');
++    check_gather<std::complex<double>, double>(argv[1], 'z');
++  } catch (const std::exception& e) {
++    std::cerr << e.what() << '\n';
++    return 1;
++  }
++}
