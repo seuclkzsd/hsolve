@@ -106,6 +106,17 @@ def test_readme_quotes_count_from_the_summary(raw):
     assert "hsolve 2/2, SLEPc default use 0/2, SLEPc tuned per case 1/2" in sec["readme-facts-en"]
 
 
+def test_silent_failures_are_counted_and_quoted():
+    runs = [_run("hsolve", 0, True, 1.0), _run("slepc-default", 0, False, 2.0, outcome=["missed"], missing=[1.0],
+                                              report={"success": True}),
+            _run("slepc-default", 1, False, 2.0, outcome=["residual"], report={"success": False})]
+    e = tables.summarize_solver([r for r in runs if r["solver"] == "slepc-default"])
+    assert e["silent_failures"] == 1
+    s = {"scenarios": [{"title": "t", "short": "s", "solvers": {"slepc-default": e}}]}
+    assert tables.silent_failures(s) == {"slepc-default": (1, ["t"])}
+    assert tables.silent_failures(s, key="short") == {"slepc-default": (1, ["s"])}
+
+
 def test_campaign_tuning_is_reported(raw, tmp_path):
     tf = tmp_path / "elsewhere" / "tuning.json"
     tf.parent.mkdir()

@@ -80,6 +80,8 @@ def summarize_solver(runs: list[dict[str, Any]]) -> dict[str, Any]:
     peaks = [r["solver_peak_bytes"] / 2**30 for r in runs if r.get("solver_peak_bytes")]
     out: dict[str, Any] = {
         "reps": len(runs), "valid_runs": sum(valid), "correct": bool(runs) and all(valid),
+        # wrong results the solver itself reported as a success (only the evaluation catches them)
+        "silent_failures": sum(1 for r in runs if not r.get("valid") and (r.get("report") or {}).get("success") is True),
         "verdict": "correct" if runs and all(valid) else ("partial" if any(valid) else "failed"),
         "outcomes": outcomes,
         "time_s": _median([r.get("solver_s") for r in runs]),
@@ -339,6 +341,17 @@ def conditions_text(summary: dict[str, Any]) -> str:
     ])
 
 
+def silent_failures(summary: dict[str, Any], key: str = "title") -> dict[str, tuple[int, list[str]]]:
+    """Per solver with any: (runs that reported success but failed the evaluation, their scenarios)."""
+    out = {}
+    for s in SOLVERS:
+        hits = [(r[key], r["solvers"][s]["silent_failures"]) for r in summary["scenarios"]
+                if r["solvers"].get(s, {}).get("silent_failures")]
+        if hits:
+            out[s] = (sum(n for _, n in hits), [t for t, _ in hits])
+    return out
+
+
 def headline(summary: dict[str, Any]) -> str:
     """The page's findings, every number counted from the summary."""
     rows = summary["scenarios"]
@@ -363,6 +376,10 @@ def headline(summary: dict[str, Any]) -> str:
         labels = {**OUTCOME_LABELS, "unsupported": "不支持（库报错）"}
         lines.append(f"- {SOLVER_LABELS[s]}未通过 {len(failed)} 个场景：" + "；".join(
             f"{labels[o]} {len(by_class[o])} 个（{'、'.join(by_class[o])}）" for o in order if o in by_class) + "。")
+    silent = silent_failures(summary)
+    if silent:
+        lines.append("- 自称成功、结果却未通过独立评测的运行（只有对照参考谱或完备性计数才能发现的错误）：" + "；".join(
+            f"{SOLVER_LABELS[s]} {n} 次（{'、'.join(titles)}）" for s, (n, titles) in silent.items()) + "。")
     for s in ("slepc-tuned", "slepc-default"):
         ratios = [(r["title"], r["speedup_vs"][s]) for r in rows if s in r["speedup_vs"]]
         if ratios:
@@ -527,6 +544,11 @@ def readme_facts(summary: dict[str, Any]) -> str:
                    f"个特征对，却漏掉其中 {d['max_missing']} 个（{failure_text(d)}）；调优配置 {t['valid_runs']}/{t['reps']} "
                    f"次有效。hsolve {h['valid_runs']}/{h['reps']} 次全部找到，Sylvester 惯性计数 {_joined(cert.get('count_inertia'))}"
                    f" 个 = 找到 {_joined(cert.get('count_found'))} 个，中位时间 {fmt_time(h['time_s'])}。")
+    silent = silent_failures(summary)
+    if silent:
+        out.append("- **静默错误**：SLEPc 有 " + "，".join(
+            f"{n} 次{SOLVER_LABELS[s].removeprefix('SLEPc ')}运行（{'、'.join(titles)}）" for s, (n, titles) in silent.items())
+            + "报告成功，结果却漏解或混入非物理模，只有对照参考谱才能发现；hsolve 的每次运行都通过独立评测。")
     sp = speed_range(summary, "slepc-tuned")
     if sp:
         k, lo, hi, slower = sp
@@ -571,6 +593,13 @@ def readme_facts_en(summary: dict[str, Any]) -> str:
            f"shift-and-invert + MUMPS) on the same 16 cores was correct in every repetition on "
            f"{c['slepc-default']['correct']}/{n} scenarios with its defaults and on {c['slepc-tuned']['correct']}/{n} "
            "when tuned per case."]
+    silent = silent_failures(summary, key="short")
+    if silent:
+        names = {"slepc-default": "default", "slepc-tuned": "tuned"}
+        out.append("- **Silent failures**: " + "; ".join(
+            f"{n} SLEPc runs ({names.get(s, s)}: {', '.join(titles)})" for s, (n, titles) in silent.items())
+            + " reported success while missing eigenvalues or returning non-physical modes; only a comparison "
+              "with the reference spectrum reveals it.")
     sp = speed_range(summary, "slepc-tuned", key="short")
     if sp:
         out.append(f"- **Speed**: where both are correct ({sp[0]} scenarios) the ratio of median times (tuned SLEPc / "
