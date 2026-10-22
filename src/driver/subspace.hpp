@@ -27,6 +27,10 @@
 // are bounded componentwise (gamma |A| |x|, gamma |B| |x|: one more product with |A|, |B| and |x|),
 // and a B^{-1}-norm by the smaller of ||v|| / sqrt(lambda_min(B)) and the Jacobi-weighted
 // ||D^{-1/2} v|| / sqrt(lambda_min(D^{-1/2} B D^{-1/2})), so a badly scaled B does not inflate them.
+// The scalar steps are one-sided too: eta and the bound carry a gamma factor for their roundings
+// (1/sqrt(1 - eps) - 1 is formed without cancellation), the ends of the Kahan intervals are rounded
+// outward and the gaps downward (std::nextafter of the value rounded to nearest), so the
+// disjointness and inside-the-window comparisons are exact statements about the exact intervals.
 #pragma once
 
 #include <limits>

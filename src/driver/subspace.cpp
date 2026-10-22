@@ -365,10 +365,17 @@ double gram_defect(const CsrMatrix<T>* b, const RowStats& sb, index_t n, const C
 struct Group {
   std::vector<index_t> pairs;  // ascending lambda
   double lo = 0.0, hi = 0.0;   // min / max lambda
-  double residual = 0.0;       // sqrt(sum rho^2)
+  double residual = 0.0;       // >= sqrt(sum rho^2)
   double eps = 0.0;            // Gram defect
-  double eta = 0.0;            // Kahan radius
+  double eta = 0.0;            // Kahan radius (>= the exact formula's value)
+  double left = 0.0, right = 0.0;  // the Kahan interval, rounded outward: [left, right] contains
+                                   // [lo - eta, hi + eta]
 };
+
+/// The neighbouring doubles: up(fl(x)) >= x and down(fl(x)) <= x for a result fl(x) rounded to
+/// nearest, so differences and sums rounded this way are one-sided bounds of the exact ones.
+inline double up(double x) { return std::isfinite(x) ? std::nextafter(x, kInfinity) : x; }
+inline double down(double x) { return std::isfinite(x) ? std::nextafter(x, -kInfinity) : x; }
 
 }  // namespace
 
@@ -557,7 +564,8 @@ SubspaceReport subspace_bounds(const CsrMatrix<T>& a, const CsrMatrix<T>* b, con
     out.gap = gap;
     out.residual = g.residual;
     out.orthogonality = g.eps;
-    const double bound = g.residual / (gap * std::sqrt(1.0 - g.eps));
+    // Four roundings (1 - eps, sqrt, product, quotient): gamma_4 covers them.
+    const double bound = g.residual / (gap * std::sqrt(1.0 - g.eps)) * (1.0 + gamma_of(4.0));
     out.sin_bound = gap > 0.0 && g.eps < kMaxOrthogonalityDefect && std::isfinite(bound) ? std::min(bound, 1.0) : kNaN;
     for (index_t j : out.pairs) per_pair[static_cast<std::size_t>(j)] = out.sin_bound;
     rep.groups.push_back(std::move(out));
@@ -571,16 +579,26 @@ SubspaceReport subspace_bounds(const CsrMatrix<T>& a, const CsrMatrix<T>* b, con
       g.lo = std::min(g.lo, lambda[static_cast<std::size_t>(j)]);
       g.hi = std::max(g.hi, lambda[static_cast<std::size_t>(j)]);
     }
-    g.residual = std::sqrt(r2);
+    g.residual = std::sqrt(r2) * (1.0 + gamma_of(static_cast<double>(g.pairs.size()) + 2.0));
     const Timer gram_timer;
     g.eps = gram_defect(b, sb, n, column, g.pairs, abs_b, gram_width);
     if (opt.diagnostics) opt.diagnostics->gram_s += gram_timer.seconds();
     if (!(g.eps < kMaxOrthogonalityDefect)) {
       g.eta = kInfinity;
+      g.left = -kInfinity;
+      g.right = kInfinity;
       return;
     }
-    const double inv = 1.0 / std::sqrt(1.0 - g.eps);
-    g.eta = (g.residual * inv + std::sqrt(1.0 + g.eps) * (g.hi - g.lo) * (inv - 1.0)) * (1.0 + 4.0 * kRoundoff);
+    // 1 / sqrt(1 - eps) - 1 = eps / (s (1 + s)), s = sqrt(1 - eps): no cancellation. About ten
+    // roundings in all, each relative to its term (no differences of nearly equal numbers):
+    // gamma_8 (with its factor 2 of slack) covers them.
+    const double s = std::sqrt(1.0 - g.eps);
+    const double excess = g.eps / (s * (1.0 + s));
+    g.eta = (g.residual / s + std::sqrt(1.0 + g.eps) * (g.hi - g.lo) * excess) * (1.0 + gamma_of(8.0));
+    // The interval ends rounded outward: comparisons between them and with the window ends are
+    // then exact statements about the exact intervals.
+    g.left = down(g.lo - g.eta);
+    g.right = up(g.hi + g.eta);
   };
 
   std::vector<char> placed(static_cast<std::size_t>(m + e), 0);
@@ -607,7 +625,8 @@ SubspaceReport subspace_bounds(const CsrMatrix<T>& a, const CsrMatrix<T>* b, con
       Group g;
       g.pairs = in;
       measure(g);
-      describe(g, std::min(g.lo - win.lower, win.upper - g.hi), "window", win.lower, win.upper, win.count);
+      describe(g, std::min(down(g.lo - win.lower), down(win.upper - g.hi)), "window", win.lower, win.upper,
+               win.count);
     };
     if (count < win.count) {
       window_group();
@@ -634,7 +653,7 @@ SubspaceReport subspace_bounds(const CsrMatrix<T>& a, const CsrMatrix<T>* b, con
     for (;;) {  // merge neighbours whose intervals meet (each merge shortens the list)
       std::size_t meet = groups.size();
       for (std::size_t q = 0; q + 1 < groups.size(); ++q)
-        if (groups[q].hi + groups[q].eta >= groups[q + 1].lo - groups[q + 1].eta) {
+        if (groups[q].right >= groups[q + 1].left) {
           meet = q;
           break;
         }
@@ -644,19 +663,19 @@ SubspaceReport subspace_bounds(const CsrMatrix<T>& a, const CsrMatrix<T>* b, con
       groups.erase(groups.begin() + static_cast<std::ptrdiff_t>(meet) + 1);
       measure(groups[meet]);
     }
-    const bool inside = std::isfinite(groups.front().eta) &&
-                        groups.front().lo - groups.front().eta > win.lower &&
-                        groups.back().hi + groups.back().eta < win.upper;
+    const bool inside = std::isfinite(groups.front().eta) && groups.front().left > win.lower &&
+                        groups.back().right < win.upper;
     if (!inside) {  // an interval reaches a window end (or a group is not independent)
       window_group();
       continue;
     }
     for (std::size_t q = 0; q < groups.size(); ++q) {
       const Group& g = groups[q];
-      double gap = std::min(g.lo - win.lower, win.upper - g.hi);
-      if (q > 0) gap = std::min(gap, g.lo - (groups[q - 1].hi + groups[q - 1].eta));
-      if (q + 1 < groups.size()) gap = std::min(gap, groups[q + 1].lo - groups[q + 1].eta - g.hi);
-      describe(g, gap, "cluster", g.lo - g.eta, g.hi + g.eta, static_cast<index_t>(g.pairs.size()));
+      // Each distance rounded down: gap is a lower bound of delta.
+      double gap = std::min(down(g.lo - win.lower), down(win.upper - g.hi));
+      if (q > 0) gap = std::min(gap, down(g.lo - groups[q - 1].right));
+      if (q + 1 < groups.size()) gap = std::min(gap, down(groups[q + 1].left - g.hi));
+      describe(g, gap, "cluster", g.left, g.right, static_cast<index_t>(g.pairs.size()));
     }
   }
   index_t without = 0;

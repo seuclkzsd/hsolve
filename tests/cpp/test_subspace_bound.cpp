@@ -287,6 +287,50 @@ TYPED_TEST(SubspaceBoundCore, ClustersOfMultipleEigenvaluesAreBoundedTightly) {
   }
 }
 
+// The scalar steps are one-sided: checked in extended precision, every cluster interval contains
+// [min theta - eta, max theta + eta] for the reported residual and orthogonality, every gap is at
+// most the distances it is taken from (window ends, neighbouring intervals), and sin_bound is at
+// least residual / (gap sqrt(1 - orthogonality)). With exact eigenvectors eta is at rounding level,
+// where an interval end rounded to nearest falls short of it in about half the cases.
+TYPED_TEST(SubspaceBoundCore, IntervalsGapsAndBoundsAreRoundedOutward) {
+  using T = TypeParam;
+  using ld = long double;
+  static_assert(std::numeric_limits<ld>::digits > std::numeric_limits<double>::digits, "needs extended precision");
+  for (const BKind kind : {BKind::Identity, BKind::Diagonal, BKind::General}) {
+    const auto e = exact_problem<T>(spectrum(), kind, 31 + static_cast<int>(kind));
+    const auto idx = exact_in(e.lambda, 0.0, 2.6);
+    DenseMatrix<T> x;
+    std::vector<double> theta;
+    perturbed_pairs(e, idx, 0.0, 3, x, theta);
+    const hs::driver::CertifiedWindow win{0.0, 2.6, 6};
+    std::vector<double> per_pair;
+    const auto rep = hs::driver::subspace_bounds(e.a, e.has_b ? &e.b : nullptr, theta, x, {}, DenseMatrix<T>{},
+                                                 {win}, options(e, kind), per_pair);
+    ASSERT_EQ(rep.groups.size(), 3u) << rep.note;
+    for (std::size_t q = 0; q < rep.groups.size(); ++q) {
+      const auto& g = rep.groups[q];
+      ASSERT_EQ(g.kind, "cluster");
+      ld lo = std::numeric_limits<ld>::infinity(), hi = -lo;
+      for (index_t j : g.pairs) {
+        lo = std::min<ld>(lo, theta[static_cast<std::size_t>(j)]);
+        hi = std::max<ld>(hi, theta[static_cast<std::size_t>(j)]);
+      }
+      const ld eps = g.orthogonality, s = std::sqrt(1.0L - eps);
+      const ld eta = static_cast<ld>(g.residual) / s + std::sqrt(1.0L + eps) * (hi - lo) * eps / (s * (1.0L + s));
+      EXPECT_GE(static_cast<ld>(g.upper) - hi, eta) << q;
+      EXPECT_GE(lo - static_cast<ld>(g.lower), eta) << q;
+      ld gap = std::min(lo - static_cast<ld>(win.lower), static_cast<ld>(win.upper) - hi);
+      if (q > 0) gap = std::min(gap, lo - static_cast<ld>(rep.groups[q - 1].upper));
+      if (q + 1 < rep.groups.size()) gap = std::min(gap, static_cast<ld>(rep.groups[q + 1].lower) - hi);
+      EXPECT_GT(g.gap, 0.0);
+      EXPECT_LE(static_cast<ld>(g.gap), gap) << q;
+      EXPECT_GE(static_cast<ld>(g.sin_bound),
+                std::min(1.0L, static_cast<ld>(g.residual) / (static_cast<ld>(g.gap) * s)))
+          << q;
+    }
+  }
+}
+
 TYPED_TEST(SubspaceBoundCore, TwoWindowsAndAPairOutsideBoth) {
   using T = TypeParam;
   const auto e = exact_problem<T>(spectrum(), BKind::Identity, 21);
