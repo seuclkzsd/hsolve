@@ -84,6 +84,25 @@ def _summary(raw_dir: Path) -> dict[str, Any]:
     return tables.build_summary(raw_dir)
 
 
+def footnote(fig, text: str) -> None:
+    """Provenance line under the figure (kept by bbox_inches='tight')."""
+    fig.text(0.0, -0.01, text, fontsize=8.5, color=MUTED, ha="left", va="top", transform=fig.transFigure)
+
+
+def conditions_note(summary: dict[str, Any]) -> str:
+    rows = summary["scenarios"]
+    if not rows:
+        return ""
+    c = rows[0]["conditions"]
+    reps = sorted({r["conditions"].get("reps") for r in rows})
+    commits = sorted({(r["conditions"].get("source_commit") or r["conditions"].get("git_commit", ""))[:7] for r in rows})
+    slepc = sorted({r["conditions"].get("slepc_version") for r in rows if r["conditions"].get("slepc_version")})
+    cpu = c.get("cpu", "").replace("Intel(R) Xeon(R)", "Xeon").replace(" CPU", "")
+    return (f"{c.get('ncores', 16)} cores of one socket ({cpu}), {c.get('mem_gb', 32):g} GiB per run, median of "
+            f"{'/'.join(map(str, reps))} interleaved repetitions; hsolve {', '.join(commits)}, SLEPc "
+            f"{', '.join(slepc)} + MUMPS 5.8.2; nodes {', '.join(summary['hosts'])}; data results/showcase/raw/")
+
+
 def _status(e: dict[str, Any] | None) -> tuple[bool, str]:
     """(correct?, short English reason) of a solver summary."""
     if not e:
@@ -150,6 +169,7 @@ def fig_scenarios(summary: dict[str, Any]):
                               label="result failed the independent check"))
     ax.legend(handles=handles, loc="lower left", bbox_to_anchor=(0.0, 1.0), ncol=4, fontsize=10.5,
               handletextpad=0.3, columnspacing=1.2)
+    footnote(fig, conditions_note(summary))
     return fig
 
 
@@ -183,6 +203,8 @@ def fig_correctness(summary: dict[str, Any], ax=None):
     ax.tick_params(length=0)
     for side in ("left", "bottom", "top", "right"):
         ax.spines[side].set_visible(False)
+    if own:
+        footnote(fig, conditions_note(summary))
     return fig if own else ax
 
 
@@ -292,6 +314,11 @@ def fig_scaling(path: Path = SCALING_JSON):
         ax.set_xlabel("threads (cores of one socket)")
         ax.legend(loc="upper left", fontsize=10)
     axes[0].set_ylabel("speedup over the fastest\n1-thread configuration")
+    hosts = sorted({h for c in doc["cases"] for h in c.get("hosts", [])})
+    reps = sorted({r["reps"] for c in doc["cases"] for r in c["variants"][0]["rows"]})
+    footnote(fig, f"hsolve default configuration, cores 16-31 of {', '.join(hosts)} (2 x Xeon Silver 4314), median of "
+                  f"{'/'.join(map(str, reps))}; data results/p9_measurements_threads_orderings.json "
+                  "(results/p9_measurements.md section 5)")
     return fig
 
 
@@ -428,6 +455,7 @@ def fig_hero(summary: dict[str, Any], phys_dir: Path = PHYS_DIR):
     ax.set_title("hard eigenproblem scenarios solved correctly\nin every repetition (independent check)",
                  loc="left", fontsize=12.5)
     ax.set_xlabel("scenarios")
+    footnote(fig, conditions_note(summary))
     return fig
 
 
