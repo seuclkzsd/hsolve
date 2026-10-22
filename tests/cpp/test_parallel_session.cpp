@@ -204,6 +204,21 @@ TYPED_TEST(ParallelSessionTyped, TwoHelpersMakeTheCertificateCounts) {
   });
 }
 
+// The helpers parse the leader's configuration (config_to_json): structure_candidates = On, which the
+// C++ API accepts as Auto, must reach them as a valid document, or they could not take the problem
+// and the leader would count alone.
+TEST(ParallelSession, StructureCandidatesOnReachesTheHelpers) {
+  const auto a = laplacian3d<double>();
+  auto cfg = nearest_cfg();
+  cfg.structure_candidates = hs::Toggle::On;
+  with_session(3, [&](hs::Transport& peers) {
+    const auto sol = hs::solve_parallel(a, nullptr, cfg, nullptr, peers, kForce);
+    expect_nearest_certified(sol);
+    EXPECT_EQ(sol.report.parallel.helper_counts, 2) << warnings(sol.report);
+    EXPECT_EQ(sol.report.parallel.fallbacks, 0);
+  });
+}
+
 // Two ranks: one helper cannot count concurrently with the leader without sharing its cores (the
 // leader's threads span every socket), so the leader counts as hs::solve does.
 TYPED_TEST(ParallelSessionTyped, OneHelperLeavesTheCountsToTheLeader) {

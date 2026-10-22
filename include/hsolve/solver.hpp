@@ -206,7 +206,8 @@ struct SolverConfig {
   /// diagonal mass (src/eigen/separable_*). Candidates are accepted only after Rayleigh-Ritz and a
   /// backward error <= tol/2 on the original A, B; the exact Sylvester certificate and the
   /// deflated reruns follow as on the general path (report.candidate_source says which ran).
-  /// config.json takes "off" | "auto"; in the C++ API On acts as Auto.
+  /// config.json takes "off" | "auto"; in the C++ API On acts as Auto (config_to_json writes it
+  /// as "auto").
   Toggle structure_candidates = Toggle::Off;
   /// A-posteriori bound on the eigenvector subspace angles (DESIGN §3.6-8c, SolveReport::subspace):
   /// Auto (the default) - computed for HEP/GHEP results whose certificate passed, lambda_min(B)
@@ -529,7 +530,8 @@ struct Solution {
 /// enums are snake_case strings. Keys absent from the document keep the values of `base`;
 /// unknown keys, wrong types and invalid enum strings throw InvalidInput.
 SolverConfig parse_config(const std::string& json_text, const SolverConfig& base = {});
-/// Serialize every field of cfg (round-trips through parse_config).
+/// Serialize every field of cfg (round-trips through parse_config; structure_candidates = On
+/// comes back as its equivalent Auto).
 std::string config_to_json(const SolverConfig& cfg, int indent = 2);
 
 /// Solve A x = lambda B x (B == nullptr -> B = I) according to cfg. A and B must be square,

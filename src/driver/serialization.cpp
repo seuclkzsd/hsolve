@@ -267,7 +267,9 @@ std::string config_to_json(const SolverConfig& c, int indent) {
             {"certificate_fault_drop", c.certificate_fault_drop},
             {"inexact_fault_reject", c.inexact_fault_reject},
             {"certificate_fault_count", c.certificate_fault_count},
-            {"structure_candidates", enum_name(c.structure_candidates)},
+            // config.json takes off | auto; On, which the C++ API accepts as Auto, is written as
+            // "auto" so that the document parses again (the helpers of a multi-process solve).
+            {"structure_candidates", c.structure_candidates == Toggle::Off ? "off" : "auto"},
             {"subspace_bound", enum_name(c.subspace_bound)},
             {"secure", c.secure},
             {"zero_filter_tol", c.zero_filter_tol},

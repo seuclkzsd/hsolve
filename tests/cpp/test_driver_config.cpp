@@ -101,6 +101,12 @@ TEST(DriverConfig, StructureCandidatesSubspaceBoundAndSecure) {
     }
   };
   EXPECT_TRUE(bad(R"({"structure_candidates": "on"})"));
+  // On (accepted by the C++ API as Auto) is written as "auto": the document parses again, as the
+  // helpers of a multi-process solve and the command line's re-validation parse it.
+  hs::SolverConfig on;
+  on.structure_candidates = hs::Toggle::On;
+  EXPECT_EQ(nlohmann::json::parse(hs::config_to_json(on))["structure_candidates"], "auto");
+  EXPECT_EQ(hs::parse_config(hs::config_to_json(on)).structure_candidates, hs::Toggle::Auto);
   EXPECT_TRUE(bad(R"({"structure_candidates": true})"));
   EXPECT_EQ(hs::parse_config(R"({"subspace_bound": "on"})").subspace_bound, hs::Toggle::On);
   EXPECT_TRUE(bad(R"({"subspace_bound": "exact"})"));
