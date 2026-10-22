@@ -175,11 +175,13 @@ def table(a: argparse.Namespace) -> int:
     lines = ["| case | n | problem | pairs | threads | RAM cap GiB | solve s [min-max] | wall s | peak RSS GiB | "
              "memory | certificate | runs ok |", "|---|---:|---|---:|---:|---:|---|---:|---:|---|---|---|"]
     for r in rows:
+        times = ("-" if r["time_median_s"] is None else
+                 f"{f(r['time_median_s'])} [{f(r['time_min_s'])}-{f(r['time_max_s'])}]")
         cert = ("-" if r["certified"] == "none" or not r["certificate"] else
                 f"{r['certificate']} {'passed' if r['certified'] == 'passed' else 'NOT passed'}")
         lines.append(f"| {r['case']} | {r['n'] or '-'} | {r['problem'] or '-'} | {r['pairs'] or '-'} | {r['threads']} | "
                      f"{r['mem_gb']:g} | "
-                     f"{f(r['time_median_s'])} [{f(r['time_min_s'])}-{f(r['time_max_s'])}] | {f(r['wall_median_s'])} | "
+                     f"{times} | {f(r['wall_median_s'])} | "
                      f"{f(r['peak_rss_gib'])} | {r['memory_mode']} | {cert} | {r['ok']}/{r['reps']}"
                      f"{' (' + ', '.join(r['errors']) + ')' if r['errors'] else ''} |")
     hosts = sorted({r["host"] for r in rows})
