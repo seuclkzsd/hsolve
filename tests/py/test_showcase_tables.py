@@ -126,7 +126,9 @@ def test_campaign_tuning_is_reported(raw, tmp_path):
                                                              "best": None}}}))
     s = tables.build_summary(raw, tuning_file=tf)
     r = s["scenarios"][0]
-    assert tables.tuned_source(r) == "本次逐例调优 31 种配置、70 次试验均未通过评测，沿用该算例的调优配置"
+    assert tables.tuned_source(r) == "本次逐例调优（31 种配置、70 次试验）没有找到通过评测的配置，沿用该算例的调优配置"
+    r["slepc_tuning"] = {**r["slepc_tuning"], "flaky": True, "flaky_confirm_reps": 20}
+    assert "按随机失败的情形每个候选确认 20 次" in tables.tuned_source(r)
     lim = tables.limitations(s)
     assert "1 个场景（" in lim and "没有找到通过评测的配置" in lim
 

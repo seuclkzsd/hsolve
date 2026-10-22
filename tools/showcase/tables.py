@@ -320,9 +320,11 @@ def tuned_source(r: dict[str, Any]) -> str:
     if not tu:
         return label
     tried = f"{tu['configurations']} 种配置、{tu['trials']} 次试验"
+    if tu.get("flaky") and tu.get("flaky_confirm_reps"):
+        tried += f"，按随机失败的情形每个候选确认 {tu['flaky_confirm_reps']} 次"
     if tu.get("best"):
         return f"{label}（本次逐例调优：{tried}）"
-    return f"本次逐例调优 {tried}均未通过评测，沿用{label}"
+    return f"本次逐例调优（{tried}）没有找到通过评测的配置，沿用{label}"
 
 
 def untuned_rows(summary: dict[str, Any]) -> list[dict[str, Any]]:
@@ -375,7 +377,7 @@ def failure_details(summary: dict[str, Any]) -> str:
             if s == "slepc-tuned" and r.get("slepc_tuning"):
                 tu = r["slepc_tuning"]
                 msg += (f"；配置来源：{tuned_source(r)}（有效试验 {tu['valid_trials']}/{tu['trials']}，"
-                        "`results/showcase/slepc_tuning.json`）")
+                        f"`{tu.get('record') or 'results/showcase/slepc_tuning.json'}`）")
             lines.append(f"- **{r['title']} / {SOLVER_LABELS[s]}**（{e['valid_runs']}/{e['reps']} 次有效）：{msg}")
     return "\n".join(lines) if lines else "（无）"
 
