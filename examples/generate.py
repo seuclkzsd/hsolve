@@ -13,8 +13,8 @@ date), so the committed files are reproducible:
     python3 examples/generate.py --check    regenerate into a temporary directory and compare with
                                             SHA256SUMS (exit 1 on any difference)
     cd examples && sha256sum -c SHA256SUMS  integrity of the committed files (no Python needed)
-The bytes depend on the numpy / scipy versions of env/environment.yml; --check names any file
-that differs (for another environment, compare the matrices numerically instead).
+The bytes depend on the numpy / scipy versions of env/environment.yml, and the dense reference of
+waveguide-50ghz (LAPACK QZ) also on the CPU's BLAS kernels; --check names any file that differs.
 """
 from __future__ import annotations
 
@@ -34,6 +34,7 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parent))
 
 from tools import case  # noqa: E402
+from tools.eval import common, reference  # noqa: E402
 from tools.gen import synthetic, waveguide, yee  # noqa: E402
 
 SUMS = "SHA256SUMS"
@@ -99,6 +100,10 @@ def make_waveguide(root: Path) -> dict[str, Any]:
     name = "waveguide-50ghz"
     spec = waveguide.CaseSpec(family="waveguide", a=10.0, b=10.0, freq_ghz=50.0, nx=9)
     waveguide.write(waveguide.generate(spec, name), root)
+    # The generator's reference is the continuous model (O(h^2) away from the matrix pencil's
+    # eigenvalues; kept under refs/<name>/superseded/); the evaluator gets the pencil's own
+    # spectrum by dense QZ (tools/eval/reference.py).
+    reference.build_reference(name, str(root), force=False, dense_max=common.DENSE_MAX, extra=None)
     return json.loads((root / "cases" / name / "config.json").read_text())
 
 
@@ -151,7 +156,7 @@ def generate(root: Path) -> dict[str, Any]:
         meta = json.loads((root / "cases" / ex.name / "meta.json").read_text())
         ref = json.loads((root / "refs" / ex.name / "ref.json").read_text())
         files = sorted(str(p.relative_to(root)) for sub in ("cases", "refs")
-                       for p in (root / sub / ex.name).iterdir())
+                       for p in (root / sub / ex.name).rglob("*") if p.is_file())
         entries.append({"name": ex.name, "title": ex.title, "scenario": ex.scenario,
                         "problem": meta["problem"], "n": meta["n"], "dtype": meta["dtype"],
                         "target": config["target"], "reference": ref["kind"], "files": files})
