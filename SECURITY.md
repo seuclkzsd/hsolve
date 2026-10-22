@@ -65,8 +65,10 @@ hsolve 是在本机运行的计算程序，不包含任何联网或遥测功能�
 |---|---|
 | 运行身份 | 普通用户，不需要 root，不安装系统服务 |
 | 网络 | 不使用（见上） |
-| 子进程 | `hsolve` 不启动子进程；可选的 `hsolve-mpirun` 调用 MPI 的 `mpiexec` 启动 `hsolve-mpi` |
+| 子进程 | `hsolve`、`hsolve-mpi` 与 Python 模块不启动子进程。可选的启动脚本 `hsolve-mpirun` 运行 MPI 的 `mpiexec`（取 `--mpiexec`、`$MPIEXEC`、PATH 或 `$HS_REF_ENV/bin/mpiexec`）启动 `hsolve-mpi`，每个 rank 经 `taskset` 绑核（`--interleave-leader` 时 leader 另经 `numactl`）；允许的核只在一个 NUMA 节点上时，它直接以同样的参数运行同目录的 `hsolve`（`$HSOLVE` 可改） |
 | 动态加载 | 请求 GPU 卸载（`--gpu auto\|on` 或 `HS_GPU`）时，用 `dlopen` 加载 CUDA runtime 与 cuBLAS（搜索 `HS_CUDA_LIBDIR`、系统加载路径与 `/usr/local/cuda*/lib64`）；不请求时不加载 |
-| 读取的环境变量 | `OMP_NUM_THREADS`、`HSOLVE_MEMORY_LIMIT_GB`（内存上限）、`HS_GPU` / `HS_GPU_OPTS` / `HS_GPU_REPORT` / `HS_CUDA_LIBDIR`（GPU）、`HS_BLAS_ROUTE` / `HS_BLAS_PROFILE`（BLAS hook）、`HS_MUMPS_BLOCKING`、`HS_KERNELS_NO_AVX512`；不修改用户已设置的值 |
+| 读取的系统信息 | 只读：`/proc/self/status`、`/proc/self/statm`（内存统计），`/proc/self/cgroup` 与 `/sys/fs/cgroup/` 下的内存上限，`/proc/meminfo`（内存预算）；设置 `HS_BLAS_PROFILE` 时读取 `/proc/self/exe` 的链接目标；`hsolve-mpirun` 读 `/proc/self/status` 与 `/sys/devices/system/node/` 来划分 NUMA 节点 |
+| 读取的环境变量 | hsolve 自身：`HSOLVE_MEMORY_LIMIT_GB`（内存上限）；`HS_GPU` / `HS_GPU_OPTS` / `HS_GPU_REPORT` / `HS_CUDA_LIBDIR`（GPU）；`HS_BLAS_ROUTE` / `HS_BLAS_PROFILE` / `HS_BLAS_NO_AVX512` / `HS_BLAS_NO_AVX2`（BLAS hook）；`HS_MUMPS_BLOCKING`；`HS_KERNELS_NO_AVX512`。第三方库读取各自的变量，如 OpenMP 与 OpenBLAS 的线程数（`OMP_NUM_THREADS`、`OPENBLAS_NUM_THREADS`）、MUMPS 的 `MUMPS_OOC_TMPDIR` / `MUMPS_OOC_PREFIX`、CUDA 的 `CUDA_VISIBLE_DEVICES`。`hsolve-mpirun` 另读 `MPIEXEC`、`HSOLVE`、`HSOLVE_MPI`、`HS_REF_ENV` 与 MPI 启动器为每个 rank 设置的编号变量 |
+| 修改的环境变量 | `hsolve`、`hsolve-mpi` 与 Python 模块不修改任何环境变量。`hsolve-mpirun` 为每个 rank 设置 `OMP_NUM_THREADS` 与 `OPENBLAS_NUM_THREADS`（等于该 rank 绑定的核数，覆盖调用方的值），并导出 `HSOLVE_MPIRUN_PLAN`、`HSOLVE_MPIRUN_EXE`、`HSOLVE_MPIRUN_INTERLEAVE` 把布局传给各 rank |
 | 额外写文件 | 只在用户设置时：`HS_BLAS_PROFILE=<文件>` 写 BLAS 剖析，`HS_GPU_REPORT=<文件>` 写 GPU 报告 |
 | 资源 | 线程数取 `--threads` 或 `OMP_NUM_THREADS`；内存预算默认由 cgroup、`HSOLVE_MEMORY_LIMIT_GB`、ulimit 与物理内存中最小的上限推出，超出预算的分解在分配之前就被拒绝并报告 |
