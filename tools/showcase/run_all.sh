@@ -9,7 +9,9 @@
 #                           matrices are downloaded, which needs internet)
 #   prepare [IDS...]        build/test lane: campaign data root (cases, references, resolved targets)
 #   tune IDS...             measurement slot, one guard --exclusive call: tools/bench/tune_slepc.py on
-#                           these scenarios' cases (16 cores) -> results/showcase/tuning/<scenario>.json
+#                           these scenarios' cases (16 cores) -> results/showcase/tuning/<scenario>.json;
+#                           a scenario whose tuned configuration failed at random in its raw record is
+#                           tuned as a randomly failing case (20 confirmation runs per candidate)
 #   tune-complex IDS...     the same with the complex-scalar SLEPc build (complex cases)
 #   tunes [IDS...]          `tune` once per scenario (default: TUNE_IDS below), then `profiles` and
 #                           `tuning-report`
