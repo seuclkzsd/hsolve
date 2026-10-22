@@ -1,0 +1,55 @@
+{
+  "family": "yee",
+  "problem": "HEP",
+  "description": "empty PEC cavity (16, 16, 16) cells, curl-curl (standard form)",
+  "params": {
+    "generator": "yee",
+    "cells": [
+      16,
+      16,
+      16
+    ],
+    "lengths": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "boundary": "pec",
+    "phases": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "form": "standard",
+    "eps": 1.0,
+    "mu": 1.0
+  },
+  "inertia": {
+    "A": [
+      0,
+      3375,
+      7425
+    ]
+  },
+  "scenarios": [
+    "zero-cluster",
+    "multiplicity"
+  ],
+  "targets": [
+    {
+      "sigma": 52.746790361185596,
+      "k": 12,
+      "why": "lowest resonances above the gradient null space"
+    },
+    {
+      "sigma": 261.9262933212482,
+      "k": 20,
+      "why": "higher band, many polarization-degenerate pairs"
+    }
+  ],
+  "schema_version": 1,
+  "name": "pec-cavity-multiplicity",
+  "n": 10800,
+  "nnz_A": 132120,
+  "dtype": "float64"
+}

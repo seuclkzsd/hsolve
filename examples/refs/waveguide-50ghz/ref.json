@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "kind": "dense",
+  "note": "scipy.linalg.eig(A, B) (QZ), finite spectrum; 0 infinite eigenvalue(s) dropped; 0 complex (complex_tol=1e-08)",
+  "count": 289,
+  "complete": true,
+  "window": null
+}

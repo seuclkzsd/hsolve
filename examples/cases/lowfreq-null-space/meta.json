@@ -1,0 +1,66 @@
+{
+  "family": "yee",
+  "problem": "GHEP",
+  "description": "empty PEC cavity (20, 16, 12) cells, curl-curl (generalized form)",
+  "params": {
+    "generator": "yee",
+    "cells": [
+      20,
+      16,
+      12
+    ],
+    "lengths": [
+      1.0,
+      0.7,
+      0.45
+    ],
+    "boundary": "pec",
+    "phases": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "form": "generalized",
+    "eps": 1.0,
+    "mu": 1.0
+  },
+  "inertia": {
+    "A": [
+      0,
+      3135,
+      6929
+    ],
+    "B": [
+      0,
+      0,
+      10064
+    ],
+    "pencil": [
+      0,
+      3135,
+      6929
+    ]
+  },
+  "scenarios": [
+    "zero-cluster",
+    "multiplicity"
+  ],
+  "targets": [
+    {
+      "sigma": 62.95471229349625,
+      "k": 11,
+      "why": "lowest resonances above the gradient null space"
+    },
+    {
+      "sigma": 222.61816579754463,
+      "k": 20,
+      "why": "higher band, many polarization-degenerate pairs"
+    }
+  ],
+  "schema_version": 1,
+  "name": "lowfreq-null-space",
+  "n": 10064,
+  "nnz_A": 122744,
+  "dtype": "float64",
+  "nnz_B": 10064
+}

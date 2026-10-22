@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "kind": "partial-analytic",
+  "note": "Continuous-model (partial-analytic) values, closed form: lambda = -beta^2 of all propagating modes and of the least evanescent ones (lambda <= 0.875779), in mm^-2. The discrete eigenvalues differ by O(h^2): |lambda_h - lambda| <= 0.15 h^2 (lambda + 1.09814)^2 with h = 1.57135 mm (largest bound over the listing 1.44, at the lowest mode 0.00361); compare with that tolerance, not with the solver tolerance. The 64-fold zero eigenvalue of the discrete pencil (non-physical null space) is not listed. complete=true: every discrete eigenvalue in the window [-1.09814, -0.8237] corresponds to a listed value (both edges lie in gaps the error bound cannot close). Labels (ascending): TE0,1 TE1,0 TE1,1 TM1,1 TE0,2 TE2,0 TE1,2 TE2,1 TM1,2 TM2,1 TE2,2 TM2,2 TE0,3 TE3,0 TE1,3 TE3,1 TM1,3 TM3,1 TE2,3 TE3,2 TM2,3 TM3,2 TE0,4 TE4,0 TE1,4 TE4,1 TM1,4 TM4,1 TE3,3 TM3,3 TE2,4 TE4,2 TM2,4 TM4,2.",
+  "count": 34,
+  "complete": true,
+  "window": [
+    -1.098141589009911,
+    -0.8236999216514531
+  ]
+}

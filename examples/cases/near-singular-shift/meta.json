@@ -1,0 +1,42 @@
+{
+  "family": "synthetic",
+  "problem": "HEP",
+  "description": "prescribed spectrum 'near-singular': simple spectrum uniform in [-1, 1]; targets within 1e-12 (relative) of an eigenvalue",
+  "params": {
+    "generator": "synthetic.prescribed_hermitian",
+    "kind": "near-singular",
+    "n": 2000,
+    "complex": false,
+    "spectrum_seed": 120,
+    "matrix_seed": 121,
+    "block": 8,
+    "grouping": "random"
+  },
+  "inertia": {
+    "A": [
+      1035,
+      0,
+      965
+    ]
+  },
+  "scenarios": [
+    "near-singular"
+  ],
+  "targets": [
+    {
+      "sigma": 0.30019841324797913,
+      "k": 10,
+      "why": "sigma = lambda_i (1 + 1e-12) for the eigenvalue nearest 0.3"
+    },
+    {
+      "sigma": -0.7005520584649451,
+      "k": 10,
+      "why": "sigma = lambda_i (1 + 1e-12) for the eigenvalue nearest -0.7"
+    }
+  ],
+  "schema_version": 1,
+  "name": "near-singular-shift",
+  "n": 2000,
+  "nnz_A": 47840,
+  "dtype": "float64"
+}
