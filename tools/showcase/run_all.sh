@@ -11,11 +11,13 @@
 #   campaign-complex IDS... the same with the complex-scalar SLEPc build (complex cases)
 #   physics                 build/test lane: PEC cavity and square waveguide against closed forms
 #   tables                  results/showcase/scenarios.{json,md} and the generated page sections
+#   figures [NAMES...]      docs/images/*.png|svg (all by default) with $HS_FIGURE_PYTHON
 #   slot1 | slot2 | slot3 | slot4   the campaign's four slot calls (the scenario groups below)
 #   slots-real              slot1, slot2 and slot3 one after the other (the real-scalar SLEPc build)
 #   detach STEP [ARGS...]   run a step with nohup setsid; log in $SHOWCASE_HOME/logs/
-# Figures need matplotlib, which the project env does not ship: run
-#   python3 -m tools.showcase.figures all       with any Python that has numpy + matplotlib.
+# Figures need matplotlib, which the project env does not ship: HS_FIGURE_PYTHON names any Python with
+# numpy + matplotlib >= 3.5 (default python3; the committed figures: /share/apps/anaconda3/bin/python,
+# matplotlib 3.8.4, on the cluster nodes).
 #
 # Placement (docs/DESIGN.md §6): builds, references and physics runs in the build/test lane (8 cores,
 # <= 12 GiB); every timed run in the measurement slot (16 cores 16-31, 32 GiB, guard --exclusive).
@@ -63,6 +65,9 @@ case "$step" in
     "${lane[@]}" python -m tools.showcase.physics run --root "$ROOT" --source-root data ;;
   tables)
     python -m tools.showcase.tables ;;
+  figures)
+    [ $# -gt 0 ] || set -- all
+    "${lane[@]}" "${HS_FIGURE_PYTHON:-python3}" -m tools.showcase.figures "$@" ;;
   detach)
     mkdir -p "$SHOWCASE_HOME/logs"
     log="$SHOWCASE_HOME/logs/$(date +%Y%m%d-%H%M%S)-${1:-step}.log"
