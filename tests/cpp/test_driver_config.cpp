@@ -75,8 +75,8 @@ TEST(DriverConfig, BlockSizeAndInertiaCounterRoundTrip) {
   EXPECT_TRUE(bad(R"({"inertia_counter": "yes"})"));
 }
 
-// structure_candidates (off | auto, default off), subspace_bound (auto | off, default auto) and
-// secure (default false): defaults, round trip, and "on" or other values rejected.
+// structure_candidates (off | auto, default off), subspace_bound (auto | on | off, default auto)
+// and secure (default false): defaults, round trip, and other values rejected.
 TEST(DriverConfig, StructureCandidatesSubspaceBoundAndSecure) {
   const hs::SolverConfig def;
   EXPECT_EQ(def.structure_candidates, hs::Toggle::Off);
@@ -102,7 +102,7 @@ TEST(DriverConfig, StructureCandidatesSubspaceBoundAndSecure) {
   };
   EXPECT_TRUE(bad(R"({"structure_candidates": "on"})"));
   EXPECT_TRUE(bad(R"({"structure_candidates": true})"));
-  EXPECT_TRUE(bad(R"({"subspace_bound": "on"})"));
+  EXPECT_EQ(hs::parse_config(R"({"subspace_bound": "on"})").subspace_bound, hs::Toggle::On);
   EXPECT_TRUE(bad(R"({"subspace_bound": "exact"})"));
   EXPECT_TRUE(bad(R"({"secure": "yes"})"));
 }

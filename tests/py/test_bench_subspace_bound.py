@@ -128,6 +128,16 @@ def fabricated_doc() -> dict:
                            "subspace": sub | {"performed": False, "max_sin_bound": None,
                                               "note": "disabled by configuration"}})
     runs.append({"case": "c2", "variant": "auto", "rep": 0, "returncode": 3, "wall_s": 0.1, "stderr": "boom"})
+    # A GHEP case whose lambda_min(B) auto only estimates and on proves.
+    ghep = run | {"case": "c3", "problem": "generalized_definite", "rep": 0}
+    est = sub | {"rigorous": False, "residual_norm": "b_inverse_cg", "b_min_source": "estimate", "max_sin_bound": 1e-6,
+                 "seconds": 0.01}
+    runs.append(ghep | {"variant": "auto", "time_total_s": 1.0, "subspace": est})
+    runs.append(ghep | {"variant": "on", "time_total_s": 1.3,
+                        "subspace": est | {"rigorous": True, "b_min_source": "inertia_count", "max_sin_bound": 5e-7,
+                                           "seconds": 0.3}})
+    runs.append(ghep | {"variant": "off", "time_total_s": 0.99, "groups": [],
+                        "subspace": sub | {"performed": False, "max_sin_bound": None}})
     check = {k: group[k] for k in ("kind", "pairs", "unreturned", "dimension", "gap", "residual", "sin_bound")}
     check.update(reference="exact", reference_note="", reference_dimension=3, reference_backward_error=1e-17,
                  true_gap=0.1, measured_sin=1e-12)
@@ -146,7 +156,9 @@ def test_table_from_a_fabricated_raw_file(tmp_path: Path, capsys):
     assert "提交 `0123456789`" in out and "测量槽 16 核" in out
     assert "界不小于实测夹角的有 1 / 1 组" in out
     assert "中位数 100" in out                       # bound / measured = 1e-10 / 1e-12
-    assert "真实间隙 / 界所用的间隙 δ：中位数 10" in out
+    assert "真实间隙 / 界所用的间隙 δ：中位数 10，" in out
     assert "| c1 | HEP | 100 | 2 | inertia_counts | 1.00e-10 | 是 | 2 | identity | 1/0 | 0.020 | 1.050 | 0.980 | 2.0% |" in out
     assert "| c2 | — | — | — | — | 运行失败（返回码 3） |" in out
+    assert "| c3 | estimate → inertia_count | 否 → 是 | 1.00e-06 → 5.00e-07 | 0.010 → 0.300 | 1.300 | 0.990 | 30% |" in out
+    assert "| c1 | estimate" not in out  # on and auto agree for c1: not in the on table
     assert "| c1 | 0（0, 1 + 1 未返回） | cluster | 3 | 3 | 1.00e-02 | 1.00e-01 |" in out

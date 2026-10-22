@@ -118,6 +118,11 @@ def test_report_carries_the_subspace_bound(case, tmp_path):
          "--subspace-bound", "off", "-q")
     sub = json.loads((out_off / "report.json").read_text())["subspace"]
     assert not sub["performed"] and sub["max_sin_bound"] is None and sub["note"] == "disabled by configuration"
+    out_on = tmp_path / "on"
+    _run("--A", str(case / "A.npz"), "--B", str(case / "B.npz"), "--config", str(case / "config.json"),
+         "--out", str(out_on), "--subspace-bound", "on", "-q")
+    sub = json.loads((out_on / "report.json").read_text())["subspace"]
+    assert sub["performed"] and sub["rigorous"] and sub["b_min_source"] == "diagonal"
 
 
 @needs_exe

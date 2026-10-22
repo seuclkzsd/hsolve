@@ -31,13 +31,14 @@ def conditions(doc: dict, path: Path) -> str:
     heads = sorted({b["git_head"][:10] for b in batches})
     versions = sorted({b["hsolve_version"].splitlines()[0] for b in batches if b["hsolve_version"]})
     reps = sorted({b["reps"] for b in batches})
+    variants = list(dict.fromkeys(v for b in batches for v in b.get("variants", ["auto", "off"])))
     start = min(b["started"] for b in batches)
     end = max(b.get("finished", b["started"]) for b in batches)
     return (f"由 `tools/bench/subspace_bound_run.py` 测量、`tools/bench/subspace_bound_table.py` 生成，原始数据 "
             f"`results/{path.name}`。条件：{', '.join(hosts)}（{'; '.join(cpus)}），测量槽 {'/'.join(map(str, cores))} 核"
             f"（`tools/run/guard.py --exclusive`，≤ 32 GiB），`build/{batches[0]['preset']}/hsolve`"
             f"（{', '.join(versions)}，提交 `{', '.join(heads)}`），各测例的默认配置（`data/cases/<case>/config.json`："
-            f"nearest 目标，tol = 1e-10），`--subspace-bound auto` 与 `off` 交错各 {'/'.join(map(str, reps))} 次；"
+            f"nearest 目标，tol = 1e-10），`--subspace-bound` {' / '.join(variants)} 交错各 {'/'.join(map(str, reps))} 次；"
             f"{start[:10]} 至 {end[:10]} 测量。界的定义与证明见 `docs/DESIGN.md` §3.6-8c，报告字段见 `docs/FORMATS.md` §3。\n")
 
 
@@ -67,10 +68,11 @@ def summary(doc: dict) -> list[str]:
         w.append(f"- 界 / 实测（界 < 1 的 {len(ratios)} 组）：中位数 {10 ** statistics.median(lr):.3g}，"
                  f"最小 {10 ** lr[0]:.3g}，最大 {10 ** lr[-1]:.3g}；在 10 倍以内 {sum(r <= 10 for r in ratios)} 组，"
                  f"100 倍以内 {sum(r <= 100 for r in ratios)} 组，1000 倍以内 {sum(r <= 1000 for r in ratios)} 组。")
-    loose = [(g["true_gap"] / g["gap"]) for _, _, g in groups if g.get("true_gap") and g["gap"]]
-    if loose:
-        w.append(f"- 已知完整谱的组中，真实间隙 / 界所用的间隙 δ：中位数 {statistics.median(loose):.3g}，"
-                 f"最大 {max(loose):.3g}——界偏松的主要来源是 δ 取到证书窗口端点的距离（见第 4 节）。")
+    gaps = [(g["true_gap"] / g["gap"]) for _, _, g in groups if g.get("true_gap") and g["gap"]]
+    if gaps:
+        w.append(f"- 已知完整谱的 {len(gaps)} 组中，真实间隙 / 界所用的间隙 δ：中位数 {statistics.median(gaps):.3g}，"
+                 f"最大 {max(gaps):.3g}：证书窗口与 Kahan 区间给出的 δ 基本就是真实间隙，界与实测之差来自残差项"
+                 "（第 4 节）。")
     w.append("")
     return w
 
@@ -109,6 +111,34 @@ def cost_table(doc: dict) -> list[str]:
     return w
 
 
+def on_table(doc: dict) -> list[str]:
+    """Cases where subspace_bound = on proves lambda_min(B) that auto only estimates."""
+    runs = doc["runs"]
+    rows = []
+    for case in dict.fromkeys(r["case"] for r in runs):
+        def of(variant):
+            return [r for r in runs if r["case"] == case and r["variant"] == variant and "subspace" in r]
+        auto, on, off = of("auto"), of("on"), of("off")
+        if not auto or not on or on[0]["subspace"]["b_min_source"] == auto[0]["subspace"]["b_min_source"]:
+            continue
+        a, o = auto[0]["subspace"], on[0]["subspace"]
+        t_off = median(r["time_total_s"] for r in off)
+        t_on_bound = median(r["subspace"]["seconds"] for r in on)
+        share = f"{100 * t_on_bound / t_off:.0f}%" if t_off else "—"
+        rows.append(f"| {case} | {a['b_min_source']} → {o['b_min_source']} | "
+                    f"{'是' if a['rigorous'] else '否'} → {'是' if o['rigorous'] else '否'} | "
+                    f"{fmt(a['max_sin_bound'])} → {fmt(o['max_sin_bound'])} | "
+                    f"{median(r['subspace']['seconds'] for r in auto):.3f} → {t_on_bound:.3f} | "
+                    f"{median(r['time_total_s'] for r in on):.3f} | {fmt(t_off, '.3f')} | {share} |")
+    if not rows:
+        return []
+    return ["### `subspace_bound = on`：证明 λ_min(B)\n",
+            "默认的 auto 只用廉价的证明（对角、Gershgorin、不完全 Cholesky），都不适用时用估计（`严格` = 否）。"
+            "on 在这时对 B − μ·diag(B) 做惯性计数（一到两次 B 的分解）来证明，下表是两者不同的测例（中位数）。\n",
+            "| 测例 | λ_min(B) 来源 auto → on | 严格 | max sin 界 | 界 (s) | 总时间 on (s) | 总时间 off (s) | 增量 (on) |",
+            "|---|---|---|---:|---:|---:|---:|---:|", *rows, ""]
+
+
 def check_table(doc: dict) -> list[str]:
     groups = checked_groups(doc)
     if not groups:
@@ -142,15 +172,19 @@ def main(path: str) -> int:
     w = ["# 特征向量子空间夹角的后验界：与实测夹角的比较及代价\n", conditions(doc, p)]
     w += summary(doc)
     w += cost_table(doc)
+    w += on_table(doc)
     w += check_table(doc)
     w.append("## 4. 读表说明\n")
     w.append("- 界为 ‖sin Θ‖_F ≤ ‖B^{-1/2}R‖_F / (δ·sqrt(1 − ε))（Davis–Kahan，B 内积），δ 来自证书窗口端点与其它组的 "
-             "Kahan 区间。nearest 目标的证书窗口紧贴第 k 个特征值之外，离窗口端点最近的组的 δ 可远小于真实间隙，界相应放大 "
-             "真实间隙 / δ 倍；这是只用证书已证明的信息（不假设窗口外的谱）的代价。")
-    w.append("- 残差项是对 ‖B^{-1/2}R‖_F 的严格上界（含舍入的先验界），实测夹角约为残差在其余特征向量方向上的分量除以真实间隙，"
-             "二者之比反映残差与间隙的估计余量。")
+             "Kahan 区间，残差项是 ‖B^{-1/2}R‖_F 的严格上界（含舍入的先验界）。")
+    w.append("- 界 / 实测的数量级来自 Davis–Kahan 定理只用残差的范数：把残差按精确特征向量展开，第 i 个分量对夹角的贡献是 "
+             "rᵢ / |λᵢ − θ|，定理把它们都按最小的距离 δ 计。位移反演 Krylov 方法的 Ritz 向量，残差主要落在离 σ 远的特征方向上"
+             "（这些方向被 (A − σB)^{-1} 压低，迭代不再修正它们），所以实测夹角约为残差 / 远处特征值的典型距离，比值约为该距离 / δ："
+             "谱跨度大、目标处间隙小的测例（近奇异位移、零簇、宽谱）比值大，间隙与谱跨度相当的测例（腔体、声学）比值小。"
+             "残差恰好落在最近的外部特征方向时定理取等号，所以只凭 ‖R‖ 与 δ 的界不能更紧。")
     w.append("- `严格` = 证书为计数证明且 λ_min(B) 有证明；`残差范数` 为 2（B = I）、b_inverse_diagonal（对角 B）或 "
-             "b_inverse_cg（一般 B：Jacobi 预条件 CG，余项以 λ_min(B) 的下界界定）。")
+             "b_inverse_cg（一般 B：Jacobi 预条件 CG，余项以 λ_min(B) 与 λ_min(D^{-1/2}BD^{-1/2}) 的下界界定）；"
+             "`λ_min(B) 来源` 见 `docs/FORMATS.md` §3。")
     w.append("")
     w.append("## 5. 原始数据与重新生成\n")
     w.append(f"`results/{p.name}`：每批的测量条件（主机、CPU、核数、提交、版本、重复次数），每次运行一条（测例、变体、"

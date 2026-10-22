@@ -526,8 +526,9 @@ TEST(SubspaceBoundSolveReport, NullWithAReasonUnlessACertificatePassed) {
   EXPECT_EQ(j["subspace"]["b_min_source"], "identity");
 
   // lambda_min(B) of a B that neither Gershgorin nor the incomplete-Cholesky proof covers (the 1-D
-  // Laplacian: not strictly dominant, Jacobi-scaled lambda_min ~ 1e-3 < 0.1): an inertia count of
-  // B - mu D proves it, so the bound is rigorous.
+  // Laplacian: not strictly dominant, Jacobi-scaled lambda_min ~ 1e-3 < 0.1): estimated by default
+  // (rigorous false, the note says how to prove it); with subspace_bound = on an inertia count of
+  // B - mu D proves it.
   {
     const index_t n = 60;
     const auto a = hs::identity<double>(n);
@@ -535,6 +536,13 @@ TEST(SubspaceBoundSolveReport, NullWithAReasonUnlessACertificatePassed) {
     auto gcfg = base_config<double>();
     gcfg.target.sigma = 1.0;
     gcfg.target.k = 3;
+    const auto est = hs::solve(a, &b, gcfg);
+    ASSERT_TRUE(est.report.success) << est.report.to_json();
+    EXPECT_TRUE(est.report.subspace.performed);
+    EXPECT_EQ(est.report.subspace.b_min_source, "estimate");
+    EXPECT_FALSE(est.report.subspace.rigorous);
+    EXPECT_NE(est.report.subspace.note.find("subspace_bound = on"), std::string::npos) << est.report.subspace.note;
+    gcfg.subspace_bound = hs::Toggle::On;
     const auto gs = hs::solve(a, &b, gcfg);
     ASSERT_TRUE(gs.report.success) << gs.report.to_json();
     const auto& sub = gs.report.subspace;

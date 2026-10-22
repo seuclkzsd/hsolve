@@ -613,8 +613,8 @@ double min_diagonal(const CsrMatrix<T>& b) {
 /// lambda_min(B) and lambda_min(S), S = D^{-1/2} B D^{-1/2}, for the B^{-1}-norms (B HPD): a proof
 /// where one is cheap - the diagonal of a diagonal B, Gershgorin, the definiteness proof the solve
 /// made (Ctx::b_scaled_lower), the incomplete-Cholesky proof of norms.hpp within half the solve's
-/// mean factorization time (at least 0.05 s) - else an inertia count of B - mu D (one more
-/// factorization of B's pattern), and otherwise an estimate (not proven).
+/// mean factorization time (at least 0.05 s) - else, with subspace_bound = on, an inertia count of
+/// B - mu D (one or two more factorizations of B's pattern), and otherwise an estimate (not proven).
 template <class T>
 BMinBound b_min_bound(Ctx& c, const CsrMatrix<T>& b, bool diagonal) {
   BMinBound r;
@@ -664,7 +664,7 @@ BMinBound b_min_bound(Ctx& c, const CsrMatrix<T>& b, bool diagonal) {
   // completeness certificate (compute_inertia: own analysis, double precision, no BLR, factors
   // discarded). mu = theta_min / 2 (the Lanczos estimate, from inside), then theta_min / 20. The
   // assembly rounds the diagonal (1 - mu) b_ii by at most 4u b_ii: lambda_min(S) > mu - 4u.
-  if (proof.theta_min > 0.0 && dmin > 0.0) {
+  if (c.cfg.subspace_bound == Toggle::On && proof.theta_min > 0.0 && dmin > 0.0) {
     CsrMatrix<T> diag = identity<T>(b.nrows);
     const std::vector<double> inv = inverse_diagonal(b);
     for (index_t i = 0; i < b.nrows; ++i)
@@ -745,8 +745,12 @@ void attach_subspace_bound(Ctx& c, const CsrMatrix<T>& a, const CsrMatrix<T>* b,
       out.rigorous = out.rigorous && cert.rigorous;
       out.failure_probability = cert.failure_probability;
       if (b && !opt.b_min.proven) {
-        const std::string why = "lambda_min(B) is estimated, not proven: the B^{-1}-norm remainder and rounding "
-                                "terms rest on that estimate";
+        const std::string why =
+            "lambda_min(B) is estimated, not proven: the B^{-1}-norm remainder and rounding terms rest on that "
+            "estimate" +
+            std::string(c.cfg.subspace_bound == Toggle::On
+                            ? ""
+                            : " (subspace_bound = on proves it by an inertia count of B - mu diag(B))");
         out.note = out.note.empty() ? why : why + "; " + out.note;
       }
     } catch (const Error& e) {

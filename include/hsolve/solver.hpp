@@ -209,9 +209,11 @@ struct SolverConfig {
   /// config.json takes "off" | "auto"; in the C++ API On acts as Auto.
   Toggle structure_candidates = Toggle::Off;
   /// A-posteriori bound on the eigenvector subspace angles (DESIGN §3.6-8c, SolveReport::subspace):
-  /// Auto (the default) - computed for HEP/GHEP results whose certificate passed; Off - not
-  /// computed (report.subspace.note says so). config.json takes "auto" | "off"; in the C++ API On
-  /// acts as Auto.
+  /// Auto (the default) - computed for HEP/GHEP results whose certificate passed, lambda_min(B)
+  /// proven where a cheap proof applies (diagonal, Gershgorin, incomplete Cholesky) and estimated
+  /// otherwise (report.subspace.rigorous false); On - the same, with lambda_min(B) always proven,
+  /// by an inertia count of B - mu diag(B) when nothing cheaper applies (one or two more
+  /// factorizations of B's pattern); Off - not computed (report.subspace.note says so).
   Toggle subspace_bound = Toggle::Auto;
   /// Data protection (docs/FORMATS.md §5): the report and the event log carry no file system
   /// paths (the command line records the inputs by shape, nnz, dtype and SHA-256 instead, and

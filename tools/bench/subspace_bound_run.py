@@ -2,7 +2,7 @@
 """Eigenvector subspace-angle bounds on the data cases: the bound against the measured angle, and its cost.
 
 Every case is solved with its default configuration (data/cases/<case>/config.json) by
-build/<preset>/hsolve with --subspace-bound auto and off, interleaved (the order alternates per
+build/<preset>/hsolve with --subspace-bound auto, off and on, interleaved (the order rotates per
 repetition); each report's summary is kept. From the first auto run of a case, every group of the
 report's `subspace` section is checked against a reference of the exact spectral subspace of the
 group's interval (tools/bench/subspace_reference.py): the exact eigenvectors of the synthetic
@@ -68,7 +68,8 @@ def cpu_model() -> str:
 
 def git_head() -> str:
     try:
-        return subprocess.run(["git", "-C", str(REPO), "rev-parse", "HEAD"], capture_output=True, text=True,
+        # cwd rather than git -C: the cluster nodes' git 1.8.3 predates -C.
+        return subprocess.run(["git", "rev-parse", "HEAD"], cwd=REPO, capture_output=True, text=True,
                               check=True).stdout.strip()
     except (OSError, subprocess.CalledProcessError):
         return "unknown"
@@ -148,11 +149,15 @@ def main(argv=None) -> int:
     ap.add_argument("cases", nargs="*", default=DEFAULT_CASES)
     ap.add_argument("--out", type=Path, required=True)
     ap.add_argument("--append", action="store_true", help="add this batch to an existing --out file")
-    ap.add_argument("--reps", type=int, default=3)
+    ap.add_argument("--reps", type=int, default=5)
+    ap.add_argument("--variants", default="auto,off,on", help="--subspace-bound values, comma separated")
     ap.add_argument("--preset", default="release")
     ap.add_argument("--data", type=Path, default=REPO / "data")
     ap.add_argument("--timeout", type=float, default=900.0, help="per solve (s)")
     args = ap.parse_args(argv)
+    variants = [v for v in args.variants.split(",") if v]
+    if not variants or any(v not in ("auto", "off", "on") for v in variants):
+        ap.error(f"--variants takes auto, off and on, got {args.variants!r}")
     exe = REPO / "build" / args.preset / "hsolve"
     version = subprocess.run([str(exe), "--version"], capture_output=True, text=True, check=True).stdout.strip()
     head = git_head()
@@ -163,12 +168,12 @@ def main(argv=None) -> int:
             ap.error(f"--append: {args.out} was measured at {first['git_head'][:10]} / {first['preset']}, "
                      f"this batch is {head[:10]} / {args.preset}")
     else:
-        doc = {"description": "hsolve --subspace-bound auto vs off on the cases' default configurations; "
+        doc = {"description": "hsolve --subspace-bound auto, off and on on the cases' default configurations; "
                               "bound against the measured subspace angle",
                "batches": [], "runs": [], "reference_checks": {}}
     batch = {"host": platform.node(), "cpu": cpu_model(), "cores": len(os.sched_getaffinity(0)),
              "omp_num_threads": os.environ.get("OMP_NUM_THREADS"), "git_head": head, "hsolve_version": version,
-             "preset": args.preset, "reps": args.reps, "cases": args.cases,
+             "preset": args.preset, "reps": args.reps, "variants": variants, "cases": args.cases,
              "started": time.strftime("%Y-%m-%dT%H:%M:%S%z")}
     done = set(args.cases)
     doc["runs"] = [r for r in doc["runs"] if r["case"] not in done]
@@ -179,8 +184,7 @@ def main(argv=None) -> int:
         for rep in range(args.reps):
             for case in args.cases:
                 case_dir = args.data / "cases" / case
-                variants = ("auto", "off") if rep % 2 == 0 else ("off", "auto")
-                for variant in variants:
+                for variant in variants[rep % len(variants):] + variants[:rep % len(variants)]:
                     out = work / case / f"{variant}-{rep}"
                     r, wall = solve(exe, case_dir, out, variant, args.timeout)
                     entry = {"case": case, "variant": variant, "rep": rep, "returncode": r.returncode, "wall_s": wall}

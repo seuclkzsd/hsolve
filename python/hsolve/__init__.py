@@ -380,7 +380,8 @@ def solve(
              rather than return a wrong answer) or "auto" (single only when the double factors do
              not fit in core but single ones do; result.report["precision"]).
              config["subspace_bound"]: "auto" (default; bounds on the eigenvector subspace angles
-             in result.report["subspace"]) or "off". config["structure_candidates"]: "off"
+             in result.report["subspace"]), "on" (the same with lambda_min(B) always proven) or
+             "off". config["structure_candidates"]: "off"
              (default) or "auto" (the optional structure-recognition path, docs/FORMATS.md section 2).
     threads  OpenMP threads (0 = OMP_NUM_THREADS / all available).
     verbose  0 quiet, 1 progress events, 2 debug (written to the process's stderr).

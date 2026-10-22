@@ -291,8 +291,9 @@ int hs::cli::run(int argc, char** argv, hs::Transport* peers) {
                           ->check(CLI::IsMember({"off", "auto"}));
   auto* o_subspace = app.add_option("--subspace-bound", subspace,
                                     "a-posteriori bound on the eigenvector subspace angles (report.subspace): auto "
-                                    "(default; HEP/GHEP with a passed certificate) | off")
-                         ->check(CLI::IsMember({"auto", "off"}));
+                                    "(default; HEP/GHEP with a passed certificate) | on (lambda_min(B) always "
+                                    "proven, by an inertia count if needed) | off")
+                         ->check(CLI::IsMember({"auto", "on", "off"}));
   app.add_flag("--secure", secure,
                "data protection: no file system paths in the report and the log (inputs recorded by shape, nnz, "
                "dtype and SHA-256), files created with mode 0600 (docs/FORMATS.md section 5)");
