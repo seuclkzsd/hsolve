@@ -202,6 +202,8 @@ def failure_text(e: dict[str, Any]) -> str:
             label += f" {e['max_missing']} 个"
         if o == "spurious" and e.get("max_spurious"):
             label += f" {e['max_spurious']} 个"
+        if o == "residual" and e.get("max_backward_error") is not None:
+            label += f"（最大 {e['max_backward_error']:.1e}）"
         parts.append(label)
     return "、".join(parts)
 
