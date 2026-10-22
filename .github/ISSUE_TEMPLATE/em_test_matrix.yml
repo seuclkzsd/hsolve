@@ -33,9 +33,9 @@ body:
       label: 文件
       description: |
         直接附上 `.npz`（`scipy.sparse.save_npz`）或 `.mtx` 文件（压缩后不超过 25 MB），
-        或给出长期存储（如 Zenodo）的链接与每个文件的 SHA-256。
+        或给出长期存储（如 Zenodo）的链接与每个文件的 SHA-256。只提交验证结果、不公开矩阵时留空。
     validations:
-      required: true
+      required: false
   - type: textarea
     id: target
     attributes:
@@ -71,5 +71,5 @@ body:
     attributes:
       label: 确认
       options:
-        - label: 我有权公开这些数据，它们不涉密、不受出口管制，并同意按上面选择的方式授权
+        - label: 我在这里提交的内容（矩阵文件如有，以及描述与结果）可以公开：不涉密、不受出口管制，我有权按上面选择的方式授权
           required: true
