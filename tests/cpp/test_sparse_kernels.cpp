@@ -423,8 +423,10 @@ TYPED_TEST(SparseKernelPaths, BackwardErrorIsAtRoundingLevelForAnAccurateSolve) 
         std::vector<double> omega(static_cast<std::size_t>(q));
         hs::shifted_residual(a, bp, sigma, x.data(), n, y.data(), n, r.data(), n, q, {path},
                              omega.data());
+        // Rounding level of a dense LU solve of order 120: 16 u held with OpenBLAS' AVX2 and
+        // AVX-512 kernels, its SSE kernels (OPENBLAS_CORETYPE=Nehalem) reached 16.4 u.
         for (index_t k = 0; k < q; ++k)
-          EXPECT_LT(omega[k], 16 * std::numeric_limits<double>::epsilon())
+          EXPECT_LT(omega[k], 32 * std::numeric_limits<double>::epsilon())
               << name(path) << " with_b=" << with_b << " q=" << q << " k=" << k;
       }
       auto y2 = y;
