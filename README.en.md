@@ -84,7 +84,9 @@ print(res.success, res.eigenvalues, res.report["certificate"]["statement"])
 
 {{TODO:rb-evidence hard-case comparison table (scenario · case · hsolve · SLEPc default usage · SLEPc tuned · remarks), with the test conditions}}
 
-## Physics example: the 18 propagating modes of a square waveguide
+## Physics examples
+
+### The 18 propagating modes of a square waveguide (indefinite B)
 
 A hollow 10 mm × 10 mm metallic waveguide carries 18 propagating modes at 50 GHz (12 TE and 6 TM; cut-off frequencies
 15·√(m² + n²) GHz). Discretized with the repository's finite-element generator (Lee–Sun–Cendes mixed edge/nodal
@@ -95,8 +97,15 @@ python -m tools.gen.waveguide --family waveguide --a 10 --b 10 --freq 50 --targe
 hsolve --A data/cases/wg-square-2e4/A.npz --B data/cases/wg-square-2e4/B.npz --sigma -0.5 --k 18 --out out/
 ```
 
-hsolve detects the indefinite B, excludes the null space and returns exactly the 18 propagating modes.
+hsolve detects the indefinite B, excludes the null space and returns exactly the 18 propagating modes. With indefinite
+B Sylvester inertia does not count eigenvalues, so this problem has no completeness certificate (the `certificate` of
+`report.json` says it is not available); the result is checked by the residual acceptance of every pair and against
+reference solutions.
 {{TODO:rb-evidence result table: mode, analytic β, computed β, relative difference, backward error, time and conditions}}
+
+### A rectangular cavity (positive definite B, with a completeness certificate)
+
+{{TODO:rb-evidence cavity example (docs/showcase/物理场景.md, "矩形谐振腔"): structure and grid, generation and solve commands (σ, k, zero_filter_tol), the gradient null-space modes excluded by inertia, the exact certificate's expected / found counts, both copies of the double TE111 / TM111 mode returned, largest backward error and the independent evaluation, test conditions}}
 
 ## Parallel scheme
 
@@ -143,7 +152,7 @@ Please cite hsolve as described in [CITATION.cff](CITATION.cff) ("Cite this repo
 
 ```bibtex
 @software{hsolve,
-  author  = {{seuclkzsd and the hsolve contributors}},
+  author  = {seuclkzsd},
   title   = {hsolve: a certified shift-invert eigensolver for large sparse Hermitian (indefinite) eigenproblems from electromagnetic simulation},
   year    = {2026},
   version = {1.0.0},

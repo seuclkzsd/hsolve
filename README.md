@@ -69,7 +69,9 @@ print(res.success, res.eigenvalues, res.report["certificate"]["statement"])
 
 {{TODO:rb-evidence 的困难场景对比表，建议的列：场景 · 测例（n、问题类型）· hsolve（有效次数 / 时间）· SLEPc 默认用法 · SLEPc 逐例调优 · 说明。建议的行：重特征值（简并模）、σ 贴近谐振频率、零附近密集谱（低频击穿）、B 不定的波导（大维零空间）、区间内上千个特征值；对手出错、漏解或返回空的情况照实列出，并写明测试条件。}}
 
-## 物理示例：方波导的 18 个传播模
+## 物理示例
+
+### 方波导的 18 个传播模（B 不定）
 
 10 mm × 10 mm 的空心金属方波导，在 50 GHz 下有 18 个传播模（TE 12 个、TM 6 个，截止频率 15·√(m² + n²) GHz）。
 用仓库里的有限元生成器离散（Lee–Sun–Cendes 棱元-节点元混合公式，λ = −β²），这是一个 B 不定、且带大维零空间的
@@ -80,7 +82,13 @@ python -m tools.gen.waveguide --family waveguide --a 10 --b 10 --freq 50 --targe
 hsolve --A data/cases/wg-square-2e4/A.npz --B data/cases/wg-square-2e4/B.npz --sigma -0.5 --k 18 --out out/
 ```
 
-hsolve 自动识别 B 不定并排除零空间，返回的正是 18 个传播模。{{TODO:rb-evidence 的结果表：模式、解析 β、计算 β、相对差、后向误差，以及求解时间与条件}}
+hsolve 自动识别 B 不定并排除零空间，返回的正是 18 个传播模。B 不定时 Sylvester 惯性不能计数，所以这个问题没有
+完备性证书（`report.json` 的 `certificate` 写明不可用），结果靠每个特征对的残差验收以及与参考解的对照来核对。
+{{TODO:rb-evidence 的结果表：模式、解析 β、计算 β、相对差、后向误差，以及求解时间与条件}}
+
+### 矩形谐振腔（B 正定，带完备性证书）
+
+{{TODO:rb-evidence 的谐振腔示例（docs/showcase/物理场景.md「矩形谐振腔」）：结构与网格、生成与求解命令（σ、k、zero_filter_tol）、按惯性排除的梯度零模个数、exact 证书的「应有 / 找到」计数、二重简并的 TE111 / TM111 两个都返回、最大后向误差与独立评测结论、测试条件}}
 
 ## 并行方案
 
@@ -129,7 +137,7 @@ hsolve 自动识别 B 不定并排除零空间，返回的正是 18 个传播模
 
 ```bibtex
 @software{hsolve,
-  author  = {{seuclkzsd and the hsolve contributors}},
+  author  = {seuclkzsd},
   title   = {hsolve: a certified shift-invert eigensolver for large sparse Hermitian (indefinite) eigenproblems from electromagnetic simulation},
   year    = {2026},
   version = {1.0.0},
