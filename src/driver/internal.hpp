@@ -108,6 +108,11 @@ struct Ctx {
   /// Jacobi-scaled B is at least this (HpdProof::lower_bound); 0: no such proof. The subspace bound
   /// reuses it for lambda_min(B).
   double b_scaled_lower = 0.0;
+  /// That proof ran to a conclusion - proven, or failed for a reason that does not depend on its
+  /// budget (nearly_singular, breakdown, gershgorin) - so the subspace bound does not repeat it, and
+  /// its Lanczos estimate of lambda_min of the Jacobi-scaled B (0: none).
+  bool b_proof_settled = false;
+  double b_theta_min = 0.0;
 };
 
 template <class T>

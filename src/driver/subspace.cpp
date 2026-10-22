@@ -31,9 +31,10 @@ constexpr double kRoundoff = 0x1p-53;
 constexpr index_t kChunkColumns = 16;
 /// A group whose Gram defect reaches this is not numerically independent: no bound.
 constexpr double kMaxOrthogonalityDefect = 0.5;
-/// CG for r^H B^{-1} r stops once its remainder bound ||s||^2 / lambda_min(B) is at most this share
-/// of the quadratic form (inflating the residual norm by at most half of it).
-constexpr double kRemainderShare = 1e-6;
+/// CG for r^H B^{-1} r stops once its remainder estimate (s^H B^{-1} s, bounded through
+/// lambda_min(B) and lambda_min(S)) is at most this share of the quadratic form: the residual norm
+/// is then inflated by at most half of it (0.5%), far below the bound's own slack.
+constexpr double kRemainderShare = 1e-2;
 
 /// gamma_k = k u / (1 - k u) of Higham (Accuracy and Stability, §3.1), with a factor 2 of slack
 /// that also covers complex arithmetic.
@@ -81,15 +82,38 @@ std::vector<double> inverse_diagonal(const CsrMatrix<T>& b) {
   return inv;
 }
 
-/// out[i] = sum_j |m_ij| |v_j|: the componentwise envelope of m v (the rounding error of a computed
-/// m v is at most gamma_{len+1} out[i] in row i).
+/// |v| to within 2u: sqrt(re^2 + im^2) without the scaling of std::abs (hypot), which costs an
+/// order of magnitude more; the envelopes below carry slack for this rounding.
+inline double magnitude(double v) { return std::fabs(v); }
+inline double magnitude(const cplx& v) { return std::sqrt(v.real() * v.real() + v.imag() * v.imag()); }
+
+/// out(:, j) = |v(:, j)| for the p columns of v (n x p, ld n; out ld n).
 template <class T>
-void abs_product(const CsrMatrix<T>& m, const T* v, double* out) {
+void magnitudes(const T* v, index_t n, index_t p, double* out) {
 #pragma omp parallel for schedule(static)
-  for (index_t i = 0; i < m.nrows; ++i) {
-    double s = 0.0;
-    for (index_t p = m.rowptr[i]; p < m.rowptr[i + 1]; ++p) s += std::abs(m.values[p]) * std::abs(v[m.colind[p]]);
-    out[i] = s;
+  for (index_t i = 0; i < n; ++i)
+    for (index_t j = 0; j < p; ++j) out[i + j * n] = magnitude(v[i + j * n]);
+}
+
+/// out(i, j) = sum_k |m_ik| absv(k, j) for the p columns of absv (n x p, ld n; out ld n): the
+/// componentwise envelope |M| |V| (the rounding error of a computed M v is at most gamma_{len+1}
+/// times it in row i). One pass over M for all columns.
+template <class T>
+void abs_spmm(const CsrMatrix<T>& m, const double* absv, index_t p, double* out) {
+  const index_t n = m.nrows;
+#pragma omp parallel
+  {
+    std::vector<double> acc(static_cast<std::size_t>(p));
+#pragma omp for schedule(static)
+    for (index_t i = 0; i < n; ++i) {
+      std::fill(acc.begin(), acc.end(), 0.0);
+      for (index_t q = m.rowptr[i]; q < m.rowptr[i + 1]; ++q) {
+        const double mv = magnitude(m.values[q]);
+        const double* vk = absv + m.colind[q];
+        for (index_t j = 0; j < p; ++j) acc[static_cast<std::size_t>(j)] += mv * vk[j * n];
+      }
+      for (index_t j = 0; j < p; ++j) out[i + j * n] = acc[static_cast<std::size_t>(j)];
+    }
   }
 }
 
@@ -125,76 +149,141 @@ double envelope_b_inverse_norm(const double* c, index_t n, const BInverseWeights
   return bound * slack;
 }
 
+/// Rows per block of the fused CG passes: the per-column partial sums are formed on these fixed
+/// blocks and added in block order, so the sums do not depend on the number of threads.
+constexpr index_t kCgBlockRows = 2048;
+
+/// Re conj(a) b.
+inline double re_dot(double a, double b) { return a * b; }
+inline double re_dot(const cplx& a, const cplx& b) { return a.real() * b.real() + a.imag() * b.imag(); }
+
+/// One fused pass of the block CG: f(j, i0, i1, acc) for every column j with active[j], on the
+/// fixed row blocks [i0, i1) in parallel; acc points to the column's `width` partial sums of the
+/// block, which come back added in block order (sums[j * width + k]).
+template <class F>
+void fused_pass(index_t n, index_t p, const std::vector<char>& active, int width, std::vector<double>& part,
+                std::vector<double>& sums, const F& f) {
+  const index_t blocks = (n + kCgBlockRows - 1) / kCgBlockRows;
+  const auto stride = static_cast<std::size_t>(p) * static_cast<std::size_t>(width);
+  part.assign(static_cast<std::size_t>(blocks) * stride, 0.0);
+#pragma omp parallel for schedule(static)
+  for (index_t blk = 0; blk < blocks; ++blk) {
+    const index_t i0 = blk * kCgBlockRows, i1 = std::min(n, i0 + kCgBlockRows);
+    double* acc = part.data() + static_cast<std::size_t>(blk) * stride;
+    for (index_t j = 0; j < p; ++j)
+      if (active[static_cast<std::size_t>(j)]) f(j, i0, i1, acc + static_cast<std::size_t>(j) * width);
+  }
+  sums.assign(stride, 0.0);
+  for (index_t blk = 0; blk < blocks; ++blk)
+    for (std::size_t k = 0; k < stride; ++k) sums[k] += part[static_cast<std::size_t>(blk) * stride + k];
+}
+
 /// Upper bounds q_j >= r_j^H B^{-1} r_j for the p columns of r (n x p, ld n), B HPD. For any z,
 /// with s = r - B z:  r^H B^{-1} r = Re z^H (2 r - B z) + s^H B^{-1} s, where s^H B^{-1} s is bounded
 /// by envelope_b_inverse_norm (lower bounds, or estimates, of lambda_min(B) and lambda_min(S)).
-/// z comes from Jacobi-preconditioned CG (it only makes s small; the identity holds for any z). The
-/// evaluation's rounding is bounded a priori, componentwise for the products with B.
+/// z comes from Jacobi-preconditioned CG (it only makes s small; the identity holds for any z),
+/// run on all columns at once with their own step sizes: one product with B and three fused passes
+/// over the columns per iteration. The evaluation's rounding is bounded a priori, componentwise for
+/// the products with B.
 template <class T>
 void cg_b_inverse_quadratic(const CsrMatrix<T>& b, const BInverseWeights& wts, const RowStats& sb, const T* r,
                             index_t n, index_t p, const SubspaceOptions& opt, double* q) {
-  const std::vector<double>& inv_diag = *wts.inv_diag;
+  const double* inv_diag = wts.inv_diag->data();
   DenseMatrix<T> z(n, p), s(n, p), h(n, p), dir(n, p), bd(n, p);
-  std::vector<double> envelope(static_cast<std::size_t>(n));
-  std::vector<double> rnorm(static_cast<std::size_t>(p)), rho(static_cast<std::size_t>(p));
-  std::vector<double> quad(static_cast<std::size_t>(p), 0.0);  // r^H z_k = sum_i alpha_i rho_i
-  std::vector<char> done(static_cast<std::size_t>(p), 0);
-  const auto precondition = [&](index_t j) {
-    const T* sj = s.col(j);
+  const auto np = static_cast<std::size_t>(p);
+  std::vector<double> rnorm(np), rho(np), alpha(np), beta(np);
+  std::vector<double> quad(np, 0.0);  // r^H z_k = sum_i alpha_i rho_i
+  std::vector<char> active(np, 1);
+  std::vector<double> part, sums;
+  // s = r, h = D^{-1} s, dir = h; ||r||^2 and rho = s^H h.
+  fused_pass(n, p, active, 2, part, sums, [&](index_t j, index_t i0, index_t i1, double* acc) {
+    const T* rj = r + j * n;
+    T* sj = s.col(j);
     T* hj = h.col(j);
-#pragma omp parallel for schedule(static)
-    for (index_t i = 0; i < n; ++i) hj[i] = sj[i] * inv_diag[static_cast<std::size_t>(i)];
-  };
-  for (index_t j = 0; j < p; ++j) {
-    std::copy(r + j * n, r + (j + 1) * n, s.col(j));
-    rnorm[static_cast<std::size_t>(j)] = linalg::norm2(n, s.col(j));
-    if (!(rnorm[static_cast<std::size_t>(j)] > 0.0)) {
-      done[static_cast<std::size_t>(j)] = 1;
-      continue;
+    T* dj = dir.col(j);
+    for (index_t i = i0; i < i1; ++i) {
+      sj[i] = rj[i];
+      hj[i] = rj[i] * inv_diag[i];
+      dj[i] = hj[i];
+      acc[0] += std::norm(rj[i]);
+      acc[1] += re_dot(rj[i], hj[i]);
     }
-    precondition(j);
-    std::copy(h.col(j), h.col(j) + n, dir.col(j));
-    rho[static_cast<std::size_t>(j)] = real_part(linalg::dot(n, s.col(j), h.col(j)));
+  });
+  for (std::size_t j = 0; j < np; ++j) {
+    rnorm[j] = std::sqrt(sums[2 * j]);
+    rho[j] = sums[2 * j + 1];
+    active[j] = rnorm[j] > 0.0 && rho[j] > 0.0;
   }
-  for (int it = 0; it < opt.cg_max_iterations; ++it) {
-    if (std::all_of(done.begin(), done.end(), [](char d) { return d != 0; })) break;
+  const Timer cg_timer;
+  int it = 0;
+  for (; it < opt.cg_max_iterations; ++it) {
+    if (std::none_of(active.begin(), active.end(), [](char a) { return a != 0; })) break;
     spmm(b, dir.data(), n, bd.data(), n, p);
-    for (index_t j = 0; j < p; ++j) {
-      const auto js = static_cast<std::size_t>(j);
-      if (done[js]) continue;
-      const double curvature = real_part(linalg::dot(n, dir.col(j), bd.col(j)));
-      if (!(curvature > 0.0) || !(rho[js] > 0.0)) {  // breakdown: the bound below holds for this z
-        done[js] = 1;
+    // Curvatures dir^H B dir.
+    fused_pass(n, p, active, 1, part, sums, [&](index_t j, index_t i0, index_t i1, double* acc) {
+      const T* dj = dir.col(j);
+      const T* bj = bd.col(j);
+      for (index_t i = i0; i < i1; ++i) acc[0] += re_dot(dj[i], bj[i]);
+    });
+    for (std::size_t j = 0; j < np; ++j) {
+      if (!active[j]) continue;
+      if (!(sums[j] > 0.0)) {  // breakdown: the bound below holds for the current z
+        active[j] = 0;
         continue;
       }
-      const double alpha = rho[js] / curvature;
-      quad[js] += alpha * rho[js];
-      linalg::axpy(n, T(alpha), dir.col(j), z.col(j));
-      const double snorm = linalg::axpy_norm2(n, T(-alpha), bd.col(j), s.col(j));
-      precondition(j);
-      const double rho_next = real_part(linalg::dot(n, s.col(j), h.col(j)));  // ||D^{-1/2} s||^2
+      alpha[j] = rho[j] / sums[j];
+      quad[j] += alpha[j] * rho[j];
+    }
+    // z += alpha dir, s -= alpha B dir, h = D^{-1} s; ||s||^2 and ||D^{-1/2} s||^2 = s^H h.
+    fused_pass(n, p, active, 2, part, sums, [&](index_t j, index_t i0, index_t i1, double* acc) {
+      const double a = alpha[static_cast<std::size_t>(j)];
+      const T* dj = dir.col(j);
+      const T* bj = bd.col(j);
+      T* zj = z.col(j);
+      T* sj = s.col(j);
+      T* hj = h.col(j);
+      for (index_t i = i0; i < i1; ++i) {
+        zj[i] += a * dj[i];
+        sj[i] -= a * bj[i];
+        hj[i] = sj[i] * inv_diag[i];
+        acc[0] += std::norm(sj[i]);
+        acc[1] += re_dot(sj[i], hj[i]);
+      }
+    });
+    for (std::size_t j = 0; j < np; ++j) {
+      if (!active[j]) continue;
+      const double snorm2 = sums[2 * j], rho_next = sums[2 * j + 1];
       // Enough once the remainder's estimate, s^H B^{-1} s <= min(||s||^2 / lambda_min(B),
       // ||D^{-1/2} s||^2 / lambda_min(S)), is a negligible share of r^H B^{-1} r (approached from
       // below by CG's r^H z_k), or s is at rounding level.
-      double remainder = snorm * snorm / wts.b_min;
+      double remainder = snorm2 / wts.b_min;
       if (wts.scaled > 0.0) remainder = std::min(remainder, rho_next / wts.scaled);
-      if (remainder <= kRemainderShare * quad[js] || snorm <= opt.cg_tol * rnorm[js]) {
-        done[js] = 1;
+      if (remainder <= kRemainderShare * quad[j] || std::sqrt(snorm2) <= opt.cg_tol * rnorm[j] || !(rho_next > 0.0)) {
+        active[j] = 0;
         continue;
       }
-      const double beta = rho_next / rho[js];
-      rho[js] = rho_next;
-      T* dj = dir.col(j);
-      const T* hj = h.col(j);
-#pragma omp parallel for schedule(static)
-      for (index_t i = 0; i < n; ++i) dj[i] = hj[i] + beta * dj[i];
+      beta[j] = rho_next / rho[j];
+      rho[j] = rho_next;
     }
+    // dir = h + beta dir.
+    fused_pass(n, p, active, 0, part, sums, [&](index_t j, index_t i0, index_t i1, double*) {
+      const double bt = beta[static_cast<std::size_t>(j)];
+      const T* hj = h.col(j);
+      T* dj = dir.col(j);
+      for (index_t i = i0; i < i1; ++i) dj[i] = hj[i] + bt * dj[i];
+    });
+  }
+  if (opt.diagnostics) {
+    opt.diagnostics->cg_s += cg_timer.seconds();
+    opt.diagnostics->cg_iterations = std::max(opt.diagnostics->cg_iterations, it);
   }
   // The identity with the explicit s = r - B z (not CG's recurrence).
   spmm(b, z.data(), n, bd.data(), n, p);
   const double g_n = gamma_of(static_cast<double>(n) + 2.0);
   const double g_b = gamma_of(static_cast<double>(sb.max_nnz) + 1.0);
-  double* env = envelope.data();
+  std::vector<double> abs_z(np * static_cast<std::size_t>(n)), abs_bz_all(np * static_cast<std::size_t>(n));
+  magnitudes(z.data(), n, p, abs_z.data());
+  abs_spmm(b, abs_z.data(), p, abs_bz_all.data());
   for (index_t j = 0; j < p; ++j) {
     const T* rj = r + j * n;
     const T* zj = z.col(j);
@@ -208,11 +297,11 @@ void cg_b_inverse_quadratic(const CsrMatrix<T>& b, const BInverseWeights& wts, c
     // w = fl(B z) is within g_b |B| |z| of B z componentwise, so
     // |fl(main) - z^H (2 r - B z)| <= gamma_n ||z|| (2 ||r|| + ||w||) + g_b ||z|| || |B| |z| ||, and
     // the exact r - B z is at most |s_i| (1 + 2u) + g_b (|B| |z|)_i in modulus.
-    abs_product(b, zj, env);
+    double* env = abs_bz_all.data() + static_cast<std::size_t>(j) * static_cast<std::size_t>(n);
     const double abs_bz = linalg::norm2(n, env) * (1.0 + g_n);
     const double main_err = g_n * zn * (2.0 * rn + wn) + g_b * zn * abs_bz;
 #pragma omp parallel for schedule(static)
-    for (index_t i = 0; i < n; ++i) env[i] = std::abs(sj[i]) * (1.0 + 2.0 * kRoundoff) + g_b * env[i];
+    for (index_t i = 0; i < n; ++i) env[i] = magnitude(sj[i]) * (1.0 + 4.0 * kRoundoff) + g_b * env[i];
     const double remainder = envelope_b_inverse_norm(env, n, wts);
     q[j] = std::max(0.0, main + main_err) + remainder * remainder;
   }
@@ -338,14 +427,13 @@ std::vector<double> residual_b_inverse_norms(const CsrMatrix<T>& a, const CsrMat
   const RowStats sa = row_stats(a);
   const RowStats sb = b ? row_stats(*b) : RowStats{};
   const bool cg = b != nullptr && !opt.b_diagonal;
-  const double per_column = (cg ? 7.0 : 2.0) * static_cast<double>(n) * sizeof(T);
-  // Two (CG: three) n-vectors of envelopes, then half the memory left for the column chunks: the
-  // rest stays free for the allocator's and the libraries' own use.
-  const double fixed = (cg ? 3.0 : 2.0) * static_cast<double>(n) * sizeof(double);
-  const double fit = std::floor((0.5 * opt.memory_bytes - fixed) / per_column);
+  // Per column: A x, the residual (CG: five more blocks), and the envelopes |x|, |A| |x|, |B| |x|
+  // (CG: |z|, |B| |z|). Half the memory left for the column chunks: the rest stays free for the
+  // allocator's and the libraries' own use.
+  const double per_column = static_cast<double>(n) * ((cg ? 7.0 : 2.0) * sizeof(T) + (cg ? 5.0 : 3.0) * sizeof(double));
+  const double fit = std::floor(0.5 * opt.memory_bytes / per_column);
   if (!(fit >= 1.0))
-    HS_THROW(OutOfMemoryBudget, "subspace bound: one column's workspace (" << (per_column + fixed) / 1e6
-                                                                          << " MB) exceeds the "
+    HS_THROW(OutOfMemoryBudget, "subspace bound: one column's workspace (" << per_column / 1e6 << " MB) exceeds the "
                                                                           << opt.memory_bytes / 1e6 << " MB left");
   const index_t w = std::min<index_t>({m, kChunkColumns, static_cast<index_t>(std::min(fit, 1e9))});
   const std::vector<double> inv_diag = b ? inverse_diagonal(*b) : std::vector<double>{};
@@ -360,8 +448,8 @@ std::vector<double> residual_b_inverse_norms(const CsrMatrix<T>& a, const CsrMat
   const double g_res = gamma_of(static_cast<double>(std::max(sa.max_nnz, sb.max_nnz)) + 4.0);
   const double g_n = gamma_of(static_cast<double>(n) + 4.0);
   DenseMatrix<T> ax(n, w), res(n, w);
-  std::vector<double> q(static_cast<std::size_t>(w)), env_a(static_cast<std::size_t>(n)),
-      env_b(static_cast<std::size_t>(n));
+  const auto block = static_cast<std::size_t>(n) * static_cast<std::size_t>(w);
+  std::vector<double> q(static_cast<std::size_t>(w)), abs_x(block), env_a(block), env_b(b ? block : 0);
   for (index_t j0 = 0; j0 < m; j0 += w) {
     const index_t p = std::min(w, m - j0);
     spmm(a, x.col(j0), n, ax.data(), n, p);
@@ -377,27 +465,22 @@ std::vector<double> residual_b_inverse_norms(const CsrMatrix<T>& a, const CsrMat
       for (index_t i = 0; i < n; ++i) rj[i] = axj[i] - l * rj[i];
     }
     if (cg) cg_b_inverse_quadratic(*b, wts, sb, res.data(), n, p, opt, q.data());
+    // The residual's own rounding, componentwise: |r - fl(r)| <= gamma_{m+4} (|A| |x| + |lambda| |B| |x|)
+    // (the envelopes' evaluation adds at most gamma_{m+3} relative, covered by the factor 1 + g_res).
+    magnitudes(x.col(j0), n, p, abs_x.data());
+    abs_spmm(a, abs_x.data(), p, env_a.data());
+    if (b) abs_spmm(*b, abs_x.data(), p, env_b.data());
+    const std::vector<double>& abs_bx = b ? env_b : abs_x;
     for (index_t j = 0; j < p; ++j) {
       const auto jj = static_cast<std::size_t>(j0 + j);
       const T* rj = res.col(j);
-      const T* xj = x.col(j0 + j);
-      // The residual's own rounding, componentwise: |r - fl(r)| <= gamma_{m+4} (|A| |x| + |lambda| |B| |x|)
-      // (the envelope's evaluation adds at most gamma_{m+1} relative, covered by the factor 1 + g_res).
-      abs_product(a, xj, env_a.data());
-      if (b) {
-        abs_product(*b, xj, env_b.data());
-      } else {
-#pragma omp parallel for schedule(static)
-        for (index_t i = 0; i < n; ++i) env_b[static_cast<std::size_t>(i)] = std::abs(xj[i]);
-      }
-      if (abs_b_norms) (*abs_b_norms)[jj] = linalg::norm2(n, env_b.data()) * (1.0 + g_res) * (1.0 + g_n);
+      double* ea = env_a.data() + static_cast<std::size_t>(j) * static_cast<std::size_t>(n);
+      const double* eb = abs_bx.data() + static_cast<std::size_t>(j) * static_cast<std::size_t>(n);
+      if (abs_b_norms) (*abs_b_norms)[jj] = linalg::norm2(n, eb) * (1.0 + g_res) * (1.0 + g_n);
       const double scale = g_res * (1.0 + g_res), al = std::abs(lambda[jj]);
 #pragma omp parallel for schedule(static)
-      for (index_t i = 0; i < n; ++i) {
-        const auto ii = static_cast<std::size_t>(i);
-        env_a[ii] = scale * (env_a[ii] + al * env_b[ii]);
-      }
-      const double rounding = envelope_b_inverse_norm(env_a.data(), n, wts);
+      for (index_t i = 0; i < n; ++i) ea[i] = scale * (ea[i] + al * eb[i]);
+      const double rounding = envelope_b_inverse_norm(ea, n, wts);
       double norm = 0.0;
       if (!b) {
         norm = linalg::norm2(n, rj) * (1.0 + g_n);
@@ -440,6 +523,7 @@ SubspaceReport subspace_bounds(const CsrMatrix<T>& a, const CsrMatrix<T>* b, con
   // Pair j < m is returned pair j, pair m + i the unreturned pair i.
   std::vector<double> lambda = returned;
   lambda.insert(lambda.end(), unreturned.begin(), unreturned.end());
+  const Timer residual_timer;
   std::vector<double> abs_b;  // || |B| |x_j| || per pair (the Gram rounding)
   std::vector<double> rho = residual_b_inverse_norms(a, b, returned, x, opt, &abs_b);
   if (e > 0) {
@@ -448,6 +532,7 @@ SubspaceReport subspace_bounds(const CsrMatrix<T>& a, const CsrMatrix<T>* b, con
     rho.insert(rho.end(), rho_extra.begin(), rho_extra.end());
     abs_b.insert(abs_b.end(), abs_b_extra.begin(), abs_b_extra.end());
   }
+  if (opt.diagnostics) opt.diagnostics->residual_s += residual_timer.seconds();
   const auto column = [&](index_t j) { return j < m ? x.col(j) : extra.col(j - m); };
   const RowStats sb = b ? row_stats(*b) : RowStats{};
   const double per_column = 3.0 * static_cast<double>(n) * sizeof(T);
@@ -487,7 +572,9 @@ SubspaceReport subspace_bounds(const CsrMatrix<T>& a, const CsrMatrix<T>* b, con
       g.hi = std::max(g.hi, lambda[static_cast<std::size_t>(j)]);
     }
     g.residual = std::sqrt(r2);
+    const Timer gram_timer;
     g.eps = gram_defect(b, sb, n, column, g.pairs, abs_b, gram_width);
+    if (opt.diagnostics) opt.diagnostics->gram_s += gram_timer.seconds();
     if (!(g.eps < kMaxOrthogonalityDefect)) {
       g.eta = kInfinity;
       return;
@@ -643,16 +730,24 @@ BMinBound b_min_bound(Ctx& c, const CsrMatrix<T>& b, bool diagonal) {
     r.source = "incomplete_cholesky";
     return r;
   }
-  const FactorStats& fs = c.rep.factor_stats;
-  const double t_factor = fs.factorizations > 0 ? fs.factorize_s / static_cast<double>(fs.factorizations) : 0.0;
-  HpdProofOptions po;
-  po.max_seconds = std::max(0.5 * t_factor, 0.05);
-  po.max_bytes = std::max(0.0, 0.5 * budget_left(c));
-  po.seed = c.cfg.seed;
-  const HpdProof proof = prove_positive_definite(b, po);
-  event(c, "subspace_b_min", {{"proven", proof.proven}, {"outcome", proof.outcome}, {"lower", proof.lower_bound},
-                              {"theta_min", proof.theta_min}, {"seconds", proof.seconds},
-                              {"budget_s", po.max_seconds}});
+  // The incomplete-Cholesky proof, unless the solve's own attempt already settled it (the same
+  // Lanczos seed gives the same estimate theta, and a failure that is not a budget limit repeats).
+  HpdProof proof;
+  if (c.b_proof_settled) {
+    proof.theta_min = c.b_theta_min;
+    proof.outcome = "settled by the solve's proof";
+  } else {
+    const FactorStats& fs = c.rep.factor_stats;
+    const double t_factor = fs.factorizations > 0 ? fs.factorize_s / static_cast<double>(fs.factorizations) : 0.0;
+    HpdProofOptions po;
+    po.max_seconds = std::max(0.5 * t_factor, 0.05);
+    po.max_bytes = std::max(0.0, 0.5 * budget_left(c));
+    po.seed = c.cfg.seed;
+    proof = prove_positive_definite(b, po);
+    event(c, "subspace_b_min", {{"proven", proof.proven}, {"outcome", proof.outcome}, {"lower", proof.lower_bound},
+                                {"theta_min", proof.theta_min}, {"seconds", proof.seconds},
+                                {"budget_s", po.max_seconds}});
+  }
   if (proof.proven && dmin > 0.0) {
     r.scaled = scaled_of(proof.lower_bound);
     r.value = r.scaled * dmin * (1.0 - 4.0 * kRoundoff);
@@ -717,6 +812,7 @@ void attach_subspace_bound(Ctx& c, const CsrMatrix<T>& a, const CsrMatrix<T>* b,
   SolveReport& rep = c.rep;
   SubspaceReport& out = rep.subspace;
   out = SubspaceReport{};
+  SubspaceDiagnostics diag;
   const InertiaCertificate& cert = rep.certificate;
   if (c.cfg.subspace_bound == Toggle::Off) {
     out.note = "disabled by configuration";
@@ -731,6 +827,7 @@ void attach_subspace_bound(Ctx& c, const CsrMatrix<T>& a, const CsrMatrix<T>* b,
   } else {
     SubspaceOptions opt;
     opt.scale = rep.scale;
+    opt.diagnostics = &diag;
     opt.memory_bytes = std::max(0.0, 0.9 * budget_left(c));
     try {
       if (b) {
@@ -765,7 +862,10 @@ void attach_subspace_bound(Ctx& c, const CsrMatrix<T>& a, const CsrMatrix<T>* b,
   out.seconds = timer.seconds();
   event(c, "subspace_bound", {{"performed", out.performed}, {"max_sin_bound", out.max_sin_bound},
                               {"rigorous", out.rigorous}, {"groups", static_cast<std::int64_t>(out.groups.size())},
-                              {"b_min_source", out.b_min_source}, {"seconds", out.seconds}, {"note", out.note}});
+                              {"b_min_source", out.b_min_source}, {"seconds", out.seconds},
+                              {"residual_s", diag.residual_s}, {"cg_s", diag.cg_s},
+                              {"cg_iterations", static_cast<std::int64_t>(diag.cg_iterations)},
+                              {"gram_s", diag.gram_s}, {"note", out.note}});
 }
 
 #define HS_INSTANTIATE_SUBSPACE(T)                                                                          \

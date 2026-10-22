@@ -404,6 +404,9 @@ Solution<T> solve_with_factors(Ctx& c, const ShiftedPencil<T>& pencil, const Dia
                          {"pattern_predicted_s", proof.pattern_predicted_s}, {"attempts_s", proof.attempts_s},
                          {"stored_bytes", proof.stored_bytes}, {"level1_bound", proof.level1_bound},
                          {"level1_entries", static_cast<std::int64_t>(proof.level1_entries)}});
+    c.b_proof_settled = proof.proven || proof.outcome == "nearly_singular" || proof.outcome == "breakdown" ||
+                        proof.outcome == "gershgorin";
+    c.b_theta_min = proof.theta_min;
     if (proof.proven) {
       c.b_scaled_lower = proof.lower_bound;
       Inertia ib;

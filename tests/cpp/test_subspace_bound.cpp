@@ -350,7 +350,8 @@ TYPED_TEST(SubspaceBoundCore, ResidualNormsBoundTheBInverseNorm) {
       for (index_t i = 0; i < z.rows(); ++i)
         s += std::norm((e.lambda[static_cast<std::size_t>(i)] - theta[static_cast<std::size_t>(j)]) * z(i, j));
       EXPECT_GE(rho[static_cast<std::size_t>(j)], std::sqrt(s) * (1.0 - 1e-6));
-      EXPECT_LE(rho[static_cast<std::size_t>(j)], std::sqrt(s) * (1.0 + 1e-3));
+      // CG stops once its remainder estimate is 1% of the quadratic form: at most 0.5% above.
+      EXPECT_LE(rho[static_cast<std::size_t>(j)], std::sqrt(s) * (1.0 + 5e-3));
     }
   }
 }

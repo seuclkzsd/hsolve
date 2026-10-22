@@ -64,6 +64,15 @@ struct BMinBound {
   double scaled = 0.0;
 };
 
+/// Where the time of a bound goes (for the event log; filled when SubspaceOptions::diagnostics is
+/// set).
+struct SubspaceDiagnostics {
+  double residual_s = 0.0;  ///< residuals and their B^{-1}-norms (CG included)
+  double cg_s = 0.0;        ///< of which the CG iterations
+  int cg_iterations = 0;    ///< largest iteration count of a CG block
+  double gram_s = 0.0;      ///< Gram defects of the groups
+};
+
 struct SubspaceOptions {
   double scale = 1.0;                         ///< ||A||_2 / ||B||_2 (cluster tolerance)
   double cluster_rtol = kSubspaceClusterRtol;
@@ -73,6 +82,7 @@ struct SubspaceOptions {
   bool b_diagonal = false;                    ///< B is diagonal: exact weights, no CG
   int cg_max_iterations = 300;                ///< general B: Jacobi-preconditioned CG per column
   double cg_tol = 1e-10;                      ///< ... until ||B z - r|| <= cg_tol ||r||
+  SubspaceDiagnostics* diagnostics = nullptr;  ///< receives the time split (optional)
 };
 
 /// The bounds for the returned pairs (returned, columns of x) of the pencil (a, b), b == nullptr
