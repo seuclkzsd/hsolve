@@ -1,0 +1,27 @@
+# Review assignment (https://docs.github.com/articles/about-code-owners).
+# The last matching pattern takes precedence. Roles and decision rules: GOVERNANCE.md.
+
+# Default owner of every file.
+*                                   @seuclkzsd
+
+# Completeness certificate and numerical correctness. Changes here need a test and a review
+# (GOVERNANCE.md, "决策规则"); add the domain reviewers here once they are appointed.
+/src/verify/                        @seuclkzsd
+/src/driver/                        @seuclkzsd
+/src/factor/                        @seuclkzsd
+/include/hsolve/verify.hpp          @seuclkzsd
+/include/hsolve/solver.hpp          @seuclkzsd
+/include/hsolve/factor.hpp          @seuclkzsd
+/tools/eval/                        @seuclkzsd
+
+# Third-party sources and the patches to them (CeCILL-C, see NOTICE).
+/third_party/                       @seuclkzsd
+/patches/                           @seuclkzsd
+
+# Licensing and governance documents.
+/LICENSE                            @seuclkzsd
+/NOTICE                             @seuclkzsd
+/THIRD_PARTY_NOTICES                @seuclkzsd
+/GOVERNANCE.md                      @seuclkzsd
+/MAINTAINERS.md                     @seuclkzsd
+/.github/                           @seuclkzsd
