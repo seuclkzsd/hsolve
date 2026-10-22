@@ -145,11 +145,14 @@ WORKFLOWS = ROOT / ".github" / "workflows"
 
 
 def test_workflow_actions_are_pinned_to_exact_versions():
-    uses = [(f.name, m.group(1)) for f in sorted(WORKFLOWS.glob("*.yml"))
-            for m in re.finditer(r"^\s*(?:-\s*)?uses:\s*(\S+)", f.read_text(), re.M)]
+    """A commit SHA with its release tag as a comment (or at least an exact vX.Y.Z tag)."""
+    uses = [(f.name, m.group(1).strip()) for f in sorted(WORKFLOWS.glob("*.yml"))
+            for m in re.finditer(r"^\s*(?:-\s*)?uses:\s*(.+)$", f.read_text(), re.M)]
     assert uses
+    action = r"[\w.-]+/[\w.-]+(/[\w./-]+)?"
     for name, ref in uses:
-        assert re.fullmatch(r"[\w.-]+/[\w.-]+(/[\w./-]+)?@v\d+\.\d+\.\d+", ref), f"{name}: {ref} is not an exact tag"
+        assert re.fullmatch(rf"{action}@([0-9a-f]{{40}} # v\d+\.\d+\.\d+|v\d+\.\d+\.\d+)", ref), \
+            f"{name}: '{ref}' is neither a commit SHA with its tag nor an exact tag"
 
 
 def test_ci_workflow_runs_exactly_the_steps_of_ci_sh():
@@ -174,3 +177,26 @@ def test_docker_context_holds_what_the_image_build_reads():
     for path in needed:
         assert path.split("/")[0] in allowed, f"{path} is outside the Docker build context"
     assert os.access(ROOT / "scripts" / "docker-entrypoint.sh", os.X_OK)
+
+
+def test_release_version_must_match_cmake_and_a_dated_changelog_section(tmp_path):
+    info = load("hsolve_release_info", ROOT / "tools" / "release" / "release_info.py")
+    (tmp_path / "CMakeLists.txt").write_text("cmake_minimum_required(VERSION 3.20)\n"
+                                             "project(hsolve VERSION 1.2.3 LANGUAGES C CXX)\n")
+    assert info.version_for("branch", "main", "0123456789abcdef", tmp_path) == "1.2.3-dev.0123456"
+    assert info.version_for("tag", "v1.2.3", "0" * 40, tmp_path) == "1.2.3"  # no CHANGELOG.md: no check
+    assert info.version_for("tag", "v1.2.3-rc1", "0" * 40, tmp_path) == "1.2.3-rc1"
+    for bad in ("v1.2.4", "1.2.3", "v1.2"):
+        with pytest.raises(SystemExit):
+            info.version_for("tag", bad, "0" * 40, tmp_path)
+    changelog = tmp_path / "CHANGELOG.md"
+    changelog.write_text("# 更新日志\n\n## [未发布]\n\n## [1.2.3] - {{TODO:日期}}\n\n- a\n\n## [1.2.2] - 2026-01-01\n")
+    with pytest.raises(SystemExit):
+        info.version_for("tag", "v1.2.3", "0" * 40, tmp_path)
+    changelog.write_text("# 更新日志\n\n## [1.2.3] - 2026-11-01\n\n### 新增\n\n- 新功能\n\n## [1.2.2] - 2026-01-01\n\n- old\n")
+    assert info.version_for("tag", "v1.2.3", "0" * 40, tmp_path) == "1.2.3"
+    notes = info.notes("1.2.3", "ghcr.io/x/hsolve", "https://example.org/hsolve", tmp_path)
+    assert notes.startswith("### 新增\n\n- 新功能\n")
+    assert "old" not in notes
+    assert "docker run --rm ghcr.io/x/hsolve:1.2.3 demo" in notes
+    assert "releases/download/v1.2.3/hsolve-1.2.3-linux-x86_64.tar.gz" in notes

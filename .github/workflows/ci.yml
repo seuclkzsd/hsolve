@@ -1,7 +1,8 @@
 # Build, test and demo on every push to main and every pull request: the portable release preset
 # with -Werror, the whole C++ test suite, the Python tests, the demo smoke run and the relocatable
 # binary package. Every step is a step of tools/dev/ci.sh, which runs the same way on a developer
-# machine or a cluster node (docs/INSTALL.md).
+# machine or a cluster node (docs/INSTALL.md; tools/dev/ci_clone.sh: in a fresh clone). Actions
+# are pinned to commit SHAs, their release tag in the comment.
 name: CI
 
 on:
@@ -33,12 +34,12 @@ jobs:
       CUDA_VISIBLE_DEVICES: ""
     steps:
       - name: Check out
-        uses: actions/checkout@v7.0.1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
       - name: Conda environment (env/environment.yml)
-        uses: mamba-org/setup-micromamba@v3.2.1
+        uses: mamba-org/setup-micromamba@f457c30a868e4760d3a6fcea5f25dc655b8edf39 # v3.2.1
         env:
           # Solve for glibc 2.17 like the release packages (.github/workflows/release.yml), so the
           # package step's glibc check sees the libraries a release would bundle.
@@ -57,7 +58,7 @@ jobs:
 
       - name: Restore the MUMPS build
         id: mumps-cache
-        uses: actions/cache/restore@v6.1.0
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: .cache/mumps
           key: ${{ steps.mumps-key.outputs.key }}
@@ -67,7 +68,7 @@ jobs:
 
       - name: Save the MUMPS build
         if: steps.mumps-cache.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v6.1.0
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: .cache/mumps
           key: ${{ steps.mumps-cache.outputs.cache-primary-key }}
@@ -91,7 +92,7 @@ jobs:
         run: tools/dev/ci.sh package
 
       - name: Upload the binary package
-        uses: actions/upload-artifact@v7.0.2
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: hsolve-linux-x86_64-${{ github.sha }}
           path: |
@@ -102,7 +103,7 @@ jobs:
 
       - name: Test logs on failure
         if: failure()
-        uses: actions/upload-artifact@v7.0.2
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: ci-logs-${{ github.sha }}
           path: |
