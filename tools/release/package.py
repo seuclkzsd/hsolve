@@ -61,9 +61,14 @@ def cmake_cache(build: Path) -> dict[str, str]:
 
 def resolved_libs(elf: Path, env: dict[str, str] | None = None) -> dict[str, str | None]:
     """soname -> path as the dynamic loader resolves it (LD_TRACE_LOADED_OBJECTS = ldd)."""
-    text = subprocess.run([str(elf)] if os.access(elf, os.X_OK) and elf.suffix != ".so" else ["ldd", str(elf)],
-                          env=dict(env or os.environ, LD_TRACE_LOADED_OBJECTS="1"), capture_output=True,
-                          text=True).stdout
+    run_env = dict(env or os.environ)
+    run_env.pop("LD_LIBRARY_PATH", None)  # what the RPATHs resolve, not a user's library path
+    if elf.suffix == ".so":
+        cmd = ["ldd", str(elf)]  # a script run by the shell: tracing its environment would trace the shell
+    else:
+        cmd = [str(elf)]
+        run_env["LD_TRACE_LOADED_OBJECTS"] = "1"
+    text = subprocess.run(cmd, env=run_env, capture_output=True, text=True).stdout
     libs: dict[str, str | None] = {}
     for line in text.splitlines():
         line = line.strip()
