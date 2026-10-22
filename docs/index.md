@@ -49,7 +49,7 @@ hide:
     ---
 
     OpenMP 承担全部数值计算；多 socket 机器上每个 socket 一个进程分担证书计数与谱切片；可选的 cuBLAS 卸载。
-    没有 MPI 和 GPU 时结果完全相同。
+    没有 MPI 和 GPU 时走默认的单进程 CPU 路径；开启它们不改变证书的条件与保证，结果照常经残差验收。
 
     [:octicons-arrow-right-24: 并行方案](PARALLEL.md)
 

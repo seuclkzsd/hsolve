@@ -23,7 +23,7 @@
 | 规模与内存 | {{TODO:rb-evidence 十万阶与百万阶的时间与峰值内存}}；内存预算自动由 cgroup / ulimit / 物理内存推出，放不下时转外存 | {{TODO:性能对比页}} |
 | 问题覆盖 | HEP、GHEP、GHIEP（B 不定的波导）；实对称与复厄密；σ 附近最近 k 个、区间内全部、代数两端 | [求解边界](docs/SOLUTION.md#12-求解边界能处理--不能处理) |
 | 正确性复核 | 独立评测器由原矩阵重算后向误差、特征值误差与子空间夹角，并按参考谱检查漏解与虚报；{{TODO:rb-evidence 测例数、通过数、最大后向误差}} | [评测方法](docs/guide/evaluation.md) |
-| 并行 | OpenMP 多线程；多 socket 机器上每 socket 一个进程（`hsolve-mpi`）；可选的 cuBLAS 卸载；没有 MPI 与 GPU 时结果相同 | [并行方案](docs/PARALLEL.md) |
+| 并行 | OpenMP 多线程；多 socket 机器上每 socket 一个进程（`hsolve-mpi`）；可选的 cuBLAS 卸载；没有 MPI 与 GPU 时走默认的单进程 CPU 路径，开启时证书的条件与保证不变 | [并行方案](docs/PARALLEL.md) |
 | 开源治理 | Apache-2.0；依赖全部开源并逐项登记；CI、带 SHA256SUMS 的 Release；贡献、治理与安全策略 | [NOTICE](NOTICE) · [CONTRIBUTING](CONTRIBUTING.md) · [GOVERNANCE](GOVERNANCE.md) |
 
 测试条件：{{TODO:rb-evidence 的硬件、核数、内存上限、版本与提交、重复次数与统计量}}。原始数据与生成表格的脚本：
@@ -63,7 +63,7 @@ print(res.success, res.eigenvalues, res.report["certificate"]["statement"])
 - **稳健**：σ 落在特征值上或密集簇中、零附近密集谱、近奇异位移、内存受限都有对应的处置；非厄密输入直接拒绝。
 - **速度**：自研多线程嵌套剖分（带分隔子的流精修）、块 Krylov-Schur 的多右端回代、MUMPS 回代的 AVX-512 / AVX2 窄核。
 - **接口**：命令行（`.npz` / `.npy` / `.mtx` 进，`.npy` 与 JSON 报告出）与 Python（SciPy / NumPy 进出），同一份配置格式。
-- **可复现**：确定性模式下分解与回代逐位可复现；所有运行可用独立评测器 `tools/eval` 复核。
+- **可复现**：确定性模式下，同一线程数的分解与回代逐位可复现；所有运行可用独立评测器 `tools/eval` 复核。
 
 ## 困难场景对比
 
@@ -90,7 +90,9 @@ hsolve 自动识别 B 不定并排除零空间，返回的正是 18 个传播模
 | 多进程（`hsolve-mpirun`） | 每个 socket 一个 helper 进程：证书的两次计数同时做，谱切片分给各 socket | {{TODO:rb-evidence 两 socket 对单进程的加速比}} |
 | GPU（`--gpu auto`） | 百万阶分解中的大稠密更新（FP64 cuBLAS，运行时加载） | {{TODO:rb-evidence 的整次运行加速比}} |
 
-没有 MPI、没有 GPU 时，单进程 CPU 路径就是默认路径，结果相同。详见[并行方案](docs/PARALLEL.md)。
+没有 MPI、没有 GPU 时，单进程 CPU 路径就是默认路径。多进程与 GPU 卸载不改变完备性证书的成立条件与保证，结果照常经
+残差验收；实测中多进程模式的惯性计数与谱切片和单进程相同（[P10 多进程记录](results/p10_mpi.md)），GPU 卸载与 CPU 路径
+的特征值相对差不超过 3.3e-15（两个百万阶测例各 5 次运行，[P10 GPU 记录](results/p10_gpu.md) §5）。详见[并行方案](docs/PARALLEL.md)。
 
 ## 文档
 

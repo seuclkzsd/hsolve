@@ -29,7 +29,7 @@ that can be checked.
 | Scale and memory | {{TODO:rb-evidence time and peak memory at 1e5 and 1e6}}; the memory budget follows the cgroup / ulimit / physical memory, with out-of-core factorization when needed | {{TODO:performance page}} |
 | Problem classes | HEP, GHEP and GHIEP (indefinite B, waveguides); real symmetric and complex Hermitian; k nearest to σ, all in an interval, algebraic extremes | [Scope](docs/SOLUTION.md#12-求解边界能处理--不能处理) |
 | Independent checking | An independent evaluator recomputes backward errors, eigenvalue errors and subspace angles from the original matrices and checks completeness against reference spectra. {{TODO:rb-evidence number of cases, passes, largest backward error}} | [Evaluation](docs/guide/evaluation.md) |
-| Parallelism | OpenMP threads; one process per socket on multi-socket machines (`hsolve-mpi`); optional cuBLAS offload; identical results without MPI or GPU | [Parallel scheme](docs/PARALLEL.md) |
+| Parallelism | OpenMP threads; one process per socket on multi-socket machines (`hsolve-mpi`); optional cuBLAS offload; without MPI or GPU the default single-process CPU path runs, and with them the certificate's conditions and guarantees are unchanged | [Parallel scheme](docs/PARALLEL.md) |
 | Open governance | Apache-2.0; all dependencies open source and listed; CI; releases with SHA256SUMS; contribution, governance and security policies | [NOTICE](NOTICE) · [CONTRIBUTING](CONTRIBUTING.md) · [GOVERNANCE](GOVERNANCE.md) |
 
 Test conditions: {{TODO:rb-evidence hardware, cores, memory cap, version and commit, repetitions and statistic}}.
@@ -76,7 +76,8 @@ print(res.success, res.eigenvalues, res.report["certificate"]["statement"])
   solves of block Krylov-Schur, AVX-512 / AVX2 narrow kernels in the MUMPS solves.
 - **Interfaces**: command line (`.npz` / `.npy` / `.mtx` in, `.npy` and a JSON report out) and Python (SciPy / NumPy in
   and out), with one configuration format.
-- **Reproducibility**: bitwise reproducible factorization and solves in deterministic mode; every run can be checked
+- **Reproducibility**: in deterministic mode the factorization and solves are bitwise reproducible at the same thread
+  count; every run can be checked
   with the independent evaluator `tools/eval`.
 
 ## Hard cases
@@ -105,7 +106,11 @@ hsolve detects the indefinite B, excludes the null space and returns exactly the
 | Processes (`hsolve-mpirun`) | one helper process per socket: the certificate's two counts at once, spectrum slices spread over the sockets | {{TODO:rb-evidence two sockets against one process}} |
 | GPU (`--gpu auto`) | large dense updates of 1e6-size factorizations (FP64 cuBLAS, loaded at run time) | {{TODO:rb-evidence whole-run speedup}} |
 
-Without MPI or a GPU the single-process CPU path is the default and gives the same results.
+Without MPI or a GPU the single-process CPU path is the default. Multi-process runs and GPU offload keep the
+completeness certificate's conditions and guarantees, and their results pass the same residual acceptance; in the
+measurements the multi-process mode gave the same inertia counts and spectrum slices as one process
+([P10 multi-process record](results/p10_mpi.md)), and GPU offload eigenvalues within 3.3e-15 relative of the CPU
+path's (two 1e6 cases, 5 runs each; [P10 GPU record](results/p10_gpu.md) §5).
 
 ## Documentation
 
