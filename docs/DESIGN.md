@@ -65,6 +65,10 @@ cuBLAS，把 MUMPS 分解（含证书计数）中被主机流量模型判为划�
 加回；默认只用 GPU，混合模式为测量选项）；模式 `HS_GPU` / `hsolve --gpu off|auto|on`，默认 off（与今天的 CPU 路径完全
 相同），无 GPU 或无 CUDA 库时自动回到 CPU（降级模式）；报告的 `gpu` 对象（§3.8、§3.10）。实测见 `results/p10_gpu.md`。
 
+v11（rb-features）——结构识别快路径改为可选、默认关闭（`structure_candidates = off`，§3.6-5）；特征向量子空间夹角的
+后验界（Davis–Kahan sinΘ，间隙取自证书窗口与 Kahan 残差区间，§3.6-8c，报告 `subspace`）；命令行的数据保护模式
+`secure`（报告与日志不含路径、输入以 SHA-256 记录、文件 0600，`docs/FORMATS.md` §5）。
+
 v10（P10「mpi」，分支 p10mpi）——可选的多进程模式 `hsolve-mpi`（CMake `HSOLVE_WITH_MPI=AUTO`，启动脚本
 `hsolve-mpirun`）：leader 占全部核运行 hs::solve，每个 NUMA 节点一个 helper 进程；nearest 证书的两次精确计数由两个
 helper 同时做，窗口目标的切片交给 helper，是否交出由代价规则与覆盖整棵进程树的内存预算决定，helper 失败由 leader

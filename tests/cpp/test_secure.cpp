@@ -1,4 +1,6 @@
-// The SHA-256 digests (include/hsolve/util.hpp) for recording inputs by content.
+// Data protection helpers (docs/FORMATS.md §5): the SHA-256 digests the command line's secure mode
+// records instead of input paths (include/hsolve/util.hpp), and the matrix readers' refusal of
+// numpy object arrays (whose payload would be a pickle).
 #include <gtest/gtest.h>
 #include <unistd.h>
 
@@ -9,6 +11,7 @@
 #include <vector>
 
 #include "hsolve/error.hpp"
+#include "hsolve/io.hpp"
 #include "hsolve/util.hpp"
 
 namespace {
@@ -49,6 +52,31 @@ TEST(Sha256, ChunkedUpdatesAndFilesAgree) {
   } catch (const hs::Error& e) {
     EXPECT_EQ(e.code(), hs::Error::Code::Io);
   }
+}
+
+// A .npy whose dtype is 'object' carries a pickle: the reader refuses it before reading the payload
+// (it has no unpickler at all).
+TEST(SecureInput, ObjectArraysAreRefused) {
+  const auto path = std::filesystem::temp_directory_path() / ("hsolve_object_" + std::to_string(::getpid()) + ".npy");
+  std::string header = "{'descr': '|O', 'fortran_order': False, 'shape': (2, 2), }";
+  header.append(64 - (10 + header.size() + 1) % 64, ' ');
+  header += '\n';
+  std::string bytes = std::string("\x93NUMPY\x01\x00", 8);
+  bytes += static_cast<char>(header.size() & 0xff);
+  bytes += static_cast<char>(header.size() >> 8);
+  bytes += header;
+  bytes += "\x80\x02" "cos\nsystem\n(S'touch /tmp/hsolve_pwned'\ntR.";  // a pickle that would run a command
+  {
+    std::ofstream out(path, std::ios::binary);
+    out.write(bytes.data(), static_cast<std::streamsize>(bytes.size()));
+  }
+  try {
+    (void)hs::load_matrix(path.string());
+    ADD_FAILURE() << "an object array must be refused";
+  } catch (const hs::Error& e) {
+    EXPECT_EQ(e.code(), hs::Error::Code::Unsupported) << e.what();
+  }
+  std::filesystem::remove(path);
 }
 
 }  // namespace

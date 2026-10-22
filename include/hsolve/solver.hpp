@@ -213,6 +213,10 @@ struct SolverConfig {
   /// computed (report.subspace.note says so). config.json takes "auto" | "off"; in the C++ API On
   /// acts as Auto.
   Toggle subspace_bound = Toggle::Auto;
+  /// Data protection (docs/FORMATS.md §5): the report and the event log carry no file system
+  /// paths (the command line records the inputs by shape, nnz, dtype and SHA-256 instead, and
+  /// creates its output and log files with mode 0600). The solve itself is unchanged.
+  bool secure = false;
   double zero_filter_tol = -1.0;  ///< < 0 disables; else |lambda| <= zero_filter_tol*scale is a
                                   ///< (non-physical) zero mode, avoided by shift placement (§3.6)
   double complex_tol = 1e-8;      ///< GHIEP: a pair is complex only if |Im lambda| >

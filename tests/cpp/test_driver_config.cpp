@@ -75,6 +75,38 @@ TEST(DriverConfig, BlockSizeAndInertiaCounterRoundTrip) {
   EXPECT_TRUE(bad(R"({"inertia_counter": "yes"})"));
 }
 
+// structure_candidates (off | auto, default off), subspace_bound (auto | off, default auto) and
+// secure (default false): defaults, round trip, and "on" or other values rejected.
+TEST(DriverConfig, StructureCandidatesSubspaceBoundAndSecure) {
+  const hs::SolverConfig def;
+  EXPECT_EQ(def.structure_candidates, hs::Toggle::Off);
+  EXPECT_EQ(def.subspace_bound, hs::Toggle::Auto);
+  EXPECT_FALSE(def.secure);
+  const auto j = nlohmann::json::parse(hs::config_to_json(def));
+  EXPECT_EQ(j["structure_candidates"], "off");
+  EXPECT_EQ(j["subspace_bound"], "auto");
+  EXPECT_EQ(j["secure"], false);
+  const auto c = hs::parse_config(R"({"structure_candidates": "auto", "subspace_bound": "off", "secure": true})");
+  EXPECT_EQ(c.structure_candidates, hs::Toggle::Auto);
+  EXPECT_EQ(c.subspace_bound, hs::Toggle::Off);
+  EXPECT_TRUE(c.secure);
+  const auto again = hs::parse_config(hs::config_to_json(c));
+  EXPECT_EQ(hs::config_to_json(again), hs::config_to_json(c));
+  auto bad = [](const char* doc) {
+    try {
+      (void)hs::parse_config(doc);
+      return false;
+    } catch (const hs::Error& e) {
+      return e.code() == hs::Error::Code::InvalidInput;
+    }
+  };
+  EXPECT_TRUE(bad(R"({"structure_candidates": "on"})"));
+  EXPECT_TRUE(bad(R"({"structure_candidates": true})"));
+  EXPECT_TRUE(bad(R"({"subspace_bound": "on"})"));
+  EXPECT_TRUE(bad(R"({"subspace_bound": "exact"})"));
+  EXPECT_TRUE(bad(R"({"secure": "yes"})"));
+}
+
 // ordering: -1 adaptive, MUMPS ICNTL(7) 0 / 2..7, or 10 = hsolve's nested dissection
 // (kOrderingNestedDissection); 1 (a caller-given pivot order) and anything else are rejected.
 TEST(DriverConfig, OrderingAcceptsMumpsCodesAndOwnNestedDissection) {

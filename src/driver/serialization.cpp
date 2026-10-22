@@ -200,6 +200,10 @@ SolverConfig parse_config(const std::string& json_text, const SolverConfig& base
     else if (key == "certificate_fault_count") c.certificate_fault_count = get_integer<index_t>(v, k);
     else if (key == "structure_candidates") c.structure_candidates = auto_or_off(v, k);
     else if (key == "subspace_bound") c.subspace_bound = auto_or_off(v, k);
+    else if (key == "secure") {
+      if (!v.is_boolean()) HS_THROW(InvalidInput, "config: 'secure' must be true/false");
+      c.secure = v.get<bool>();
+    }
     else if (key == "zero_filter_tol") c.zero_filter_tol = get_number(v, k);
     else if (key == "complex_tol") c.complex_tol = get_number(v, k);
     else if (key == "max_shift_retries") c.max_shift_retries = get_integer<index_t>(v, k);
@@ -265,6 +269,7 @@ std::string config_to_json(const SolverConfig& c, int indent) {
             {"certificate_fault_count", c.certificate_fault_count},
             {"structure_candidates", enum_name(c.structure_candidates)},
             {"subspace_bound", enum_name(c.subspace_bound)},
+            {"secure", c.secure},
             {"zero_filter_tol", c.zero_filter_tol},
             {"complex_tol", c.complex_tol},
             {"max_shift_retries", c.max_shift_retries}};
