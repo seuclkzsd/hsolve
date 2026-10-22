@@ -1,0 +1,980 @@
+{
+ "schema_version": 1,
+ "scenario": {
+  "id": "bloch-1e5",
+  "group": "bloch",
+  "title": "Bloch 周期单元（复厄密，n ≈ 1e5）",
+  "case": "sc-bloch-1e5",
+  "source": null,
+  "why": "复厄密、二重简并、梯度零空间 32768 维",
+  "target": {
+   "mode": "nearest",
+   "sigma": 45.30305300190923,
+   "k": 10
+  },
+  "hsolve": {},
+  "reference": "generated",
+  "derived": false,
+  "reps": 3,
+  "timeout_s": 900,
+  "group_label": "复厄密（Bloch 周期）",
+  "target_info": {},
+  "override": false,
+  "hsolve_config": {
+   "method": "shift_invert_lanczos"
+  },
+  "n": 98304,
+  "problem": "HEP",
+  "dtype": "complex128",
+  "nnz_a": 1277952,
+  "nnz_b": 0,
+  "source_path": null,
+  "reference_info": {
+   "schema_version": 1,
+   "kind": "discrete-exact",
+   "note": "discrete Yee/FIT spectrum: sum_d (2/h_d sin(theta_d))^2 with TE/TM multiplicities and the gradient null space; exact up to assembly rounding",
+   "count": 98304,
+   "complete": true,
+   "window": null
+  },
+  "target_multiplicities": [
+   2,
+   2,
+   2,
+   2,
+   2
+  ]
+ },
+ "started": "2026-10-23T01:28:25",
+ "finished": "2026-10-23T01:31:18",
+ "conditions": {
+  "host": "gpu02",
+  "cpu": "Intel(R) Xeon(R) Silver 4314 CPU @ 2.40GHz",
+  "os": "Linux-3.10.0-1160.el7.x86_64-x86_64-with-glibc2.17",
+  "python": "3.11.17",
+  "git_commit": "fac61d895e7f47b02e2d3316e90bd7ee7899df56",
+  "source_commit": "b9aadc47b09db34f9b72870ee912d7d1e8715c50",
+  "hsolve_binary": "build/release/hsolve",
+  "hsolve_md5": "8d69a98bc60e327e479a591ef93742c0",
+  "cores": "16-31",
+  "ncores": 16,
+  "mem_gb": 32.0,
+  "reps": 3,
+  "slepc_version": "3.26.0",
+  "slepc_env": "/tmp/os2026-p28/ref-complex",
+  "tuned_profiles": "results/showcase/slepc_tuned_profiles.json"
+ },
+ "norms": {
+  "norm2_a": 15551.260339706429,
+  "norm2_b": 1.0,
+  "scale": 15551.260339706429,
+  "method": [
+   "eigsh",
+   "identity"
+  ],
+  "seconds": 1.394764379132539
+ },
+ "reference": {
+  "kind": "discrete-exact",
+  "complete": true,
+  "window": null,
+  "eigenvalues": [
+   29.098593171541065,
+   29.098593171541065,
+   40.41819985369236,
+   40.41819985369236,
+   52.630332724234535,
+   52.630332724234535,
+   56.88507854283177,
+   56.88507854283177,
+   59.787442449928406,
+   59.787442449928406,
+   67.98700929397425,
+   67.98700929397425,
+   69.14276808407722,
+   69.14276808407722
+  ],
+  "truncated": false,
+  "levels": [
+   [
+    29.098593171541065,
+    2
+   ],
+   [
+    40.41819985369236,
+    2
+   ],
+   [
+    52.630332724234535,
+    2
+   ],
+   [
+    56.88507854283177,
+    2
+   ],
+   [
+    59.787442449928406,
+    2
+   ],
+   [
+    67.98700929397425,
+    2
+   ],
+   [
+    69.14276808407722,
+    2
+   ]
+  ]
+ },
+ "runs": [
+  {
+   "solver": "hsolve",
+   "wall_s": 24.309,
+   "peak_rss_gib": 4.142,
+   "rc": 0,
+   "killed": null,
+   "claimed_success": true,
+   "success": true,
+   "solver_max_eta": 3.126196864954065e-11,
+   "max_eta": 3.117518081486979e-11,
+   "pairs": 10,
+   "eigenvalues": [
+    40.41819985369132,
+    40.41819985369128,
+    52.63033272423362,
+    52.63033272423499,
+    56.88507854283031,
+    56.885078542831735,
+    59.78744244992744,
+    59.7874424499276,
+    29.098593171541268,
+    29.098593171539864
+   ],
+   "solver_peak_bytes": 4446949376,
+   "verdict": "pass",
+   "eval_reasons": [],
+   "completeness": "complete",
+   "certified": true,
+   "valid": true,
+   "why": [],
+   "solver_s": 24.095514421,
+   "solver_s_scope": "report time_total_s",
+   "phases": {
+    "analysis_s": 0.631048557,
+    "numeric_s": 20.068807651,
+    "factorizations": 3,
+    "solves": 104,
+    "solve_s": 2.39294927,
+    "ortho_s": null,
+    "iterate_s": 2.741648443999999,
+    "verify_s": 0.04997119100000402
+   },
+   "evaluation": {
+    "verdict": "pass",
+    "reasons": [],
+    "status": "complete",
+    "certified": true,
+    "expected": 10,
+    "found": 10,
+    "missing": [],
+    "boundary_deficit": 0,
+    "spurious": 0,
+    "unmatched": 0,
+    "distinct_returned": 10,
+    "duplicates": 0,
+    "rejected_pairs": 0,
+    "max_backward_error": 3.117518081486979e-11,
+    "max_eig_scaled_error": 9.377911317730337e-17,
+    "max_subspace_angle": null
+   },
+   "outcome": [],
+   "report": {
+    "version": "0.1.0",
+    "method": "shift_invert_lanczos",
+    "candidate_source": "iterative",
+    "problem": "standard",
+    "sigma_used": 45.30305300190923,
+    "block_size": 8,
+    "zero_cluster_dim": -1,
+    "zero_modes_filtered": 0,
+    "time_total_s": 24.095514421,
+    "time_certificate_s": 13.561339359999998,
+    "warnings": [],
+    "certificate": {
+     "count_found": 10,
+     "count_inertia": 10,
+     "endpoint_moves": 0,
+     "failure_probability": 0.0,
+     "lower": 15.314188451235216,
+     "method": "exact",
+     "note": "",
+     "passed": true,
+     "performed": true,
+     "rigorous": true,
+     "seconds": 13.561339359999998,
+     "solves": 0,
+     "statement": "double-precision Sylvester counts (main factorization): nu(b) - nu(a) = 10 eigenvalue(s) in [15.3142, 64.7473], 10 distinct found pair(s) there: every eigenvalue in the window is found",
+     "upper": 64.74726106308617
+    },
+    "slices": 0,
+    "factorizations": 3
+   },
+   "rep": 0,
+   "position": 0
+  },
+  {
+   "solver": "slepc-default",
+   "config": "1x16",
+   "config_source": "default",
+   "config_scope": "default",
+   "wall_s": 16.494,
+   "peak_rss_gib": 4.345,
+   "rc": 0,
+   "killed": null,
+   "claimed_success": false,
+   "success": false,
+   "solver_max_eta": 1.3645551359475156e-07,
+   "max_eta": 1.8522305583255372e-07,
+   "pairs": 10,
+   "eigenvalues": [
+    40.418199853691576,
+    40.418199853690524,
+    52.630332724234506,
+    52.63033272424708,
+    56.885078542828666,
+    56.88507854283007,
+    59.78744244992475,
+    59.78744244993204,
+    29.098593171541904,
+    29.09859317153609
+   ],
+   "solver_peak_bytes": 4641046528,
+   "verdict": "fail",
+   "eval_reasons": [
+    "5 of 10 pairs have backward error > tol=1e-10"
+   ],
+   "completeness": "complete",
+   "certified": true,
+   "valid": false,
+   "why": [
+    "solver claims no success",
+    "5 of 10 pairs have backward error > tol=1e-10"
+   ],
+   "solver_s": 13.686241699999998,
+   "solver_s_scope": "log_view setup+solve+vectors",
+   "phases": {
+    "analysis_s": 1.1481,
+    "numeric_s": 6.549,
+    "factorizations": 1,
+    "solves": 35,
+    "solve_s": 5.8513,
+    "ortho_s": 0.063913,
+    "iterate_s": null,
+    "verify_s": null
+   },
+   "evaluation": {
+    "verdict": "fail",
+    "reasons": [
+     "5 of 10 pairs have backward error > tol=1e-10"
+    ],
+    "status": "complete",
+    "certified": true,
+    "expected": 10,
+    "found": 10,
+    "missing": [],
+    "boundary_deficit": 0,
+    "spurious": 0,
+    "unmatched": 0,
+    "distinct_returned": 10,
+    "duplicates": 0,
+    "rejected_pairs": 5,
+    "max_backward_error": 1.8522305583255372e-07,
+    "max_eig_scaled_error": 8.041702532365091e-16,
+    "max_subspace_angle": null
+   },
+   "outcome": [
+    "residual"
+   ],
+   "report": {
+    "slepc_version": "3.26.0",
+    "nconv": 13,
+    "iterations": 2,
+    "mpi_ranks": 1,
+    "omp_threads": 16,
+    "petsc_options": [
+     "-log_view",
+     ":~/rb-evidence/runs/bloch-1e5/log_view-slepc-default-r0.txt"
+    ],
+    "unused_options": [],
+    "warnings": [],
+    "time_setup_s": 7.737706760875881,
+    "time_solve_s": 5.948545704595745,
+    "success": false
+   },
+   "stderr_tail": "[guard] {\"cmd\": [\"env\", \"LD_LIBRARY_PATH=/tmp/os2026-p28/ref-complex/lib\", \"/tmp/os2026-p28/ref-complex/bin/mpiexec\", \"-x\", \"LD_LIBRARY_PATH\", \"-n\", \"1\", \"--bind-to\", \"none\", \"-x\", \"OMP_NUM_THREADS=16\", \"-x\", \"OPENBLAS_NUM_THREADS=16\", \"/tmp/os2026-p28/ref-complex/bin/python\", \"~/os2026-wt/rb-evidence/tools/bench/baseline_slepc.py\", \"--case\", \"sc-bloch-1e5\", \"--out\", \"~/rb-evidence/runs/bloch-1e5/slepc-default-r0\", \"--root\", \"~/rb-evidence/data\", \"-log_view\", \":~/rb-evidence/runs/bloch-1e5/log_view-slepc-default-r0.txt\"], \"returncode\": 0, \"killed\": null, \"wall_s\": 16.494, \"peak_rss_gib\": 4.345, \"peak_sampled_gib\": 4.33, \"cpu_s\": 204.215, \"cores\": \"16-31\", \"threads\": 16, \"mem_limit_gib\": 32.0, \"exclusive\": true}\n",
+   "stdout_tail": "slepc: n=98304 target=nearest nconv=13 its=2 setup=7.74s solve=5.95s total=13.92s peak=4.32GiB\n",
+   "rep": 0,
+   "position": 1
+  },
+  {
+   "solver": "slepc-tuned",
+   "config": "1x16",
+   "config_source": "class profile HEP/nearest",
+   "config_scope": "class",
+   "wall_s": 16.402,
+   "peak_rss_gib": 4.345,
+   "rc": 0,
+   "killed": null,
+   "claimed_success": false,
+   "success": false,
+   "solver_max_eta": 9.287516970506594e-08,
+   "max_eta": 1.2606762666130227e-07,
+   "pairs": 10,
+   "eigenvalues": [
+    40.41819985369231,
+    40.41819985369072,
+    52.63033272423411,
+    52.63033272423946,
+    56.885078542830506,
+    56.885078542830655,
+    59.78744244992781,
+    59.787442449931056,
+    29.098593171540195,
+    29.098593171536393
+   ],
+   "solver_peak_bytes": 4641619968,
+   "verdict": "fail",
+   "eval_reasons": [
+    "5 of 10 pairs have backward error > tol=1e-10"
+   ],
+   "completeness": "complete",
+   "certified": true,
+   "valid": false,
+   "why": [
+    "solver claims no success",
+    "5 of 10 pairs have backward error > tol=1e-10"
+   ],
+   "solver_s": 13.546759,
+   "solver_s_scope": "log_view setup+solve+vectors",
+   "phases": {
+    "analysis_s": 1.1477,
+    "numeric_s": 6.5088,
+    "factorizations": 1,
+    "solves": 35,
+    "solve_s": 5.7498,
+    "ortho_s": 0.063848,
+    "iterate_s": null,
+    "verify_s": null
+   },
+   "evaluation": {
+    "verdict": "fail",
+    "reasons": [
+     "5 of 10 pairs have backward error > tol=1e-10"
+    ],
+    "status": "complete",
+    "certified": true,
+    "expected": 10,
+    "found": 10,
+    "missing": [],
+    "boundary_deficit": 0,
+    "spurious": 0,
+    "unmatched": 0,
+    "distinct_returned": 10,
+    "duplicates": 0,
+    "rejected_pairs": 5,
+    "max_backward_error": 1.2606762666130227e-07,
+    "max_eig_scaled_error": 3.1556624320096307e-16,
+    "max_subspace_angle": null
+   },
+   "outcome": [
+    "residual"
+   ],
+   "report": {
+    "slepc_version": "3.26.0",
+    "nconv": 13,
+    "iterations": 2,
+    "mpi_ranks": 1,
+    "omp_threads": 16,
+    "petsc_options": [
+     "-log_view",
+     ":~/rb-evidence/runs/bloch-1e5/log_view-slepc-tuned-r0.txt"
+    ],
+    "unused_options": [],
+    "warnings": [],
+    "time_setup_s": 7.700200821273029,
+    "time_solve_s": 5.846524386201054,
+    "success": false
+   },
+   "stderr_tail": "[guard] {\"cmd\": [\"env\", \"LD_LIBRARY_PATH=/tmp/os2026-p28/ref-complex/lib\", \"/tmp/os2026-p28/ref-complex/bin/mpiexec\", \"-x\", \"LD_LIBRARY_PATH\", \"-n\", \"1\", \"--bind-to\", \"none\", \"-x\", \"OMP_NUM_THREADS=16\", \"-x\", \"OPENBLAS_NUM_THREADS=16\", \"/tmp/os2026-p28/ref-complex/bin/python\", \"~/os2026-wt/rb-evidence/tools/bench/baseline_slepc.py\", \"--case\", \"sc-bloch-1e5\", \"--out\", \"~/rb-evidence/runs/bloch-1e5/slepc-tuned-r0\", \"--root\", \"~/rb-evidence/data\", \"-log_view\", \":~/rb-evidence/runs/bloch-1e5/log_view-slepc-tuned-r0.txt\"], \"returncode\": 0, \"killed\": null, \"wall_s\": 16.402, \"peak_rss_gib\": 4.345, \"peak_sampled_gib\": 4.345, \"cpu_s\": 202.098, \"cores\": \"16-31\", \"threads\": 16, \"mem_limit_gib\": 32.0, \"exclusive\": true}\n",
+   "stdout_tail": "slepc: n=98304 target=nearest nconv=13 its=2 setup=7.70s solve=5.85s total=13.76s peak=4.32GiB\n",
+   "rep": 0,
+   "position": 2
+  },
+  {
+   "solver": "slepc-default",
+   "config": "1x16",
+   "config_source": "default",
+   "config_scope": "default",
+   "wall_s": 16.488,
+   "peak_rss_gib": 4.345,
+   "rc": 0,
+   "killed": null,
+   "claimed_success": false,
+   "success": false,
+   "solver_max_eta": 7.412913158967948e-08,
+   "max_eta": 1.0062198234093239e-07,
+   "pairs": 10,
+   "eigenvalues": [
+    40.418199853691036,
+    40.418199853690794,
+    52.63033272423414,
+    52.63033272423852,
+    56.88507854282958,
+    56.885078542829696,
+    59.78744244992659,
+    59.78744244993284,
+    29.098593171541044,
+    29.098593171539296
+   ],
+   "solver_peak_bytes": 4640841728,
+   "verdict": "fail",
+   "eval_reasons": [
+    "5 of 10 pairs have backward error > tol=1e-10"
+   ],
+   "completeness": "complete",
+   "certified": true,
+   "valid": false,
+   "why": [
+    "solver claims no success",
+    "5 of 10 pairs have backward error > tol=1e-10"
+   ],
+   "solver_s": 13.6031347,
+   "solver_s_scope": "log_view setup+solve+vectors",
+   "phases": {
+    "analysis_s": 1.1499,
+    "numeric_s": 6.5417,
+    "factorizations": 1,
+    "solves": 35,
+    "solve_s": 5.7637,
+    "ortho_s": 0.066096,
+    "iterate_s": null,
+    "verify_s": null
+   },
+   "evaluation": {
+    "verdict": "fail",
+    "reasons": [
+     "5 of 10 pairs have backward error > tol=1e-10"
+    ],
+    "status": "complete",
+    "certified": true,
+    "expected": 10,
+    "found": 10,
+    "missing": [],
+    "boundary_deficit": 0,
+    "spurious": 0,
+    "unmatched": 0,
+    "distinct_returned": 10,
+    "duplicates": 0,
+    "rejected_pairs": 5,
+    "max_backward_error": 1.0062198234093239e-07,
+    "max_eig_scaled_error": 2.8401595671309805e-16,
+    "max_subspace_angle": null
+   },
+   "outcome": [
+    "residual"
+   ],
+   "report": {
+    "slepc_version": "3.26.0",
+    "nconv": 13,
+    "iterations": 2,
+    "mpi_ranks": 1,
+    "omp_threads": 16,
+    "petsc_options": [
+     "-log_view",
+     ":~/rb-evidence/runs/bloch-1e5/log_view-slepc-default-r1.txt"
+    ],
+    "unused_options": [],
+    "warnings": [],
+    "time_setup_s": 7.739965399261564,
+    "time_solve_s": 5.863163268193603,
+    "success": false
+   },
+   "stderr_tail": "[guard] {\"cmd\": [\"env\", \"LD_LIBRARY_PATH=/tmp/os2026-p28/ref-complex/lib\", \"/tmp/os2026-p28/ref-complex/bin/mpiexec\", \"-x\", \"LD_LIBRARY_PATH\", \"-n\", \"1\", \"--bind-to\", \"none\", \"-x\", \"OMP_NUM_THREADS=16\", \"-x\", \"OPENBLAS_NUM_THREADS=16\", \"/tmp/os2026-p28/ref-complex/bin/python\", \"~/os2026-wt/rb-evidence/tools/bench/baseline_slepc.py\", \"--case\", \"sc-bloch-1e5\", \"--out\", \"~/rb-evidence/runs/bloch-1e5/slepc-default-r1\", \"--root\", \"~/rb-evidence/data\", \"-log_view\", \":~/rb-evidence/runs/bloch-1e5/log_view-slepc-default-r1.txt\"], \"returncode\": 0, \"killed\": null, \"wall_s\": 16.488, \"peak_rss_gib\": 4.345, \"peak_sampled_gib\": 4.345, \"cpu_s\": 203.021, \"cores\": \"16-31\", \"threads\": 16, \"mem_limit_gib\": 32.0, \"exclusive\": true}\n",
+   "stdout_tail": "slepc: n=98304 target=nearest nconv=13 its=2 setup=7.74s solve=5.86s total=13.86s peak=4.32GiB\n",
+   "rep": 1,
+   "position": 0
+  },
+  {
+   "solver": "slepc-tuned",
+   "config": "1x16",
+   "config_source": "class profile HEP/nearest",
+   "config_scope": "class",
+   "wall_s": 16.544,
+   "peak_rss_gib": 4.345,
+   "rc": 0,
+   "killed": null,
+   "claimed_success": false,
+   "success": false,
+   "solver_max_eta": 1.1128838145225648e-07,
+   "max_eta": 1.5104326195675154e-07,
+   "pairs": 10,
+   "eigenvalues": [
+    40.41819985369137,
+    40.418199853690616,
+    52.63033272423464,
+    52.630332724239715,
+    56.88507854283064,
+    56.885078542830655,
+    59.787442449926864,
+    59.78744244994964,
+    29.09859317154161,
+    29.09859317153656
+   ],
+   "solver_peak_bytes": 4641472512,
+   "verdict": "fail",
+   "eval_reasons": [
+    "5 of 10 pairs have backward error > tol=1e-10"
+   ],
+   "completeness": "complete",
+   "certified": true,
+   "valid": false,
+   "why": [
+    "solver claims no success",
+    "5 of 10 pairs have backward error > tol=1e-10"
+   ],
+   "solver_s": 13.677549299999999,
+   "solver_s_scope": "log_view setup+solve+vectors",
+   "phases": {
+    "analysis_s": 1.1717,
+    "numeric_s": 6.6013,
+    "factorizations": 1,
+    "solves": 35,
+    "solve_s": 5.7669,
+    "ortho_s": 0.064995,
+    "iterate_s": null,
+    "verify_s": null
+   },
+   "evaluation": {
+    "verdict": "fail",
+    "reasons": [
+     "5 of 10 pairs have backward error > tol=1e-10"
+    ],
+    "status": "complete",
+    "certified": true,
+    "expected": 10,
+    "found": 10,
+    "missing": [],
+    "boundary_deficit": 0,
+    "spurious": 0,
+    "unmatched": 0,
+    "distinct_returned": 10,
+    "duplicates": 0,
+    "rejected_pairs": 5,
+    "max_backward_error": 1.5104326195675154e-07,
+    "max_eig_scaled_error": 1.3599994850300273e-15,
+    "max_subspace_angle": null
+   },
+   "outcome": [
+    "residual"
+   ],
+   "report": {
+    "slepc_version": "3.26.0",
+    "nconv": 13,
+    "iterations": 2,
+    "mpi_ranks": 1,
+    "omp_threads": 16,
+    "petsc_options": [
+     "-log_view",
+     ":~/rb-evidence/runs/bloch-1e5/log_view-slepc-tuned-r1.txt"
+    ],
+    "unused_options": [],
+    "warnings": [],
+    "time_setup_s": 7.81187090696767,
+    "time_solve_s": 5.865665454883128,
+    "success": false
+   },
+   "stderr_tail": "[guard] {\"cmd\": [\"env\", \"LD_LIBRARY_PATH=/tmp/os2026-p28/ref-complex/lib\", \"/tmp/os2026-p28/ref-complex/bin/mpiexec\", \"-x\", \"LD_LIBRARY_PATH\", \"-n\", \"1\", \"--bind-to\", \"none\", \"-x\", \"OMP_NUM_THREADS=16\", \"-x\", \"OPENBLAS_NUM_THREADS=16\", \"/tmp/os2026-p28/ref-complex/bin/python\", \"~/os2026-wt/rb-evidence/tools/bench/baseline_slepc.py\", \"--case\", \"sc-bloch-1e5\", \"--out\", \"~/rb-evidence/runs/bloch-1e5/slepc-tuned-r1\", \"--root\", \"~/rb-evidence/data\", \"-log_view\", \":~/rb-evidence/runs/bloch-1e5/log_view-slepc-tuned-r1.txt\"], \"returncode\": 0, \"killed\": null, \"wall_s\": 16.544, \"peak_rss_gib\": 4.345, \"peak_sampled_gib\": 4.33, \"cpu_s\": 203.816, \"cores\": \"16-31\", \"threads\": 16, \"mem_limit_gib\": 32.0, \"exclusive\": true}\n",
+   "stdout_tail": "slepc: n=98304 target=nearest nconv=13 its=2 setup=7.81s solve=5.87s total=13.86s peak=4.32GiB\n",
+   "rep": 1,
+   "position": 1
+  },
+  {
+   "solver": "hsolve",
+   "wall_s": 24.151,
+   "peak_rss_gib": 4.141,
+   "rc": 0,
+   "killed": null,
+   "claimed_success": true,
+   "success": true,
+   "solver_max_eta": 2.908789729341204e-11,
+   "max_eta": 2.900714550125249e-11,
+   "pairs": 10,
+   "eigenvalues": [
+    40.41819985369135,
+    40.41819985369121,
+    52.630332724233654,
+    52.63033272423495,
+    56.88507854283043,
+    56.885078542831685,
+    59.78744244992754,
+    59.7874424499276,
+    29.098593171541225,
+    29.098593171539903
+   ],
+   "solver_peak_bytes": 4446756864,
+   "verdict": "pass",
+   "eval_reasons": [],
+   "completeness": "complete",
+   "certified": true,
+   "valid": true,
+   "why": [],
+   "solver_s": 23.958683482,
+   "solver_s_scope": "report time_total_s",
+   "phases": {
+    "analysis_s": 0.619346071,
+    "numeric_s": 19.953606877,
+    "factorizations": 3,
+    "solves": 104,
+    "solve_s": 2.423019167,
+    "ortho_s": null,
+    "iterate_s": 2.766914946,
+    "verify_s": 0.04786534200000314
+   },
+   "evaluation": {
+    "verdict": "pass",
+    "reasons": [],
+    "status": "complete",
+    "certified": true,
+    "expected": 10,
+    "found": 10,
+    "missing": [],
+    "boundary_deficit": 0,
+    "spurious": 0,
+    "unmatched": 0,
+    "distinct_returned": 10,
+    "duplicates": 0,
+    "rejected_pairs": 0,
+    "max_backward_error": 2.900714550125249e-11,
+    "max_eig_scaled_error": 8.604006014810843e-17,
+    "max_subspace_angle": null
+   },
+   "outcome": [],
+   "report": {
+    "version": "0.1.0",
+    "method": "shift_invert_lanczos",
+    "candidate_source": "iterative",
+    "problem": "standard",
+    "sigma_used": 45.30305300190923,
+    "block_size": 8,
+    "zero_cluster_dim": -1,
+    "zero_modes_filtered": 0,
+    "time_total_s": 23.958683482,
+    "time_certificate_s": 13.535419935999998,
+    "warnings": [],
+    "certificate": {
+     "count_found": 10,
+     "count_inertia": 10,
+     "endpoint_moves": 0,
+     "failure_probability": 0.0,
+     "lower": 15.31418845120168,
+     "method": "exact",
+     "note": "",
+     "passed": true,
+     "performed": true,
+     "rigorous": true,
+     "seconds": 13.535419935999998,
+     "solves": 0,
+     "statement": "double-precision Sylvester counts (main factorization): nu(b) - nu(a) = 10 eigenvalue(s) in [15.3142, 64.7473], 10 distinct found pair(s) there: every eigenvalue in the window is found",
+     "upper": 64.7472610630847
+    },
+    "slices": 0,
+    "factorizations": 3
+   },
+   "rep": 1,
+   "position": 2
+  },
+  {
+   "solver": "slepc-tuned",
+   "config": "1x16",
+   "config_source": "class profile HEP/nearest",
+   "config_scope": "class",
+   "wall_s": 16.599,
+   "peak_rss_gib": 4.343,
+   "rc": 0,
+   "killed": null,
+   "claimed_success": false,
+   "success": false,
+   "solver_max_eta": 6.656234596056575e-08,
+   "max_eta": 9.035091948584985e-08,
+   "pairs": 10,
+   "eigenvalues": [
+    40.41819985369203,
+    40.4181998536913,
+    52.63033272423462,
+    52.630332724237746,
+    56.885078542829895,
+    56.8850785428301,
+    59.78744244992324,
+    59.78744244992836,
+    29.098593171541655,
+    29.098593171539093
+   ],
+   "solver_peak_bytes": 4639236096,
+   "verdict": "fail",
+   "eval_reasons": [
+    "5 of 10 pairs have backward error > tol=1e-10"
+   ],
+   "completeness": "complete",
+   "certified": true,
+   "valid": false,
+   "why": [
+    "solver claims no success",
+    "5 of 10 pairs have backward error > tol=1e-10"
+   ],
+   "solver_s": 13.6000951,
+   "solver_s_scope": "log_view setup+solve+vectors",
+   "phases": {
+    "analysis_s": 1.1711,
+    "numeric_s": 6.4828,
+    "factorizations": 1,
+    "solves": 35,
+    "solve_s": 5.8086,
+    "ortho_s": 0.066015,
+    "iterate_s": null,
+    "verify_s": null
+   },
+   "evaluation": {
+    "verdict": "fail",
+    "reasons": [
+     "5 of 10 pairs have backward error > tol=1e-10"
+    ],
+    "status": "complete",
+    "certified": true,
+    "expected": 10,
+    "found": 10,
+    "missing": [],
+    "boundary_deficit": 0,
+    "spurious": 0,
+    "unmatched": 0,
+    "distinct_returned": 10,
+    "duplicates": 0,
+    "rejected_pairs": 5,
+    "max_backward_error": 9.035091948584985e-08,
+    "max_eig_scaled_error": 3.308967957218306e-16,
+    "max_subspace_angle": null
+   },
+   "outcome": [
+    "residual"
+   ],
+   "report": {
+    "slepc_version": "3.26.0",
+    "nconv": 13,
+    "iterations": 2,
+    "mpi_ranks": 1,
+    "omp_threads": 16,
+    "petsc_options": [
+     "-log_view",
+     ":~/rb-evidence/runs/bloch-1e5/log_view-slepc-tuned-r2.txt"
+    ],
+    "unused_options": [],
+    "warnings": [],
+    "time_setup_s": 7.69280230300501,
+    "time_solve_s": 5.907280272804201,
+    "success": false
+   },
+   "stderr_tail": "[guard] {\"cmd\": [\"env\", \"LD_LIBRARY_PATH=/tmp/os2026-p28/ref-complex/lib\", \"/tmp/os2026-p28/ref-complex/bin/mpiexec\", \"-x\", \"LD_LIBRARY_PATH\", \"-n\", \"1\", \"--bind-to\", \"none\", \"-x\", \"OMP_NUM_THREADS=16\", \"-x\", \"OPENBLAS_NUM_THREADS=16\", \"/tmp/os2026-p28/ref-complex/bin/python\", \"~/os2026-wt/rb-evidence/tools/bench/baseline_slepc.py\", \"--case\", \"sc-bloch-1e5\", \"--out\", \"~/rb-evidence/runs/bloch-1e5/slepc-tuned-r2\", \"--root\", \"~/rb-evidence/data\", \"-log_view\", \":~/rb-evidence/runs/bloch-1e5/log_view-slepc-tuned-r2.txt\"], \"returncode\": 0, \"killed\": null, \"wall_s\": 16.599, \"peak_rss_gib\": 4.343, \"peak_sampled_gib\": 4.343, \"cpu_s\": 202.353, \"cores\": \"16-31\", \"threads\": 16, \"mem_limit_gib\": 32.0, \"exclusive\": true}\n",
+   "stdout_tail": "slepc: n=98304 target=nearest nconv=13 its=2 setup=7.69s solve=5.91s total=13.80s peak=4.32GiB\n",
+   "rep": 2,
+   "position": 0
+  },
+  {
+   "solver": "hsolve",
+   "wall_s": 24.305,
+   "peak_rss_gib": 4.141,
+   "rc": 0,
+   "killed": null,
+   "claimed_success": true,
+   "success": true,
+   "solver_max_eta": 3.0668397709183196e-11,
+   "max_eta": 3.058325799116618e-11,
+   "pairs": 10,
+   "eigenvalues": [
+    40.41819985369137,
+    40.41819985369127,
+    52.63033272423365,
+    52.630332724235,
+    56.885078542830314,
+    56.88507854283171,
+    59.7874424499275,
+    59.78744244992753,
+    29.098593171541243,
+    29.098593171539925
+   ],
+   "solver_peak_bytes": 4445958144,
+   "verdict": "pass",
+   "eval_reasons": [],
+   "completeness": "complete",
+   "certified": true,
+   "valid": true,
+   "why": [],
+   "solver_s": 24.041586706,
+   "solver_s_scope": "report time_total_s",
+   "phases": {
+    "analysis_s": 0.621776815,
+    "numeric_s": 20.055616057,
+    "factorizations": 3,
+    "solves": 104,
+    "solve_s": 2.3785461220000004,
+    "ortho_s": null,
+    "iterate_s": 2.7245040220000005,
+    "verify_s": 0.048310995999998996
+   },
+   "evaluation": {
+    "verdict": "pass",
+    "reasons": [],
+    "status": "complete",
+    "certified": true,
+    "expected": 10,
+    "found": 10,
+    "missing": [],
+    "boundary_deficit": 0,
+    "spurious": 0,
+    "unmatched": 0,
+    "distinct_returned": 10,
+    "duplicates": 0,
+    "rejected_pairs": 0,
+    "max_backward_error": 3.058325799116618e-11,
+    "max_eig_scaled_error": 9.332387476382132e-17,
+    "max_subspace_angle": null
+   },
+   "outcome": [],
+   "report": {
+    "version": "0.1.0",
+    "method": "shift_invert_lanczos",
+    "candidate_source": "iterative",
+    "problem": "standard",
+    "sigma_used": 45.30305300190923,
+    "block_size": 8,
+    "zero_cluster_dim": -1,
+    "zero_modes_filtered": 0,
+    "time_total_s": 24.041586706,
+    "time_certificate_s": 13.527817202,
+    "warnings": [],
+    "certificate": {
+     "count_found": 10,
+     "count_inertia": 10,
+     "endpoint_moves": 0,
+     "failure_probability": 0.0,
+     "lower": 15.31418845119574,
+     "method": "exact",
+     "note": "",
+     "passed": true,
+     "performed": true,
+     "rigorous": true,
+     "seconds": 13.527817202,
+     "solves": 0,
+     "statement": "double-precision Sylvester counts (main factorization): nu(b) - nu(a) = 10 eigenvalue(s) in [15.3142, 64.7473], 10 distinct found pair(s) there: every eigenvalue in the window is found",
+     "upper": 64.74726106307806
+    },
+    "slices": 0,
+    "factorizations": 3
+   },
+   "rep": 2,
+   "position": 1
+  },
+  {
+   "solver": "slepc-default",
+   "config": "1x16",
+   "config_source": "default",
+   "config_scope": "default",
+   "wall_s": 16.45,
+   "peak_rss_gib": 4.343,
+   "rc": 0,
+   "killed": null,
+   "claimed_success": false,
+   "success": false,
+   "solver_max_eta": 7.02468390989835e-08,
+   "max_eta": 9.535220569491193e-08,
+   "pairs": 10,
+   "eigenvalues": [
+    40.41819985369141,
+    40.418199853691036,
+    52.63033272423435,
+    52.63033272423797,
+    56.88507854283081,
+    56.885078542831344,
+    59.787442449922096,
+    59.78744244992891,
+    29.098593171543225,
+    29.098593171538315
+   ],
+   "solver_peak_bytes": 4639510528,
+   "verdict": "fail",
+   "eval_reasons": [
+    "4 of 10 pairs have backward error > tol=1e-10"
+   ],
+   "completeness": "complete",
+   "certified": true,
+   "valid": false,
+   "why": [
+    "solver claims no success",
+    "4 of 10 pairs have backward error > tol=1e-10"
+   ],
+   "solver_s": 13.415095800000001,
+   "solver_s_scope": "log_view setup+solve+vectors",
+   "phases": {
+    "analysis_s": 1.1574,
+    "numeric_s": 6.4458,
+    "factorizations": 1,
+    "solves": 35,
+    "solve_s": 5.6716,
+    "ortho_s": 0.062759,
+    "iterate_s": null,
+    "verify_s": null
+   },
+   "evaluation": {
+    "verdict": "fail",
+    "reasons": [
+     "4 of 10 pairs have backward error > tol=1e-10"
+    ],
+    "status": "complete",
+    "certified": true,
+    "expected": 10,
+    "found": 10,
+    "missing": [],
+    "boundary_deficit": 0,
+    "spurious": 0,
+    "unmatched": 0,
+    "distinct_returned": 10,
+    "duplicates": 0,
+    "rejected_pairs": 4,
+    "max_backward_error": 9.535220569491193e-08,
+    "max_eig_scaled_error": 4.041765537840242e-16,
+    "max_subspace_angle": null
+   },
+   "outcome": [
+    "residual"
+   ],
+   "report": {
+    "slepc_version": "3.26.0",
+    "nconv": 13,
+    "iterations": 2,
+    "mpi_ranks": 1,
+    "omp_threads": 16,
+    "petsc_options": [
+     "-log_view",
+     ":~/rb-evidence/runs/bloch-1e5/log_view-slepc-default-r2.txt"
+    ],
+    "unused_options": [],
+    "warnings": [],
+    "time_setup_s": 7.647664389573038,
+    "time_solve_s": 5.767355905845761,
+    "success": false
+   },
+   "stderr_tail": "[guard] {\"cmd\": [\"env\", \"LD_LIBRARY_PATH=/tmp/os2026-p28/ref-complex/lib\", \"/tmp/os2026-p28/ref-complex/bin/mpiexec\", \"-x\", \"LD_LIBRARY_PATH\", \"-n\", \"1\", \"--bind-to\", \"none\", \"-x\", \"OMP_NUM_THREADS=16\", \"-x\", \"OPENBLAS_NUM_THREADS=16\", \"/tmp/os2026-p28/ref-complex/bin/python\", \"~/os2026-wt/rb-evidence/tools/bench/baseline_slepc.py\", \"--case\", \"sc-bloch-1e5\", \"--out\", \"~/rb-evidence/runs/bloch-1e5/slepc-default-r2\", \"--root\", \"~/rb-evidence/data\", \"-log_view\", \":~/rb-evidence/runs/bloch-1e5/log_view-slepc-default-r2.txt\"], \"returncode\": 0, \"killed\": null, \"wall_s\": 16.45, \"peak_rss_gib\": 4.343, \"peak_sampled_gib\": 4.329, \"cpu_s\": 200.083, \"cores\": \"16-31\", \"threads\": 16, \"mem_limit_gib\": 32.0, \"exclusive\": true}\n",
+   "stdout_tail": "slepc: n=98304 target=nearest nconv=13 its=2 setup=7.65s solve=5.77s total=13.67s peak=4.32GiB\n",
+   "rep": 2,
+   "position": 2
+  }
+ ]
+}

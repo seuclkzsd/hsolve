@@ -50,14 +50,14 @@
    2
   ]
  },
- "started": "2026-10-22T21:54:50",
- "finished": "2026-10-22T21:55:43",
+ "started": "2026-10-23T01:24:00",
+ "finished": "2026-10-23T01:24:50",
  "conditions": {
-  "host": "c004",
+  "host": "gpu02",
   "cpu": "Intel(R) Xeon(R) Silver 4314 CPU @ 2.40GHz",
   "os": "Linux-3.10.0-1160.el7.x86_64-x86_64-with-glibc2.17",
   "python": "3.11.17",
-  "git_commit": "8c5187e41ce823975a872aae6681249ba32694a1",
+  "git_commit": "fac61d895e7f47b02e2d3316e90bd7ee7899df56",
   "source_commit": "b9aadc47b09db34f9b72870ee912d7d1e8715c50",
   "hsolve_binary": "build/release/hsolve",
   "hsolve_md5": "8d69a98bc60e327e479a591ef93742c0",
@@ -77,7 +77,7 @@
    "eigsh",
    "eigsh"
   ],
-  "seconds": 0.6124958023428917
+  "seconds": 0.6698122946545482
  },
  "reference": {
   "kind": "discrete-exact",
@@ -4074,61 +4074,119 @@
    0.0,
    0.0,
    0.0,
-   0.0,
-   0.0,
-   0.0,
-   0.0,
-   0.0,
-   0.0,
-   0.0,
-   0.0,
-   0.0,
-   0.0
+   27.39889561732972,
+   42.452527004076806,
+   50.12059816320995,
+   56.94486042525989,
+   59.98601039230824,
+   59.98601039230824,
+   71.99849181200698,
+   79.84975628388776,
+   89.5319752002384,
+   89.5319752002384
   ],
-  "truncated": true
+  "truncated": true,
+  "levels": [
+   [
+    0.0,
+    35475
+   ],
+   [
+    27.39889561732972,
+    1
+   ],
+   [
+    42.452527004076806,
+    1
+   ],
+   [
+    50.12059816320995,
+    1
+   ],
+   [
+    56.94486042525989,
+    1
+   ],
+   [
+    59.98601039230824,
+    2
+   ],
+   [
+    71.99849181200698,
+    1
+   ],
+   [
+    79.84975628388776,
+    1
+   ],
+   [
+    89.5319752002384,
+    2
+   ],
+   [
+    102.57145882976799,
+    1
+   ],
+   [
+    106.02081834790174,
+    1
+   ],
+   [
+    109.39572109181793,
+    1
+   ],
+   [
+    112.43687105886627,
+    2
+   ],
+   [
+    121.07444973464882,
+    1
+   ]
+  ]
  },
  "runs": [
   {
    "solver": "hsolve",
-   "wall_s": 3.178,
-   "peak_rss_gib": 0.975,
+   "wall_s": 3.127,
+   "peak_rss_gib": 0.902,
    "rc": 0,
    "killed": null,
    "claimed_success": true,
    "success": true,
-   "solver_max_eta": 4.6150283341934305e-11,
-   "max_eta": 4.598881437159672e-11,
+   "solver_max_eta": 7.630184200590992e-11,
+   "max_eta": 7.603520759622678e-11,
    "pairs": 10,
    "eigenvalues": [
-    50.120598163210005,
-    56.944860425259364,
+    50.12059816321,
+    56.944860425259336,
     42.45252700407748,
-    59.986010392308074,
-    59.9860103923086,
-    71.99849181200763,
-    27.39889561732913,
-    79.84975628388716,
+    59.9860103923081,
+    59.98601039230865,
+    71.99849181200759,
+    27.3988956173291,
+    79.84975628388717,
     89.53197520023808,
-    89.53197520023893
+    89.5319752002389
    ],
-   "solver_peak_bytes": 1047367680,
+   "solver_peak_bytes": 968650752,
    "verdict": "pass",
    "eval_reasons": [],
    "completeness": "complete",
    "certified": true,
    "valid": true,
    "why": [],
-   "solver_s": 2.766573422,
+   "solver_s": 2.901983322,
    "solver_s_scope": "report time_total_s",
    "phases": {
-    "analysis_s": 0.26242816,
-    "numeric_s": 1.653831397,
+    "analysis_s": 0.266737248,
+    "numeric_s": 1.692707699,
     "factorizations": 4,
-    "solves": 80,
-    "solve_s": 0.604530134,
+    "solves": 88,
+    "solve_s": 0.6739268030000001,
     "ortho_s": null,
-    "iterate_s": 0.7062524870000002,
-    "verify_s": 0.008730338999999698
+    "iterate_s": 0.794655415,
+    "verify_s": 0.00927486099999969
    },
    "evaluation": {
     "verdict": "pass",
@@ -4144,7 +4202,7 @@
     "distinct_returned": 10,
     "duplicates": 0,
     "rejected_pairs": 0,
-    "max_backward_error": 4.598881437159672e-11,
+    "max_backward_error": 7.603520759622678e-11,
     "max_eig_scaled_error": 2.8095272167606454e-17,
     "max_subspace_angle": null
    },
@@ -4158,8 +4216,8 @@
     "block_size": 4,
     "zero_cluster_dim": -1,
     "zero_modes_filtered": 0,
-    "time_total_s": 2.766573422,
-    "time_certificate_s": 0.7565380180000001,
+    "time_total_s": 2.901983322,
+    "time_certificate_s": 0.7976433000000003,
     "warnings": [
      "shift perturbed to 50.1208 (A - sigma B singular at the requested shift)"
     ],
@@ -4168,16 +4226,16 @@
      "count_inertia": 10,
      "endpoint_moves": 0,
      "failure_probability": 0.0,
-     "lower": 5.354610569270314,
+     "lower": 5.3546105719039225,
      "method": "exact",
      "note": "",
      "passed": true,
      "performed": true,
      "rigorous": true,
-     "seconds": 0.7565380180000001,
+     "seconds": 0.7976433000000003,
      "solves": 0,
      "statement": "double-precision Sylvester counts (main factorization): nu(b) - nu(a) = 10 eigenvalue(s) in [5.35461, 96.0517], 10 distinct found pair(s) there: every eigenvalue in the window is found",
-     "upper": 96.05171701500069
+     "upper": 96.05171701501472
     },
     "slices": 0,
     "factorizations": 4
@@ -4190,28 +4248,28 @@
    "config": "1x16",
    "config_source": "default",
    "config_scope": "default",
-   "wall_s": 7.738,
-   "peak_rss_gib": 0.889,
+   "wall_s": 6.23,
+   "peak_rss_gib": 0.836,
    "rc": 0,
    "killed": null,
    "claimed_success": false,
    "success": false,
-   "solver_max_eta": 0.0013599040754264703,
-   "max_eta": 0.0018104209579242144,
+   "solver_max_eta": 0.0013598549788930226,
+   "max_eta": 0.001810355596407438,
    "pairs": 10,
    "eigenvalues": [
     50.12059816320981,
-    56.944860425246816,
-    42.452527004076615,
-    59.98601039228908,
-    59.986010392309076,
-    71.99849181199642,
-    27.398895617352487,
-    79.84975628390113,
-    89.53197520009203,
-    -6.022865761678986e-09
+    56.94486042524313,
+    42.45252700408573,
+    59.986010392307115,
+    59.986010392322,
+    71.9984918120089,
+    27.39889561679962,
+    79.84975628388764,
+    89.53197520028434,
+    -2.5581741169844463e-09
    ],
-   "solver_peak_bytes": 926547968,
+   "solver_peak_bytes": 871649280,
    "verdict": "fail",
    "eval_reasons": [
     "9 of 10 pairs have backward error > tol=1e-10",
@@ -4225,15 +4283,15 @@
     "9 of 10 pairs have backward error > tol=1e-10",
     "completeness incomplete: 1 missing, boundary deficit 0, 10 distinct returned"
    ],
-   "solver_s": 3.53855,
+   "solver_s": 3.6637,
    "solver_s_scope": "log_view setup+solve+vectors",
    "phases": {
-    "analysis_s": 1.2378,
-    "numeric_s": 0.56555,
+    "analysis_s": 1.2415,
+    "numeric_s": 0.59346,
     "factorizations": 1,
     "solves": 36,
-    "solve_s": 1.64683,
-    "ortho_s": 0.031999,
+    "solve_s": 1.71699,
+    "ortho_s": 0.032565,
     "iterate_s": null,
     "verify_s": null
    },
@@ -4256,8 +4314,8 @@
     "distinct_returned": 10,
     "duplicates": 0,
     "rejected_pairs": 9,
-    "max_backward_error": 0.0018104209579242144,
-    "max_eig_scaled_error": 2.5112541723318895e-13,
+    "max_backward_error": 0.001810355596407438,
+    "max_eig_scaled_error": 1.0666393173999225e-13,
     "max_subspace_angle": null
    },
    "outcome": [
@@ -4276,12 +4334,12 @@
     ],
     "unused_options": [],
     "warnings": [],
-    "time_setup_s": 1.8389040753245354,
-    "time_solve_s": 1.6996283009648323,
+    "time_setup_s": 1.8926126072183251,
+    "time_solve_s": 1.7711393469944596,
     "success": false
    },
-   "stderr_tail": "[guard] {\"cmd\": [\"~/envs/os2026-ref/bin/mpiexec\", \"-n\", \"1\", \"--bind-to\", \"none\", \"-x\", \"OMP_NUM_THREADS=16\", \"-x\", \"OPENBLAS_NUM_THREADS=16\", \"~/envs/os2026-ref/bin/python\", \"~/os2026-wt/rb-evidence/tools/bench/baseline_slepc.py\", \"--case\", \"yee-pec-box-1e5\", \"--out\", \"~/rb-evidence/runs/sigma-on-eigenvalue/slepc-default-r0\", \"--root\", \"~/rb-evidence/data\", \"--target\", \"{\\\"mode\\\":\\\"nearest\\\",\\\"sigma\\\":50.12059816320995,\\\"k\\\":10}\", \"-log_view\", \":~/rb-evidence/runs/sigma-on-eigenvalue/log_view-slepc-default-r0.txt\"], \"returncode\": 0, \"killed\": null, \"wall_s\": 7.738, \"peak_rss_gib\": 0.889, \"peak_sampled_gib\": 0.889, \"cpu_s\": 41.904, \"cores\": \"16-31\", \"threads\": 16, \"mem_limit_gib\": 32.0, \"exclusive\": true}\n",
-   "stdout_tail": "slepc: n=109744 target=nearest nconv=10 its=1 setup=1.84s solve=1.70s total=3.69s peak=0.86GiB\n",
+   "stderr_tail": "[guard] {\"cmd\": [\"~/envs/os2026-ref/bin/mpiexec\", \"-n\", \"1\", \"--bind-to\", \"none\", \"-x\", \"OMP_NUM_THREADS=16\", \"-x\", \"OPENBLAS_NUM_THREADS=16\", \"~/envs/os2026-ref/bin/python\", \"~/os2026-wt/rb-evidence/tools/bench/baseline_slepc.py\", \"--case\", \"yee-pec-box-1e5\", \"--out\", \"~/rb-evidence/runs/sigma-on-eigenvalue/slepc-default-r0\", \"--root\", \"~/rb-evidence/data\", \"--target\", \"{\\\"mode\\\":\\\"nearest\\\",\\\"sigma\\\":50.12059816320995,\\\"k\\\":10}\", \"-log_view\", \":~/rb-evidence/runs/sigma-on-eigenvalue/log_view-slepc-default-r0.txt\"], \"returncode\": 0, \"killed\": null, \"wall_s\": 6.23, \"peak_rss_gib\": 0.836, \"peak_sampled_gib\": 0.808, \"cpu_s\": 43.247, \"cores\": \"16-31\", \"threads\": 16, \"mem_limit_gib\": 32.0, \"exclusive\": true}\n",
+   "stdout_tail": "slepc: n=109744 target=nearest nconv=10 its=1 setup=1.89s solve=1.77s total=3.91s peak=0.81GiB\n",
    "rep": 0,
    "position": 1
   },
@@ -4290,28 +4348,28 @@
    "config": "4x4/core eps_nev=k+2 st_mat_mumps_cntl_7=1e-10 st_mat_mumps_icntl_28=2 st_mat_mumps_icntl_29=2 st_mat_mumps_icntl_35=2",
    "config_source": "case profile yee-pec-box-1e5",
    "config_scope": "case",
-   "wall_s": 7.044,
-   "peak_rss_gib": 1.37,
+   "wall_s": 6.503,
+   "peak_rss_gib": 1.36,
    "rc": 0,
    "killed": null,
    "claimed_success": false,
    "success": false,
-   "solver_max_eta": 2.278643700639612e-05,
-   "max_eta": 3.0307184121520198e-05,
+   "solver_max_eta": 4.8298539081551834e-06,
+   "max_eta": 6.423964906553947e-06,
    "pairs": 10,
    "eigenvalues": [
-    50.120598163150134,
-    56.944860425167235,
-    42.45252700377882,
-    59.98601039169475,
-    59.98601039235135,
-    71.99849181199592,
-    27.398895617365042,
-    79.84975628395888,
-    89.53197520024987,
-    89.53197520030022
+    50.12059816359656,
+    56.944860425189745,
+    42.45252700450522,
+    59.986010390456165,
+    59.98601039188316,
+    71.99849181239601,
+    27.398895622407938,
+    79.84975628435339,
+    89.5319751994263,
+    89.53197520016451
    ],
-   "solver_peak_bytes": 1444667392,
+   "solver_peak_bytes": 1452294144,
    "verdict": "fail",
    "eval_reasons": [
     "9 of 10 pairs have backward error > tol=1e-10"
@@ -4323,15 +4381,15 @@
     "solver claims no success",
     "9 of 10 pairs have backward error > tol=1e-10"
    ],
-   "solver_s": 3.32154,
+   "solver_s": 3.9445799999999998,
    "solver_s_scope": "log_view setup+solve+vectors",
    "phases": {
-    "analysis_s": 0.71046,
-    "numeric_s": 0.78467,
+    "analysis_s": 0.71986,
+    "numeric_s": 0.78035,
     "factorizations": 1,
-    "solves": 59,
-    "solve_s": 1.72902,
-    "ortho_s": 0.044725,
+    "solves": 78,
+    "solve_s": 2.31685,
+    "ortho_s": 0.069761,
     "iterate_s": null,
     "verify_s": null
    },
@@ -4351,8 +4409,212 @@
     "distinct_returned": 10,
     "duplicates": 0,
     "rejected_pairs": 9,
-    "max_backward_error": 3.0307184121520198e-05,
-    "max_eig_scaled_error": 2.5515841278877226e-14,
+    "max_backward_error": 6.423964906553947e-06,
+    "max_eig_scaled_error": 2.1149635234217329e-13,
+    "max_subspace_angle": null
+   },
+   "outcome": [
+    "residual"
+   ],
+   "report": {
+    "slepc_version": "3.26.0",
+    "nconv": 16,
+    "iterations": 5,
+    "mpi_ranks": 4,
+    "omp_threads": 4,
+    "petsc_options": [
+     "-eps_nev",
+     "12",
+     "-st_mat_mumps_cntl_7",
+     "1e-10",
+     "-st_mat_mumps_icntl_28",
+     "2",
+     "-st_mat_mumps_icntl_29",
+     "2",
+     "-st_mat_mumps_icntl_35",
+     "2",
+     "-log_view",
+     ":~/rb-evidence/runs/sigma-on-eigenvalue/log_view-slepc-tuned-r0.txt"
+    ],
+    "unused_options": [],
+    "warnings": [],
+    "time_setup_s": 1.543144712690264,
+    "time_solve_s": 2.4014035859145224,
+    "success": false
+   },
+   "stderr_tail": "[guard] {\"cmd\": [\"~/envs/os2026-ref/bin/mpiexec\", \"-n\", \"4\", \"--bind-to\", \"none\", \"-x\", \"OMP_NUM_THREADS=4\", \"-x\", \"OPENBLAS_NUM_THREADS=4\", \"-x\", \"OMP_PROC_BIND=close\", \"-x\", \"OMP_PLACES=cores\", \"~/envs/os2026-ref/bin/python\", \"~/os2026-wt/rb-evidence/tools/bench/baseline_slepc.py\", \"--case\", \"yee-pec-box-1e5\", \"--out\", \"~/rb-evidence/runs/sigma-on-eigenvalue/slepc-tuned-r0\", \"--bind\", \"core\", \"--root\", \"~/rb-evidence/data\", \"--target\", \"{\\\"mode\\\":\\\"nearest\\\",\\\"sigma\\\":50.12059816320995,\\\"k\\\":10}\", \"-eps_nev\", \"12\", \"-st_mat_mumps_cntl_7\", \"1e-10\", \"-st_mat_mumps_icntl_28\", \"2\", \"-st_mat_mumps_icntl_29\", \"2\", \"-st_mat_mumps_icntl_35\", \"2\", \"-log_view\", \":~/rb-evidence/runs/sigma-on-eigenvalue/log_view-slepc-tuned-r0.txt\"], \"returncode\": 0, \"killed\": null, \"wall_s\": 6.503, \"peak_rss_gib\": 1.36, \"peak_sampled_gib\": 1.36, \"cpu_s\": 61.603, \"cores\": \"16-31\", \"threads\": 16, \"mem_limit_gib\": 32.0, \"exclusive\": true}\n",
+   "stdout_tail": "slepc: n=109744 target=nearest nconv=16 its=5 setup=1.54s solve=2.40s total=4.14s peak=1.35GiB\n",
+   "rep": 0,
+   "position": 2
+  },
+  {
+   "solver": "slepc-default",
+   "config": "1x16",
+   "config_source": "default",
+   "config_scope": "default",
+   "wall_s": 6.291,
+   "peak_rss_gib": 0.839,
+   "rc": 0,
+   "killed": null,
+   "claimed_success": false,
+   "success": false,
+   "solver_max_eta": 0.0013599220697915848,
+   "max_eta": 0.0018104449135663279,
+   "pairs": 10,
+   "eigenvalues": [
+    50.12059816320981,
+    56.94486042527485,
+    42.45252700407869,
+    59.98601039229619,
+    59.98601039230922,
+    71.99849181201195,
+    27.398895617199827,
+    79.84975628388995,
+    89.53197520021294,
+    -2.1349279677451705e-08
+   ],
+   "solver_peak_bytes": 874999808,
+   "verdict": "fail",
+   "eval_reasons": [
+    "9 of 10 pairs have backward error > tol=1e-10",
+    "completeness incomplete: 1 missing, boundary deficit 0, 10 distinct returned"
+   ],
+   "completeness": "incomplete",
+   "certified": true,
+   "valid": false,
+   "why": [
+    "solver claims no success",
+    "9 of 10 pairs have backward error > tol=1e-10",
+    "completeness incomplete: 1 missing, boundary deficit 0, 10 distinct returned"
+   ],
+   "solver_s": 3.66453,
+   "solver_s_scope": "log_view setup+solve+vectors",
+   "phases": {
+    "analysis_s": 1.2629,
+    "numeric_s": 0.58045,
+    "factorizations": 1,
+    "solves": 36,
+    "solve_s": 1.7136200000000001,
+    "ortho_s": 0.032405,
+    "iterate_s": null,
+    "verify_s": null
+   },
+   "evaluation": {
+    "verdict": "fail",
+    "reasons": [
+     "9 of 10 pairs have backward error > tol=1e-10",
+     "completeness incomplete: 1 missing, boundary deficit 0, 10 distinct returned"
+    ],
+    "status": "incomplete",
+    "certified": true,
+    "expected": 10,
+    "found": 9,
+    "missing": [
+     89.5319752002384
+    ],
+    "boundary_deficit": 0,
+    "spurious": 0,
+    "unmatched": 0,
+    "distinct_returned": 10,
+    "duplicates": 0,
+    "rejected_pairs": 9,
+    "max_backward_error": 0.0018104449135663279,
+    "max_eig_scaled_error": 8.901654094202368e-13,
+    "max_subspace_angle": null
+   },
+   "outcome": [
+    "missed",
+    "residual"
+   ],
+   "report": {
+    "slepc_version": "3.26.0",
+    "nconv": 10,
+    "iterations": 1,
+    "mpi_ranks": 1,
+    "omp_threads": 16,
+    "petsc_options": [
+     "-log_view",
+     ":~/rb-evidence/runs/sigma-on-eigenvalue/log_view-slepc-default-r1.txt"
+    ],
+    "unused_options": [],
+    "warnings": [],
+    "time_setup_s": 1.896575448103249,
+    "time_solve_s": 1.7678931192494929,
+    "success": false
+   },
+   "stderr_tail": "[guard] {\"cmd\": [\"~/envs/os2026-ref/bin/mpiexec\", \"-n\", \"1\", \"--bind-to\", \"none\", \"-x\", \"OMP_NUM_THREADS=16\", \"-x\", \"OPENBLAS_NUM_THREADS=16\", \"~/envs/os2026-ref/bin/python\", \"~/os2026-wt/rb-evidence/tools/bench/baseline_slepc.py\", \"--case\", \"yee-pec-box-1e5\", \"--out\", \"~/rb-evidence/runs/sigma-on-eigenvalue/slepc-default-r1\", \"--root\", \"~/rb-evidence/data\", \"--target\", \"{\\\"mode\\\":\\\"nearest\\\",\\\"sigma\\\":50.12059816320995,\\\"k\\\":10}\", \"-log_view\", \":~/rb-evidence/runs/sigma-on-eigenvalue/log_view-slepc-default-r1.txt\"], \"returncode\": 0, \"killed\": null, \"wall_s\": 6.291, \"peak_rss_gib\": 0.839, \"peak_sampled_gib\": 0.839, \"cpu_s\": 43.249, \"cores\": \"16-31\", \"threads\": 16, \"mem_limit_gib\": 32.0, \"exclusive\": true}\n",
+   "stdout_tail": "slepc: n=109744 target=nearest nconv=10 its=1 setup=1.90s solve=1.77s total=3.90s peak=0.81GiB\n",
+   "rep": 1,
+   "position": 0
+  },
+  {
+   "solver": "slepc-tuned",
+   "config": "4x4/core eps_nev=k+2 st_mat_mumps_cntl_7=1e-10 st_mat_mumps_icntl_28=2 st_mat_mumps_icntl_29=2 st_mat_mumps_icntl_35=2",
+   "config_source": "case profile yee-pec-box-1e5",
+   "config_scope": "case",
+   "wall_s": 5.949,
+   "peak_rss_gib": 1.378,
+   "rc": 0,
+   "killed": null,
+   "claimed_success": false,
+   "success": false,
+   "solver_max_eta": 4.481715176067393e-06,
+   "max_eta": 5.960921708958164e-06,
+   "pairs": 10,
+   "eigenvalues": [
+    50.12059816274944,
+    56.9448604253331,
+    42.45252700403018,
+    59.986010391708575,
+    59.98601039254346,
+    71.99849181168263,
+    27.39889561752425,
+    79.84975628393418,
+    89.5319752003469,
+    89.5319752006152
+   ],
+   "solver_peak_bytes": 1453334528,
+   "verdict": "fail",
+   "eval_reasons": [
+    "9 of 10 pairs have backward error > tol=1e-10"
+   ],
+   "completeness": "complete",
+   "certified": true,
+   "valid": false,
+   "why": [
+    "solver claims no success",
+    "9 of 10 pairs have backward error > tol=1e-10"
+   ],
+   "solver_s": 3.35288,
+   "solver_s_scope": "log_view setup+solve+vectors",
+   "phases": {
+    "analysis_s": 0.72063,
+    "numeric_s": 0.77571,
+    "factorizations": 1,
+    "solves": 59,
+    "solve_s": 1.7569299999999999,
+    "ortho_s": 0.046008,
+    "iterate_s": null,
+    "verify_s": null
+   },
+   "evaluation": {
+    "verdict": "fail",
+    "reasons": [
+     "9 of 10 pairs have backward error > tol=1e-10"
+    ],
+    "status": "complete",
+    "certified": true,
+    "expected": 10,
+    "found": 10,
+    "missing": [],
+    "boundary_deficit": 0,
+    "spurious": 0,
+    "unmatched": 0,
+    "distinct_returned": 10,
+    "duplicates": 0,
+    "rejected_pairs": 9,
+    "max_backward_error": 5.960921708958164e-06,
+    "max_eig_scaled_error": 2.4940751493853943e-14,
     "max_subspace_angle": null
    },
    "outcome": [
@@ -4376,264 +4638,60 @@
      "-st_mat_mumps_icntl_35",
      "2",
      "-log_view",
-     ":~/rb-evidence/runs/sigma-on-eigenvalue/log_view-slepc-tuned-r0.txt"
-    ],
-    "unused_options": [],
-    "warnings": [],
-    "time_setup_s": 1.535727508366108,
-    "time_solve_s": 1.785819947719574,
-    "success": false
-   },
-   "stderr_tail": "[guard] {\"cmd\": [\"~/envs/os2026-ref/bin/mpiexec\", \"-n\", \"4\", \"--bind-to\", \"none\", \"-x\", \"OMP_NUM_THREADS=4\", \"-x\", \"OPENBLAS_NUM_THREADS=4\", \"-x\", \"OMP_PROC_BIND=close\", \"-x\", \"OMP_PLACES=cores\", \"~/envs/os2026-ref/bin/python\", \"~/os2026-wt/rb-evidence/tools/bench/baseline_slepc.py\", \"--case\", \"yee-pec-box-1e5\", \"--out\", \"~/rb-evidence/runs/sigma-on-eigenvalue/slepc-tuned-r0\", \"--bind\", \"core\", \"--root\", \"~/rb-evidence/data\", \"--target\", \"{\\\"mode\\\":\\\"nearest\\\",\\\"sigma\\\":50.12059816320995,\\\"k\\\":10}\", \"-eps_nev\", \"12\", \"-st_mat_mumps_cntl_7\", \"1e-10\", \"-st_mat_mumps_icntl_28\", \"2\", \"-st_mat_mumps_icntl_29\", \"2\", \"-st_mat_mumps_icntl_35\", \"2\", \"-log_view\", \":~/rb-evidence/runs/sigma-on-eigenvalue/log_view-slepc-tuned-r0.txt\"], \"returncode\": 0, \"killed\": null, \"wall_s\": 7.044, \"peak_rss_gib\": 1.37, \"peak_sampled_gib\": 1.37, \"cpu_s\": 55.362, \"cores\": \"16-31\", \"threads\": 16, \"mem_limit_gib\": 32.0, \"exclusive\": true}\n",
-   "stdout_tail": "slepc: n=109744 target=nearest nconv=13 its=3 setup=1.54s solve=1.79s total=3.48s peak=1.35GiB\n",
-   "rep": 0,
-   "position": 2
-  },
-  {
-   "solver": "slepc-default",
-   "config": "1x16",
-   "config_source": "default",
-   "config_scope": "default",
-   "wall_s": 5.788,
-   "peak_rss_gib": 0.886,
-   "rc": 0,
-   "killed": null,
-   "claimed_success": false,
-   "success": false,
-   "solver_max_eta": 0.0013599213100546112,
-   "max_eta": 0.0018104439021393828,
-   "pairs": 10,
-   "eigenvalues": [
-    50.12059816320981,
-    56.94486042526987,
-    42.45252700407405,
-    59.986010392307165,
-    59.98601039230991,
-    71.99849181200483,
-    27.398895617260496,
-    79.84975628385752,
-    89.53197520015662,
-    -1.657526382814467e-08
-   ],
-   "solver_peak_bytes": 923299840,
-   "verdict": "fail",
-   "eval_reasons": [
-    "9 of 10 pairs have backward error > tol=1e-10",
-    "completeness incomplete: 1 missing, boundary deficit 0, 10 distinct returned"
-   ],
-   "completeness": "incomplete",
-   "certified": true,
-   "valid": false,
-   "why": [
-    "solver claims no success",
-    "9 of 10 pairs have backward error > tol=1e-10",
-    "completeness incomplete: 1 missing, boundary deficit 0, 10 distinct returned"
-   ],
-   "solver_s": 3.5331699999999997,
-   "solver_s_scope": "log_view setup+solve+vectors",
-   "phases": {
-    "analysis_s": 1.2391,
-    "numeric_s": 0.55868,
-    "factorizations": 1,
-    "solves": 36,
-    "solve_s": 1.64637,
-    "ortho_s": 0.032025,
-    "iterate_s": null,
-    "verify_s": null
-   },
-   "evaluation": {
-    "verdict": "fail",
-    "reasons": [
-     "9 of 10 pairs have backward error > tol=1e-10",
-     "completeness incomplete: 1 missing, boundary deficit 0, 10 distinct returned"
-    ],
-    "status": "incomplete",
-    "certified": true,
-    "expected": 10,
-    "found": 9,
-    "missing": [
-     89.5319752002384
-    ],
-    "boundary_deficit": 0,
-    "spurious": 0,
-    "unmatched": 0,
-    "distinct_returned": 10,
-    "duplicates": 0,
-    "rejected_pairs": 9,
-    "max_backward_error": 0.0018104439021393828,
-    "max_eig_scaled_error": 6.911112100616782e-13,
-    "max_subspace_angle": null
-   },
-   "outcome": [
-    "missed",
-    "residual"
-   ],
-   "report": {
-    "slepc_version": "3.26.0",
-    "nconv": 10,
-    "iterations": 1,
-    "mpi_ranks": 1,
-    "omp_threads": 16,
-    "petsc_options": [
-     "-log_view",
-     ":~/rb-evidence/runs/sigma-on-eigenvalue/log_view-slepc-default-r1.txt"
-    ],
-    "unused_options": [],
-    "warnings": [],
-    "time_setup_s": 1.8334901109337807,
-    "time_solve_s": 1.699620358645916,
-    "success": false
-   },
-   "stderr_tail": "[guard] {\"cmd\": [\"~/envs/os2026-ref/bin/mpiexec\", \"-n\", \"1\", \"--bind-to\", \"none\", \"-x\", \"OMP_NUM_THREADS=16\", \"-x\", \"OPENBLAS_NUM_THREADS=16\", \"~/envs/os2026-ref/bin/python\", \"~/os2026-wt/rb-evidence/tools/bench/baseline_slepc.py\", \"--case\", \"yee-pec-box-1e5\", \"--out\", \"~/rb-evidence/runs/sigma-on-eigenvalue/slepc-default-r1\", \"--root\", \"~/rb-evidence/data\", \"--target\", \"{\\\"mode\\\":\\\"nearest\\\",\\\"sigma\\\":50.12059816320995,\\\"k\\\":10}\", \"-log_view\", \":~/rb-evidence/runs/sigma-on-eigenvalue/log_view-slepc-default-r1.txt\"], \"returncode\": 0, \"killed\": null, \"wall_s\": 5.788, \"peak_rss_gib\": 0.886, \"peak_sampled_gib\": 0.886, \"cpu_s\": 41.708, \"cores\": \"16-31\", \"threads\": 16, \"mem_limit_gib\": 32.0, \"exclusive\": true}\n",
-   "stdout_tail": "slepc: n=109744 target=nearest nconv=10 its=1 setup=1.83s solve=1.70s total=3.68s peak=0.86GiB\n",
-   "rep": 1,
-   "position": 0
-  },
-  {
-   "solver": "slepc-tuned",
-   "config": "4x4/core eps_nev=k+2 st_mat_mumps_cntl_7=1e-10 st_mat_mumps_icntl_28=2 st_mat_mumps_icntl_29=2 st_mat_mumps_icntl_35=2",
-   "config_source": "case profile yee-pec-box-1e5",
-   "config_scope": "case",
-   "wall_s": 7.045,
-   "peak_rss_gib": 1.357,
-   "rc": 0,
-   "killed": null,
-   "claimed_success": false,
-   "success": false,
-   "solver_max_eta": 1.1836384575967875e-06,
-   "max_eta": 1.5743026721387237e-06,
-   "pairs": 10,
-   "eigenvalues": [
-    50.12059816410947,
-    56.944860425430576,
-    42.45252700342648,
-    59.98601039235626,
-    59.98601039271031,
-    71.99849181169533,
-    27.398895617381392,
-    79.84975628389074,
-    89.53197520004554,
-    89.53197520046797
-   ],
-   "solver_peak_bytes": 1430892544,
-   "verdict": "fail",
-   "eval_reasons": [
-    "9 of 10 pairs have backward error > tol=1e-10"
-   ],
-   "completeness": "complete",
-   "certified": true,
-   "valid": false,
-   "why": [
-    "solver claims no success",
-    "9 of 10 pairs have backward error > tol=1e-10"
-   ],
-   "solver_s": 3.57225,
-   "solver_s_scope": "log_view setup+solve+vectors",
-   "phases": {
-    "analysis_s": 0.71545,
-    "numeric_s": 0.7741,
-    "factorizations": 1,
-    "solves": 68,
-    "solve_s": 1.97085,
-    "ortho_s": 0.054653,
-    "iterate_s": null,
-    "verify_s": null
-   },
-   "evaluation": {
-    "verdict": "fail",
-    "reasons": [
-     "9 of 10 pairs have backward error > tol=1e-10"
-    ],
-    "status": "complete",
-    "certified": true,
-    "expected": 10,
-    "found": 10,
-    "missing": [],
-    "boundary_deficit": 0,
-    "spurious": 0,
-    "unmatched": 0,
-    "distinct_returned": 10,
-    "duplicates": 0,
-    "rejected_pairs": 9,
-    "max_backward_error": 1.5743026721387237e-06,
-    "max_eig_scaled_error": 3.742751866340816e-14,
-    "max_subspace_angle": null
-   },
-   "outcome": [
-    "residual"
-   ],
-   "report": {
-    "slepc_version": "3.26.0",
-    "nconv": 14,
-    "iterations": 4,
-    "mpi_ranks": 4,
-    "omp_threads": 4,
-    "petsc_options": [
-     "-eps_nev",
-     "12",
-     "-st_mat_mumps_cntl_7",
-     "1e-10",
-     "-st_mat_mumps_icntl_28",
-     "2",
-     "-st_mat_mumps_icntl_29",
-     "2",
-     "-st_mat_mumps_icntl_35",
-     "2",
-     "-log_view",
      ":~/rb-evidence/runs/sigma-on-eigenvalue/log_view-slepc-tuned-r1.txt"
     ],
     "unused_options": [],
     "warnings": [],
-    "time_setup_s": 1.5335901752114296,
-    "time_solve_s": 2.03859493881464,
+    "time_setup_s": 1.5381773877888918,
+    "time_solve_s": 1.8146350351162255,
     "success": false
    },
-   "stderr_tail": "[guard] {\"cmd\": [\"~/envs/os2026-ref/bin/mpiexec\", \"-n\", \"4\", \"--bind-to\", \"none\", \"-x\", \"OMP_NUM_THREADS=4\", \"-x\", \"OPENBLAS_NUM_THREADS=4\", \"-x\", \"OMP_PROC_BIND=close\", \"-x\", \"OMP_PLACES=cores\", \"~/envs/os2026-ref/bin/python\", \"~/os2026-wt/rb-evidence/tools/bench/baseline_slepc.py\", \"--case\", \"yee-pec-box-1e5\", \"--out\", \"~/rb-evidence/runs/sigma-on-eigenvalue/slepc-tuned-r1\", \"--bind\", \"core\", \"--root\", \"~/rb-evidence/data\", \"--target\", \"{\\\"mode\\\":\\\"nearest\\\",\\\"sigma\\\":50.12059816320995,\\\"k\\\":10}\", \"-eps_nev\", \"12\", \"-st_mat_mumps_cntl_7\", \"1e-10\", \"-st_mat_mumps_icntl_28\", \"2\", \"-st_mat_mumps_icntl_29\", \"2\", \"-st_mat_mumps_icntl_35\", \"2\", \"-log_view\", \":~/rb-evidence/runs/sigma-on-eigenvalue/log_view-slepc-tuned-r1.txt\"], \"returncode\": 0, \"killed\": null, \"wall_s\": 7.045, \"peak_rss_gib\": 1.357, \"peak_sampled_gib\": 1.357, \"cpu_s\": 58.657, \"cores\": \"16-31\", \"threads\": 16, \"mem_limit_gib\": 32.0, \"exclusive\": true}\n",
-   "stdout_tail": "slepc: n=109744 target=nearest nconv=14 its=4 setup=1.53s solve=2.04s total=3.75s peak=1.33GiB\n",
+   "stderr_tail": "[guard] {\"cmd\": [\"~/envs/os2026-ref/bin/mpiexec\", \"-n\", \"4\", \"--bind-to\", \"none\", \"-x\", \"OMP_NUM_THREADS=4\", \"-x\", \"OPENBLAS_NUM_THREADS=4\", \"-x\", \"OMP_PROC_BIND=close\", \"-x\", \"OMP_PLACES=cores\", \"~/envs/os2026-ref/bin/python\", \"~/os2026-wt/rb-evidence/tools/bench/baseline_slepc.py\", \"--case\", \"yee-pec-box-1e5\", \"--out\", \"~/rb-evidence/runs/sigma-on-eigenvalue/slepc-tuned-r1\", \"--bind\", \"core\", \"--root\", \"~/rb-evidence/data\", \"--target\", \"{\\\"mode\\\":\\\"nearest\\\",\\\"sigma\\\":50.12059816320995,\\\"k\\\":10}\", \"-eps_nev\", \"12\", \"-st_mat_mumps_cntl_7\", \"1e-10\", \"-st_mat_mumps_icntl_28\", \"2\", \"-st_mat_mumps_icntl_29\", \"2\", \"-st_mat_mumps_icntl_35\", \"2\", \"-log_view\", \":~/rb-evidence/runs/sigma-on-eigenvalue/log_view-slepc-tuned-r1.txt\"], \"returncode\": 0, \"killed\": null, \"wall_s\": 5.949, \"peak_rss_gib\": 1.378, \"peak_sampled_gib\": 1.37, \"cpu_s\": 52.375, \"cores\": \"16-31\", \"threads\": 16, \"mem_limit_gib\": 32.0, \"exclusive\": true}\n",
+   "stdout_tail": "slepc: n=109744 target=nearest nconv=13 its=3 setup=1.54s solve=1.81s total=3.55s peak=1.35GiB\n",
    "rep": 1,
    "position": 1
   },
   {
    "solver": "hsolve",
-   "wall_s": 3.079,
-   "peak_rss_gib": 0.956,
+   "wall_s": 3.176,
+   "peak_rss_gib": 0.898,
    "rc": 0,
    "killed": null,
    "claimed_success": true,
    "success": true,
-   "solver_max_eta": 4.935021073040949e-11,
-   "max_eta": 4.917775796514241e-11,
+   "solver_max_eta": 4.835742323026952e-11,
+   "max_eta": 4.818843975076438e-11,
    "pairs": 10,
    "eigenvalues": [
     50.12059816320996,
-    56.944860425259314,
-    42.45252700407749,
-    59.98601039230809,
-    59.986010392308586,
-    71.99849181200763,
-    27.3988956173291,
-    79.84975628388717,
-    89.53197520023814,
-    89.53197520023897
+    56.94486042525927,
+    42.45252700407747,
+    59.986010392308074,
+    59.9860103923086,
+    71.99849181200764,
+    27.398895617329128,
+    79.84975628388726,
+    89.53197520023811,
+    89.53197520023899
    ],
-   "solver_peak_bytes": 1026809856,
+   "solver_peak_bytes": 964489216,
    "verdict": "pass",
    "eval_reasons": [],
    "completeness": "complete",
    "certified": true,
    "valid": true,
    "why": [],
-   "solver_s": 2.856223701,
+   "solver_s": 2.972389065,
    "solver_s_scope": "report time_total_s",
    "phases": {
-    "analysis_s": 0.266988268,
-    "numeric_s": 1.646875065,
+    "analysis_s": 0.267689362,
+    "numeric_s": 1.705190507,
     "factorizations": 4,
     "solves": 88,
-    "solve_s": 0.661028941,
+    "solve_s": 0.6740666559999999,
     "ortho_s": null,
-    "iterate_s": 0.7776061980000002,
-    "verify_s": 0.008694799999999503
+    "iterate_s": 0.7929719890000002,
+    "verify_s": 0.009105995999999617
    },
    "evaluation": {
     "verdict": "pass",
@@ -4649,8 +4707,8 @@
     "distinct_returned": 10,
     "duplicates": 0,
     "rejected_pairs": 0,
-    "max_backward_error": 4.917775796514241e-11,
-    "max_eig_scaled_error": 2.839101187463389e-17,
+    "max_backward_error": 4.818843975076438e-11,
+    "max_eig_scaled_error": 2.7765387913508497e-17,
     "max_subspace_angle": null
    },
    "outcome": [],
@@ -4663,8 +4721,8 @@
     "block_size": 4,
     "zero_cluster_dim": -1,
     "zero_modes_filtered": 0,
-    "time_total_s": 2.856223701,
-    "time_certificate_s": 0.7562870730000002,
+    "time_total_s": 2.972389065,
+    "time_certificate_s": 0.7952174320000003,
     "warnings": [
      "shift perturbed to 50.1208 (A - sigma B singular at the requested shift)"
     ],
@@ -4673,16 +4731,16 @@
      "count_inertia": 10,
      "endpoint_moves": 0,
      "failure_probability": 0.0,
-     "lower": 5.35461057186631,
+     "lower": 5.35461057472919,
      "method": "exact",
      "note": "",
      "passed": true,
      "performed": true,
      "rigorous": true,
-     "seconds": 0.7562870730000002,
+     "seconds": 0.7952174320000003,
      "solves": 0,
      "statement": "double-precision Sylvester counts (main factorization): nu(b) - nu(a) = 10 eigenvalue(s) in [5.35461, 96.0517], 10 distinct found pair(s) there: every eigenvalue in the window is found",
-     "upper": 96.05171701499881
+     "upper": 96.05171701500225
     },
     "slices": 0,
     "factorizations": 4
@@ -4695,28 +4753,28 @@
    "config": "4x4/core eps_nev=k+2 st_mat_mumps_cntl_7=1e-10 st_mat_mumps_icntl_28=2 st_mat_mumps_icntl_29=2 st_mat_mumps_icntl_35=2",
    "config_source": "case profile yee-pec-box-1e5",
    "config_scope": "case",
-   "wall_s": 6.153,
-   "peak_rss_gib": 1.352,
+   "wall_s": 6.555,
+   "peak_rss_gib": 1.373,
    "rc": 0,
    "killed": null,
    "claimed_success": false,
    "success": false,
-   "solver_max_eta": 2.0652847826042166e-06,
-   "max_eta": 2.7469396006136245e-06,
+   "solver_max_eta": 1.5724511394658229e-06,
+   "max_eta": 2.091444405832649e-06,
    "pairs": 10,
    "eigenvalues": [
-    50.120598163366225,
-    56.944860425236136,
-    42.45252700437102,
-    59.986010392026074,
-    59.98601039253288,
-    71.99849181194553,
-    27.398895617338425,
-    79.84975628389239,
-    89.53197520023664,
-    89.53197520034388
+    50.12059816328854,
+    56.94486042508228,
+    42.45252700362721,
+    59.986010391738795,
+    59.986010392794185,
+    71.99849181110739,
+    27.398895617428195,
+    79.8497562839456,
+    89.53197519926191,
+    89.53197520158571
    ],
-   "solver_peak_bytes": 1434628096,
+   "solver_peak_bytes": 1448263680,
    "verdict": "fail",
    "eval_reasons": [
     "9 of 10 pairs have backward error > tol=1e-10"
@@ -4728,15 +4786,15 @@
     "solver claims no success",
     "9 of 10 pairs have backward error > tol=1e-10"
    ],
-   "solver_s": 3.60837,
+   "solver_s": 3.95589,
    "solver_s_scope": "log_view setup+solve+vectors",
    "phases": {
-    "analysis_s": 0.71955,
-    "numeric_s": 0.78207,
+    "analysis_s": 0.7202,
+    "numeric_s": 0.78427,
     "factorizations": 1,
-    "solves": 69,
-    "solve_s": 2.00658,
-    "ortho_s": 0.055275,
+    "solves": 79,
+    "solve_s": 2.3273200000000003,
+    "ortho_s": 0.067399,
     "iterate_s": null,
     "verify_s": null
    },
@@ -4756,8 +4814,8 @@
     "distinct_returned": 10,
     "duplicates": 0,
     "rejected_pairs": 9,
-    "max_backward_error": 2.7469396006136245e-06,
-    "max_eig_scaled_error": 1.2245694048885058e-14,
+    "max_backward_error": 2.091444405832649e-06,
+    "max_eig_scaled_error": 5.596731094530489e-14,
     "max_subspace_angle": null
    },
    "outcome": [
@@ -4765,8 +4823,8 @@
    ],
    "report": {
     "slepc_version": "3.26.0",
-    "nconv": 14,
-    "iterations": 4,
+    "nconv": 15,
+    "iterations": 5,
     "mpi_ranks": 4,
     "omp_threads": 4,
     "petsc_options": [
@@ -4785,56 +4843,56 @@
     ],
     "unused_options": [],
     "warnings": [],
-    "time_setup_s": 1.5335082709789276,
-    "time_solve_s": 2.0748502537608147,
+    "time_setup_s": 1.5460137007758021,
+    "time_solve_s": 2.40988641185686,
     "success": false
    },
-   "stderr_tail": "[guard] {\"cmd\": [\"~/envs/os2026-ref/bin/mpiexec\", \"-n\", \"4\", \"--bind-to\", \"none\", \"-x\", \"OMP_NUM_THREADS=4\", \"-x\", \"OPENBLAS_NUM_THREADS=4\", \"-x\", \"OMP_PROC_BIND=close\", \"-x\", \"OMP_PLACES=cores\", \"~/envs/os2026-ref/bin/python\", \"~/os2026-wt/rb-evidence/tools/bench/baseline_slepc.py\", \"--case\", \"yee-pec-box-1e5\", \"--out\", \"~/rb-evidence/runs/sigma-on-eigenvalue/slepc-tuned-r2\", \"--bind\", \"core\", \"--root\", \"~/rb-evidence/data\", \"--target\", \"{\\\"mode\\\":\\\"nearest\\\",\\\"sigma\\\":50.12059816320995,\\\"k\\\":10}\", \"-eps_nev\", \"12\", \"-st_mat_mumps_cntl_7\", \"1e-10\", \"-st_mat_mumps_icntl_28\", \"2\", \"-st_mat_mumps_icntl_29\", \"2\", \"-st_mat_mumps_icntl_35\", \"2\", \"-log_view\", \":~/rb-evidence/runs/sigma-on-eigenvalue/log_view-slepc-tuned-r2.txt\"], \"returncode\": 0, \"killed\": null, \"wall_s\": 6.153, \"peak_rss_gib\": 1.352, \"peak_sampled_gib\": 1.352, \"cpu_s\": 56.535, \"cores\": \"16-31\", \"threads\": 16, \"mem_limit_gib\": 32.0, \"exclusive\": true}\n",
-   "stdout_tail": "slepc: n=109744 target=nearest nconv=14 its=4 setup=1.53s solve=2.07s total=3.74s peak=1.34GiB\n",
+   "stderr_tail": "[guard] {\"cmd\": [\"~/envs/os2026-ref/bin/mpiexec\", \"-n\", \"4\", \"--bind-to\", \"none\", \"-x\", \"OMP_NUM_THREADS=4\", \"-x\", \"OPENBLAS_NUM_THREADS=4\", \"-x\", \"OMP_PROC_BIND=close\", \"-x\", \"OMP_PLACES=cores\", \"~/envs/os2026-ref/bin/python\", \"~/os2026-wt/rb-evidence/tools/bench/baseline_slepc.py\", \"--case\", \"yee-pec-box-1e5\", \"--out\", \"~/rb-evidence/runs/sigma-on-eigenvalue/slepc-tuned-r2\", \"--bind\", \"core\", \"--root\", \"~/rb-evidence/data\", \"--target\", \"{\\\"mode\\\":\\\"nearest\\\",\\\"sigma\\\":50.12059816320995,\\\"k\\\":10}\", \"-eps_nev\", \"12\", \"-st_mat_mumps_cntl_7\", \"1e-10\", \"-st_mat_mumps_icntl_28\", \"2\", \"-st_mat_mumps_icntl_29\", \"2\", \"-st_mat_mumps_icntl_35\", \"2\", \"-log_view\", \":~/rb-evidence/runs/sigma-on-eigenvalue/log_view-slepc-tuned-r2.txt\"], \"returncode\": 0, \"killed\": null, \"wall_s\": 6.555, \"peak_rss_gib\": 1.373, \"peak_sampled_gib\": 1.365, \"cpu_s\": 62.0, \"cores\": \"16-31\", \"threads\": 16, \"mem_limit_gib\": 32.0, \"exclusive\": true}\n",
+   "stdout_tail": "slepc: n=109744 target=nearest nconv=15 its=5 setup=1.55s solve=2.41s total=4.14s peak=1.35GiB\n",
    "rep": 2,
    "position": 0
   },
   {
    "solver": "hsolve",
-   "wall_s": 3.247,
-   "peak_rss_gib": 0.973,
+   "wall_s": 3.13,
+   "peak_rss_gib": 0.899,
    "rc": 0,
    "killed": null,
    "claimed_success": true,
    "success": true,
-   "solver_max_eta": 2.665502067647563e-11,
-   "max_eta": 2.6561761211959257e-11,
+   "solver_max_eta": 7.385359406261458e-11,
+   "max_eta": 7.359551513490376e-11,
    "pairs": 10,
    "eigenvalues": [
-    50.12059816320992,
-    56.944860425259336,
-    42.45252700407746,
-    59.98601039230805,
-    59.986010392308586,
-    71.99849181200763,
-    27.39889561732914,
-    79.84975628388725,
-    89.53197520023798,
-    89.53197520023882
+    50.12059816320998,
+    56.94486042525937,
+    42.45252700407749,
+    59.98601039230807,
+    59.986010392308664,
+    71.99849181200776,
+    27.39889561732915,
+    79.84975628388712,
+    89.53197520023807,
+    89.53197520023892
    ],
-   "solver_peak_bytes": 1044729856,
+   "solver_peak_bytes": 965730304,
    "verdict": "pass",
    "eval_reasons": [],
    "completeness": "complete",
    "certified": true,
    "valid": true,
    "why": [],
-   "solver_s": 2.897303123,
+   "solver_s": 2.93918547,
    "solver_s_scope": "report time_total_s",
    "phases": {
-    "analysis_s": 0.267366249,
-    "numeric_s": 1.63808132,
+    "analysis_s": 0.271028686,
+    "numeric_s": 1.712922377,
     "factorizations": 4,
-    "solves": 90,
-    "solve_s": 0.7148029979999999,
+    "solves": 88,
+    "solve_s": 0.6804944530000001,
     "ortho_s": null,
-    "iterate_s": 0.7750108680000001,
-    "verify_s": 0.0745004510000003
+    "iterate_s": 0.8038610339999999,
+    "verify_s": 0.009208930999999643
    },
    "evaluation": {
     "verdict": "pass",
@@ -4850,8 +4908,8 @@
     "distinct_returned": 10,
     "duplicates": 0,
     "rejected_pairs": 0,
-    "max_backward_error": 2.6561761211959257e-11,
-    "max_eig_scaled_error": 2.7208053046524146e-17,
+    "max_backward_error": 7.359551513490376e-11,
+    "max_eig_scaled_error": 3.249141138814824e-17,
     "max_subspace_angle": null
    },
    "outcome": [],
@@ -4864,8 +4922,8 @@
     "block_size": 4,
     "zero_cluster_dim": -1,
     "zero_modes_filtered": 0,
-    "time_total_s": 2.897303123,
-    "time_certificate_s": 0.7527288239999996,
+    "time_total_s": 2.93918547,
+    "time_certificate_s": 0.7994773200000003,
     "warnings": [
      "shift perturbed to 50.1208 (A - sigma B singular at the requested shift)"
     ],
@@ -4874,16 +4932,16 @@
      "count_inertia": 10,
      "endpoint_moves": 0,
      "failure_probability": 0.0,
-     "lower": 5.354610572180235,
+     "lower": 5.354610572855766,
      "method": "exact",
      "note": "",
      "passed": true,
      "performed": true,
      "rigorous": true,
-     "seconds": 0.7527288239999996,
+     "seconds": 0.7994773200000003,
      "solves": 0,
      "statement": "double-precision Sylvester counts (main factorization): nu(b) - nu(a) = 10 eigenvalue(s) in [5.35461, 96.0517], 10 distinct found pair(s) there: every eigenvalue in the window is found",
-     "upper": 96.05171701499492
+     "upper": 96.05171701498398
     },
     "slices": 0,
     "factorizations": 4
@@ -4896,28 +4954,28 @@
    "config": "1x16",
    "config_source": "default",
    "config_scope": "default",
-   "wall_s": 5.743,
-   "peak_rss_gib": 0.873,
+   "wall_s": 6.136,
+   "peak_rss_gib": 0.837,
    "rc": 0,
    "killed": null,
    "claimed_success": false,
    "success": false,
-   "solver_max_eta": 0.0013599063673255295,
-   "max_eta": 0.0018104240090968246,
+   "solver_max_eta": 0.0013598592912655403,
+   "max_eta": 0.0018103613374075998,
    "pairs": 10,
    "eigenvalues": [
     50.12059816320981,
-    56.94486042525195,
-    42.452527004076046,
-    59.98601039228908,
-    59.98601039230864,
-    71.99849181200264,
-    27.39889561740219,
-    79.84975628391396,
-    89.53197520020984,
-    -6.593097623408539e-09
+    56.94486042526233,
+    42.45252700408153,
+    59.98601039230711,
+    59.9860103923115,
+    71.99849181199946,
+    27.398895617448865,
+    79.84975628387141,
+    89.53197520015675,
+    -5.363112620671018e-09
    ],
-   "solver_peak_bytes": 911532032,
+   "solver_peak_bytes": 872390656,
    "verdict": "fail",
    "eval_reasons": [
     "9 of 10 pairs have backward error > tol=1e-10",
@@ -4931,15 +4989,15 @@
     "9 of 10 pairs have backward error > tol=1e-10",
     "completeness incomplete: 1 missing, boundary deficit 0, 10 distinct returned"
    ],
-   "solver_s": 3.53086,
+   "solver_s": 3.66379,
    "solver_s_scope": "log_view setup+solve+vectors",
    "phases": {
-    "analysis_s": 1.2318,
-    "numeric_s": 0.56817,
+    "analysis_s": 1.2678,
+    "numeric_s": 0.5985,
     "factorizations": 1,
     "solves": 36,
-    "solve_s": 1.64122,
-    "ortho_s": 0.032267,
+    "solve_s": 1.68344,
+    "ortho_s": 0.032274,
     "iterate_s": null,
     "verify_s": null
    },
@@ -4962,8 +5020,8 @@
     "distinct_returned": 10,
     "duplicates": 0,
     "rejected_pairs": 9,
-    "max_backward_error": 0.0018104240090968246,
-    "max_eig_scaled_error": 2.7490142683772187e-13,
+    "max_backward_error": 0.0018103613374075998,
+    "max_eig_scaled_error": 2.236167877265027e-13,
     "max_subspace_angle": null
    },
    "outcome": [
@@ -4982,12 +5040,12 @@
     ],
     "unused_options": [],
     "warnings": [],
-    "time_setup_s": 1.8361987844109535,
-    "time_solve_s": 1.6946098655462265,
+    "time_setup_s": 1.9270516391843557,
+    "time_solve_s": 1.7367064668796957,
     "success": false
    },
-   "stderr_tail": "[guard] {\"cmd\": [\"~/envs/os2026-ref/bin/mpiexec\", \"-n\", \"1\", \"--bind-to\", \"none\", \"-x\", \"OMP_NUM_THREADS=16\", \"-x\", \"OPENBLAS_NUM_THREADS=16\", \"~/envs/os2026-ref/bin/python\", \"~/os2026-wt/rb-evidence/tools/bench/baseline_slepc.py\", \"--case\", \"yee-pec-box-1e5\", \"--out\", \"~/rb-evidence/runs/sigma-on-eigenvalue/slepc-default-r2\", \"--root\", \"~/rb-evidence/data\", \"--target\", \"{\\\"mode\\\":\\\"nearest\\\",\\\"sigma\\\":50.12059816320995,\\\"k\\\":10}\", \"-log_view\", \":~/rb-evidence/runs/sigma-on-eigenvalue/log_view-slepc-default-r2.txt\"], \"returncode\": 0, \"killed\": null, \"wall_s\": 5.743, \"peak_rss_gib\": 0.873, \"peak_sampled_gib\": 0.847, \"cpu_s\": 40.917, \"cores\": \"16-31\", \"threads\": 16, \"mem_limit_gib\": 32.0, \"exclusive\": true}\n",
-   "stdout_tail": "slepc: n=109744 target=nearest nconv=10 its=1 setup=1.84s solve=1.69s total=3.68s peak=0.85GiB\n",
+   "stderr_tail": "[guard] {\"cmd\": [\"~/envs/os2026-ref/bin/mpiexec\", \"-n\", \"1\", \"--bind-to\", \"none\", \"-x\", \"OMP_NUM_THREADS=16\", \"-x\", \"OPENBLAS_NUM_THREADS=16\", \"~/envs/os2026-ref/bin/python\", \"~/os2026-wt/rb-evidence/tools/bench/baseline_slepc.py\", \"--case\", \"yee-pec-box-1e5\", \"--out\", \"~/rb-evidence/runs/sigma-on-eigenvalue/slepc-default-r2\", \"--root\", \"~/rb-evidence/data\", \"--target\", \"{\\\"mode\\\":\\\"nearest\\\",\\\"sigma\\\":50.12059816320995,\\\"k\\\":10}\", \"-log_view\", \":~/rb-evidence/runs/sigma-on-eigenvalue/log_view-slepc-default-r2.txt\"], \"returncode\": 0, \"killed\": null, \"wall_s\": 6.136, \"peak_rss_gib\": 0.837, \"peak_sampled_gib\": 0.809, \"cpu_s\": 42.493, \"cores\": \"16-31\", \"threads\": 16, \"mem_limit_gib\": 32.0, \"exclusive\": true}\n",
+   "stdout_tail": "slepc: n=109744 target=nearest nconv=10 its=1 setup=1.93s solve=1.74s total=3.87s peak=0.81GiB\n",
    "rep": 2,
    "position": 2
   }
