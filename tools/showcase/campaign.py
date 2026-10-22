@@ -239,6 +239,13 @@ SOURCE_PATHS = ("src", "apps", "include", "python", "CMakeLists.txt", "CMakePres
                 "third_party", "patches")
 
 
+def home_relative(text: str, home: str | None = None) -> str:
+    """The record as committed: paths under the node's home directory written as ~/... (the raw
+    records quote command lines and stderr; the account's home path says nothing about the run)."""
+    home = str(Path.home()) if home is None else home
+    return text.replace(home.rstrip("/") + "/", "~/") if home not in ("", "/") else text
+
+
 def git_commit(paths: tuple[str, ...] = ()) -> str:
     """HEAD of the repository, or the last commit that changed `paths`."""
     cmd = ["git", "log", "-1", "--format=%H"] + (["--", *paths] if paths else [])
@@ -322,7 +329,7 @@ def main(argv: list[str] | None = None) -> int:
     args.raw_dir.mkdir(parents=True, exist_ok=True)
     for sid in args.scenario:
         doc = run_scenario(resolved[sid], args, args.profiles)
-        (args.raw_dir / f"{sid}.json").write_text(json.dumps(doc, indent=1, ensure_ascii=False) + "\n")
+        (args.raw_dir / f"{sid}.json").write_text(home_relative(json.dumps(doc, indent=1, ensure_ascii=False)) + "\n")
     return 0
 
 

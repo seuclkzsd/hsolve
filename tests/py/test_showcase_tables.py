@@ -113,3 +113,11 @@ def test_merge_profiles_later_sources_win(tmp_path):
     got = {p["name"]: p for p in doc["profiles"]}
     assert set(got) == {"x", "y"} and got["x"]["config"]["options"] == {"eps_ncv": "3k"}
     assert got["x"]["source"].endswith("b.json") and [s["profiles"] for s in doc["sources"]] == [2, 1]
+
+
+def test_raw_records_are_written_home_relative():
+    text = '{"slepc_env": "/share/home/u/envs/ref", "cmd": ["/share/home/u/envs/ref/bin/mpiexec", "/share/home/uv/x"]}'
+    out = campaign.home_relative(text, "/share/home/u")
+    assert out == '{"slepc_env": "~/envs/ref", "cmd": ["~/envs/ref/bin/mpiexec", "/share/home/uv/x"]}'
+    assert json.loads(out)
+    assert campaign.home_relative(text, "/") == text
