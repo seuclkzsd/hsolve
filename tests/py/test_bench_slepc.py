@@ -612,6 +612,8 @@ def test_tune_confirmation_includes_the_stored_profile_and_its_flaky_flag(tmp_pa
     slepc_profile.save_profiles([{**_profile("case", "tiny", mode="interval"), "tuned": {"valid": True, "flaky": True}}],
                                 args.profiles_file)
     assert not _SyntheticTuner(lambda cfg, n: (1.0, True), "tiny", args).flaky
+    # random failures seen outside the tuning (a comparison campaign) are declared with --flaky
+    assert _SyntheticTuner(lambda cfg, n: (1.0, True), "tiny", _tuner_args(tmp_path, "--flaky")).flaky
 
 
 # ------------------------------------------------------------------------------------ compare

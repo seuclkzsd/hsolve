@@ -293,6 +293,20 @@ def test_tuning_records_give_profiles_and_a_summary(tmp_path):
         campaign.showcase_profiles({"a": _tune_doc("cube", "1x16 eps_nev=3k"), "b": _tune_doc("cube", "1x16 eps_nev=3k")})
 
 
+def test_a_random_failure_in_the_campaign_is_found_for_the_tuning(tmp_path):
+    runs = [_run("slepc-tuned", 0, True, 8.2, config="4x4 eps_nev=3k"),
+            _run("slepc-tuned", 1, False, 8.1, config="4x4 eps_nev=3k"),
+            _run("slepc-default", 0, False, 4.5, config="1x16"), _run("slepc-default", 1, True, 4.5, config="1x16")]
+    (tmp_path / "multiplet-cube.json").write_text(json.dumps(_doc("multiplet-cube", runs)))
+    seen = campaign.campaign_random_failure("multiplet-cube", tmp_path)
+    assert seen["config"] == "4x4 eps_nev=3k" and (seen["valid_runs"], seen["runs"]) == (1, 2)
+    assert seen["record"] == "results/showcase/raw/multiplet-cube.json" and seen["host"] == "c004"
+    steady = [dict(r, valid=False) for r in runs]                     # failing every time is not random
+    (tmp_path / "multiplet-cube.json").write_text(json.dumps(_doc("multiplet-cube", steady)))
+    assert campaign.campaign_random_failure("multiplet-cube", tmp_path) is None
+    assert campaign.campaign_random_failure("no-record", tmp_path) is None
+
+
 def test_same_target():
     near = {"mode": "nearest", "sigma": 50.1, "k": 10}
     assert campaign.same_target(near, dict(near, k=12)) and not campaign.same_target(near, dict(near, sigma=52.8))

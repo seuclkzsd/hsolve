@@ -40,9 +40,10 @@ confirmation runs the default, the descent's start (--from-profile: the stored p
 and up to --confirm-top runners-up --confirm-reps times INTERLEAVED (rotating order) and compares
 MEDIANS; a configuration is valid only if every confirmation run passes the evaluation.
 Randomly failing cases: when a configuration of the case was valid in some runs and invalid in
-others - in this tuning, or recorded as "flaky" in a stored profile of the case and target mode at
-any core count (multi-rank MUMPS is not deterministic; SLEPc's GHIEP Krylov-Schur on
-wg-square-1e5 misses eigenvalues in some runs, with 1 and with 2 ranks) -
+others - in this tuning, recorded as "flaky" in a stored profile of the case and target mode at
+any core count, or seen elsewhere and declared with --flaky (a comparison campaign whose runs of
+the tuned configuration failed at random) (multi-rank MUMPS is not deterministic; SLEPc's GHIEP
+Krylov-Schur on wg-square-1e5 misses eigenvalues in some runs, with 1 and with 2 ranks) -
 every configuration still valid after the regular confirmation gets further interleaved runs up to
 --flaky-confirm-reps (default 20), all of which it must pass. 5 passing runs cannot tell a
 configuration that fails in a quarter of its runs from a sound one (it passes 5 of 5 with
@@ -284,8 +285,9 @@ class Tuner:
         self.cache: dict[str, list[dict[str, Any]]] = {}
         # random failures recorded by an earlier tuning of this case and target mode, at any core
         # count (they come from the solver, not the layout): confirm with the long series at once
-        self.flaky = any(p["scope"] == "case" and p["name"] == c.name and p["mode"] == self.mode
-                         and p.get("tuned", {}).get("flaky") for p in load_profiles(args.profiles_file))
+        self.flaky = bool(getattr(args, "flaky", False)) or any(
+            p["scope"] == "case" and p["name"] == c.name and p["mode"] == self.mode
+            and p.get("tuned", {}).get("flaky") for p in load_profiles(args.profiles_file))
         t0 = time.perf_counter()
         self.norms = evaluate.estimate_norms(c.A, c.B)
         self.norm_time = time.perf_counter() - t0
@@ -627,6 +629,8 @@ def build_parser() -> argparse.ArgumentParser:
     ap.add_argument("--confirm-top", type=int, default=2, help="runners-up in the confirmation")
     ap.add_argument("--flaky-confirm-reps", type=int, default=20,
                     help="confirmation runs per configuration of a randomly failing case (docstring)")
+    ap.add_argument("--flaky", action="store_true",
+                    help="the case fails at random (seen outside this tuning): confirm with the long series")
     ap.add_argument("--margin", type=float, default=0.03, help="relative gain a candidate needs to replace the incumbent")
     ap.add_argument("--keep-vectors", action="store_true", help="keep eigenvectors.npy of every trial")
     ap.add_argument("--groups", default=None, help="comma list: run only these search groups (see plan())")

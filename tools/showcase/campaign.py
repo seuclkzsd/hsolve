@@ -423,7 +423,9 @@ def tuning_record(sid: str, doc: dict[str, Any]) -> dict[str, Any]:
             "configurations": len({t.get("label") for t in trials}),
             "default_valid": doc.get("default_valid"), "default_median_s": doc.get("default_median_s"),
             "best": best, "best_median_s": doc.get("best_median_s") if best else None,
-            "flaky": bool(doc.get("flaky")),
+            "flaky": bool(doc.get("flaky")), "declared_flaky": doc.get("declared_flaky"),
+            "confirm_reps": doc.get("confirm_reps"),
+            "flaky_confirm_reps": doc.get("flaky_confirm_reps") if doc.get("flaky") else None,
             "invalid_reasons": sorted({t["why"] for t in trials if not t.get("valid") and t.get("why")})[:8],
             "trial_list": [{"id": t.get("id"), "phase": t.get("phase"), "label": t.get("label"),
                             "valid": bool(t.get("valid")), "solver_s": t.get("solver_s"), "why": t.get("why")}
@@ -437,6 +439,29 @@ def tuning_summary(tunings: dict[str, dict[str, Any]]) -> dict[str, Any]:
             "tunings": {sid: tuning_record(sid, doc) for sid, doc in sorted(tunings.items())}}
 
 
+FLAKY_CONFIRM_TOP = 4   # runners-up confirmed with the long series when the case fails at random
+
+
+def campaign_random_failure(sid: str, raw_dir: Path = RAW_DIR) -> dict[str, Any] | None:
+    """A random failure of the scenario's slepc-tuned configuration in its committed campaign record:
+    the same configuration valid in some repetitions and invalid in others (what the tuner calls a
+    randomly failing case, here seen outside the tuning); None when there is none."""
+    path = Path(raw_dir) / f"{sid}.json"
+    if not path.exists():
+        return None
+    doc = json.loads(path.read_text())
+    by: dict[str, list[bool]] = {}
+    for r in doc["runs"]:
+        if r["solver"] == "slepc-tuned" and r.get("config"):
+            by.setdefault(r["config"], []).append(bool(r.get("valid")))
+    for config, valid in by.items():
+        if any(valid) and not all(valid):
+            return {"config": config, "valid_runs": sum(valid), "runs": len(valid),
+                    "record": f"results/showcase/raw/{sid}.json", "started": doc.get("started"),
+                    "host": (doc.get("conditions") or {}).get("host")}
+    return None
+
+
 def tune_json_path(rec: dict[str, Any]) -> Path:
     """Where tools/bench/tune_slepc.py writes the record of this scenario's tuning."""
     mode = rec["target"].get("mode", "nearest")
@@ -446,8 +471,11 @@ def tune_json_path(rec: dict[str, Any]) -> Path:
 def tune_scenarios(resolved: dict[str, dict[str, Any]], ids: list[str], args) -> int:
     """Run the SLEPc tuner on each scenario's case (with the scenario's target when it overrides the
     case's) in this process (use_slepc_env reaches its runs) and keep the full record as
-    TUNING_DIR/<scenario>.json. Profiles come from these records (`profiles`), so tunings on two
-    nodes never write one file. Returns the number of tunings without a record."""
+    TUNING_DIR/<scenario>.json. A random failure of the scenario's tuned configuration in its
+    campaign record makes the tuning treat the case as randomly failing (--flaky: every candidate
+    still valid gets the long confirmation series, FLAKY_CONFIRM_TOP runners-up among them); the
+    record says why. Profiles come from these records (`profiles`), so tunings on two nodes never
+    write one file. Returns the number of tunings without a record."""
     failed = 0
     TUNING_DIR.mkdir(parents=True, exist_ok=True)
     for sid in ids:
@@ -456,6 +484,11 @@ def tune_scenarios(resolved: dict[str, dict[str, Any]], ids: list[str], args) ->
                 "--tag", TUNE_TAG, "--profiles-file", str(TUNED_FILE), "--timeout", str(rec["timeout_s"])]
         if rec["override"]:
             argv += ["--target", json.dumps(rec["target"], separators=(",", ":"))]
+        seen = campaign_random_failure(sid)
+        if seen:
+            argv += ["--flaky", "--confirm-top", str(FLAKY_CONFIRM_TOP)]
+            print(f"[showcase tune] {sid}: the tuned configuration '{seen['config']}' was valid in "
+                  f"{seen['valid_runs']} of {seen['runs']} campaign runs: confirming with the long series", flush=True)
         print(f"[showcase tune] {sid}: tools/bench/tune_slepc.py {' '.join(argv)}", flush=True)
         path = tune_json_path(rec)
         path.unlink(missing_ok=True)
@@ -465,6 +498,8 @@ def tune_scenarios(resolved: dict[str, dict[str, Any]], ids: list[str], args) ->
             print(f"[showcase tune] {sid}: tuner exit {rc}, no complete tune.json", flush=True)
             failed += 1
             continue
+        if seen:
+            doc["declared_flaky"] = seen
         (TUNING_DIR / f"{sid}.json").write_text(home_relative(json.dumps(doc, indent=1)) + "\n")
     return failed
 
