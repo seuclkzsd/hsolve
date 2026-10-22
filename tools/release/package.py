@@ -314,11 +314,13 @@ def main(argv: list[str] | None = None) -> int:
     info = subprocess.run([str(stage_dir / "bin" / "hsolve"), "--A", "unused.npz", "--version"], capture_output=True,
                           text=True, env={"PATH": "/usr/bin:/bin"}).stdout.strip()
     solved = smoke(stage_dir)
+    # HSOLVE_COMMIT / SOURCE_DATE_EPOCH come from the caller where the tree has no .git (container builds).
     try:
-        commit = run(["git", "rev-parse", "HEAD"], cwd=ROOT).strip()
+        commit = os.environ.get("HSOLVE_COMMIT") or run(["git", "rev-parse", "HEAD"], cwd=ROOT).strip()
         epoch = int(os.environ.get("SOURCE_DATE_EPOCH") or run(["git", "log", "-1", "--format=%ct"], cwd=ROOT))
     except (OSError, subprocess.CalledProcessError, ValueError):
-        commit, epoch = "unknown", int(os.environ.get("SOURCE_DATE_EPOCH", "0"))
+        commit = os.environ.get("HSOLVE_COMMIT") or "unknown"
+        epoch = int(os.environ.get("SOURCE_DATE_EPOCH") or 0)
     (stage_dir / "BUILD-INFO.txt").write_text("\n".join([
         f"package: {name}", f"commit: {commit}", f"build: {info}",
         f"needs: x86-64 Linux with glibc >= {ns.glibc_max} (newest symbol used: {glibc})",
