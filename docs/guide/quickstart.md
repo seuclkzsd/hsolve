@@ -35,14 +35,15 @@ tar xf {{TODO:rb-eng 的压缩包名}}
 ```bash
 git clone https://github.com/seuclkzsd/hsolve.git && cd hsolve
 conda env create -f env/environment.yml && source env/activate.sh
-tools/dev/build.sh portable
+tools/dev/build.sh release
 ```
 
 构建先由仓库自带的 MUMPS 5.8.2 官方源码包编译打过补丁的 MUMPS（只在第一次，之后按输入哈希复用），再编译
-hsolve。产物在 `build/portable/`：命令行 `hsolve` 与 Python 模块 `build/portable/python/hsolve`。
-`tools/dev/build.sh release` 则为本机指令集优化（`-march=native`），适合在同一台机器上长期使用。
+hsolve。产物在 `build/release/`：命令行 `hsolve` 与 Python 模块 `build/release/python/hsolve`。
+想确认构建无误，运行 `tools/dev/test.sh release`：重新构建同一预设并运行全部 C++ 单元测试与 Python 测试，与 CI
+检查的是同一个预设。其它构建预设（本机指令集优化、ASan / UBSan）见[开发与测试](developing.md#构建)。
 
-下文的命令假设在源码目录中、已经 `source env/activate.sh`，`hsolve` 指 `build/portable/hsolve`。
+下文的命令假设在源码目录中、已经 `source env/activate.sh`，`hsolve` 指 `build/release/hsolve`。
 
 ## 2. 第一次求解：10 mm 方波导在 50 GHz 的传播模
 
@@ -52,7 +53,7 @@ hsolve。产物在 `build/portable/`：命令行 `hsolve` 与 Python 模块 `bui
 
 ```bash
 python -m tools.gen.waveguide --family waveguide --a 10 --b 10 --freq 50 --target-n 20000 --name wg-square-2e4
-build/portable/hsolve --A data/cases/wg-square-2e4/A.npz --B data/cases/wg-square-2e4/B.npz \
+build/release/hsolve --A data/cases/wg-square-2e4/A.npz --B data/cases/wg-square-2e4/B.npz \
     --sigma -0.5 --k 18 --out out/wg-square-2e4
 ```
 
@@ -96,7 +97,7 @@ print(r['success'], max(p['backward_error'] for p in r['pairs']), r['certificate
 
 ```python
 import numpy as np, scipy.sparse as sp
-import hsolve                                    # PYTHONPATH=build/portable/python
+import hsolve                                    # PYTHONPATH=build/release/python
 
 n = 2000
 A = sp.diags([-np.ones(n - 1), 2 * np.ones(n), -np.ones(n - 1)], [-1, 0, 1], format="csr")

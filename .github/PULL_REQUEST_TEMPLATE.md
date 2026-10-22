@@ -8,7 +8,6 @@
 
 - [ ] `tools/dev/build.sh release`：没有编译告警
 - [ ] `tools/dev/test.sh release`：全部 ctest 与 pytest 通过
-- [ ] 可移植构建（改动构建、SIMD 内核或 BLAS hook 时）：`tools/dev/build.sh portable && ctest --test-dir build/portable --output-on-failure -j 4`
 - [ ] `tools/dev/test.sh debug`（改动内存管理、多线程或 MUMPS 调用时）
 - [ ] `mkdocs build --strict`（改动文档时）
 

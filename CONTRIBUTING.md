@@ -51,13 +51,13 @@ tools/dev/test.sh release
 
 ## 提交前检查
 
-下列检查与 CI 相同；CI 的定义在 `.github/workflows/`，两者不一致时以 CI 为准，并请提 Issue 修正本节。
+下列检查与 CI 相同：CI 构建和测试的也是 `release` 预设（可移植 x86-64，即发行包与容器所用的构建）。CI 的定义在
+`.github/workflows/`，两者不一致时以 CI 为准，并请提 Issue 修正本节。
 
 | 检查 | 命令 | 何时必须 |
 |---|---|---|
 | 构建无编译告警 | `tools/dev/build.sh release` | 总是 |
 | C++ 单元测试 + Python 测试 | `tools/dev/test.sh release` | 总是 |
-| 可移植构建（不带 `-march=native`，用于发行包与容器） | `tools/dev/build.sh portable && ctest --test-dir build/portable --output-on-failure -j 4` | 改动构建脚本、CMake、SIMD 内核或 BLAS hook 时 |
 | ASan / UBSan | `tools/dev/test.sh debug` | 改动内存管理、多线程或 MUMPS 调用时 |
 | 文档站构建 | `pip install -r requirements-docs.txt && mkdocs build --strict` | 改动 `docs/`、`mkdocs.yml` 或根目录的治理文档时 |
 

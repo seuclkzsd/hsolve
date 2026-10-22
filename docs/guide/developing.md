@@ -29,10 +29,13 @@
 
 ```bash
 source env/activate.sh
-tools/dev/build.sh release      # -O3 -march=native：本机使用与测量
-tools/dev/build.sh portable     # 不带 -march=native：发行包与容器
+tools/dev/build.sh release      # 默认：可移植 x86-64，SIMD 内核运行时按 CPU 选择；CI、发行包与容器都用它
+tools/dev/build.sh native       # -march=native：只能在与构建机同型的 CPU 上运行，适合在本机长期使用
 tools/dev/build.sh debug        # ASan + UBSan
 ```
+
+预设的完整定义在 `CMakePresets.json`（旧名 `portable` 与 `release` 相同）。提交前的检查以 `release` 为准，
+与 CI 一致（[参与贡献 · 提交前检查](../../CONTRIBUTING.md#提交前检查)）。
 
 | 开关 | 作用 |
 |---|---|
