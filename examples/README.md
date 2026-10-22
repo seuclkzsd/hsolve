@@ -17,7 +17,8 @@ scripts/demo.sh --quick    # 只跑 waveguide-50ghz 与 near-singular-shift（�
 | `bloch-cell-complex` | 10 080 | HEP（复厄密） | 最近 σ 的 10 个 | Bloch 周期胞元（光子晶体能带），复厄密矩阵 | 离散精确 |
 | `interval-slicing` | 4 356 | HEP | 区间 [722.5, 759.6] 内全部 | 谱中段的整段特征值：窗口切片、多位移求解，每片由惯性计数核对 | 离散精确 |
 
-`waveguide-50ghz` 对应商飞赛题宣讲中的实例：同一几何、频率与列式（宣讲为 293 阶，这里 9×9 网格得 289 阶）。B 不定、A 有 64 维零空间，
+`waveguide-50ghz` 对应中国商飞赛题（2026 上海开源软件应用创新大赛，<https://www.oschina.net/os2026/>）给出的实例：
+同一几何、频率与列式（赛题实例为 293 阶，这里 9×9 网格得 289 阶）。B 不定、A 有 64 维零空间，
 特征值 λ = −β² < 0 对应传播模；生成器给出的连续模型解析值保存在 `refs/waveguide-50ghz/superseded/`，
 复核用的是离散矩阵束的稠密 QZ 全谱。
 
