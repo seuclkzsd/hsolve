@@ -3,12 +3,14 @@
 
 Every case is solved with its default configuration (data/cases/<case>/config.json) by
 build/<preset>/hsolve with --subspace-bound auto, off and on, interleaved (the order rotates per
-repetition); each report's summary is kept. From the first auto run of a case, every group of the
+repetition); each report's summary is kept. From every auto run of a case, every group of the
 report's `subspace` section is checked against a reference of the exact spectral subspace of the
 group's interval (tools/bench/subspace_reference.py): the exact eigenvectors of the synthetic
 families (recomputed from the generator), else the stored reference eigenvectors of the case. The
 measured ||sin Theta||_F (B inner product) is recorded next to the bound, with the reference's own
-backward error and, where the case's complete spectrum is known, the true gap of the group.
+backward error and, where the case's complete spectrum is known, the true gap of the group. Each
+batch also records the guard's limits as the run sees them (HSOLVE_MEMORY_LIMIT_GB, the
+measurement slot) and every case's target and tol.
 
 Run on a cluster node in the measurement slot (docs/DESIGN.md §6), one batch of cases per call:
   python3 tools/run/guard.py --exclusive --timeout 2700 --mem-gb 32 -- \
@@ -121,6 +123,21 @@ def reference_check(case_dir: Path, ref_dir: Path, result: Path, report: dict) -
     return out
 
 
+def guard_limits() -> dict:
+    """The limits tools/run/guard.py sets for this process (its environment)."""
+    cap = os.environ.get("HSOLVE_MEMORY_LIMIT_GB")
+    return {"guarded": os.environ.get("HS_GUARDED") == "1", "exclusive": bool(os.environ.get("HS_SLOT_HELD")),
+            "memory_limit_gb": float(cap) if cap else None}
+
+
+def case_target(case_dir: Path) -> dict:
+    """Target and tol of the case's configuration (null: the solver's default)."""
+    cfg = json.loads((case_dir / "config.json").read_text())
+    target = cfg.get("target", {})
+    return {"mode": target.get("mode", "nearest"), "sigma": target.get("sigma"), "k": target.get("k"),
+            "lower": target.get("lower"), "upper": target.get("upper"), "tol": cfg.get("tol")}
+
+
 def solve(exe: Path, case_dir: Path, out: Path, variant: str, timeout: float) -> tuple[subprocess.CompletedProcess, float]:
     cmd = [str(exe), "--A", str(case_dir / "A.npz")]
     if (case_dir / "B.npz").is_file():
@@ -174,6 +191,7 @@ def main(argv=None) -> int:
     batch = {"host": platform.node(), "cpu": cpu_model(), "cores": len(os.sched_getaffinity(0)),
              "omp_num_threads": os.environ.get("OMP_NUM_THREADS"), "git_head": head, "hsolve_version": version,
              "preset": args.preset, "reps": args.reps, "variants": variants, "cases": args.cases,
+             "guard": guard_limits(), "targets": {c: case_target(args.data / "cases" / c) for c in args.cases},
              "started": time.strftime("%Y-%m-%dT%H:%M:%S%z")}
     done = set(args.cases)
     doc["runs"] = [r for r in doc["runs"] if r["case"] not in done]
@@ -191,12 +209,12 @@ def main(argv=None) -> int:
                     if (out / "report.json").is_file():
                         rep_doc = json.loads((out / "report.json").read_text())
                         entry.update(summarize(rep_doc))
-                        if variant == "auto" and case not in doc["reference_checks"]:
+                        if variant == "auto":
                             t0 = time.perf_counter()
                             check = reference_check(case_dir, args.data / "refs" / case, out, rep_doc)
                             if check is not None:
-                                doc["reference_checks"][case] = {"groups": check,
-                                                                 "seconds": time.perf_counter() - t0}
+                                doc["reference_checks"].setdefault(case, {"runs": []})["runs"].append(
+                                    {"rep": rep, "groups": check, "seconds": time.perf_counter() - t0})
                     else:
                         entry["stderr"] = r.stderr[-2000:]
                     doc["runs"].append(entry)

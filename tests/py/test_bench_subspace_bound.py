@@ -113,7 +113,7 @@ def test_subspace_sin_in_the_b_inner_product():
         sref.subspace_sin(e[:, [0, 1]], e[:, [0]])
 
 
-def fabricated_doc() -> dict:
+def fabricated_doc(true_gap: float = 0.1) -> dict:
     group = {"kind": "cluster", "pairs": [0, 1], "unreturned": 1, "lower": 0.9, "upper": 1.1, "dimension": 3,
              "gap": 0.01, "residual": 1e-12, "orthogonality": 1e-15, "sin_bound": 1e-10}
     sub = {"performed": True, "max_sin_bound": 1e-10, "rigorous": True, "residual_norm": "2", "b_min": 1.0,
@@ -122,30 +122,36 @@ def fabricated_doc() -> dict:
            "pairs": 2, "success": True, "certificate": "inertia_counts", "certificate_passed": True,
            "max_backward_error": 1e-15, "time_verify_s": 0.05, "peak_rss_bytes": 1, "groups": [group]}
     runs = []
-    for rep in range(2):
-        runs.append(run | {"variant": "auto", "rep": rep, "time_total_s": 1.0 + 0.1 * rep, "subspace": sub})
+    for rep in range(2):  # the second run's bound is twice the first's (a different residual)
+        runs.append(run | {"variant": "auto", "rep": rep, "time_total_s": 1.0 + 0.1 * rep,
+                           "subspace": sub | {"max_sin_bound": 1e-10 * (1 + rep)}})
         runs.append(run | {"variant": "off", "rep": rep, "time_total_s": 0.98, "groups": [],
                            "subspace": sub | {"performed": False, "max_sin_bound": None,
                                               "note": "disabled by configuration"}})
     runs.append({"case": "c2", "variant": "auto", "rep": 0, "returncode": 3, "wall_s": 0.1, "stderr": "boom"})
     # A GHEP case whose lambda_min(B) auto only estimates and on proves.
     ghep = run | {"case": "c3", "problem": "generalized_definite", "rep": 0}
-    est = sub | {"rigorous": False, "residual_norm": "b_inverse_cg", "b_min_source": "estimate", "max_sin_bound": 1e-6,
-                 "seconds": 0.01}
+    est = sub | {"rigorous": False, "residual_norm": "b_inverse_cg", "b_min_source": "estimate", "b_min": 2e-3,
+                 "max_sin_bound": 1e-6, "seconds": 0.01}
     runs.append(ghep | {"variant": "auto", "time_total_s": 1.0, "subspace": est})
     runs.append(ghep | {"variant": "on", "time_total_s": 1.3,
-                        "subspace": est | {"rigorous": True, "b_min_source": "inertia_count", "max_sin_bound": 5e-7,
-                                           "seconds": 0.3}})
+                        "subspace": est | {"rigorous": True, "b_min_source": "inertia_count", "b_min": 2e-4,
+                                           "max_sin_bound": 5e-7, "seconds": 0.3}})
     runs.append(ghep | {"variant": "off", "time_total_s": 0.99, "groups": [],
                         "subspace": sub | {"performed": False, "max_sin_bound": None}})
     check = {k: group[k] for k in ("kind", "pairs", "unreturned", "dimension", "gap", "residual", "sin_bound")}
     check.update(reference="exact", reference_note="", reference_dimension=3, reference_backward_error=1e-17,
-                 true_gap=0.1, measured_sin=1e-12)
+                 true_gap=true_gap, measured_sin=1e-12)
+    checks = [{"rep": 0, "groups": [check], "seconds": 0.1},
+              {"rep": 1, "groups": [check | {"sin_bound": 2e-10, "measured_sin": 2e-11}], "seconds": 0.1}]
     batch = {"host": "node", "cpu": "cpu", "cores": 16, "omp_num_threads": "16", "git_head": "0123456789abcdef",
-             "hsolve_version": "hsolve 0.1.0", "preset": "release", "reps": 2, "cases": ["c1", "c2"],
+             "hsolve_version": "hsolve 0.1.0", "preset": "release", "reps": 2, "cases": ["c1", "c2", "c3"],
+             "guard": {"guarded": True, "exclusive": True, "memory_limit_gb": 32.0},
+             "targets": {"c1": {"mode": "nearest", "sigma": 1.0, "k": 2, "lower": None, "upper": None, "tol": 1e-10},
+                         "c2": {"mode": "nearest", "sigma": 0.0, "k": 4, "lower": None, "upper": None, "tol": 1e-10},
+                         "c3": {"mode": "nearest", "sigma": 2.0, "k": 2, "lower": None, "upper": None, "tol": None}},
              "started": "2026-10-23T10:00:00+0800", "finished": "2026-10-23T10:05:00+0800"}
-    return {"description": "", "batches": [batch], "runs": runs,
-            "reference_checks": {"c1": {"groups": [check], "seconds": 0.1}}}
+    return {"description": "", "batches": [batch], "runs": runs, "reference_checks": {"c1": {"runs": checks}}}
 
 
 def test_table_from_a_fabricated_raw_file(tmp_path: Path, capsys):
@@ -153,14 +159,35 @@ def test_table_from_a_fabricated_raw_file(tmp_path: Path, capsys):
     path.write_text(json.dumps(fabricated_doc()))
     assert table.main(str(path)) == 0
     out = capsys.readouterr().out
-    assert "提交 `0123456789`" in out and "测量槽 16 核" in out
-    assert "界不小于实测夹角的有 1 / 1 组" in out
-    assert "中位数 100" in out                       # bound / measured = 1e-10 / 1e-12
-    assert "真实间隙 / 界所用的间隙 δ：中位数 10，" in out
-    assert "| c1 | HEP | 100 | 2 | inertia_counts | 1.00e-10 | 是 | 2 | identity | 1/0 | 0.020 | 1.050 | 0.980 | 2.0% |" in out
+    # The conditions as the runner recorded them; one day is one date.
+    assert "提交 `0123456789`" in out and "16 核（测量槽，`tools/run/guard.py --exclusive`，内存上限 32 GiB）" in out
+    assert "目标 nearest（3 个测例），tol 1e-10（2 个测例）、求解器默认（1 个测例）" in out
+    assert "2026-10-23 测量" in out and "至" not in out.split("\n", 3)[2]
+    # Every checked run counts: two runs of c1, one group each.
+    assert "1 个测例（其中 1 个有生成器给出的精确特征向量）各 2 次 auto 运行的 2 个组" in out
+    assert "界不小于实测夹角的有 2 / 2 组" in out
+    assert "中位数 31.6，最小 10，最大 100" in out    # bound / measured = 100 and 10 (geometric median)
+    # delta ten times below the true gap: the table does not claim that delta is the true gap.
+    assert "真实间隙 / 界所用的间隙 δ：中位数 10，最大 10：δ 比真实间隙小" in out
+    assert "相差不到" not in out
+    # The bound over the repetitions: median and range, and the spread in the summary.
+    assert "最大 / 最小之比的中位数 2，最大 2（c1）" in out
+    assert ("| c1 | HEP | 100 | 2 | inertia_counts | 1.50e-10 | 1.00e-10–2.00e-10 | 是 | 2 | identity | 1/0 | 0.020 | "
+            "1.050 | 0.980 | 2.0% |") in out
     assert "| c2 | — | — | — | — | 运行失败（返回码 3） |" in out
     assert "2 个测例的中位数 1.5%，最大 2.0%（c1）" in out    # 0.02 / 0.98 and 0.01 / 0.99
     assert "中位数 5%，最大 10%" in out                       # c1 auto: 1.0 and 1.1 s; c1 off: equal
-    assert "| c3 | estimate → inertia_count | 否 → 是 | 1.00e-06 → 5.00e-07 | 0.010 → 0.300 | 1.300 | 0.990 | 30% |" in out
-    assert "| c1 | estimate" not in out  # on and auto agree for c1: not in the on table
-    assert "| c1 | 0（0, 1 + 1 未返回） | cluster | 3 | 3 | 1.00e-02 | 1.00e-01 |" in out
+    assert ("| c3 | estimate → inertia_count | 2.00e-03 → 2.00e-04 | 否 → 是 | 1.00e-06 → 5.00e-07 | 0.010 → 0.300 | "
+            "1.300 | 0.990 | 30% |") in out
+    assert "| c1 | identity" not in out  # auto proves lambda_min(B) for c1: not in the on table
+    # The per-group table shows the first run.
+    assert "| c1 | 0（0, 1 + 1 未返回） | cluster | 3 | 3 | 1.00e-02 | 1.00e-01 | 1.00e-12 | 1.00e-10 | 1.00e-12 | 100 |" in out
+
+
+def test_table_states_the_gap_agreement_only_when_the_data_show_it(tmp_path: Path, capsys):
+    path = tmp_path / "subspace_bound.json"
+    path.write_text(json.dumps(fabricated_doc(true_gap=0.015)))
+    assert table.main(str(path)) == 0
+    out = capsys.readouterr().out
+    assert "真实间隙 / 界所用的间隙 δ：中位数 1.5，最大 1.5：证书窗口与 Kahan 区间给出的 δ 与真实间隙相差不到 2 倍" in out
+    assert "δ 比真实间隙小" not in out
