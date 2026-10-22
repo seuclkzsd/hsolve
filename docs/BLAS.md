@@ -271,7 +271,7 @@ with a message), else the build's `HSOLVE_BLAS_ROUTE_DEFAULT` (empty = off).
 | token | shape class | goes to |
 |---|---|---|
 | `gemv1` | dgemm with N = 1 (or M = 1) | the real dgemv (A read once, never packed) |
-| `strsm=<m>` | dtrsm side L, M <= m (capped: 4096 AVX-512, 256 AVX2, 32 portable), 1 <= N <= maxn, alpha = 1 | the hook's small triangular solve (reference loop order, up to 4 right-hand sides per pass over the triangle; no packing) |
+| `strsm=<m>` | dtrsm side L, M <= m (capped: 4096 AVX-512, 256 AVX2, 32 portable), 1 <= N <= maxn, alpha = 1 | the hook's small triangular solve (reference arithmetic order, up to 8 right-hand sides per pass on AVX-512, 4 on the other paths; factors are never packed) |
 | `trsv=<n>`, `trsv1` | dtrsm side L, N <= n, alpha = 1 | N calls of the real dtrsv |
 | `narrow` | dgemm NN / TN with 2 <= N <= maxn | the hook's narrow kernels (AVX-512F or AVX2+FMA, adapted from OpenBLAS' SkylakeX small-matrix / dgemv kernels: A streamed once, not packed); without `par`, calls outside parallel regions with >= 2 x minkb of A stay with the real routine |
 | `par` | outside OpenMP parallel regions, calls touching >= 2 x minkb of A | fixed blocks over `threads` threads: dgemv and narrow dgemm by rows of C (narrow kernels or the real routine per block), dgemm A^T B with M < 4 x threads and K >= 1024 x threads by K (partial products summed in block order) |
@@ -283,6 +283,19 @@ Instruction set: chosen at run time from CPUID - AVX-512F, else AVX2 + FMA, else
 loops (the narrow route needs AVX2 at least; on non-x86 CPUs only the portable loops are compiled).
 `HS_BLAS_NO_AVX512=1` / `HS_BLAS_NO_AVX2=1` force the fallbacks (tests, comparisons).
 `HS_BLAS_PROFILE=<file>` (`%p` = pid) turns on the call profiler of section 2 in any configuration.
+
+The AVX-512 triangular solve specializes calls with one or two right-hand sides. For
+non-transposed triangles of order at most 32, the right-hand sides remain in vector registers
+throughout substitution; larger triangles use fixed-width column loops. The transposed path
+keeps solved values in registers for orders 3–16, and reduces only the used
+accumulators, with the same FMA lane assignment and addition tree as the four-column path.
+Eight-column non-transposed groups at orders 64–512 use a row-major right-hand-side buffer
+of at most 32 KiB. Factors remain in their original layout, and unit diagonals are not read.
+AVX2, portable, and other remainder paths keep their existing implementations. These changes
+do not raise the default route limits (`strsm=512`, `maxn=16`). See
+[P18 measurements](../results/p18_measurements.md),
+[P19 measurements](../results/p19_measurements.md), and
+[P20 measurements](../results/p20_measurements.md) for microbenchmarks and complete solves.
 
 Correctness and threads (tests: `test_asmkern`, `test_asmkern_fix`, `test_asmkern_fix_exehook`):
 every routed shape class is compared with the real BLAS / a long-double reference (edge sizes,

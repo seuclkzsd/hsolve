@@ -191,6 +191,8 @@ src/mpi      （P10，不属于 libhsolve，HSOLVE_WITH_MPI）hs::Transport 的 
   - 多向量（p ≥ 2）先把 X 拷成行主序交错块（每遍 A 服务 16 个向量，连续读），工作区 n·min(p, 16)
     标量，可由 `KernelOptions::workspace` 复用；A 每列平均非零 < 2（p ≤ 4）或 < 8（更宽）时 spmm 保留
     Reference 跨步循环（如对角 B）；单个向量在所有路径上都走 Reference 行循环。
+    Auto 的实数双列 spmm 在行数 ≥ 32768 时使用两个固定累加器直接读取 X，省去交错拷贝和临时工作区；每列仍按 CSR
+    非零顺序累加，beta=0 不读取 Y。显式 Reference / Portable / Avx512 路径不变。
   - **确定性**：每个输出行由一个线程按固定顺序计算 ⇒ 同一路径的结果与线程数无关、逐次运行逐位相同；
     不同路径舍入不同（求和顺序、FMA），对 Reference 的差 ≤ 1e-14·（|A||X| 尺度）（测试契约，典型
     ~1e-15），不逐位一致。
@@ -300,6 +302,13 @@ src/mpi      （P10，不属于 libhsolve，HSOLVE_WITH_MPI）hs::Transport 的 
 - `release_factors()`（非纯虚，默认返回 false；MUMPS：JOB=−4）：释放数值因子与工作区、保留分析。
   之后 `solve` 抛 Internal、`inertia().valid = false`（valid ⇔ solve 可用，ShiftInvertOperator 与
   driver 都以它判断），计数与 `stats()` 仍描述被释放的那次分解——需要时先拷贝 `inertia()`。
+- `SparseFactorization::count(α, β)`（P12）：返回一次数值分解的惯性，允许丢弃因子，后续求解必须重新
+  `factorize`。MUMPS 5.8.2 的双精度、无 BLR、内存内主对象复用已有分析，在 JOB=2 期间临时设置
+  KEEP(201)=−1 / KEEP(251)=1，省去因子存储；这些是该版本分析 ICNTL(31)=1 后使用的存储标志。
+  分解时重算工作内存，原分析估计继续作保守预留。成功或失败后恢复存储模式，`inertia().valid=false`，
+  返回值保留计数的有效性；失败清理工作区，主元选择、缩放与零主元检测不变。其它版本 / 模式走普通
+  分解加释放。`has_inertia_only_count()` 供 driver 判断是否能省去独立计数器的分析；nearest 的
+  `inertia_counter=auto` 且主因子不再需要时采用它，显式 on、区间复用因子和 MPI helper 计数仍按原策略。
 - `InertiaCounter<T>(analysed_source, options)`：在已分析主对象的模式上计 ν(αA + βB)，**不动主对象**
   （主因子保持有效，证书后不必在工作位移重分解）。机制：自有的只计惯性 MUMPS 实例（ICNTL(31)=1），
   用主对象的主元顺序分析（PERM_IN，不再做一次填充排序）；`count(α, β, detection, precision)`、
@@ -391,8 +400,16 @@ src/mpi      （P10，不属于 libhsolve，HSOLVE_WITH_MPI）hs::Transport 的 
     main a831d79 的端到端实测见 `results/p9_measurements.md`）。
     以后这类门槛应消除 SCOTCH 的波动：两个二进制用同一主元顺序，或每个 20 次并按 flops 折算
     （`tools/bench/factspeed_gate_flops.py`，`results/p9_factspeed.md` §4.5）。
+  - **主元极值更新（P13）**：`patches/mumps-5.8.2-pivot-extrema.patch` 在 L0 并行路径中先原子读取
+    DKEEP(19/20/21)，主元绝对值不能改变极值时跳过原子写；需要写时仍执行原来的原子 min/max。
+    极值在一次分解内单调变化，所以并发更新不会使跳过判断失效。四种精度均应用；串行路径、
+    主元选择、零主元检测与精确惯性不变。默认构建包含该补丁；实验和并发统计检查见 `results/p13_measurements.md`。
+  - **本地右端整理（P14）**：`patches/mumps-5.8.2-local-scatter.patch` 在单个工作进程拥有全部主元行、
+    完全求和的右端行数等于 N 时，用一个 OpenMP 团队并行遍历前沿，将各自的连续右端区间写入 RHSINTR，
+    并省去未使用的 MPI 缓冲区分配。排列与缩放保持原计算，输出区间互不重叠；N < 32768 或前沿数 < 64
+    仍走原路径。四种算术类型均应用，默认构建包含此补丁；实验与逐元素检查见 `results/p14_measurements.md`。
   - **默认构建与回退**（P9 集成，`tools/dev/build.sh`、`tools/dev/mumps_cache.sh`）：`build.sh` 的每个预设先运行
-    `mumps_cache.sh ensure`（在 guard 下）：默认配置 = `build_mumps.sh` 的可移植默认值（nocona -O2）+ L0 分块补丁，
+    `mumps_cache.sh ensure`（在 guard 下）：默认配置 = `build_mumps.sh` 的可移植默认值（nocona -O2）+ L0 分块补丁 + 主元极值补丁 + 本地右端整理补丁，
     安装在 `$HS_MUMPS_CACHE/mumps-5.8.2-<key>`（默认 `build/deps/`；集群节点共用 `$HOME/deps/mumps-cache`），key 为
     源码包与补丁的 sha256、编译选项、两个构建脚本的 sha256、C 与 Fortran 编译器的版本行、环境前缀（库按 RPATH 链接
     其 METIS/SCOTCH/OpenBLAS）的哈希——这些都不变时直接复用（首次约 1.5 分钟，4 个作业）。并发的构建各在临时目录中
@@ -740,6 +757,10 @@ factor（InertiaCounter）、sparse、linalg；不打印；固定种子与线程
          只差 O(eps‖B‖₂) 地留在谱的凸包内）。Lee–Sun–Cendes 波导的 B 由最后一项立即判定（P4 时要分解 B 读
          惯性：wg-square-1e5 上 0.19 s，总时间的 10%）。判定了的类型决定分析前的内存规划与排序代价模型
          （§3.6-3、3b）；未定时内存按两种路径中较大者预留，排序按定性路径加一次 B 的分解定价。
+         上述检验仍未定时，再尝试正权重 Gershgorin：从 wᵢ = 1/√bᵢᵢ 开始，至多三次扫描检查
+         Σⱼ≠ᵢ|bᵢⱼ|wⱼ < bᵢᵢwᵢ（包含按行长度计算的舍入余量）；通过即证明 B 正定。失败时令
+         wᵢ ← ½(wᵢ + Σⱼ≠ᵢ|bᵢⱼ|wⱼ/bᵢᵢ) 再试；任何非有限值都放弃。工作区为三个实数 n 向量，
+         不构造填充模式；未通过继续原有 IC／惯性检验。事件方式为 `weighted_dominant`。
      (b) **严格证明**（仍未定、且目标不是 smallest / largest——它们的谱估计本来就要分解 B——时；主分析之后，
          factor 阶段；`prove_positive_definite`，`norms.hpp`）：D = diag(B) > 0，S = D^{-1/2} B D^{-1/2}；
          在填充级 1（时间或内存不够时 0）上对 S − cI 做不完全 Cholesky 得 L，则 M = S − LLᴴ 的 Gershgorin 下界
@@ -759,7 +780,7 @@ factor（InertiaCounter）、sparse、linalg；不打印；固定种子与线程
      (c) 仍未定：在主分析上分解 0·A + 1·B 读惯性（主对象为双精度非 BLR；否则 `compute_inertia`），B 为 HPD
          当且仅当没有负、零主元。
      事件 `b_inertia` 的 `how` 记录判定方式（diagonal、dominant、diagonal_entry、lanczos、
-     incomplete_cholesky、lanczos_scaled、factorization、compute_inertia），证明的细节在事件 `b_proof`。
+     weighted_dominant、incomplete_cholesky、lanczos_scaled、factorization、compute_inertia），证明的细节在事件 `b_proof`。
 2. **策略**：
    - HEP/GHEP → 位移反演 + `lanczos_krylov_schur`（B 内积，块宽见 §3.6-5）：nearest 用单位移
      （§3.6-8）；interval / smallest / largest 用窗口与谱切片（§3.6-8b）。
@@ -945,9 +966,30 @@ factor（InertiaCounter）、sparse、linalg；不打印；固定种子与线程
    「最近 k 个」的选择始终相对原始 σ₀。P2 的第二次 10× 扰动在该例上落到所需半径的 5 倍处（证书数出 166 个、
    找到 21 个），已废。有意放在或紧挨重特征值的位移（§3.6-8b 的部分簇与重根重跑，`on_eigenvalue`）不按簇
    判定、照常扰动，不告警、不计 shift_retries。
-5. **迭代求解**：内层容差 = tol × inner_tol_factor；θ → λ = σ + 1/θ。nearest 恰好收敛 k 对
+5. **候选向量与迭代求解**：nearest 在 `method = auto`、`certificate = exact`、惯性检查开启且
+   主分解为精确双精度时，先尝试可分离笛卡尔 curl-curl 候选空间（`eigen/separable_curl.cpp`）。只从矩阵推断
+   三个方向的网格尺寸、常系数与分量常数对角质量阵，逐行核对完整稀疏模板；不读取测例名称、网格元数据或参考谱。
+   实数 PEC 以节点正弦、边单元余弦的张量积和横向极化构造候选。复数 Bloch 周期路径
+   （`eigen/separable_bloch.cpp`）要求每方向至少三个单元，从边界耦合推断单位模周期相位，核对每个矩阵元素；
+   用复指数张量积与差分符号的两个厄密正交横向极化构造候选，质量归一化仍来自实际 B。
+   两条路径均要求目标避开零空间并包含整个边界重根簇；
+   模态表、向量与一维基表均先检查工作区预算，另预留原问题验证工作区。分配失败、模板不符、部分重根簇或预算不足均回到
+   原迭代路径。候选还必须在**原始 A、B** 上通过秩揭示 Rayleigh–Ritz、有限性与每对后向误差 ≤ 0.5·tol 检查。
+   通过后省去首次位移分解和 Krylov 运行；§3.6-6～8 的最终验证、精确 Sylvester 计数与缺对重跑保持执行，模态公式不充当证书。
+   日志 `structured_candidate` 记录准入结果；报告 `candidate_source = separable_cartesian_curl`（PEC）或
+   `separable_bloch_curl`（复数 Bloch）、`block_size = 0` 描述首次候选来源，后续补救仍可做位移反演。
+   跳过首次分解后，若残差补救或缺对重跑首次需要工作位移的因子，先执行现有近奇异位移处理，不能假定原始目标可直接分解。
+   显式指定方法、窗口目标、非精确分解及未通过完整模板验证的矩阵继续原路径。
+
+   **迭代求解**：内层容差 = tol × inner_tol_factor；θ → λ = σ + 1/θ。nearest 恰好收敛 k 对
    （nev = k；完备性由证书负责，不靠多算余量）。主分解为单精度 / BLR 时算子带双精度迭代修正
    （≤ 10 步，rel_tol = 0.1·tol·inner_tol_factor；每次 apply 检查收敛，未收敛即改用双精度重解，§3.4b、§3.6-3）。
+   nearest 的首次双精度块运行另可按**原矩阵对的实际后向误差**停止：所有目标 Ritz 对的相对变换残差估计
+   ≤ sqrt(内层容差) 时组装 X，显式计算 AX、BX，以 λ = σ + 1/θ 检查每一对的后向误差；全部 ≤ 0.5·tol
+   才接受。未通过时探测门槛缩小 10 倍，继续原迭代。额外工作区为 X、AX、BX 共 3·nev 列，包含在已有
+   4·nev 列预留中。此条件只改变首次 nearest 块迭代的停止时机；最终残差检查与完备性证书继续执行。
+   区间 / 单边窗口、消去子空间后的重跑、单向量以及单精度 / BLR 路径沿用变换残差条件，公开 eigensolver
+   的收敛契约不变。日志 `lanczos` 记录 `original_residual_probes`、`original_residual_accepted`。
    **块 Krylov**（P4，`SolverConfig::block_size`，0 = 自动，1 = 单向量；报告 `block_size`）：
    - HEP/GHEP（`block_size_for`）：配置 > 0 时用配置值（显式值优先）。自动时：
      - nearest 的单位移运行（P5c）：在 σ 处的主分解（`factorize_near` 之后）上用块宽规则
@@ -1050,7 +1092,9 @@ factor（InertiaCounter）、sparse、linalg；不打印；固定种子与线程
    - **计数来源 `CountSource`**（P4）：主分解对象（在计数点重分解，之后持有 K(s)，Ctx::held——单边切片
      可直接复用为位移），或 InertiaCounter（首次计数时按主分析的主元顺序建立；只计惯性的分解，实测
      便宜 10–23%，不动主因子）。规则：
-     - nearest 证书（每轮两次计数、主因子精确）：`counter_pays` 时用计数器——2·0.13·model_factor_s >
+     - nearest 证书（每轮两次计数、主因子精确）：P12 的 `auto` 优先使用主对象支持的
+       `has_inertia_only_count()`，保留分析并丢弃计数因子，省去单独计数器的分析；不支持时沿用
+       `counter_pays` 规则——2·0.13·model_factor_s >
        model_analysis_s（计数器的分析约等于一次 AMD 分析；三维填充是，低填充的二维 / 复数嵌入否，与
        实测净节省的正负一致）；`inertia_counter = on / off` 覆盖。用计数器时**每次计数前释放主因子**
        （`MainFactors::Release`：证书之后只有重跑才要主因子，重跑在 σ 重分解一次——与主对象计数相同），
@@ -1073,7 +1117,9 @@ factor（InertiaCounter）、sparse、linalg；不打印；固定种子与线程
      - `CountSource::count`：首选来源失败（事件 `count_source`、告警）后，本次求解不再用它，同一计数改在另一来源上做：
        计数器失败 → 主对象重分解（主分解精确时）；主对象失败 → 计数器。计数器在**每次计数前**先查其分析估计
        INFOG(16)：超过计数余量 `count_allowance_mb` = min(0.95·(memory_budget − 当前占用), 分解上限)（占用按预算的度量，§3.6-3） 时先释放常驻的
-       主因子再查，仍超就不尝试（在 ICNTL(23) 下它要么 INFO −19，要么——MUMPS 刚好在上限下时——让进程超出预算：
+       主因子再查；glibc 平台上余量仍不足时再调用 `malloc_trim(0)` 归还已释放的堆页，然后按同一预算与实际占用重新检查
+       （事件 `count_memory_reclaimed`；故障注入的零余量不触发回收）。这避免第一次计数释放的工作区仍留在分配器中，导致
+       第二次计数被重复计入 RSS 而错误放弃；不预先抵扣假定可复用的内存。仍超就不尝试（在 ICNTL(23) 下它要么 INFO −19，要么——MUMPS 刚好在上限下时——让进程超出预算：
        ss-3dspectralwave2 在 14 GiB 下计数器估计 14.5 GB 对上限 13.5 GB 失败，13.6 GB 时运行成功但峰值 RSS 15.1 GiB）。
      - 主对象**替补**首选的计数器时（内存已紧）同样先查余量（事件 `main_count_check`）：先释放其因子，其上次分解实际
        用的工作内存 INFOG(21)（尚未分解过时用分析估计）超过计数余量就不尝试——主对象自己的 ICNTL(23) 上限定于分析时、
@@ -1265,12 +1311,15 @@ factor（InertiaCounter）、sparse、linalg；不打印；固定种子与线程
      规则同 `count_below`（谱隙点、奇异时外移，`count_below` 的函数重载），在各自的 InertiaCounter 上（从 helper 的
      主对象构造；主对象以 leader 主分析的主元顺序 PERM_IN 分析，之后丢弃，只留计数器的分析）——计数是精确整数，与
      单进程逐个相同。前提：至少两个可用 helper；问题已共享；**代价规则**（`ParallelOptions::helper_counts = auto`）：
-     本次实测的主分解时间 t_f 下，一次计数（0.9 t_f）须多于 helper 的准备（`helper_preparation_s`：两次给定顺序的
-     分析，按 `model_analysis_s` 上界，加 0.05 s 消息）——helper 的计数在 1e5 比 leader 的快（0.85 倍时间）、在 1e6
+     本次实测的主分解时间 t_f 下，一次计数（0.9 t_f）须多于 helper 的准备（`helper_preparation_s`：一次给定顺序的
+     分析，按 `model_analysis_s` 上界，加 0.05 s 消息）。计数器直接使用收到的矩阵与 leader 的主元顺序构造，省去临时
+     主分解对象的分析——helper 的计数在 1e5 比 leader 的快（0.85 倍时间）、在 1e6
      慢（1.53 倍），规则取二者相等；内存：leader 先释放主因子（同 `MainFactors::Release`，重跑时在 σ 重分解），
      **发送问题之前**按预测检查——两次计数（各按主分析内存内估计的 `kHelperCountShare` = 0.45 倍，实测 0.38–0.50）
      加两个 helper 拿到问题后持有的内存（矩阵字节的 `kHelperProblemCopies` = 2.5 倍，实测 1.8–2.7）须放得下计数余量
-     （`count_allowance_mb`）；helper 拿到问题后再以它们报告的计数估计与占用检查一次。不满足时 leader 照旧自己数
+     （`count_allowance_mb`）；只准备选中的两个可用 helper，即使会话中还有其它 rank。helper 拿到问题后再以它们报告的
+     计数估计与占用检查一次；每次计数的任务额度通过 `InertiaCounter::set_max_memory_mb` 落实到 MUMPS 的工作内存上限，
+     数值填充或重试超过额度则返回内存错误。不满足时 leader 照旧自己数
      （report.parallel.notes 说明原因）；问题已发出时 helper 先放下它（`Helpers::drop`），helper 的两次计数之后也
      放下——leader 自己的计数（全部，或某个 helper 失败的那一次）与随后的重跑看到的预算与 hs::solve 相同（审查 p10mpi
      第 1 条：helper 留着问题时 syn-mem27-46 在 1.0 GiB 下证书未完成，hs::solve 则通过）。certificate 的陈述注明各次
@@ -1296,7 +1345,8 @@ factor（InertiaCounter）、sparse、linalg；不打印；固定种子与线程
 - **结果与容错**：结果与单进程相同（计数是整数；切片同一代码、同一主元顺序，只差分解线程数造成的舍入）。helper 的任务
   失败（MUMPS / 内存错误、`std::bad_alloc`、任何异常；故障注入 `certificate_fault_count` 位 128）以错误回复，leader
   自己做该工作，该 helper 本次求解不再使用（`report.parallel.fallbacks`、notes、告警）。helper **进程**死亡则 MPI 作业
-  终止（MPI 默认错误处理），hsolve 无法接住。
+  终止（MPI 默认错误处理），hsolve 无法接住。helper 初始化失败（例如日志无法打开）时调用 MPI_Abort 结束作业，
+  避免 helper 在 MPI_Finalize 与 leader 的回复等待之间形成死锁。
 - **内存**：预算覆盖进程树为本次求解持有的内存——`memory_in_use` 加上每个 helper 报告的 RSS 中高于其空闲水平
   （没有问题时的 RSS，随 Ready / Dropped 报告）的部分，任务进行中按授予的额度计；helper 进程本身（MPI、库，每个约
   50 MB）不计入，与它第一次拿到问题之前一样。helper 只在一批工作即将进行或进行中持有问题：被拒、做完或交回时
@@ -1307,7 +1357,8 @@ factor（InertiaCounter）、sparse、linalg；不打印；固定种子与线程
   certificate，切片为 iterate。helper 的事件写到 `<log>.rank<r>`。
 - **构建与运行**：CMake `HSOLVE_WITH_MPI`（AUTO：找到 MPI 即构建；集群节点上为 `$HS_REF_ENV` 即 os2026-ref 环境的
   Open MPI 5.0.11）构建 `hsolve-mpi`（与 `hsolve` 同一份命令行，`apps/cli.cpp`）、`hsolve-mpirun` 与
-  `test_mpi_session`（1、2、3 个 rank）。hsolve 链接顺序 MUMPS，其 libmpiseq 以桩函数定义 MPI_Init、MPI_Comm_rank、
+  `test_mpi_session`（1、2、3、5 个 rank），以及 helper 日志初始化失败的 CLI 回归测试。hsolve 链接顺序 MUMPS，
+  其 libmpiseq 以桩函数定义 MPI_Init、MPI_Comm_rank、
   MPI_Finalize、MPI_Wtime：MPI 库在链接行上排在 MUMPS 之前，全局符号查找取真正的 MPI；`hsolve-mpi` 启动时检查
   （`hs::mpi::mpi_library`），`test_mpi_session` 亦检查；可执行文件不包含 `<mpi.h>`（MUMPS 的 include 目录里有
   libseq 的 mpi.h 桩）。`--helper-counts` / `--helper-slices`（auto | on | off）= `hs::ParallelOptions`。只测过

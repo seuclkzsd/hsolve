@@ -177,7 +177,7 @@ FP64 cuBLAS 卸载到 GPU，CUDA 库运行时加载；默认 off，auto 只在�
 
 `report.json` 主要键（按 `SolveReport::to_json` 源码中的顺序列出；文件中的键按字母序）：`schema_version,
 solver, version, n, nnz_a, nnz_b, complex_scalars, problem, norm2_a, norm2_b, scale, hermitian_defect_a,
-hermitian_defect_b, method, sigma_requested, sigma_used, shift_retries, block_size, factor_options{...},
+hermitian_defect_b, method, candidate_source, sigma_requested, sigma_used, shift_retries, block_size, factor_options{...},
 factor_stats{...}, restarts, op_applies, time_total_s, time_setup_s, time_factor_s, time_iterate_s, time_verify_s,
 time_certificate_s, peak_rss_bytes, memory{...}, precision{...}, parallel{...}, pairs[{lambda_re, lambda_im, abs_residual, rel_residual,
 backward_error, accepted}], certificate{performed, lower, upper, count_inertia, count_found,
@@ -187,7 +187,12 @@ slices[...], zero_cluster_dim, zero_modes_filtered, success, warnings[]`。
 
 - `solver`（P4）：恒为 `"hsolve"`（评测在调用方未指名时用它作求解器名，§4）；`version`：`hs::version()`。
   Python 接口的 `report` 是同一份 JSON。
+- `candidate_source`：首次候选向量的来源，默认 `"iterative"`；自动路径从完整矩阵验证可分离笛卡尔
+  curl-curl 结构并通过原问题残差检查时，实数 PEC 为 `"separable_cartesian_curl"`，复数 Bloch 周期为
+  `"separable_bloch_curl"`（DESIGN §3.6-5）。它只描述首次
+  候选来源；最终残差、精确完备性证书及必要时的迭代补救照常执行，`method` 仍为解析后的驱动方法。
 - `block_size`（P4）：第一次位移反演运行实际使用的块宽（配置解析 + 内存适配之后，DESIGN §3.6-5）。
+  首次候选直接来自已验证结构时为 0；后续补救的块宽见事件日志。
   GHIEP（P5 起写入；P4 恒报 1）为普通运行、或 σ 在零带内时第一次单边运行的块宽，各次运行的实际块宽见
   事件日志的 `krylov_schur` 事件。
 - `factor_stats` 只统计主分解对象（分析、分解、回代次数与时间、估计）；InertiaCounter 的分析与计数
@@ -196,7 +201,7 @@ slices[...], zero_cluster_dim, zero_modes_filtered, success, warnings[]`。
   `time_total_s == time_setup_s + time_factor_s + time_iterate_s + time_verify_s + time_certificate_s`，
   各项 ≥ 0。`time_setup_s`：输入检查、范数估计、问题类型判定、规划；`time_factor_s`：**每一次**符号
   分析（含自适应排序的 AMD 探测与其它候选的分析）与位移、B（正定性检测）、A（GHIEP 零主元计数）的数值分解；
-  `time_iterate_s`：Krylov 求解（回代、正交化、重启）；`time_verify_s`：Rayleigh–Ritz、残差、补救、
+  `time_iterate_s`：Krylov 求解（回代、正交化、重启），或结构候选识别、生成与准入检查；`time_verify_s`：Rayleigh–Ritz、残差、补救、
   选择与证书簿记；`time_certificate_s`（P4）：HEP/GHEP 的全部 Sylvester 惯性计数（证书端点、窗口端点、
   切点、簇检查；主对象上的重分解或 InertiaCounter 的计数，含计数器的分析），P5 起还有 nearest 的其它
   完备性检验（随机检验、单精度计数及其双精度复核、auto 的选择）；GHIEP 与关闭证书的 nearest 为 0。

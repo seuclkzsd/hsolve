@@ -17,7 +17,8 @@ LDLᵀ、惯性计数）+ 自研 Krylov-Schur（含块模式）、LOBPCG、Jacob
   1–16 线程的加速比，摘要见 `docs/SOLUTION.md` §6、§9.1）；P9 的三个实验 `results/p9_ordering.md`（自研嵌套剖分）、
   `results/p9_factspeed.md`（1e6 的数值分解、MUMPS 块参数与自编 MUMPS）、`results/p9_mpi.md`（1e6 对 SLEPc、
   MPI MUMPS 的上界：负结果）；P10 的 `results/p10_mpi.md`（每 socket 一个 helper 进程的多进程模式）、`results/p10_gpu.md`
-  （cuBLAS 卸载 1e6 分解的大 dgemm）；负结果记录 `results/gpu_g1.md`（SPRAL SSIDS on GPU）、`results/p6_mixprec.md`（单精度分解）；更早的 `results/p8_certcost.md`、`results/p7_membudget.md`、
+  （cuBLAS 卸载 1e6 分解的大 dgemm）；`results/p10_nearest.md`（原残差停止、加权正定性证明，以及对调优 SLEPc 的复测与剩余差距）；
+  `results/p10_nextperf.md`（复用与迭代参数的负结果、百万维分解热点）；负结果记录 `results/gpu_g1.md`（SPRAL SSIDS on GPU）、`results/p6_mixprec.md`（单精度分解）；更早的 `results/p8_certcost.md`、`results/p7_membudget.md`、
   `results/p5c_measurements.md`、`results/p3_measurements.md`、`results/p4_measurements.md`；SLEPc 调优与公平对比：
   `results/baseline_tuning.md`、`results/baseline_tuning_p16.md`、`results/cmp-p9-1e6-profiles.json`（1e6）；
   测量程序：`bench/README.md`
@@ -35,6 +36,8 @@ tools/dev/test.sh release                    # C++ 单元测试 + Python 测试�
 
 **MUMPS 的来源**（P9 集成）：`tools/dev/build.sh` 默认（`HS_MUMPS=source`）由仓库内的官方源码包
 `third_party/mumps/MUMPS_5.8.2.tar.gz`（sha256 校验，CeCILL-C，离线可构建）加 `patches/mumps-5.8.2-l0-blocking.patch`
+、`patches/mumps-5.8.2-pivot-extrema.patch`（省去不改变主元极值的原子写入）
+与 `patches/mumps-5.8.2-local-scatter.patch`（并行整理单进程的完整右端向量）
 编译顺序版 MUMPS 5.8.2（conda-forge 的可移植编译选项，链接环境的 METIS / SCOTCH / OpenBLAS；`tools/dev/mumps_cache.sh`
 按源码包、补丁、选项、脚本、编译器与环境的哈希缓存在 `build/deps/`，`HS_MUMPS_CACHE` 可改），所有预设、命令行与
 Python 模块都链接它（`-DHSOLVE_MUMPS_ROOT`，RPATH 在环境之前），MUMPS 的块参数默认取 P9 的（分解快 5–8%，

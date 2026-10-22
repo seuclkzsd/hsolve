@@ -80,13 +80,19 @@ CUDA（若引入）为 NVIDIA 闭源但免费，赛题明确允许；仅作可�
 | 依赖 | 版本 | 许可证 | 用途 |
 |---|---|---|---|
 | PETSc / SLEPc（petsc4py / slepc4py） | 3.26 | BSD-2-Clause | SLEPc Krylov-Schur + 位移反演基线（`tools/bench/baseline_slepc.py`） |
-| MUMPS（MPI 版） | 5.8.2 | CeCILL-C | 基线的分解（与 hsolve 同版本，使对比只差特征值层） |
+| MUMPS（MPI 版） | 5.8.2 | CeCILL-C | 基线的分解；上游版本与 hsolve 相同，hsolve 另有 BLAS 内核与 MUMPS 补丁 |
 | OpenMPI | 5.0.11 | BSD-3-Clause | 基线的多 rank 布局；`hsolve-mpi` 的 MPI（P10） |
 | libfabric | 1.22（集群节点，见下） | BSD-2-Clause / GPL-2.0 双许可 | OpenMPI 的传输层 |
 | PT-SCOTCH / ParMETIS | — | CeCILL-C / 明尼苏达大学许可（限非营利研究） | 基线调优中试过的并行分析（ICNTL(28)=2） |
 
-- 该环境的 PETSc 是**实数**构建：SLEPc 不能运行 10 个复厄密测例，对比只覆盖实数测例（需要复数标量的
-  PETSc/SLEPc 环境才能补全）。
+- `os2026-ref` 的 PETSc 是**实数**构建。P28 在 gpu02 的 `/tmp/os2026-p28/ref-complex` 离线安装了独立的
+  complex128 构建：PETSc、SLEPc、petsc4py、slepc4py 均为 3.26.0，其余 99 个包与实数环境一致。
+  四个替换包的 SHA-256 和 60 项直接依赖均已核验；该临时环境尚未加入集群通用部署脚本。
+  复数进程需选择对应环境的 `python`、`mpiexec` 和 `LD_LIBRARY_PATH=<复数环境>/lib`；实数调优配置
+  不能视为已经验证过的复数配置。复现实验保留在 `/tmp/os2026-p28`。
+- 复厄密基线使用 MUMPS **LU**，矩阵设置 HERMITIAN 标记；MUMPS 的复数 Cholesky 支持复对称而非一般复厄密矩阵
+  （[PETSc MUMPS 文档](https://petsc.org/release/manualpages/Mat/MATSOLVERMUMPS/)）。实数基线仍用 LDLᵀ。
+  复数 LU 不提供惯性计数，故此基线明确拒绝复数 interval 谱切片；当前 10 个复数数据集的目标均为 nearest。
 - `tools/bench/slepc_profiles.json` 存放调优配置（`results/baseline_tuning.md`，目前只有 2 核）。
 
 ## 集群节点部署（gpu01 / gpu02 / c001–c005）

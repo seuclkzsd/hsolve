@@ -38,7 +38,7 @@ cmake --preset release -DHSOLVE_WITH_MPI=ON -DMPI_HOME=/path/to/openmpi    # 其
 ```
 
 产物：`build/<preset>/hsolve-mpi`（与 `hsolve` 同一份命令行代码 `apps/cli.cpp`）、`build/<preset>/hsolve-mpirun`
-（启动脚本）与测试 `test_mpi_session`（ctest 以 1、2、3 个 rank 运行）。每个进程仍链接**顺序版** MUMPS 与 OpenMP，MPI
+（启动脚本）与测试 `test_mpi_session`（ctest 以 1、2、3、5 个 rank 运行）。每个进程仍链接**顺序版** MUMPS 与 OpenMP，MPI
 只传会话消息。注意：顺序 MUMPS 自带的 libmpiseq 以桩函数定义了 `MPI_Init` 等，CMake 把真正的 MPI 库排在 MUMPS 之前；
 `hsolve-mpi` 启动时检查 `MPI_Init` 解析到的库，若是桩则报错退出。
 
@@ -53,7 +53,7 @@ libfabric 1.22 等，许可证见 `THIRD_PARTY_NOTICES` 3.7）。集群节点上
 ## 4. 运行
 
 ```bash
-build/release/hsolve-mpirun [--ranks R] [--dry-run] -- --A A.npz [--B B.npz] --config config.json --out DIR [hsolve 选项]
+build/release/hsolve-mpirun [--ranks R] [--interleave-leader] [--dry-run] -- --A A.npz [--B B.npz] --config config.json --out DIR [hsolve 选项]
 ```
 
 - `hsolve-mpirun` 读本进程的 cpuset 与 NUMA 拓扑：rank 0（leader）绑定全部允许的核、`OMP_NUM_THREADS` = 其个数；
@@ -65,16 +65,24 @@ build/release/hsolve-mpirun [--ranks R] [--dry-run] -- --A A.npz [--B B.npz] --c
 - 也可以直接 `mpiexec -n R … hsolve-mpi <同样的参数>`（每个 rank 的参数相同；绑定与线程数由调用者负责）。只有一个
   helper 时它什么也不做（并发计数与切片都要两个 helper，否则与 leader 抢核），所以 R = 2 算的与普通 hsolve 相同，
   只多 MPI 启动。
+- `hsolve-mpirun --interleave-leader` 可选地将 leader 的内存在其允许 CPU 所在的 NUMA 节点之间交错分配，
+  需要 `numactl`；helper 不设置新策略。单 NUMA 节点上此选项无作用，默认仍使用原有内存策略。
+  该选项适合实测受益的大型跨插槽求解，不宜统一开启：P18 的百万阶 Yee 有收益，七个小例整体变慢。
+  `--dry-run` 显示节点列表；请求的策略若不能应用，启动失败，不静默降级。数据见 `results/p18_measurements.md`。
 - 选项（只对多进程有效）：`--helper-counts auto|on|off`、`--helper-slices auto|on|off`（`hs::ParallelOptions`）。auto
-  按代价规则：计数——本次实测的主分解时间下一次计数长于 helper 的准备（约两次给定顺序的分析 + 0.05 s）；切片——一片的
+  按代价规则：计数——本次实测的主分解时间下一次计数长于 helper 的准备（一次给定顺序的分析 + 0.05 s，计数器直接使用
+  leader 提供的排列，省去临时主分解对象的分析）；切片——一片的
   预测工作长于 helper 的准备。on 只跳过代价规则；内存规则总是生效：helper 的工作（两次计数同时、或每个 helper
   一片）连同 helper 的问题副本须放得下预算的余量——发送问题前先按预测判断，helper 拿到问题后再按它们报告的占用
   判断；放不下就留给 leader，helper 放下问题，leader 的计算与普通 hsolve 在同样的预算下进行。
+- nearest 证书只向选中的两个可用 helper 发送问题，其余进程保持空闲；计数任务的预算与 MUMPS 工作内存上限均按其
+  获得的额度执行，超额时返回内存错误，由 leader 接手。
 - 输出与 `hsolve` 相同（`docs/FORMATS.md` §3），报告另有 `parallel`：processes、threads、helper_counts、helper_slices、
   fallbacks、share_s、wait_s、helper_busy_s、notes（为何没交给 helper、失败与回退）。`--log FILE` 时 helper 的事件写到
   `FILE.rank<r>`。退出码同 hsolve（rank 0 的）。
 - 容错：helper 的任务失败（内存不足、MUMPS 错误、任何异常）时 leader 自己做，结果照常认证；helper 进程崩溃则整个
-  MPI 作业结束（MPI 的默认错误处理）。
+  MPI 作业结束（MPI 的默认错误处理）。helper 初始化失败（例如无法打开自己的日志）时主动终止 MPI 作业并返回错误，
+  避免 leader 等待永远不会到达的回复。
 
 ## 5. 实测加速
 
