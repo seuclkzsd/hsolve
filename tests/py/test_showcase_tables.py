@@ -309,6 +309,18 @@ def test_a_random_failure_in_the_campaign_is_found_for_the_tuning(tmp_path):
     assert campaign.campaign_random_failure("no-record", tmp_path) is None
 
 
+def test_ratios_near_one_are_reported_as_comparable(raw):
+    s = tables.build_summary(raw)
+    cube = s["scenarios"][0]
+    cube["speedup_vs"] = {"slepc-tuned": 1.004}
+    s["scenarios"].append({**cube, "id": "x", "title": "slow one", "short": "slow", "speedup_vs": {"slepc-tuned": 0.6}})
+    n, lo, hi, slower, same = tables.speed_range(s, "slepc-tuned")
+    assert (n, slower, same) == (2, ["slow one 0.60×"], [f"{cube['title']} 1.00×"])
+    head = tables.headline(s)
+    assert "1 个场景相当（1.00–1.00×，相差不到 3%）" in head and "1 个场景 hsolve 更慢（0.60–0.60×）" in head
+    assert "hsolve 更快" not in head.split("SLEPc 逐例调优与 hsolve")[1].split("\n")[0]
+
+
 def test_same_target():
     near = {"mode": "nearest", "sigma": 50.1, "k": 10}
     assert campaign.same_target(near, dict(near, k=12)) and not campaign.same_target(near, dict(near, sigma=52.8))

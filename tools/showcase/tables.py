@@ -55,6 +55,7 @@ TUNED_LABELS = {"case": "该算例的调优配置", "other-target": "同一矩�
                 "class": "同类问题的调优配置（未针对该算例）", "default": "默认配置（无该算例的调优配置）"}
 TUNING_FILE_NAME = "slepc_tuning.json"    # next to raw/: results/showcase/slepc_tuning.json
 CLAIM_REASON = "solver claims no success"   # compare.run_once's reason; shown as its own field
+SAME_SPEED = 0.03   # median-time ratios within 3 % of 1 are reported as comparable, not faster/slower
 
 
 # ------------------------------------------------------------------------------------ summary
@@ -209,8 +210,8 @@ def build_summary(raw_dir: Path = RAW_DIR, tuning_file: Path | None = None) -> d
     tunings = load_tunings(tuning_file if tuning_file is not None else raw_dir.parent / TUNING_FILE_NAME)
     rows = [summarize_scenario(d, probe) for d in docs]
     for r in rows:
-        if r["id"] in tunings:
-            r["slepc_tuning"] = tunings[r["id"]]
+        if r["id"] in tunings:   # the trial list stays in slepc_tuning.json and the tuning record
+            r["slepc_tuning"] = {k: v for k, v in tunings[r["id"]].items() if k != "trial_list"}
             ran, best = r["solvers"].get("slepc-tuned", {}).get("config"), tunings[r["id"]].get("best")
             if best and ran != best:
                 raise ValueError(f"{r['id']}: slepc-tuned ran '{ran}' but the scenario's tuning chose '{best}' "
@@ -459,12 +460,16 @@ def headline(summary: dict[str, Any]) -> str:
     for s in ("slepc-tuned", "slepc-default"):
         ratios = [(r["title"], r["speedup_vs"][s]) for r in rows if s in r["speedup_vs"]]
         if ratios:
-            faster = [x for _, x in ratios if x > 1.0]
-            slower = [x for _, x in ratios if x <= 1.0]
+            faster = [x for _, x in ratios if x >= 1.0 + SAME_SPEED]
+            slower = [x for _, x in ratios if x <= 1.0 - SAME_SPEED]
+            same = [x for _, x in ratios if 1.0 - SAME_SPEED < x < 1.0 + SAME_SPEED]
             text = f"- 两者都正确的 {len(ratios)} 个场景中，{SOLVER_LABELS[s]}与 hsolve 的中位时间之比："
             parts = []
             if faster:
                 parts.append(f"{len(faster)} 个场景 hsolve 更快（{min(faster):.2f}–{max(faster):.2f}×）")
+            if same:
+                parts.append(f"{len(same)} 个场景相当（{min(same):.2f}–{max(same):.2f}×，相差不到 "
+                             f"{SAME_SPEED:.0%}）")
             if slower:
                 parts.append(f"{len(slower)} 个场景 hsolve 更慢（{min(slower):.2f}–{max(slower):.2f}×）")
             lines.append(text + "，".join(parts) + "。")
@@ -499,7 +504,7 @@ def limitations(summary: dict[str, Any]) -> str:
     hopeless = [r for r in rows if r.get("slepc_tuning") and not r["slepc_tuning"].get("best")]
     consistency = [r["title"] for r in rows if r["reference"].get("kind") == "solver" and not r["reference"].get("complete")]
     slower = [(r["title"], r["speedup_vs"]["slepc-tuned"], r["solvers"]["hsolve"].get("certificate_share"))
-              for r in rows if r["speedup_vs"].get("slepc-tuned", 2.0) < 1.0]
+              for r in rows if r["speedup_vs"].get("slepc-tuned", 2.0) <= 1.0 - SAME_SPEED]
     reps = sorted({r["conditions"].get("reps") for r in rows})
     parts = ["对比只覆盖 SLEPc 的 Krylov-Schur + 位移反演 + MUMPS 这一条路线（电磁特征值问题最常用的开源组合），"
              "未测 SLEPc 的其他求解器（如围道积分 CISS、LOBPCG），也未测需要额外输入的用法（例如以离散梯度矩阵作 "
@@ -603,14 +608,17 @@ def readme_table(summary: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
-def speed_range(summary: dict[str, Any], s: str, key: str = "title") -> tuple[int, float, float, list[str]] | None:
+def speed_range(summary: dict[str, Any], s: str,
+                key: str = "title") -> tuple[int, float, float, list[str], list[str]] | None:
     """(scenarios where both are correct, min and max time ratio, '<label> ratio' of those where
-    hsolve is slower); key "title" (Chinese) or "short" (English) picks the label."""
+    hsolve is slower, the same of those within SAME_SPEED of 1); key "title" (Chinese) or "short"
+    (English) picks the label."""
     ratios = [(r[key], r["speedup_vs"][s]) for r in summary["scenarios"] if s in r["speedup_vs"]]
     if not ratios:
         return None
     xs = [x for _, x in ratios]
-    return len(xs), min(xs), max(xs), [f"{t} {x:.2f}×" for t, x in ratios if x < 1.0]
+    return (len(xs), min(xs), max(xs), [f"{t} {x:.2f}×" for t, x in ratios if x <= 1.0 - SAME_SPEED],
+            [f"{t} {x:.2f}×" for t, x in ratios if 1.0 - SAME_SPEED < x < 1.0 + SAME_SPEED])
 
 
 def _joined(values) -> str:
@@ -675,9 +683,11 @@ def readme_facts(summary: dict[str, Any]) -> str:
                    f"{h['valid_runs']}/{h['reps']} 次返回最低的 {k} 个物理谐振，中位时间 {fmt_time(h['time_s'])}。")
     sp = speed_range(summary, "slepc-tuned")
     if sp:
-        k, lo, hi, slower = sp
+        k, lo, hi, slower, same = sp
+        notes = ([f"hsolve 更慢的场景：{'、'.join(slower)}"] if slower else []) \
+            + ([f"相差不到 {SAME_SPEED:.0%} 的场景：{'、'.join(same)}"] if same else [])
         txt = (f"- **速度**：两者都正确的 {k} 个场景中，逐例调优 SLEPc 与 hsolve 的中位求解时间之比为 {lo:.2f}–{hi:.2f}"
-               + (f"（hsolve 更慢的场景：{'、'.join(slower)}）" if slower else "（每个场景都是 hsolve 更快）"))
+               + (f"（{'；'.join(notes)}）" if notes else "（每个场景都是 hsolve 更快）"))
         sd = speed_range(summary, "slepc-default")
         if sd:
             txt += f"；对常规用法（{sd[0]} 个场景）为 {sd[1]:.2f}–{sd[2]:.2f}"
@@ -738,6 +748,7 @@ def readme_facts_en(summary: dict[str, Any]) -> str:
         out.append(f"- **Speed**: where both are correct ({sp[0]} scenarios) the ratio of median times (tuned SLEPc / "
                    f"hsolve) is {sp[1]:.2f}-{sp[2]:.2f}"
                    + (f"; hsolve is slower on: {', '.join(s.replace('×', 'x') for s in sp[3])}" if sp[3] else "")
+                   + (f"; within {SAME_SPEED:.0%} on: {', '.join(s.replace('×', 'x') for s in sp[4])}" if sp[4] else "")
                    + "; hsolve's times include its completeness certificate.")
     out.append("- **Conditions**: 16 cores of one socket (2 x Xeon Silver 4314 nodes), 32 GiB per run, median of the "
                "interleaved repetitions; data in `results/showcase/raw/`, tables generated by `tools/showcase/tables.py`.")
