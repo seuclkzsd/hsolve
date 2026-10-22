@@ -5,40 +5,42 @@
 
 ## 1. 安装
 
-=== "容器镜像"
+三种方式任选其一。
 
-    不需要编译，适合先看效果：
+### 容器镜像
 
-    ```bash
-    docker run --rm {{TODO:rb-eng 的镜像名与标签，例如 ghcr.io/seuclkzsd/hsolve:1.0.0}} {{TODO:rb-eng 的演示命令}}
-    ```
+不需要编译，适合先看效果：
 
-    镜像内置样例：依次求解、用独立评测器复核，并打印结果表。
+```bash
+docker run --rm {{TODO:rb-eng 的镜像名与标签，例如 ghcr.io/seuclkzsd/hsolve:1.0.0}} {{TODO:rb-eng 的演示命令}}
+```
 
-=== "Release 二进制包"
+镜像内置样例：依次求解、用独立评测器复核，并打印结果表。
 
-    ```bash
-    curl -LO https://github.com/seuclkzsd/hsolve/releases/download/v1.0.0/{{TODO:rb-eng 的压缩包名}}
-    curl -LO https://github.com/seuclkzsd/hsolve/releases/download/v1.0.0/{{TODO:rb-eng 的 SHA256SUMS 文件名}}
-    sha256sum -c {{TODO:rb-eng 的 SHA256SUMS 文件名}} --ignore-missing
-    tar xf {{TODO:rb-eng 的压缩包名}}
-    ```
+### Release 二进制包
 
-    压缩包是可移植构建（不依赖构建机的指令集），解压即可运行其中的 `hsolve`。
+```bash
+curl -LO https://github.com/seuclkzsd/hsolve/releases/download/v1.0.0/{{TODO:rb-eng 的压缩包名}}
+curl -LO https://github.com/seuclkzsd/hsolve/releases/download/v1.0.0/{{TODO:rb-eng 的 SHA256SUMS 文件名}}
+sha256sum -c {{TODO:rb-eng 的 SHA256SUMS 文件名}} --ignore-missing
+tar xf {{TODO:rb-eng 的压缩包名}}
+```
 
-=== "从源码构建"
+压缩包是可移植构建（不依赖构建机的指令集），解压即可运行其中的 `hsolve`。
 
-    需要 conda（推荐 [Miniforge](https://github.com/conda-forge/miniforge)），全部依赖来自 conda-forge：
+### 从源码构建
 
-    ```bash
-    git clone https://github.com/seuclkzsd/hsolve.git && cd hsolve
-    conda env create -f env/environment.yml && source env/activate.sh
-    tools/dev/build.sh portable
-    ```
+需要 conda（推荐 [Miniforge](https://github.com/conda-forge/miniforge)），全部依赖来自 conda-forge：
 
-    构建先由仓库自带的 MUMPS 5.8.2 官方源码包编译打过补丁的 MUMPS（只在第一次，之后按输入哈希复用），再编译
-    hsolve。产物在 `build/portable/`：命令行 `hsolve` 与 Python 模块 `build/portable/python/hsolve`。
-    `tools/dev/build.sh release` 则为本机指令集优化（`-march=native`），适合在同一台机器上长期使用。
+```bash
+git clone https://github.com/seuclkzsd/hsolve.git && cd hsolve
+conda env create -f env/environment.yml && source env/activate.sh
+tools/dev/build.sh portable
+```
+
+构建先由仓库自带的 MUMPS 5.8.2 官方源码包编译打过补丁的 MUMPS（只在第一次，之后按输入哈希复用），再编译
+hsolve。产物在 `build/portable/`：命令行 `hsolve` 与 Python 模块 `build/portable/python/hsolve`。
+`tools/dev/build.sh release` 则为本机指令集优化（`-march=native`），适合在同一台机器上长期使用。
 
 下文的命令假设在源码目录中、已经 `source env/activate.sh`，`hsolve` 指 `build/portable/hsolve`。
 
