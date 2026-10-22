@@ -484,7 +484,7 @@ commit e985acb; 5 interleaved repetitions (variant order alternating), solver ti
 * **Keep the environment's OpenBLAS** (conda-forge, DYNAMIC_ARCH): rebuilding it for the CPU,
   BLIS and LIBXSMM bring nothing or lose (section 3), and DYNAMIC_ARCH picks the right kernels on
   any x86-64 CPU at run time.
-* **Unknown judging CPU.** The hook is built without `-march=native`; its SIMD kernels carry
+* **Unknown target CPU.** The hook is built without `-march=native`; its SIMD kernels carry
   their own target attributes and are chosen by CPUID at run time (AVX-512F, else AVX2 + FMA,
   else portable loops; on non-x86 CPUs only the portable loops are compiled). AVX2 gives the same
   end-to-end gain as AVX-512 here (section 4.4), and the largest part of the gain - the parallel
@@ -494,9 +494,10 @@ commit e985acb; 5 interleaved repetitions (variant order alternating), solver ti
   and OpenBLAS' per-call overhead; on a CPU where one core can already saturate the memory the
   parallel split should gain less (not measured; it only starts at 512 KiB of A, where a parallel
   region's few microseconds are small against the call). The rest
-  of hsolve follows the build presets: `release` compiles with `-march=native` (build on the
-  judging machine), `portable` without (a binary built elsewhere); the hook behaves the same in
-  both.
+  of hsolve follows the build presets: `release` (the default; `portable` is the same preset
+  under its old name) targets the x86-64 baseline and runs on any x86-64 CPU, `native` adds
+  `-march=native` for the CPU it is built on (opt-in, docs/INSTALL.md §6); the hook behaves the
+  same in both.
 * Not pursued: an own dgemm for the factorization (at most ~20% of a factorization, section 2.1,
   and no existing kernel tried does better than OpenBLAS'), and BLIS / LIBXSMM.
 
