@@ -6,7 +6,7 @@
 #     tools/dev/cluster_run.sh gpu01 -- results/portable-vs-native/reproduce.sh build
 #     tools/dev/cluster_run.sh gpu01 -- python3 tools/run/guard.py --exclusive --timeout 2700 -- \
 #         results/portable-vs-native/reproduce.sh run
-#     tools/dev/cluster_run.sh gpu01 -- results/portable-vs-native/reproduce.sh eval table pack
+#     tools/dev/cluster_run.sh gpu01 -- results/portable-vs-native/reproduce.sh evaluate table pack
 #
 #   reproduce.sh STAGE...
 #     build   tools/dev/build.sh release (portable) and native; copies both executables to $AB/bin
@@ -16,7 +16,7 @@
 #     run     tools/bench/ab_cases.py run, 5 interleaved repetitions (ABBA order), 16 threads:
 #             native vs portable -> $AB/ab-<host>, portable vs avx2 -> $AB/ab-<host>-avx2
 #             (inside the measurement slot: guard.py --exclusive)
-#     eval    tools/eval/sweep.py on both run directories (residuals, completeness, verdicts)
+#     evaluate tools/eval/sweep.py on both run directories (residuals, completeness, verdicts)
 #     table   tools/bench/ab_cases.py table -> ab-table.{md,json}, ab-table-avx2.{md,json} here
 #     pack    the run directories without eigenvectors, home paths as $HOME, into
 #             raw-ab-<host>.tar.gz / raw-ab-<host>-avx2.tar.gz here
@@ -66,7 +66,7 @@ EOF
           --reps 0,1,2,3,4 --threads 16 --run-dir "$AB/ab-$host" "${cases[@]}"
       python3 tools/bench/ab_cases.py run --bin portable="$AB/bin/hsolve_portable" --bin avx2="$AB/bin/hsolve_avx2" \
           --reps 0,1,2,3,4 --threads 16 --run-dir "$AB/ab-$host-avx2" "${cases[@]}" ;;
-    eval)
+    evaluate)
       for d in "$AB/ab-$host" "$AB/ab-$host-avx2"; do
         "${lane[@]}" python3 -m tools.eval.sweep "$d" --out "$d/eval.md"
       done ;;
