@@ -1,0 +1,25 @@
+# The image builds from the sources only (Dockerfile): everything is excluded except the files the
+# build and the package need - no history, build trees, generated data, measurement records,
+# local packages or other local directories.
+*
+!CMakeLists.txt
+!CMakePresets.json
+!LICENSE
+!NOTICE
+!THIRD_PARTY_NOTICES
+!apps
+!bench
+!cmake
+!env
+!examples
+!include
+!patches
+!python
+!scripts
+!src
+!tests
+!third_party
+!tools
+**/__pycache__
+**/*.pyc
+**/.pytest_cache
