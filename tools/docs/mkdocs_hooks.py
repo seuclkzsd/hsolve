@@ -121,14 +121,16 @@ def on_page_markdown(markdown: str, page, config, files: Files) -> str:
 
 
 def _outside_code_spans(line: str, fn) -> str:
-    parts = []
-    pos = 0
-    for m in _CODE_SPAN.finditer(line):
-        parts.append(fn(line[pos:m.start()]))
-        parts.append(m.group(0))
-        pos = m.end()
-    parts.append(fn(line[pos:]))
-    return "".join(parts)
+    """fn applied to the line with its code spans masked, so that a link whose text contains code
+    (`[`.clang-format`](.clang-format)`) is still seen whole while code itself is never rewritten."""
+    spans = []
+
+    def mask(m: re.Match) -> str:
+        spans.append(m.group(0))
+        return f"\x00{len(spans) - 1}\x00"
+
+    masked = fn(_CODE_SPAN.sub(mask, line))
+    return re.sub(r"\x00(\d+)\x00", lambda m: spans[int(m.group(1))], masked)
 
 
 def _resolve(target: str, page_repo_path: str, page_src_uri: str, files: Files) -> str | None:
