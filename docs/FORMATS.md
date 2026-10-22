@@ -161,8 +161,8 @@ data/refs/<name>/ref.json        {"kind","note","count","complete","window"}
   （§3）；λ_min(B)（一般 B 的 B^{-1}-范数要用）只用廉价的证明（对角、Gershgorin、不完全 Cholesky），都不适用时用估计
   （`subspace.rigorous = false`）。`on` = 同 auto，廉价证明都不适用时再对 B − μ·diag(B) 做惯性计数来证明 λ_min(B)
   （再分解一到两次 B 的模式，`b_min_source = "inertia_count"`）；计数证明不了时（λ_min 低于两次计数的位移，或分解失败）
-  仍为估计（`rigorous = false`），估计不超过计数已表明过大的位移，`subspace.note` 写明计数结果。`off` = 不计算（`subspace.note` 为
-  "disabled by configuration"）。代价：返回向量上各一次 A、B 乘积与 |A|、|B| 乘积、簇内 Gram 矩阵，一般 B 另有每列一次
+  仍为估计（`rigorous = false`），估计不超过计数已表明过大的位移，`subspace.note` 写明计数结果。`off` = 不计算
+  （`subspace.note` 为 "disabled by configuration"）。代价：返回向量上各一次 A、B 乘积与 |A|、|B| 乘积、簇内 Gram 矩阵，一般 B 另有每列一次
   Jacobi 预条件 CG（B = I 与对角 B 不需要），计入 `time_verify_s`；实测见 `results/subspace_bound.md`。
 - `secure`（数据保护，§5）：true 时命令行的报告与事件日志不含任何文件路径（输入改记形状、nnz、dtype 与输入文件字节的
   SHA-256，内存上限的来源只记文件名），命令行创建的全部文件（结果、报告、日志、MUMPS 外存文件）权限为 0600、目录 0700。
@@ -308,10 +308,12 @@ seconds}, slices[...], zero_cluster_dim, zero_modes_filtered, success, warnings[
     `dimension` 维谱子空间比较。`unreturned`：组内在窗口里算出、但目标未返回的对数（nearest 的 k 截断了重特征值、
     smallest / largest 的窗口多于 k 个），它们的向量属于被界定的子空间。`gap`：组内特征值到其余全部特征值的距离下界
     δ（窗口端点与其它组的 Kahan 区间）；`residual` ≥ ‖B^{-1/2}(AX − BXΛ)‖_F（含舍入误差的先验界）；
-    `orthogonality` ≥ ‖XᴴBX − I‖₂；`sin_bound = min(1, residual / (gap·sqrt(1 − orthogonality)))`。
+    `orthogonality` ≥ ‖XᴴBX − I‖₂；`sin_bound = min(1, residual / (gap·sqrt(1 − orthogonality)))`（向上舍入；
+    `lower` / `upper` 为向外舍入的 Kahan 区间，`gap` 向下舍入，`docs/DESIGN.md` §3.6-8c）。
   - `rigorous`：证书为证明（计数，或 κ 有证明的随机检验）且 λ_min(B) 有证明（B = I、对角 B、Gershgorin、不完全
     Cholesky 证明，或 `subspace_bound = on` 的惯性计数）时为 true；λ_min(B) 只是估计时为 false（`note` 说明——on 时
-    写明各次计数的位移与负、零主元数或失败原因——估计只影响 B^{-1}-范数的余项与舍入项）。`failure_probability`：取自证书（计数为 0，随机检验为其 δ）。`residual_norm`：`"2"`（B = I）、
+    写明各次计数的位移与负、零主元数或失败原因——估计只影响 B^{-1}-范数的余项与舍入项）。`failure_probability`：
+    取自证书（计数为 0，随机检验为其 δ）。`residual_norm`：`"2"`（B = I）、
     `"b_inverse_diagonal"`（对角 B，精确加权）、`"b_inverse_cg"`（一般 B：Jacobi 预条件 CG，余项以 λ_min(B) 与
     λ_min(D^{-1/2}BD^{-1/2}) 的下界界定，D = diag(B)）。`b_min` / `b_min_source`：所用的 λ_min(B) 下界（或估计）及其来源
     （`identity`、`diagonal`、`gershgorin`、`incomplete_cholesky`、`inertia_count`、`estimate`）。`seconds`：计入
