@@ -21,6 +21,14 @@ Writes results/showcase/raw/<scenario>.json after every scenario. Run inside the
         python -m tools.showcase.campaign run --root $HOME/rb-evidence/data --scenario multiplet-cube ...
 
     python -m tools.showcase.campaign profiles     # (re)write the merged tuned-profile file
+
+Scenarios whose case has no tuned profile get one with `tune` (tools/bench/tune_slepc.py with the
+scenario's target, 16 cores, inside the measurement slot): the profiles go to
+results/showcase/slepc_tuned_showcase.json, a condensed record of each tuning (configurations and
+runs tried, how many were valid) to results/showcase/slepc_tuning.json; `profiles` then merges them.
+
+    python3 tools/run/guard.py --exclusive --timeout 2700 -- \\
+        python -m tools.showcase.campaign tune --root $HOME/rb-evidence/data --scenario multiplet-cube
 """
 from __future__ import annotations
 
