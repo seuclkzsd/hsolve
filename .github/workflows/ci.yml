@@ -1,0 +1,112 @@
+# Build, test and demo on every push to main and every pull request: the portable release preset
+# with -Werror, the whole C++ test suite, the Python tests, the demo smoke run and the relocatable
+# binary package. Every step is a step of tools/dev/ci.sh, which runs the same way on a developer
+# machine or a cluster node (docs/INSTALL.md).
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  linux-x86_64:
+    name: build + tests + demo (Linux x86-64, portable)
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    defaults:
+      run:
+        shell: bash -el {0}   # login shell: setup-micromamba's activation of the environment
+    env:
+      HS_JOBS: "4"
+      HS_MUMPS_CACHE: ${{ github.workspace }}/.cache/mumps
+      # The runner is not shared: tools/run/guard.py need not keep 12 GiB free for other users.
+      HS_MIN_AVAIL_GB: "1"
+      CUDA_VISIBLE_DEVICES: ""
+    steps:
+      - name: Check out
+        uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Conda environment (env/environment.yml)
+        uses: mamba-org/setup-micromamba@v3.2.1
+        env:
+          # Solve for glibc 2.17 like the release packages (.github/workflows/release.yml), so the
+          # package step's glibc check sees the libraries a release would bundle.
+          CONDA_OVERRIDE_GLIBC: "2.17"
+        with:
+          environment-file: env/environment.yml
+          cache-environment: true
+          init-shell: bash
+
+      # The cache key is tools/dev/mumps_cache.sh's own (tarball, patches, flags, build scripts,
+      # compiler versions, environment prefix). Restore and save are separate steps, so the MUMPS
+      # build is kept even when a later step fails.
+      - name: MUMPS cache key
+        id: mumps-key
+        run: echo "key=${{ runner.os }}-$(basename "$(tools/dev/mumps_cache.sh prefix)")" >> "$GITHUB_OUTPUT"
+
+      - name: Restore the MUMPS build
+        id: mumps-cache
+        uses: actions/cache/restore@v6.1.0
+        with:
+          path: .cache/mumps
+          key: ${{ steps.mumps-key.outputs.key }}
+
+      - name: MUMPS 5.8.2 from third_party (patched)
+        run: tools/dev/ci.sh deps
+
+      - name: Save the MUMPS build
+        if: steps.mumps-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v6.1.0
+        with:
+          path: .cache/mumps
+          key: ${{ steps.mumps-cache.outputs.cache-primary-key }}
+
+      - name: Build (release preset, portable x86-64, -Werror)
+        run: tools/dev/ci.sh build
+
+      - name: Portability (no AVX outside the CPUID dispatch)
+        run: tools/dev/ci.sh portability
+
+      - name: C++ tests (ctest)
+        run: tools/dev/ci.sh ctest
+
+      - name: Python tests (pytest)
+        run: tools/dev/ci.sh pytest
+
+      - name: Example files and demo smoke run
+        run: tools/dev/ci.sh examples demo
+
+      - name: Relocatable binary package
+        run: tools/dev/ci.sh package
+
+      - name: Upload the binary package
+        uses: actions/upload-artifact@v7.0.2
+        with:
+          name: hsolve-linux-x86_64-${{ github.sha }}
+          path: |
+            build/ci-package/*.tar.gz
+            build/ci-package/*.sha256
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Test logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v7.0.2
+        with:
+          name: ci-logs-${{ github.sha }}
+          path: |
+            build/release/Testing/Temporary/LastTest*.log
+            build/ci-demo/
+          if-no-files-found: ignore
+          retention-days: 14
