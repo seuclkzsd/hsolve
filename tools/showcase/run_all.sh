@@ -14,6 +14,8 @@
 #   figures [NAMES...]      docs/images/*.png|svg (all by default) with $HS_FIGURE_PYTHON
 #   slot1 | slot2 | slot3 | slot4   the campaign's four slot calls (the scenario groups below)
 #   slots-real              slot1, slot2 and slot3 one after the other (the real-scalar SLEPc build)
+#   steps STEP...           these steps one after the other (each its own call; a failure does not
+#                           stop the next; exit status of the last failure)
 #   detach STEP [ARGS...]   run a step with nohup setsid; log in $SHOWCASE_HOME/logs/
 # Figures need matplotlib, which the project env does not ship: HS_FIGURE_PYTHON names any Python with
 # numpy + matplotlib >= 3.5 (default python3; the committed figures: /share/apps/anaconda3/bin/python,
@@ -57,9 +59,10 @@ case "$step" in
   slot2) "$0" campaign "${SLOT2[@]}" ;;
   slot3) "$0" campaign "${SLOT3[@]}" ;;
   slot4) "$0" campaign-complex "${SLOT4[@]}" ;;
-  slots-real)   # slot1-3 back to back (separate slot calls; a failed call does not stop the next)
+  slots-real) "$0" steps slot1 slot2 slot3 ;;
+  steps)
     rc=0
-    for s in slot1 slot2 slot3; do "$0" "$s" || rc=$?; done
+    for s in "$@"; do echo "[run_all] step $s"; "$0" "$s" || rc=$?; done
     exit "$rc" ;;
   physics)
     "${lane[@]}" python -m tools.showcase.physics run --root "$ROOT" --source-root data ;;
