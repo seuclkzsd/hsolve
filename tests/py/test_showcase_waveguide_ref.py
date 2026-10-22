@@ -23,22 +23,24 @@ def small_guide(tmp_path_factory):
 def test_family_reference_matches_dense_pencil(small_guide):
     root = small_guide
     line = wref.write_reference("wg-small", root)
-    assert "18 eigenvalues" in line
+    zeros = (16 - 1) ** 2                             # interior nodes of the 16 x 16 grid
+    assert f"{18 + zeros} eigenvalues" in line and f"{zeros} zeros" in line
     ref = cio.load_ref("wg-small", root=root)
     assert ref.info["complete"] and ref.info["kind"] == "solver"
     lo, hi = ref.info["window"]
+    assert lo < -wg.wavenumber(50.0) ** 2 + 0.1 and 0 < hi        # the zero cluster lies inside the window
     c = cio.load_case("wg-small", root=root)
     w = sla.eigvals(c.A.toarray(), c.B.toarray())
     w = w[np.isfinite(w)]
     real = w[np.abs(w.imag) <= 1e-9].real
     dense = np.sort(real[(real >= lo) & (real <= hi)])
-    assert dense.size == ref.eigenvalues.size == 18
+    assert dense.size == ref.eigenvalues.size == 18 + zeros
     assert np.max(np.abs(dense - ref.eigenvalues)) <= 1e-9
+    assert np.count_nonzero(ref.eigenvalues == 0.0) == zeros and np.count_nonzero(ref.eigenvalues < 0) == 18
     fam = json.loads((root / "refs/wg-small/family.json").read_text())
     assert fam["families"]["TE"]["count"] == 12 and fam["families"]["TM"]["count"] == 6
     labels = [m["label"] for m in fam["families"]["TE"]["modes"]]
     assert labels[:2] == ["TE01/TE10", "TE01/TE10"] and "TE11" in labels
-    assert hi < 0                                    # the zero cluster stays outside the window
 
 
 def test_rebuild_rejects_another_pencil(small_guide):

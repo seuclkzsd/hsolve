@@ -46,6 +46,12 @@ def attempt(case: str, root: str, lower: float, upper: float, pc_type: str, solv
                                                  m.data.astype(PETSc.ScalarType)))
     a.assemble()
     a.setOption(PETSc.Mat.Option.HERMITIAN, True)
+    # Spectrum slicing builds its solvers from the options database (prefix st_), as in SLEPc's
+    # ex25; the MUMPS settings are those slicing needs for an inertia (tools/bench/baseline_slepc.py).
+    opts = PETSc.Options()
+    for name, value in (("st_ksp_type", "preonly"), ("st_pc_type", pc_type), ("st_pc_factor_mat_solver_type", solver),
+                        ("st_mat_mumps_icntl_13", "1"), ("st_mat_mumps_icntl_24", "1"), ("st_mat_mumps_cntl_3", "1e-12")):
+        opts.setValue(name, value)
     eps = SLEPc.EPS().create()
     eps.setOperators(a)
     eps.setProblemType(SLEPc.EPS.ProblemType.HEP)
@@ -54,20 +60,25 @@ def attempt(case: str, root: str, lower: float, upper: float, pc_type: str, solv
     eps.setWhichEigenpairs(SLEPc.EPS.Which.ALL)
     st = eps.getST()
     st.setType(SLEPc.ST.Type.SINVERT)
-    ksp = st.getKSP()
-    ksp.setType(PETSc.KSP.Type.PREONLY)
-    pc = ksp.getPC()
-    pc.setType(pc_type)
-    pc.setFactorSolverType(solver)
+    eps.setFromOptions()
     t0 = time.perf_counter()
     try:
         eps.setUp()
         eps.solve()
         out.update(status="solved", nconv=int(eps.getConverged()))
-    except PETSc.Error as err:
-        out.update(status="error", petsc_error_code=int(err.ierr), message=str(err))
+    except (PETSc.Error, SystemError) as err:   # petsc4py may wrap the PETSc error in a SystemError
+        cause = err.__cause__ if isinstance(err, SystemError) and err.__cause__ is not None else err
+        out.update(status="error", petsc_error_code=int(getattr(cause, "ierr", -1)), message=str(cause))
     out["seconds"] = time.perf_counter() - t0
     return out
+
+
+def petsc_message(stderr: str) -> str:
+    """The text lines of PETSc's error report ("[0] No support for ..."), without the stack frames."""
+    lines = [ln.split("]", 1)[1].strip() for ln in stderr.splitlines() if ln.startswith("[0]") and "]" in ln]
+    keep = [ln for ln in lines if ln and " at " not in ln and not ln.startswith("#") and "----" not in ln
+            and not ln.startswith("See https") and "PETSc Release" not in ln and "Configure options" not in ln]
+    return "; ".join(dict.fromkeys(keep))[:400]
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -94,9 +105,11 @@ def main(argv: list[str] | None = None) -> int:
         except ValueError:
             rec = {}
         rec.update(pc_type=pc_type, solver=solver, returncode=proc.returncode,
-                   stderr_tail=proc.stderr[-4000:])
+                   stderr_tail=proc.stderr[-4000:], petsc_message=petsc_message(proc.stderr))
         if not rec.get("status"):
             rec["status"] = "crashed"
+        if not rec.get("message"):
+            rec["message"] = rec["petsc_message"]
         results.append(rec)
         print(f"{pc_type}/{solver}: {rec['status']} {rec.get('message', '')[:200]}", flush=True)
     doc = {"schema_version": 1, "case": args.case, "target": {"mode": "interval", "lower": args.lower,
