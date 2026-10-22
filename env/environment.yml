@@ -14,10 +14,14 @@ dependencies:
   - gcc_linux-64=13
   - gxx_linux-64=13
   - gfortran_linux-64=13
+  # glibc 2.17 headers and stubs: what is built here runs on any Linux with glibc >= 2.17
+  # (CentOS 7 and newer; tools/release/package.py checks it)
+  - sysroot_linux-64=2.17
   - cmake>=3.20
   - ninja
   - make
   - pkg-config
+  - patch  # applies the MUMPS patches (tools/dev/build_mumps.sh)
   # numerical libraries (all open source, see docs/DEPENDENCIES.md)
   - mumps-seq=5.8.2
   - mumps-include=5.8.2
