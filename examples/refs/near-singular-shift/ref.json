@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "kind": "discrete-exact",
+  "note": "exact eigenvalues of the stored matrix up to assembly rounding: unitary similarity of diag(lambda), error ~ eps * max|lambda| over each eigenvalue's block neighbourhood",
+  "count": 2000,
+  "complete": true,
+  "window": null
+}

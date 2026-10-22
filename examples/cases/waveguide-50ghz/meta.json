@@ -1,0 +1,81 @@
+{
+  "family": "waveguide",
+  "problem": "GHIEP",
+  "description": "Lee-Sun-Cendes FEM (Whitney edges + P1 nodes) of a 10.0 x 10.0 mm PEC waveguide, air-filled, at 50.0 GHz: A x = lambda B x with lambda = -beta^2 [mm^-2]; A and B indefinite (B: 64 negative / 225 positive), 64-fold zero eigenvalue (null space of A, non-physical), 18 propagating modes in the continuous model.",
+  "params": {
+    "family": "waveguide",
+    "a": 10.0,
+    "b": 10.0,
+    "freq_ghz": 50.0,
+    "eps_slab": 1.0,
+    "mu_slab": 1.0,
+    "slab_width": 0.0,
+    "target_n": null,
+    "pattern": "unionjack",
+    "perturb": 0.0,
+    "seed": 0,
+    "nx": 9,
+    "ny": 9,
+    "k0_rad_per_mm": 1.0479225109758408,
+    "units": {
+      "length": "mm",
+      "frequency": "GHz",
+      "eigenvalue": "mm^-2"
+    },
+    "generator": "tools.gen.waveguide",
+    "command": "python -m tools.gen.waveguide --family=waveguide --a=10.0 --b=10.0 --freq=50.0 --eps-slab=1.0 --mu-slab=1.0 --nx=9 --ny=9 --pattern=unionjack --perturb=0.0 --seed=0 --name=waveguide-50ghz"
+  },
+  "mesh": {
+    "nx": 9,
+    "ny": 9,
+    "nodes": 100,
+    "triangles": 162,
+    "interior_edges": 225,
+    "interior_nodes": 64,
+    "h_max_mm": 1.571348402636773,
+    "dof_layout": "[interior edges (e_t); interior nodes (e_z)]"
+  },
+  "inertia": {
+    "A": [
+      76,
+      64,
+      149
+    ],
+    "B": [
+      64,
+      0,
+      225
+    ],
+    "pencil": [
+      18,
+      64,
+      207
+    ]
+  },
+  "complex_eigenvalue_count": 0,
+  "complex_eigenvalue_min_real": null,
+  "scenarios": [
+    "indefinite-B",
+    "zero-cluster",
+    "clustered"
+  ],
+  "targets": [
+    {
+      "sigma": -0.5013049800407187,
+      "k": 18,
+      "why": "all propagating modes (lambda = -beta^2 < 0); sigma lies mid-way between two spectral gaps that the dense discrete spectrum cannot close, so the k nearest eigenvalues are exactly this group; the zero cluster (lambda = 0) is excluded."
+    },
+    {
+      "sigma": 0.27781071578105804,
+      "k": 6,
+      "why": "the least evanescent modes just above the zero cluster (lambda > 0, close to cutoff); sigma lies mid-way between two spectral gaps that the dense discrete spectrum cannot close, so the k nearest eigenvalues are exactly this group."
+    }
+  ],
+  "citation": "J.-F. Lee, D.-K. Sun, Z. J. Cendes, Full-wave analysis of dielectric waveguides using tangential vector finite elements, IEEE Trans. MTT 39(8):1262-1271, 1991",
+  "schema_version": 1,
+  "name": "waveguide-50ghz",
+  "n": 289,
+  "nnz_A": 1057,
+  "dtype": "float64",
+  "nnz_B": 2623
+}

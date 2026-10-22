@@ -1,0 +1,55 @@
+{
+  "family": "yee",
+  "problem": "HEP",
+  "description": "empty PEC cavity (12, 12, 12) cells, curl-curl (standard form)",
+  "params": {
+    "generator": "yee",
+    "cells": [
+      12,
+      12,
+      12
+    ],
+    "lengths": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "boundary": "pec",
+    "phases": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "form": "standard",
+    "eps": 1.0,
+    "mu": 1.0
+  },
+  "inertia": {
+    "A": [
+      0,
+      1331,
+      3025
+    ]
+  },
+  "scenarios": [
+    "zero-cluster",
+    "multiplicity"
+  ],
+  "targets": [
+    {
+      "sigma": 52.32339055032932,
+      "k": 12,
+      "why": "lowest resonances above the gradient null space"
+    },
+    {
+      "sigma": 252.45077565426257,
+      "k": 20,
+      "why": "higher band, many polarization-degenerate pairs"
+    }
+  ],
+  "schema_version": 1,
+  "name": "interval-slicing",
+  "n": 4356,
+  "nnz_A": 52140,
+  "dtype": "float64"
+}

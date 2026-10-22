@@ -1,0 +1,7 @@
+== portable
+hsolve 0.1.0, gcc 13.4, flags: Release -pipe -O3 -DNDEBUG native=OFF mumps=mumps-5.8.2-4aa1f2dcd75ea2ff mumps_blocking=p9, openmp 201511
+9a6fcfe6023b97009afe1e36f2e4823a61d7cb068625f280eef8ed5fbed504d4  hsolve_portable
+== native
+hsolve 0.1.0, gcc 13.4, flags: Release -pipe -O3 -DNDEBUG native=ON mumps=mumps-5.8.2-4aa1f2dcd75ea2ff mumps_blocking=p9, openmp 201511
+23560f914eeb333a65ea8c4cbca3c710e0f8e0107a653a406c3564fdf0a2f1c0  hsolve_native
+commit 6b9382fc08f68452d6174f9290291efa943ec3e2

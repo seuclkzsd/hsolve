@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Build and run C++ unit tests (ctest) and Python tool tests (pytest) under the resource guard.
-# Usage: tools/dev/test.sh [release|debug] [ctest -R regex]
+# Usage: tools/dev/test.sh [release|native|portable|debug] [ctest -R regex]
 # ctest names are "<test executable>.<Suite>.<Name>", e.g. -R test_sparse or -R SparsePencil.
 # A regex that matches no test is an error (noTestsAction), never a silent pass.
 set -euo pipefail

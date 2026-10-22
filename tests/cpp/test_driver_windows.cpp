@@ -6,12 +6,15 @@
 #include <algorithm>
 #include <cmath>
 #include <fstream>
+#include <limits>
 #include <numeric>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include <nlohmann/json.hpp>
 
+#include "driver/internal.hpp"
 #include "hsolve/error.hpp"
 #include "hsolve/log.hpp"
 #include "hsolve/solver.hpp"
@@ -217,6 +220,11 @@ TEST(DriverSlicing, EigenvaluesOnTheIntervalEndsAreIncluded) {
 TEST(DriverSlicing, ZeroBandIsCutOutOfTheInterval) {
   // 40 exact zero eigenvalues (a null space) inside the interval: with zero_filter_tol the band
   // |lambda| <= tol*scale is excluded by inertia counts at its edges, never computed.
+  // The upper end 0.5 is an eigenvalue: the matrix's copy of it lies 1e-15 below 0.5 in an
+  // -march=native build and 5.6e-16 above it in an x86-64 baseline build; null-pivot detection
+  // flags neither, so the count at 0.5 takes it while the computed value may lie just outside -
+  // the global certificate must count it as the end's count does (assign_to_windows), after a
+  // count beyond the end has shown that no further eigenvalue lies there.
   std::vector<double> lam(40, 0.0);
   for (int i = 1; i <= 150; ++i) {
     lam.push_back(0.01 * i);
@@ -225,7 +233,12 @@ TEST(DriverSlicing, ZeroBandIsCutOutOfTheInterval) {
   auto a = hs::test::prescribed_spectrum<double>(lam, 5, 22);
   auto cfg = interval_cfg(-0.5, 0.5, 30);
   cfg.zero_filter_tol = 1e-6;
-  auto sol = hs::solve(a, nullptr, cfg);
+  const std::string path = ::testing::TempDir() + "/driver_zero_band_ends.jsonl";
+  hs::Solution<double> sol;
+  {
+    hs::Logger log(0, path);
+    sol = hs::solve(a, nullptr, cfg, &log);
+  }
   expect_window_ok(sol);
   std::vector<double> want;
   for (double x : lam)
@@ -233,6 +246,53 @@ TEST(DriverSlicing, ZeroBandIsCutOutOfTheInterval) {
   expect_same_set(sol.eigenvalues, want, 1e-10);
   EXPECT_EQ(sol.report.zero_modes_filtered, 40);
   for (double x : sol.eigenvalues) EXPECT_GT(std::abs(x), 1e-3);
+  // An end is checked exactly when a pair computed just outside it was needed, and was clear.
+  const auto outside = std::count_if(sol.eigenvalues.begin(), sol.eigenvalues.end(),
+                                     [](double x) { return std::abs(x) > 0.5; });
+  for (double x : sol.eigenvalues) {
+    if (std::abs(x) > 0.5) {
+      EXPECT_LT(std::abs(x) - 0.5, 1e-12);
+    }
+  }
+  std::ifstream in(path);
+  std::string line;
+  index_t checks = 0;
+  while (std::getline(in, line)) {
+    const auto j = nlohmann::json::parse(line);
+    if (j.value("event", "") != "window_end_check") continue;
+    ++checks;
+    EXPECT_TRUE(j["clear"].get<bool>()) << line;
+  }
+  EXPECT_EQ(checks, outside);
+}
+
+TEST(DriverSlicing, AnEigenvalueJustOutsideAnEndIsNeitherReturnedNorCounted) {
+  // Eigenvalues 1.5e-9 outside both ends (within the ends' resolution 1e-9 * scale, but far above
+  // the rounding of the counts there): the counts leave them out, the slices keep their pairs as
+  // near the ends, and the result has exactly the eigenvalues inside - no end check needed.
+  std::vector<double> lam;
+  for (int i = 0; i < 300; ++i) lam.push_back(-3.0 + 0.02 * i);  // -3 .. 2.98
+  const double lo = -1.01, hi = 0.99;
+  lam.push_back(lo - 1.5e-9);
+  lam.push_back(hi + 1.5e-9);
+  auto a = hs::test::prescribed_spectrum<double>(lam, 4, 23);
+  const std::string path = ::testing::TempDir() + "/driver_just_outside.jsonl";
+  hs::Solution<double> sol;
+  {
+    hs::Logger log(0, path);
+    sol = hs::solve(a, nullptr, interval_cfg(lo, hi, 30), &log);
+  }
+  expect_window_ok(sol);
+  expect_same_set(sol.eigenvalues, in_interval(lam, lo, hi), 1e-10);
+  EXPECT_EQ(sol.report.certificate.count_inertia, 100);
+  for (double x : sol.eigenvalues) {
+    EXPECT_GE(x, lo);
+    EXPECT_LE(x, hi);
+  }
+  std::ifstream in(path);
+  std::string line;
+  while (std::getline(in, line))
+    EXPECT_NE(nlohmann::json::parse(line).value("event", ""), "window_end_check") << line;
 }
 
 TEST(DriverSlicing, EmptyIntervalSucceedsWithNoPairs) {
@@ -399,10 +459,13 @@ TEST(DriverTargets, KthEigenvalueInsideAMultiplet) {
   std::vector<double> neg(lam);
   for (auto& x : neg) x = -x;
   auto an = hs::test::prescribed_spectrum<double>(neg, 4, 49);
-  // The 1e-12 bounds below detect that regression for single-vector runs, which overshoot tol by
-  // orders of magnitude; a block run stops as soon as its estimates meet tol (eigen.hpp), so the
-  // 11-pair window's auto block width (the default) is checked against tol, with the same
-  // structural checks (shift placement, factorizations) as the single-vector runs.
+  // The tol / 10 bounds below detect that regression for single-vector runs, which overshoot tol
+  // by one to five orders of magnitude (eta 1e-15 .. 1.1e-12 here: the run ends a restart earlier
+  // or later with the rounding of the build - largest k = 7 ends at 3.7e-15 after 7 restarts with
+  // -march=native, at 1.07e-12 after 6 in an x86-64 baseline build); a block run stops as soon as
+  // its estimates meet tol (eigen.hpp), so the 11-pair window's auto block width (the default) is
+  // checked against tol, with the same structural checks (shift placement, factorizations) as the
+  // single-vector runs.
   // sign = +1: smallest of `a` (shift above the multiplet at 2.5); -1: largest of `an` (mirror).
   auto expect_shift_placed = [](const hs::SolveReport& r, double sign, index_t k) {
     EXPECT_LE(r.factor_stats.factorizations, 18) << k;
@@ -418,7 +481,7 @@ TEST(DriverTargets, KthEigenvalueInsideAMultiplet) {
       expect_window_ok(s);
       expect_same_set(s.eigenvalues, {lam.begin(), lam.begin() + k}, 1e-10);
       EXPECT_EQ(s.report.block_size, p == 0 ? 4 : 1);
-      EXPECT_LE(worst_eta(s.report), p == 1 ? 1e-12 : cs.tol) << k;
+      EXPECT_LE(worst_eta(s.report), p == 1 ? 0.1 * cs.tol : cs.tol) << k;
       expect_shift_placed(s.report, +1.0, k);
       auto cl = end_cfg(hs::TargetMode::Largest, k);
       cl.block_size = p;
@@ -426,7 +489,7 @@ TEST(DriverTargets, KthEigenvalueInsideAMultiplet) {
       expect_window_ok(l);
       expect_same_set(l.eigenvalues, {neg.begin(), neg.begin() + k}, 1e-10);
       EXPECT_EQ(l.report.block_size, p == 0 ? 4 : 1);
-      EXPECT_LE(worst_eta(l.report), p == 1 ? 1e-12 : cl.tol) << k;
+      EXPECT_LE(worst_eta(l.report), p == 1 ? 0.1 * cl.tol : cl.tol) << k;
       expect_shift_placed(l.report, -1.0, k);
     }
   }
@@ -485,13 +548,18 @@ TEST(DriverSlicing, IntervalsAroundA30FoldEigenvalue) {
 }
 
 TEST(DriverSlicing, MultipletsInsideSlicesGetAllCopies) {
-  {  // 40-fold 0.5 inside [0.2, 0.8] with slices of at most 10
+  {  // 40-fold 0.5 inside [0.195, 0.805] with slices of at most 10. The ends lie mid-way between
+     // eigenvalues of the 0.01 ladder: at 0.2 and 0.8 the ladder's values -1 + 0.01 i fall on
+     // either side of the end depending on whether this file is compiled with FMA contraction, and
+     // the matrix's eigenvalues differ from them by rounding (ends on eigenvalues:
+     // EigenvaluesOnTheIntervalEndsAreIncluded).
     std::vector<double> lam(40, 0.5);
     for (int i = 0; i < 300; ++i) lam.push_back(-1.0 + 0.01 * i);
     auto a = hs::test::prescribed_spectrum<double>(lam, 4, 46);
-    auto sol = hs::solve(a, nullptr, interval_cfg(0.2, 0.8, 10));
+    auto sol = hs::solve(a, nullptr, interval_cfg(0.195, 0.805, 10));
     expect_window_ok(sol);
-    expect_same_set(sol.eigenvalues, in_interval(lam, 0.2, 0.8), 1e-10);
+    expect_same_set(sol.eigenvalues, in_interval(lam, 0.195, 0.805), 1e-10);
+    EXPECT_EQ(sol.eigenvalues.size(), 101u);
   }
   {  // 12 copies of 1.0, automatic slices
     std::vector<double> lam(12, 1.0);
@@ -618,6 +686,152 @@ TEST(DriverTargets, IndefiniteBSupportsNearestOnly) {
       EXPECT_EQ(e.code(), hs::Error::Code::Unsupported);
     }
   }
+}
+
+// ------------------------------------------------- global certificate: pairs on window ends
+
+// One window [-0.5, 0.5] (scale 2: resolution d = 2e-9 at both ends) in a model of the counts: the
+// counts at its ends are nu_lo and nu_lo + required (either may have taken an eigenvalue that lies
+// numerically on its end, to either side); a count 2 d beyond an end counts the true eigenvalues
+// `exact` below that point. asked: the ends checked, in order (+1 upper, -1 lower).
+struct OneWindow {
+  explicit OneWindow(std::vector<double> exact_eigenvalues, index_t nu_at_lo = 0)
+      : exact(std::move(exact_eigenvalues)), nu_lo(nu_at_lo) {}
+
+  std::vector<double> exact;
+  index_t nu_lo;
+  std::vector<int> asked;
+  std::vector<index_t> found;
+
+  std::vector<index_t> tally(const std::vector<double>& lambda, index_t required) {
+    const std::vector<hs::driver::WindowTally> w{{-0.5, 0.5, required, false}};
+    auto end_is_clear = [&](std::size_t win, bool upper) {
+      EXPECT_EQ(win, 0u);
+      asked.push_back(upper ? 1 : -1);
+      const double end = upper ? 0.5 : -0.5;
+      const double beyond = end + (upper ? 2.0 : -2.0) * hs::driver::end_resolution(2.0, end);
+      const auto nu = static_cast<index_t>(std::count_if(exact.begin(), exact.end(), [&](double x) { return x < beyond; }));
+      return nu == (upper ? nu_lo + required : nu_lo);
+    };
+    return hs::driver::assign_to_windows(lambda, std::vector<char>(lambda.size(), 0), w, 2.0, end_is_clear, found);
+  }
+};
+
+// End checks for the cases that must not need one, and for the assignment mechanics alone.
+const hs::driver::EndIsClear kNoCheck = [](std::size_t, bool) {
+  ADD_FAILURE() << "end check asked";
+  return false;
+};
+const hs::driver::EndIsClear kAlwaysClear = [](std::size_t, bool) { return true; };
+
+std::vector<index_t> one_window(const std::vector<double>& lambda, index_t required, std::vector<index_t>& found,
+                                const hs::driver::EndIsClear& end_is_clear = kNoCheck) {
+  const std::vector<hs::driver::WindowTally> w{{-0.5, 0.5, required, false}};
+  return hs::driver::assign_to_windows(lambda, std::vector<char>(lambda.size(), 0), w, 2.0, end_is_clear, found);
+}
+
+TEST(DriverWindowTally, EndResolutionIsRelativeToTheScaleAndZeroForOpenEnds) {
+  EXPECT_DOUBLE_EQ(hs::driver::end_resolution(2.0, 0.5), 2e-9);
+  EXPECT_DOUBLE_EQ(hs::driver::end_resolution(2.0, -8.0), 8e-9);
+  EXPECT_EQ(hs::driver::end_resolution(2.0, std::numeric_limits<double>::infinity()), 0.0);
+  EXPECT_EQ(hs::driver::end_resolution(2.0, -std::numeric_limits<double>::infinity()), 0.0);
+}
+
+TEST(DriverWindowTally, APairJustOutsideAnEndCountsWhenTheCountTookIt) {
+  // The count at 0.5 took an eigenvalue whose computed value is 0.5 + 5.6e-16 (ZeroBandIsCut...);
+  // the count beyond the end finds nothing further, so the pair belongs to the window.
+  OneWindow m{{-0.2, 0.1, 0.5 + 5.6e-16, 0.9}};
+  auto in = m.tally({-0.2, 0.1, 0.5 + 5.6e-16, 0.9}, 3);
+  EXPECT_EQ(in, (std::vector<index_t>{0, 1, 2}));
+  EXPECT_EQ(m.found, (std::vector<index_t>{3}));
+  EXPECT_EQ(m.asked, (std::vector<int>{1}));
+  OneWindow lower{{-0.5 - 1e-12, -0.2, 0.1}};  // the lower end likewise: nu(-0.5) = 0 put it inside
+  in = lower.tally({-0.5 - 1e-12, -0.2, 0.1}, 3);
+  EXPECT_EQ(in, (std::vector<index_t>{0, 1, 2}));
+  EXPECT_EQ(lower.asked, (std::vector<int>{-1}));
+}
+
+TEST(DriverWindowTally, AGenuineEigenvalueJustOutsideAnEndNeverStandsInForAMissingOne) {
+  // The window holds -0.2, 0.1, 0.3, and 0.1 was not found. 0.5 + 1e-9 is an eigenvalue outside
+  // the window (the count at 0.5 left it out) within d of the end: the count beyond the end
+  // includes it, so its pair does not prove the window and the certificate fails (2 of 3).
+  OneWindow m{{-0.2, 0.1, 0.3, 0.5 + 1e-9}};
+  auto in = m.tally({-0.2, 0.3, 0.5 + 1e-9}, 3);
+  EXPECT_EQ(in, (std::vector<index_t>{0, 1}));
+  EXPECT_EQ(m.found, (std::vector<index_t>{2}));
+  EXPECT_EQ(m.asked, (std::vector<int>{1}));
+  OneWindow lower{{-0.5 - 1e-9, -0.2, 0.1, 0.3}, 1};  // mirrored at the lower end: nu(-0.5) = 1
+  in = lower.tally({-0.5 - 1e-9, -0.2, 0.3}, 3);
+  EXPECT_EQ(in, (std::vector<index_t>{1, 2}));
+  EXPECT_EQ(lower.found, (std::vector<index_t>{2}));
+  EXPECT_EQ(lower.asked, (std::vector<int>{-1}));
+}
+
+TEST(DriverWindowTally, EachEndIsCheckedOnceAndOnlyWhenAPairThereIsNeeded) {
+  // 0.5 + 1e-10 and 0.5 + 2e-10 are eigenvalues outside the window: one check of the upper end
+  // turns both pairs down. The count at -0.5 took -0.5 - 3e-10 (nu_lo = 0): the lower end is clear
+  // and gives its pair; 0.25 is still missing.
+  OneWindow m{{-0.5 - 3e-10, 0.0, 0.25, 0.5 + 1e-10, 0.5 + 2e-10}};
+  auto in = m.tally({0.0, 0.5 + 1e-10, 0.5 + 2e-10, -0.5 - 3e-10}, 3);
+  EXPECT_EQ(m.asked, (std::vector<int>{1, -1}));
+  EXPECT_EQ(in, (std::vector<index_t>{0, 3}));
+  EXPECT_EQ(m.found, (std::vector<index_t>{2}));
+  // The count at -0.5 left -0.5 - 3e-10 out (nu_lo = 1): neither end gives a pair.
+  OneWindow neither{{-0.5 - 3e-10, 0.0, 0.25, 0.5 + 1e-10, 0.5 + 2e-10}, 1};
+  in = neither.tally({0.0, 0.5 + 1e-10, 0.5 + 2e-10, -0.5 - 3e-10}, 2);
+  EXPECT_EQ(neither.asked, (std::vector<int>{1, -1}));
+  EXPECT_EQ(in, (std::vector<index_t>{0}));
+  // A complete window, or one without a pair near an end, asks nothing.
+  std::vector<index_t> found;
+  in = one_window({-0.2, 0.1, 0.5 + 1e-10}, 2, found);
+  EXPECT_EQ(in, (std::vector<index_t>{0, 1}));
+  in = one_window({-0.2, 0.1, 0.7}, 3, found);
+  EXPECT_EQ(found, (std::vector<index_t>{2}));
+}
+
+TEST(DriverWindowTally, APairJustInsideAnEndIsDroppedWhenTheCountLeftItOut) {
+  std::vector<index_t> found;
+  auto in = one_window({-0.2, 0.5 - 4e-16, 0.1}, 2, found);
+  EXPECT_EQ(in, (std::vector<index_t>{0, 2}));
+  EXPECT_EQ(found, (std::vector<index_t>{2}));
+}
+
+TEST(DriverWindowTally, PairsBeyondTheResolutionNeverMove) {
+  // A missing eigenvalue is not made up by a pair 1e-6 outside, nor an extra one hidden when it
+  // lies 1e-6 inside: the certificate fails, whatever a count beyond the end would say.
+  std::vector<index_t> found;
+  auto in = one_window({-0.2, 0.1, 0.5 + 1e-6}, 3, found, kAlwaysClear);
+  EXPECT_EQ(in, (std::vector<index_t>{0, 1}));
+  EXPECT_EQ(found, (std::vector<index_t>{2}));
+  in = one_window({-0.2, 0.1, 0.5 - 1e-6}, 2, found);
+  EXPECT_EQ(in, (std::vector<index_t>{0, 1, 2}));
+  EXPECT_EQ(found, (std::vector<index_t>{3}));
+}
+
+TEST(DriverWindowTally, NearestToTheEndFirstAndOnlyAsManyAsTheCountAsks) {
+  std::vector<index_t> found;
+  auto in = one_window({0.0, 0.5 + 9e-10, -0.5 - 3e-10, 0.5 + 1e-10}, 2, found, kAlwaysClear);
+  EXPECT_EQ(in, (std::vector<index_t>{0, 3}));
+  in = one_window({0.5 - 9e-10, 0.0, 0.5 - 1e-10, -0.5 + 5e-10}, 2, found);
+  EXPECT_EQ(in, (std::vector<index_t>{0, 1}));  // drops 1e-10, then 5e-10 from the end
+}
+
+TEST(DriverWindowTally, ZeroBandPairsAndPartialClusters) {
+  std::vector<index_t> found;
+  // A pair in the zero band never proves a window, neither by lying inside it ...
+  const std::vector<hs::driver::WindowTally> w{{-0.5, 0.5, 2, false}};
+  auto in = hs::driver::assign_to_windows({-0.2, 1e-9, 0.1}, {0, 1, 0}, w, 2.0, kNoCheck, found);
+  EXPECT_EQ(in, (std::vector<index_t>{0, 2}));
+  // ... nor from just outside the end of a window that borders the band.
+  const std::vector<hs::driver::WindowTally> above_band{{1e-6, 0.5, 2, false}};
+  in = hs::driver::assign_to_windows({1e-6 - 1e-12, 0.1}, {1, 0}, above_band, 2.0, kNoCheck, found);
+  EXPECT_EQ(in, (std::vector<index_t>{1}));
+  // A partial cluster keeps its first `required` copies, no end rule.
+  const std::vector<hs::driver::WindowTally> wp{{0.9, 1.1, 2, true}, {1.5, 2.5, 1, false}};
+  in = hs::driver::assign_to_windows({1.0, 1.0, 1.0, 1.1 + 1e-12, 2.0}, std::vector<char>(5, 0), wp, 2.0, kNoCheck,
+                                     found);
+  EXPECT_EQ(in, (std::vector<index_t>{0, 1, 4}));
+  EXPECT_EQ(found, (std::vector<index_t>{2, 1}));
 }
 
 }  // namespace

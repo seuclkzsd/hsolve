@@ -1,0 +1,137 @@
+{
+  "generator": "examples/generate.py",
+  "layout": "tools/case.py (docs/FORMATS.md)",
+  "examples": [
+    {
+      "name": "pec-cavity-multiplicity",
+      "title": "PEC cube cavity, multiple resonances",
+      "scenario": "multiplicity",
+      "problem": "HEP",
+      "n": 10800,
+      "dtype": "float64",
+      "target": {
+        "mode": "nearest",
+        "sigma": 52.746790361185596,
+        "k": 12
+      },
+      "reference": "discrete-exact",
+      "files": [
+        "cases/pec-cavity-multiplicity/A.npz",
+        "cases/pec-cavity-multiplicity/config.json",
+        "cases/pec-cavity-multiplicity/meta.json",
+        "refs/pec-cavity-multiplicity/eigenvalues.npy",
+        "refs/pec-cavity-multiplicity/ref.json"
+      ]
+    },
+    {
+      "name": "near-singular-shift",
+      "title": "shift within 1e-12 of an eigenvalue",
+      "scenario": "near-singular",
+      "problem": "HEP",
+      "n": 2000,
+      "dtype": "float64",
+      "target": {
+        "mode": "nearest",
+        "sigma": 0.30019841324797913,
+        "k": 10
+      },
+      "reference": "discrete-exact",
+      "files": [
+        "cases/near-singular-shift/A.npz",
+        "cases/near-singular-shift/config.json",
+        "cases/near-singular-shift/meta.json",
+        "refs/near-singular-shift/eigenvalues.npy",
+        "refs/near-singular-shift/ref.json"
+      ]
+    },
+    {
+      "name": "lowfreq-null-space",
+      "title": "resonances just above a 3135-fold null space",
+      "scenario": "zero-cluster",
+      "problem": "GHEP",
+      "n": 10064,
+      "dtype": "float64",
+      "target": {
+        "mode": "interval",
+        "lower": 2.992674881684086e-05,
+        "upper": 88.50164133718894
+      },
+      "reference": "discrete-exact",
+      "files": [
+        "cases/lowfreq-null-space/A.npz",
+        "cases/lowfreq-null-space/B.npz",
+        "cases/lowfreq-null-space/config.json",
+        "cases/lowfreq-null-space/meta.json",
+        "refs/lowfreq-null-space/eigenvalues.npy",
+        "refs/lowfreq-null-space/ref.json"
+      ]
+    },
+    {
+      "name": "waveguide-50ghz",
+      "title": "square waveguide 50 GHz, indefinite B",
+      "scenario": "indefinite-B",
+      "problem": "GHIEP",
+      "n": 289,
+      "dtype": "float64",
+      "target": {
+        "mode": "nearest",
+        "sigma": -0.5013049800407187,
+        "k": 18
+      },
+      "reference": "dense",
+      "files": [
+        "cases/waveguide-50ghz/A.npz",
+        "cases/waveguide-50ghz/B.npz",
+        "cases/waveguide-50ghz/config.json",
+        "cases/waveguide-50ghz/meta.json",
+        "refs/waveguide-50ghz/eigenvalues.npy",
+        "refs/waveguide-50ghz/eigenvectors.npy",
+        "refs/waveguide-50ghz/ref.json",
+        "refs/waveguide-50ghz/superseded/partial-analytic/eigenvalues.npy",
+        "refs/waveguide-50ghz/superseded/partial-analytic/ref.json"
+      ]
+    },
+    {
+      "name": "bloch-cell-complex",
+      "title": "Bloch cell, complex Hermitian",
+      "scenario": "complex-hermitian",
+      "problem": "HEP",
+      "n": 10080,
+      "dtype": "complex128",
+      "target": {
+        "mode": "nearest",
+        "sigma": 44.821326757022696,
+        "k": 10
+      },
+      "reference": "discrete-exact",
+      "files": [
+        "cases/bloch-cell-complex/A.npz",
+        "cases/bloch-cell-complex/config.json",
+        "cases/bloch-cell-complex/meta.json",
+        "refs/bloch-cell-complex/eigenvalues.npy",
+        "refs/bloch-cell-complex/ref.json"
+      ]
+    },
+    {
+      "name": "interval-slicing",
+      "title": "all eigenvalues of a mid-spectrum band",
+      "scenario": "clustered",
+      "problem": "HEP",
+      "n": 4356,
+      "dtype": "float64",
+      "target": {
+        "mode": "interval",
+        "lower": 722.539884989526,
+        "upper": 759.6367385196113
+      },
+      "reference": "discrete-exact",
+      "files": [
+        "cases/interval-slicing/A.npz",
+        "cases/interval-slicing/config.json",
+        "cases/interval-slicing/meta.json",
+        "refs/interval-slicing/eigenvalues.npy",
+        "refs/interval-slicing/ref.json"
+      ]
+    }
+  ]
+}

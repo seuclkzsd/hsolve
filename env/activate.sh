@@ -1,15 +1,35 @@
 # Source this file to enter the project environment:  source env/activate.sh
-# Activates the conda env and sets the resource policy defaults (docs/DESIGN.md §6).
+# Activates the conda environment of env/environment.yml and sets the resource policy defaults
+# (docs/DESIGN.md §6, docs/INSTALL.md).
 # Per-host settings (conda location, environment prefix, cores, memory limits) live in
 # env/hosts/<short hostname>.sh (cluster nodes, the development server); without such a file the
-# defaults below apply - on any other machine (a user's, the judges') every CPU this shell may use.
+# defaults below apply - on any other machine (a user's, CI, a container) every CPU this shell may use.
+# Which environment:
+#   HS_CONDA_ENV set (name or prefix)       activate it with conda, or micromamba if conda is absent;
+#   else an already active environment that holds the project's toolchain (cmake and conda's g++,
+#   e.g. a CI job after setup-micromamba)   use it as it is;
+#   else                                    activate the environment "hsolve" (conda or micromamba).
 _hs_host_file="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/hosts/$(hostname -s).sh"
 # shellcheck disable=SC1090
 [ -f "$_hs_host_file" ] && source "$_hs_host_file"
-_conda_bin="${HS_CONDA_BIN:-$(command -v conda || echo "$HOME/miniconda3/bin/conda")}"
-eval "$("$_conda_bin" shell.bash hook)"
-conda activate "${HS_CONDA_ENV:-os2026}"
-unset _conda_bin _hs_host_file
+if [ -n "${HS_CONDA_ENV:-}" ] || [ -z "${CONDA_PREFIX:-}" ] || [ ! -x "${CONDA_PREFIX:-}/bin/cmake" ] ||
+   ! compgen -G "${CONDA_PREFIX:-/nonexistent}/bin/x86_64-conda*-linux-gnu-g++" >/dev/null; then
+  _hs_env="${HS_CONDA_ENV:-hsolve}"
+  _conda_bin="${HS_CONDA_BIN:-$(command -v conda || true)}"
+  [ -n "$_conda_bin" ] || [ ! -x "$HOME/miniconda3/bin/conda" ] || _conda_bin="$HOME/miniconda3/bin/conda"
+  if [ -n "$_conda_bin" ]; then
+    eval "$("$_conda_bin" shell.bash hook)"
+    conda activate "$_hs_env"
+  elif command -v micromamba >/dev/null 2>&1; then
+    eval "$(micromamba shell hook -s bash)"
+    micromamba activate "$_hs_env"
+  else
+    echo "env/activate.sh: neither conda nor micromamba found; create the environment first (docs/INSTALL.md)" >&2
+    return 1 2>/dev/null || exit 1
+  fi
+  unset _conda_bin _hs_env
+fi
+unset _hs_host_file
 # Some user profiles prepend other toolchains (e.g. an old cmake); make the env win.
 export PATH="$CONDA_PREFIX/bin:$PATH"
 # conda compiler activation injects -march=nocona -O2 ...; CMake owns optimisation flags.
@@ -21,5 +41,5 @@ export HS_MEM_GB="${HS_MEM_GB:-30}"            # RSS limit enforced by tools/run
 export OMP_NUM_THREADS="${OMP_NUM_THREADS:-4}" # interactive default; guard.py overrides per run
 export OPENBLAS_NUM_THREADS="${OPENBLAS_NUM_THREADS:-4}"
 # numpy's MADV_HUGEPAGE triggers failing THP compaction on this machine: first touch of fresh
-# arrays becomes ~100x slower (measured by the generator agents). Disable it for every tool.
+# arrays becomes ~100x slower (measured with the data generators). Disable it for every tool.
 export NUMPY_MADVISE_HUGEPAGE=0

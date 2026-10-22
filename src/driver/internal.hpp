@@ -840,6 +840,46 @@ template <class T>
 Solution<T> solve_definite(Ctx& c, const ShiftedPencil<T>& pencil, SparseFactorization<T>& fac, double n2a,
                            double n2b, double scale, double sigma0, const SpectrumEstimate& spectrum);
 
+/// Resolution of a window end or slice end s of the windowed solve (definite.cpp): an eigenvalue
+/// within this distance of s is numerically on it - 1e-9 * max(scale, |s|), ten times the
+/// eigenvalue error an accepted pair can carry at the default tol; 0 for an open (infinite) end.
+double end_resolution(double scale, double s);
+
+/// A target window of the windowed solve's global certificate (definite.cpp, step 4): [lo, hi]
+/// between two exact counts (+-inf: open), proven by `required` pairs; partial: a cluster of
+/// numerically equal eigenvalues of which any `required` copies are a valid answer.
+struct WindowTally {
+  double lo = 0.0, hi = 0.0;
+  index_t required = 0;
+  bool partial = false;
+};
+
+/// Whether the count beyond end `upper` (true: hi, false: lo) of window w equals the count at that
+/// end: nu(hi + 2 d) == nu(hi), nu(lo - 2 d) == nu(lo), d = end_resolution - no eigenvalue lies
+/// within 2 d outside the end beyond those the end's count already took (assign_to_windows).
+using EndIsClear = std::function<bool(std::size_t w, bool upper)>;
+
+/// The pairs (eigenvalues `lambda`; excluded[j]: inside the zero band) that prove the windows, in
+/// ascending index; found[w] = how many prove window w. A pair belongs to the window that holds it
+/// (a partial window keeps the first `required`). The count at an end decides on which side of it
+/// an eigenvalue within about eps * ||K|| lies - null-pivot detection need not flag it
+/// (include/hsolve/factor.hpp) - while the pair's computed eigenvalue may fall on the other side
+/// in its last bits. So, with run_slice's tolerance d = end_resolution:
+///   * a window holding fewer pairs than its count also takes unassigned pairs (not excluded)
+///     within d outside one of its ends, nearest to the end first - but only from an end that
+///     end_is_clear(w, upper) confirms by a count at 2 d beyond it: no eigenvalue lies there, so a
+///     pair computed within d outside the end (eigenvalue error <= d / 10 for an accepted pair at
+///     the default tol) belongs to an eigenvalue the end's count put inside. A genuine eigenvalue
+///     just outside the end fails the check and never stands in for a missing one. end_is_clear is
+///     called at most once per end, and only for an end with such a pair while the window is short;
+///   * a window holding more pairs than its count drops pairs within d inside an end, nearest to
+///     the end first (more distinct converged pairs than eigenvalues: the extra one belongs to an
+///     eigenvalue the count put outside).
+/// Pairs farther from the ends never move.
+std::vector<index_t> assign_to_windows(const std::vector<double>& lambda, const std::vector<char>& excluded,
+                                       const std::vector<WindowTally>& windows, double scale,
+                                       const EndIsClear& end_is_clear, std::vector<index_t>& found);
+
 /// GHIEP (B indefinite): shift-invert general Krylov-Schur, projected refinement, real/complex
 /// classification.
 template <class T>

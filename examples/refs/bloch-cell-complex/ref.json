@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "kind": "discrete-exact",
+  "note": "discrete Yee/FIT spectrum: sum_d (2/h_d sin(theta_d))^2 with TE/TM multiplicities and the gradient null space; exact up to assembly rounding",
+  "count": 10080,
+  "complete": true,
+  "window": null
+}

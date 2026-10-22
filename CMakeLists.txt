@@ -1,7 +1,11 @@
 cmake_minimum_required(VERSION 3.20)
 project(hsolve VERSION 0.1.0 DESCRIPTION "Sparse Hermitian (indefinite) eigensolver" LANGUAGES C CXX)
 
-option(HSOLVE_NATIVE "Optimize for the build machine (-march=native)" ON)
+# Instruction set: OFF (default) compiles for the compiler's x86-64 baseline, so that a binary runs
+# on any x86-64 CPU; the hot SIMD kernels (src/sparse/kernels.cpp, src/blas) carry their AVX-512 /
+# AVX2+FMA variants as function target attributes and pick one at run time by CPUID. ON adds
+# -march=native (CMakePresets.json "native"): the binary then needs the build machine's ISA.
+option(HSOLVE_NATIVE "Optimize for the build machine (-march=native); the default build is portable" OFF)
 option(HSOLVE_BUILD_TESTS "Build unit tests" ON)
 option(HSOLVE_BUILD_APPS "Build command-line applications" ON)
 option(HSOLVE_WERROR "Treat compiler warnings as errors" OFF)
@@ -239,8 +243,16 @@ if(HSOLVE_BUILD_TESTS)
     target_link_libraries(${name} PRIVATE hsolve hsolve_test_support GTest::gtest_main LAPACK::LAPACK
                                           BLAS::BLAS MUMPS::MUMPS nlohmann_json::nlohmann_json)
     # Test names are "<executable>.<Suite>.<Name>", so `ctest -R test_factor` selects one file.
-    gtest_discover_tests(${name} TEST_PREFIX "${name}." DISCOVERY_MODE PRE_TEST
-      PROPERTIES ENVIRONMENT "OMP_NUM_THREADS=2;OPENBLAS_NUM_THREADS=1")
+    if(name STREQUAL "test_parallel_session")
+      # Its Auto decisions compare the measured main factorization time with a cost model: run it
+      # alone, so that tests beside it on a small machine (a 4-CPU CI runner, ctest -j4) do not
+      # inflate that time and turn "too cheap for the helpers" into "worth it".
+      gtest_discover_tests(${name} TEST_PREFIX "${name}." DISCOVERY_MODE PRE_TEST
+        PROPERTIES ENVIRONMENT "OMP_NUM_THREADS=2;OPENBLAS_NUM_THREADS=1" RUN_SERIAL TRUE)
+    else()
+      gtest_discover_tests(${name} TEST_PREFIX "${name}." DISCOVERY_MODE PRE_TEST
+        PROPERTIES ENVIRONMENT "OMP_NUM_THREADS=2;OPENBLAS_NUM_THREADS=1")
+    endif()
   endforeach()
   # Multi-process sessions over MPI (tests/cpp/mpi/): every test program runs as an MPI job of 1, 2
   # 3 and 5 ranks (rank 0 runs the tests, the others serve). Not in the glob above: they need MPI.

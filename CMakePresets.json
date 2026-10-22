@@ -12,8 +12,19 @@
     {
       "name": "release",
       "inherits": "base",
-      "displayName": "Release (-O3 -march=native)",
-      "cacheVariables": { "CMAKE_BUILD_TYPE": "Release" }
+      "displayName": "Release, portable x86-64 (default; SIMD kernels chosen at run time)",
+      "cacheVariables": { "CMAKE_BUILD_TYPE": "Release", "HSOLVE_NATIVE": "OFF" }
+    },
+    {
+      "name": "native",
+      "inherits": "base",
+      "displayName": "Release with -march=native (runs only on CPUs with the build machine's ISA)",
+      "cacheVariables": { "CMAKE_BUILD_TYPE": "Release", "HSOLVE_NATIVE": "ON" }
+    },
+    {
+      "name": "portable",
+      "inherits": "release",
+      "displayName": "Same as release (name kept for existing scripts)"
     },
     {
       "name": "debug",
@@ -23,21 +34,18 @@
         "CMAKE_BUILD_TYPE": "Debug",
         "HSOLVE_SANITIZE": "address,undefined"
       }
-    },
-    {
-      "name": "portable",
-      "inherits": "base",
-      "displayName": "Release without -march=native (for distribution)",
-      "cacheVariables": { "CMAKE_BUILD_TYPE": "Release", "HSOLVE_NATIVE": "OFF" }
     }
   ],
   "buildPresets": [
     { "name": "release", "configurePreset": "release", "jobs": 4 },
-    { "name": "debug", "configurePreset": "debug", "jobs": 4 },
-    { "name": "portable", "configurePreset": "portable", "jobs": 4 }
+    { "name": "native", "configurePreset": "native", "jobs": 4 },
+    { "name": "portable", "configurePreset": "portable", "jobs": 4 },
+    { "name": "debug", "configurePreset": "debug", "jobs": 4 }
   ],
   "testPresets": [
     { "name": "release", "configurePreset": "release", "output": { "outputOnFailure": true }, "execution": { "jobs": 4, "noTestsAction": "error" } },
+    { "name": "native", "configurePreset": "native", "output": { "outputOnFailure": true }, "execution": { "jobs": 4, "noTestsAction": "error" } },
+    { "name": "portable", "configurePreset": "portable", "output": { "outputOnFailure": true }, "execution": { "jobs": 4, "noTestsAction": "error" } },
     { "name": "debug", "configurePreset": "debug", "output": { "outputOnFailure": true }, "execution": { "jobs": 4, "noTestsAction": "error" } }
   ]
 }

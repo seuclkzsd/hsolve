@@ -1,0 +1,56 @@
+{
+  "family": "yee",
+  "problem": "HEP",
+  "description": "empty Bloch-periodic cell (16, 15, 14) cells, curl-curl (standard form)",
+  "params": {
+    "generator": "yee",
+    "cells": [
+      16,
+      15,
+      14
+    ],
+    "lengths": [
+      1.0,
+      0.9,
+      0.8
+    ],
+    "boundary": "bloch",
+    "phases": [
+      0.9424777960769379,
+      0.6283185307179586,
+      0.3141592653589793
+    ],
+    "form": "standard",
+    "eps": 1.0,
+    "mu": 1.0
+  },
+  "inertia": {
+    "A": [
+      0,
+      3360,
+      6720
+    ]
+  },
+  "scenarios": [
+    "zero-cluster",
+    "multiplicity",
+    "complex-hermitian"
+  ],
+  "targets": [
+    {
+      "sigma": 44.821326757022696,
+      "k": 10,
+      "why": "lowest resonances above the gradient null space"
+    },
+    {
+      "sigma": 154.61360983113354,
+      "k": 20,
+      "why": "higher band, many polarization-degenerate pairs"
+    }
+  ],
+  "schema_version": 1,
+  "name": "bloch-cell-complex",
+  "n": 10080,
+  "nnz_A": 131040,
+  "dtype": "complex128"
+}

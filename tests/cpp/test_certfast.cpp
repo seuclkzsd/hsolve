@@ -521,13 +521,17 @@ TYPED_TEST(VerifyExclusion, SuppliedCouplingSavesTheBlockApplication) {
   std::vector<double> theta;
   for (index_t i : idx) theta.push_back(1.0 / (st.pc.lambda[i] - kSigma));
   auto opt = default_options();
-  opt.coupling_bound = 1e-12;
+  // The supplied theta come from the dense eigensolver's lambda, accurate to ~1e-11 in theta: the
+  // coupling bound must cover that, or whether the edge eigenvalue 0.36 (exactly at distance r)
+  // counts depends on the platform's rounding (it flipped with OpenBLAS' AVX2 kernels at 1e-12).
+  opt.coupling_bound = 1e-9;
   opt.deflated_theta = &theta;
   const auto r = hs::exclusion_check<T>(*st.op, nullptr, columns(st.pc.v, idx), kSigma, kRadius, opt);
   EXPECT_EQ(r.status, ExclusionStatus::Passed) << r.statement;
   EXPECT_EQ(r.op_applications, r.block_steps * 4);
-  EXPECT_EQ(r.coupling, 1e-12);
+  EXPECT_EQ(r.coupling, 1e-9);
   EXPECT_EQ(r.found_inside, 8);
+  EXPECT_EQ(r.certified_inside, 7);  // 0.36 within e of the edge, as with a computed coupling
 }
 
 TYPED_TEST(VerifyExclusion, NoStatementWithoutGapOrWithinTheStepCap) {
