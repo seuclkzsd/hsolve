@@ -60,7 +60,7 @@ DEFAULT_CORES = os.environ.get("HS_CORES", "24-30,33-41")
 MEMORY_LIMIT_ENV = "HSOLVE_MEMORY_LIMIT_GB"  # hs::kMemoryLimitEnv: the cap the child may plan with
 DEFAULT_MEM_GB = float(os.environ.get("HS_MEM_GB", "30"))
 DEFAULT_MIN_AVAIL_GB = float(os.environ.get("HS_MIN_AVAIL_GB", "12"))
-# During parallel multi-agent phases set HS_MAX_SHARED_MEM_GB (e.g. 8): larger --mem-gb then
+# While several parallel jobs share a node set HS_MAX_SHARED_MEM_GB (e.g. 8): larger --mem-gb then
 # requires --exclusive, so heavy runs never overlap.
 MAX_SHARED_MEM_GB = float(os.environ.get("HS_MAX_SHARED_MEM_GB", "inf"))
 MEASURE_CORES = os.environ.get("HS_MEASURE_CORES", "")

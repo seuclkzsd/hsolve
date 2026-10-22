@@ -41,5 +41,5 @@ export HS_MEM_GB="${HS_MEM_GB:-30}"            # RSS limit enforced by tools/run
 export OMP_NUM_THREADS="${OMP_NUM_THREADS:-4}" # interactive default; guard.py overrides per run
 export OPENBLAS_NUM_THREADS="${OPENBLAS_NUM_THREADS:-4}"
 # numpy's MADV_HUGEPAGE triggers failing THP compaction on this machine: first touch of fresh
-# arrays becomes ~100x slower (measured by the generator agents). Disable it for every tool.
+# arrays becomes ~100x slower (measured with the data generators). Disable it for every tool.
 export NUMPY_MADVISE_HUGEPAGE=0
