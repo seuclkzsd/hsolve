@@ -81,7 +81,7 @@ def notes(version: str, image: str, repo: str, root: Path = ROOT) -> str:
         "```bash",
         f"curl -LO {repo}/releases/download/v{version}/{tarball}",
         f"curl -LO {repo}/releases/download/v{version}/SHA256SUMS",
-        "sha256sum -c SHA256SUMS --ignore-missing",
+        "sha256sum -c SHA256SUMS",
         f"tar -xzf {tarball} && hsolve-{version}-linux-x86_64/scripts/demo.sh --quick",
         "```",
         "",

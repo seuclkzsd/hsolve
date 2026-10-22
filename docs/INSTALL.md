@@ -43,7 +43,7 @@ hsolve-1.0.0-linux-x86_64/scripts/demo.sh --quick
 ```
 
 版本号以 [Releases](https://github.com/seuclkzsd/hsolve/releases) 页为准；同页的 `SHA256SUMS` 用
-`sha256sum -c SHA256SUMS --ignore-missing` 校验下载。
+`sha256sum -c SHA256SUMS` 校验下载（在下载目录里运行；该文件只列这一个包）。
 
 包可以放在任意目录、由任意用户使用：`bin/hsolve` 通过 `$ORIGIN` 相对路径找到 `lib/` 里随包的 MUMPS 5.8.2（含本项目
 补丁）、OpenBLAS、METIS、SCOTCH 与 GCC 运行库，不需要 conda、编译器、root 或 `LD_LIBRARY_PATH`。指令集只要求 x86-64

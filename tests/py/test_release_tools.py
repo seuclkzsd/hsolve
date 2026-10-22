@@ -206,3 +206,24 @@ def test_release_version_must_match_cmake_and_a_dated_changelog_section(tmp_path
     assert "old" not in notes
     assert "docker run --rm ghcr.io/x/hsolve:1.2.3 demo" in notes
     assert "releases/download/v1.2.3/hsolve-1.2.3-linux-x86_64.tar.gz" in notes
+
+
+@pytest.mark.skipif(shutil.which("sha256sum") is None, reason="needs sha256sum")
+def test_download_check_runs_as_written_with_old_coreutils(tmp_path):
+    """The checksum command of the release notes and docs/INSTALL.md §2, in a directory with the
+    downloaded package and SHA256SUMS as release.yml writes it; no option newer than coreutils 8.22
+    (CentOS 7: no --ignore-missing, so SHA256SUMS lists the package alone)."""
+    info = load("hsolve_release_info", ROOT / "tools" / "release" / "release_info.py")
+    notes = info.notes("1.2.3", "ghcr.io/x/hsolve", "https://example.org/hsolve", tmp_path)
+    check = [line for line in notes.splitlines() if line.startswith("sha256sum")]
+    assert check == ["sha256sum -c SHA256SUMS"]
+    assert f"`{check[0]}`" in (ROOT / "docs" / "INSTALL.md").read_text()
+    writes = re.findall(r"^\s*sha256sum (.+) > SHA256SUMS$", (WORKFLOWS / "release.yml").read_text(), re.M)
+    assert writes == ['"hsolve-${{ steps.version.outputs.version }}-linux-x86_64.tar.gz"']
+    tarball = tmp_path / "hsolve-1.2.3-linux-x86_64.tar.gz"
+    tarball.write_bytes(b"package bytes")
+    sums = subprocess.run(["sha256sum", tarball.name], cwd=tmp_path, capture_output=True, text=True, check=True)
+    (tmp_path / "SHA256SUMS").write_text(sums.stdout)
+    assert subprocess.run(check[0].split(), cwd=tmp_path, capture_output=True).returncode == 0
+    tarball.write_bytes(b"tampered bytes")
+    assert subprocess.run(check[0].split(), cwd=tmp_path, capture_output=True).returncode != 0

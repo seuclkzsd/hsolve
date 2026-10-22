@@ -80,6 +80,8 @@ jobs:
         run: |
           tools/dev/ci.sh package
           cd build/ci-package
+          # The package alone: the release notes' `sha256sum -c SHA256SUMS` needs every file listed
+          # (coreutils before 8.25, e.g. CentOS 7, has no --ignore-missing).
           sha256sum "hsolve-${{ steps.version.outputs.version }}-linux-x86_64.tar.gz" > SHA256SUMS
           cat SHA256SUMS
 
