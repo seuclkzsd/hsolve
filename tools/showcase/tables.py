@@ -403,14 +403,14 @@ def limitations(summary: dict[str, Any]) -> str:
     if not rows:
         return "（尚无数据）"
     untuned = [r["title"] for r in rows if r["solvers"].get("slepc-tuned", {}).get("config_scope") not in (None, "case")
-               and not r.get("slepc_tuning")]
+               and not r.get("slepc_tuning") and not r.get("slepc_probe")]
     hopeless = [r["title"] for r in rows if r.get("slepc_tuning") and not r["slepc_tuning"].get("best")]
     consistency = [r["title"] for r in rows if r["reference"].get("kind") == "solver" and not r["reference"].get("complete")]
     slower = [(r["title"], r["speedup_vs"]["slepc-tuned"], r["solvers"]["hsolve"].get("certificate_share"))
               for r in rows if r["speedup_vs"].get("slepc-tuned", 2.0) < 1.0]
     reps = sorted({r["conditions"].get("reps") for r in rows})
     parts = ["对比只覆盖 SLEPc 的 Krylov-Schur + 位移反演 + MUMPS 这一条路线（电磁特征值问题最常用的开源组合），"
-             "未测 SLEPc 的其他求解器（如围道积分 CISS、LOBPCG），也未测需要额外输入的用法（例如以离散梯度矩阵作"
+             "未测 SLEPc 的其他求解器（如围道积分 CISS、LOBPCG），也未测需要额外输入的用法（例如以离散梯度矩阵作 "
              "`EPSSetDeflationSpace` 收缩零空间）"]
     if untuned:
         parts.append(f"{len(untuned)} 个场景（{'、'.join(untuned)}）的「逐例调优」用的是同类问题的调优配置，"
