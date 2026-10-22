@@ -405,10 +405,13 @@ TEST(DriverTargets, KthEigenvalueInsideAMultiplet) {
   std::vector<double> neg(lam);
   for (auto& x : neg) x = -x;
   auto an = hs::test::prescribed_spectrum<double>(neg, 4, 49);
-  // The 1e-12 bounds below detect that regression for single-vector runs, which overshoot tol by
-  // orders of magnitude; a block run stops as soon as its estimates meet tol (eigen.hpp), so the
-  // 11-pair window's auto block width (the default) is checked against tol, with the same
-  // structural checks (shift placement, factorizations) as the single-vector runs.
+  // The tol / 10 bounds below detect that regression for single-vector runs, which overshoot tol
+  // by one to five orders of magnitude (eta 1e-15 .. 1.1e-12 here: the run ends a restart earlier
+  // or later with the rounding of the build - largest k = 7 ends at 3.7e-15 after 7 restarts with
+  // -march=native, at 1.07e-12 after 6 in an x86-64 baseline build); a block run stops as soon as
+  // its estimates meet tol (eigen.hpp), so the 11-pair window's auto block width (the default) is
+  // checked against tol, with the same structural checks (shift placement, factorizations) as the
+  // single-vector runs.
   // sign = +1: smallest of `a` (shift above the multiplet at 2.5); -1: largest of `an` (mirror).
   auto expect_shift_placed = [](const hs::SolveReport& r, double sign, index_t k) {
     EXPECT_LE(r.factor_stats.factorizations, 18) << k;
@@ -424,7 +427,7 @@ TEST(DriverTargets, KthEigenvalueInsideAMultiplet) {
       expect_window_ok(s);
       expect_same_set(s.eigenvalues, {lam.begin(), lam.begin() + k}, 1e-10);
       EXPECT_EQ(s.report.block_size, p == 0 ? 4 : 1);
-      EXPECT_LE(worst_eta(s.report), p == 1 ? 1e-12 : cs.tol) << k;
+      EXPECT_LE(worst_eta(s.report), p == 1 ? 0.1 * cs.tol : cs.tol) << k;
       expect_shift_placed(s.report, +1.0, k);
       auto cl = end_cfg(hs::TargetMode::Largest, k);
       cl.block_size = p;
@@ -432,7 +435,7 @@ TEST(DriverTargets, KthEigenvalueInsideAMultiplet) {
       expect_window_ok(l);
       expect_same_set(l.eigenvalues, {neg.begin(), neg.begin() + k}, 1e-10);
       EXPECT_EQ(l.report.block_size, p == 0 ? 4 : 1);
-      EXPECT_LE(worst_eta(l.report), p == 1 ? 1e-12 : cl.tol) << k;
+      EXPECT_LE(worst_eta(l.report), p == 1 ? 0.1 * cl.tol : cl.tol) << k;
       expect_shift_placed(l.report, -1.0, k);
     }
   }
@@ -491,13 +494,18 @@ TEST(DriverSlicing, IntervalsAroundA30FoldEigenvalue) {
 }
 
 TEST(DriverSlicing, MultipletsInsideSlicesGetAllCopies) {
-  {  // 40-fold 0.5 inside [0.2, 0.8] with slices of at most 10
+  {  // 40-fold 0.5 inside [0.195, 0.805] with slices of at most 10. The ends lie mid-way between
+     // eigenvalues of the 0.01 ladder: at 0.2 and 0.8 the ladder's values -1 + 0.01 i fall on
+     // either side of the end depending on whether this file is compiled with FMA contraction, and
+     // the matrix's eigenvalues differ from them by rounding (ends on eigenvalues:
+     // EigenvaluesOnTheIntervalEndsAreIncluded).
     std::vector<double> lam(40, 0.5);
     for (int i = 0; i < 300; ++i) lam.push_back(-1.0 + 0.01 * i);
     auto a = hs::test::prescribed_spectrum<double>(lam, 4, 46);
-    auto sol = hs::solve(a, nullptr, interval_cfg(0.2, 0.8, 10));
+    auto sol = hs::solve(a, nullptr, interval_cfg(0.195, 0.805, 10));
     expect_window_ok(sol);
-    expect_same_set(sol.eigenvalues, in_interval(lam, 0.2, 0.8), 1e-10);
+    expect_same_set(sol.eigenvalues, in_interval(lam, 0.195, 0.805), 1e-10);
+    EXPECT_EQ(sol.eigenvalues.size(), 101u);
   }
   {  // 12 copies of 1.0, automatic slices
     std::vector<double> lam(12, 1.0);
