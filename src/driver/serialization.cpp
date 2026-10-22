@@ -80,6 +80,15 @@ E enum_parse(const json& j, const char* key) {
   HS_THROW(InvalidInput, "config: '" << key << "' = \"" << s << "\" is not one of {" << allowed << "}");
 }
 
+// A switch whose only values are "auto" and "off".
+Toggle auto_or_off(const json& j, const char* key) {
+  if (!j.is_string()) HS_THROW(InvalidInput, "config: '" << key << "' must be a string");
+  const auto s = j.get<std::string>();
+  if (s == "auto") return Toggle::Auto;
+  if (s == "off") return Toggle::Off;
+  HS_THROW(InvalidInput, "config: '" << key << "' = \"" << s << "\" is not one of {auto, off}");
+}
+
 double get_number(const json& j, const char* key) {
   if (!j.is_number()) HS_THROW(InvalidInput, "config: '" << key << "' must be a number");
   return j.get<double>();
@@ -189,6 +198,12 @@ SolverConfig parse_config(const std::string& json_text, const SolverConfig& base
       c.inexact_fault_reject = v.get<bool>();
     }
     else if (key == "certificate_fault_count") c.certificate_fault_count = get_integer<index_t>(v, k);
+    else if (key == "structure_candidates") c.structure_candidates = auto_or_off(v, k);
+    else if (key == "subspace_bound") c.subspace_bound = enum_parse<Toggle>(v, k);
+    else if (key == "secure") {
+      if (!v.is_boolean()) HS_THROW(InvalidInput, "config: 'secure' must be true/false");
+      c.secure = v.get<bool>();
+    }
     else if (key == "zero_filter_tol") c.zero_filter_tol = get_number(v, k);
     else if (key == "complex_tol") c.complex_tol = get_number(v, k);
     else if (key == "max_shift_retries") c.max_shift_retries = get_integer<index_t>(v, k);
@@ -252,6 +267,11 @@ std::string config_to_json(const SolverConfig& c, int indent) {
             {"certificate_fault_drop", c.certificate_fault_drop},
             {"inexact_fault_reject", c.inexact_fault_reject},
             {"certificate_fault_count", c.certificate_fault_count},
+            // config.json takes off | auto; On, which the C++ API accepts as Auto, is written as
+            // "auto" so that the document parses again (the helpers of a multi-process solve).
+            {"structure_candidates", c.structure_candidates == Toggle::Off ? "off" : "auto"},
+            {"subspace_bound", enum_name(c.subspace_bound)},
+            {"secure", c.secure},
             {"zero_filter_tol", c.zero_filter_tol},
             {"complex_tol", c.complex_tol},
             {"max_shift_retries", c.max_shift_retries}};
@@ -266,8 +286,21 @@ std::string SolveReport::to_json(int indent) const {
                        {"abs_residual", p.abs_residual},
                        {"rel_residual", p.rel_residual},
                        {"backward_error", p.backward_error},
-                       {"accepted", p.accepted}});
+                       {"accepted", p.accepted},
+                       {"subspace_sin_bound", finite_or_null(p.subspace_sin_bound)}});
   }
+  json groups_j = json::array();
+  for (const auto& g : subspace.groups)
+    groups_j.push_back({{"kind", g.kind},
+                        {"pairs", g.pairs},
+                        {"unreturned", g.unreturned},
+                        {"lower", finite_or_null(g.lower)},
+                        {"upper", finite_or_null(g.upper)},
+                        {"dimension", g.dimension},
+                        {"gap", finite_or_null(g.gap)},
+                        {"residual", finite_or_null(g.residual)},
+                        {"orthogonality", finite_or_null(g.orthogonality)},
+                        {"sin_bound", finite_or_null(g.sin_bound)}});
   json slices_j = json::array();
   for (const auto& sl : slices) {
     slices_j.push_back({{"lower", finite_or_null(sl.lower)},
@@ -358,6 +391,17 @@ std::string SolveReport::to_json(int indent) const {
               {"solves", certificate.solves},
               {"seconds", certificate.seconds},
               {"statement", certificate.statement}}},
+            {"subspace",
+             {{"performed", subspace.performed},
+              {"max_sin_bound", finite_or_null(subspace.max_sin_bound)},
+              {"rigorous", subspace.rigorous},
+              {"failure_probability", subspace.failure_probability},
+              {"residual_norm", subspace.residual_norm},
+              {"b_min", subspace.b_min},
+              {"b_min_source", subspace.b_min_source},
+              {"groups", groups_j},
+              {"note", subspace.note},
+              {"seconds", subspace.seconds}}},
             {"slices", slices_j},
             {"zero_cluster_dim", zero_cluster_dim},
             {"zero_modes_filtered", zero_modes_filtered},

@@ -141,7 +141,10 @@ class SolveResult:
                          B-orthonormal for HEP/GHEP, unit 2-norm for indefinite B.
     complex_eigenvalues  complex128 (c,): genuinely complex eigenvalues (indefinite B only).
     complex_eigenvectors complex128 (n, c).
-    report               dict, the SolveReport (same keys as report.json of the CLI).
+    report               dict, the SolveReport (same keys as report.json of the CLI), e.g.
+                         report["certificate"] (the completeness certificate) and
+                         report["subspace"] / report["pairs"][i]["subspace_sin_bound"] (bounds on
+                         the eigenvector subspace angles, docs/FORMATS.md section 3).
     config               dict, the complete effective configuration (a valid config.json).
     """
 
@@ -376,6 +379,12 @@ def solve(
              (default), "single" (half the factor memory, slower; checked, falls back to double
              rather than return a wrong answer) or "auto" (single only when the double factors do
              not fit in core but single ones do; result.report["precision"]).
+             config["subspace_bound"]: "auto" (default; bounds on the eigenvector subspace angles
+             in result.report["subspace"]), "on" (the same, with lambda_min(B) also proven by an
+             inertia count where no cheaper proof applies; when the count does not prove it,
+             result.report["subspace"]["note"] says why) or "off".
+             config["structure_candidates"]: "off" (default) or "auto" (the optional
+             structure-recognition path, docs/FORMATS.md section 2).
     threads  OpenMP threads (0 = OMP_NUM_THREADS / all available).
     verbose  0 quiet, 1 progress events, 2 debug (written to the process's stderr).
     storage  'auto' (a matrix with one empty strict triangle is mirrored, as the CLI does),

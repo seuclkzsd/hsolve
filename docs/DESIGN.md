@@ -65,6 +65,11 @@ cuBLAS，把 MUMPS 分解（含证书计数）中被主机流量模型判为划�
 加回；默认只用 GPU，混合模式为测量选项）；模式 `HS_GPU` / `hsolve --gpu off|auto|on`，默认 off（与今天的 CPU 路径完全
 相同），无 GPU 或无 CUDA 库时自动回到 CPU（降级模式）；报告的 `gpu` 对象（§3.8、§3.10）。实测见 `results/p10_gpu.md`。
 
+v11——结构识别快路径改为可选、默认关闭（`structure_candidates = off`，§3.6-5）；特征向量子空间夹角的
+后验界（Davis–Kahan sinΘ，间隙取自证书窗口与 Kahan 残差区间，舍入按分量计入，`subspace_bound = auto | on | off`，
+§3.6-8c，报告 `subspace`，实测 `results/subspace_bound.md`）；命令行的数据保护模式 `secure`（报告与日志不含路径、
+输入以 SHA-256 记录、文件 0600，`docs/FORMATS.md` §5）。
+
 v10（P10「mpi」，分支 p10mpi）——可选的多进程模式 `hsolve-mpi`（CMake `HSOLVE_WITH_MPI=AUTO`，启动脚本
 `hsolve-mpirun`）：leader 占全部核运行 hs::solve，每个 NUMA 节点一个 helper 进程；nearest 证书的两次精确计数由两个
 helper 同时做，窗口目标的切片交给 helper，是否交出由代价规则与覆盖整棵进程树的内存预算决定，helper 失败由 leader
@@ -206,7 +211,7 @@ src/mpi      （P10，不属于 libhsolve，HSOLVE_WITH_MPI）hs::Transport 的 
 - `DenseMatrix<T>`：列主序、64 字节对齐、`ld == rows`。
 - `blas_lapack.hpp`：自行声明 Fortran BLAS/LAPACK（LP64，隐藏字符串长度参数显式传递；
   **不声明 `zdotc_` 一类复数返回值函数**——Fortran 复数返回 ABI 陷阱，点积用 gemv）。
-- `dense_ops.hpp`（**所有权：lead**）：`fill_random`（计数器式 SplitMix64，结果与线程数无关）、
+- `dense_ops.hpp`（**所有权：维护者**）：`fill_random`（计数器式 SplitMix64，结果与线程数无关）、
   `dot/norm2/axpy/scal/gram/multiply`、`orthogonalize_cgs2`（欧氏 / 存储 M·V / 按需重算 M·w
   三种模式）、`orthogonalize_block_cgs2`。其它模块只消费，不得另写同功能函数。
 - **确定性归约**：`dot`、`norm2` 与 CGS 的投影 Vᴴ M w 都在只依赖问题规模的固定行块上求和（块内
@@ -235,7 +240,7 @@ src/mpi      （P10，不属于 libhsolve，HSOLVE_WITH_MPI）hs::Transport 的 
   块 Krylov-Schur 专用；一般 Krylov-Schur 块模式的回退核；P5c 起另有单投影快路径 `try_fast`，§3.5）与
   `eigen_detail::block_cgs_cholqr2`
   （`src/eigen/block_general.*`：本节的 `orthogonalize_block_cgs2` + 两次 Cholesky-QR，一般块模式的
-  快路径，§3.5）是同类核，暂归 eigen；是否并入 dense_ops 由 lead 决定。
+  快路径，§3.5）是同类核，暂归 eigen；是否并入 dense_ops 由维护者决定。
 
 ### 3.4 factor（`include/hsolve/factor.hpp`）
 - 唯一后端 MUMPS 5.8（顺序版 + OpenMP）。**一条分解路径且始终有惯性**：实数 SYM=2（LDLᵀ，
@@ -966,7 +971,9 @@ factor（InertiaCounter）、sparse、linalg；不打印；固定种子与线程
    「最近 k 个」的选择始终相对原始 σ₀。P2 的第二次 10× 扰动在该例上落到所需半径的 5 倍处（证书数出 166 个、
    找到 21 个），已废。有意放在或紧挨重特征值的位移（§3.6-8b 的部分簇与重根重跑，`on_eigenvalue`）不按簇
    判定、照常扰动，不告警、不计 shift_retries。
-5. **候选向量与迭代求解**：nearest 在 `method = auto`、`certificate = exact`、惯性检查开启且
+5. **候选向量与迭代求解**：**可选的结构识别路径**（实验性，`SolverConfig::structure_candidates`，默认 `off`：
+   此时下面整段不执行，求解与没有这条路径时逐位相同，`tests/cpp/test_separable_curl.cpp`
+   `OffByDefaultTakesTheGeneralPath`）。设为 `auto` 时，nearest 在 `method = auto`、`certificate = exact`、惯性检查开启且
    主分解为精确双精度时，先尝试可分离笛卡尔 curl-curl 候选空间（`eigen/separable_curl.cpp`）。只从矩阵推断
    三个方向的网格尺寸、常系数与分量常数对角质量阵，逐行核对完整稀疏模板；不读取测例名称、网格元数据或参考谱。
    实数 PEC 以节点正弦、边单元余弦的张量积和横向极化构造候选。复数 Bloch 周期路径
@@ -1202,6 +1209,67 @@ factor（InertiaCounter）、sparse、linalg；不打印；固定种子与线程
      ≤ 1e-8 相对）的两次计数证实整簇数值相等后接受任意这些副本；否则整簇求解（先查内存预算）。
    - 报告：每次运行一条 `slices[]`（窗口、位移、which、计数、找到数、nev、重跑、重启、算子作用
      次数、是否通过）；`sigma_used` 为首片位移。
+8c. **特征向量子空间夹角的后验界**（`driver/subspace.*`，`SolverConfig::subspace_bound` = auto（默认）/ on / off；报告
+   `subspace` 与 `pairs[].subspace_sin_bound`，`docs/FORMATS.md` §3）。证书通过后，在 B 内积下界定每个返回特征对所在簇的
+   特征向量子空间与精确特征子空间的夹角：
+   - **变换**：C = B^{-1/2} A B^{-1/2} 为厄密矩阵，返回块 X（B-正交归一至舍入）对应 Y = B^{1/2}X，残差
+     CY − YΘ = B^{-1/2}(AX − BXΘ)；G = XᴴBX，ε ≥ ‖G − I‖₂ < 1/2（否则该组无界）。
+   - **Davis–Kahan sinΘ**（Frobenius 范数）：若 C 在精确谱子空间 E 之外的特征值与组内每个 θ 至少相距 δ，则
+     S = E⊥ᴴY 满足 Λ₂S − SΘ = E⊥ᴴR，‖S‖_F ≤ ‖R‖_F/δ，于是 ‖sinΘ(span X, E)‖_F ≤ ‖B^{-1/2}R‖_F / (δ·sqrt(1 − ε))；它同时界定
+     组内每个向量与 E 的夹角。
+   - **间隙 δ 的来源**：证书窗口 [lower, upper) 内恰有 count 个特征值（Sylvester 计数；随机检验为其声称半径与找到数），
+     窗口外的特征值离组内 θ 不近于窗口端点。窗口内算出的对（返回的，加上在窗口内找到但目标未返回的：nearest 的 k 截断
+     了重特征值、smallest / largest 的窗口多于 k 个；`Ctx::unreturned_*`）与 count 相等时，按特征值排序分簇——相邻者
+     相距 ≤ 1e-6·(|λ| + scale)（与评测的参考簇同一规则）或单对残差区间相交即同簇——再对每簇用 **Kahan 定理**
+     （Parlett, *The Symmetric Eigenvalue Problem*, Thm 11.5.1，作用于正交化的 YG^{-1/2}、H = Θ）：C 有 |c| 个特征值落在
+     J_c = [min θ_c − η_c, max θ_c + η_c]，η_c = ‖R_c‖_F/sqrt(1 − ε_c) + sqrt(1 + ε_c)·(max θ_c − min θ_c)·(1/sqrt(1 − ε_c) − 1)
+     （第二项来自 Θ 与 G^{-1/2} 的换位子）。各 J_c 互不相交（相交即合并、重算）且都在窗口内时，计数推出每个 J_c 恰含 |c| 个
+     特征值、窗口内 J 之外没有特征值，δ_c 取到窗口端点与相邻 J 的距离，E_c 为 J_c 的谱子空间（维数 |c|）。算出的对少于
+     count（smallest / largest 的部分簇），或某个 J 伸出窗口时，整个窗口为一组（`kind = "window"`），与窗口的
+     count 维谱子空间比较，δ 为到窗口端点的距离。
+   - **残差的 B^{-1}-范数**：B = I 为 2-范数；对角 B 精确加权；一般 HPD B 对每列做 Jacobi 预条件 CG 得 z ≈ B^{-1}r，
+     对任意 z 有 rᴴB^{-1}r = Re zᴴ(2r − Bz) + sᴴB^{-1}s（s = r − Bz 显式计算）。向量 v 的 B^{-1}-范数取两种界中较小者：
+     ‖v‖²/λ_min(B) 与 Jacobi 加权的 ‖D^{-1/2}v‖²/λ_min(S)（D = diag(B)，S = D^{-1/2}BD^{-1/2}，vᴴB^{-1}v =
+     (D^{-1/2}v)ᴴS^{-1}(D^{-1/2}v)）——B 的对角跨多个量级时（如 ss-tem27623 的 1e-9 至 3），λ_min(B) 很小而 λ_min(S) 不小，
+     后者小得多。CG 各列同时迭代（每步一次 B 的块乘积与三次按固定行块融合的向量运算，求和与线程数无关），在余项估计
+     不超过 CG 自身的下界估计 rᴴz_k 的 1% 时停止（残差范数因此至多放大 0.5%；或 ‖s‖ ≤ 1e-10‖r‖、至多 300 步）。
+     λ_min(S) 与 λ_min(B) = λ_min(S)·min bᵢᵢ 的下界依次取：对角元（对角 B）、Gershgorin（原矩阵与 Jacobi 缩放后两者）、
+     求解开始时 B 的正定性证明（§3.6-1，`Ctx::b_scaled_lower`）、不完全 Cholesky 证明（norms.hpp，预算为平均一次分解时间的
+     1/2、至少 0.05 s；求解开始时的证明已有结论——证明了，或因 θ < 0.1、主元破缺、Gershgorin 不成立而失败——则不重复，
+     `Ctx::b_proof_settled`）；`subspace_bound = on` 时再加**惯性计数**：B − μD 与 S − μI 惯性相同（Sylvester），对 B − μD
+     做一次 LDLᵀ 分解（`compute_inertia`：自己的分析、双精度、无 BLR、不保留因子，与完备性证书同一计数论证），无负、零主元即证明
+     λ_min(S) > μ − 4u（组装对角元 (1 − μ)bᵢᵢ 的舍入）；μ 先取 S 上 Lanczos 估计 θ 的一半，有负、零主元（或奇异，即
+     λ_min(S) ≤ μ）时再取 θ/20，分解失败（内存、MUMPS 错误）则不再试。默认的 auto 不做计数（它要再分解一到两次 B 的模式，
+     在 1e5 阶的 GHEP 上与整次求解同量级）。这些都不成立时用估计：θ/2，但不超过计数已表明 ≥ λ_min(S) 的最小位移的一半；
+     报告 `rigorous = false` 并在 `note` 中说明（auto 时提示 on 可尝试证明；on 时写明各次计数的位移与负、零主元数，或
+     失败原因）——估计只进入余项与舍入项。`b_min_source` 记录来源。
+   - **舍入**：残差、Gram 矩阵元与 B^{-1}-范数的浮点误差都按先验界计入（Higham §3.1 的 γ_k，取 2 倍余量覆盖复数运算），
+     所以界对精确量成立。标量步骤也取单侧：η 与最终的界乘 γ 因子覆盖自身的舍入（1/sqrt(1 − ε) − 1 写成
+     ε/(s(1 + s))、s = sqrt(1 − ε)，避免相消），Kahan 区间端点向外舍入、间隙向下舍入（对就近舍入的结果取 std::nextafter），
+     于是区间互不相交、落在窗口内的比较对精确区间成立。与 A、B 的乘积按分量界：|r − fl(r)| ≤ γ(|A||x| + |λ||B||x|)，
+     |fl(Bz) − Bz| ≤ γ|B||z|，Gram 矩阵元 |gᵢⱼ − fl(gᵢⱼ)| ≤ γ‖xᵢ‖·‖|B||xⱼ|‖（多一次 |A|、|B| 与 |x| 的乘积）；再按上面的 B^{-1}-范数界换算。
+     与用行绝对值和乘 ‖x‖ 的范数界相比，B 的尺度很不均匀时（特征向量在 B 的小对角元处很大）舍入项小几个数量级。
+     `rigorous` = 证书为证明且 λ_min(B) 有证明。
+   - **代价**：返回（与未返回）向量上各一次 A、B 稀疏乘积及一次 |A|、|B| 乘积、每簇一个 Gram 矩阵（窗口组为 n·m²），
+     一般 B 另加每列的 CG，必要时一次不完全 Cholesky 证明或一两次 B − μD 的惯性计数；分块（每块 ≤ 16 列，至多用预算余量的
+     一半）以控制内存，放不下时不计算（`note`）。计入 verify 阶段；在计算之前先释放主分解对象（界只需要 A、B 与向量）。
+     GHIEP（无证书）、证书未通过或关闭时不计算，`note` 写明原因。
+   - **测试**：`tests/cpp/test_subspace_bound.cpp`——已知特征向量的稠密小例（B = I、对角 B、一般 B、尺度跨 4 个量级的 B，
+     实数与复数）上界必须不小于真实夹角且至多大 3 个数量级；三重与二重特征值、未返回的副本、窗口组、两个窗口与窗口外的对；
+     端到端的 nearest（k 截断重特征值）、interval（多片）与 smallest，由惯性计数证明 λ_min 的一维 Laplace B，以及
+     计数证明不了时（2000 阶，λ_min(S) = 1.2e-6 低于两次计数的位移）估计不超过计数位移、`note` 写明计数结果。
+   - **实测**（`results/subspace_bound.md`，原始数据 `results/subspace_bound.json`；22 个数据测例的默认配置，gpu01 测量槽
+     16 核、32 GiB，auto / off / on 交错各 5 次，时间取中位数）：有参考特征向量的 18 个测例（11 个由生成器参数重算精确特征
+     向量，其余为 ARPACK tol 1e-14 的参考；HEP、GHEP、复数、重数至 12 的重特征值）每次 auto 运行都与参考比较，共 590 组，
+     界在每组都不小于实测夹角，界 / 实测的中位数 1.5e3（最小 43，最大 8.6e6）。已知完整谱的组中真实间隙 / δ 的中位数为 1、
+     最大为 2（证书窗口的端点放在谱隙中点）；差距来自 Davis–Kahan 只用残差范数：位移反演 Ritz 向量的残差主要落在离 σ 远的
+     特征方向上，它们对夹角的贡献按到那些特征值的距离缩小，界却按 δ 计——谱跨度大、目标处间隙小的测例最松（宽谱 8.6e6、
+     零簇 1e5）。默认 `deterministic = false` 下各次运行的特征向量在舍入级上不同，界随残差变化：同一测例 5 次的最大 / 最小之比
+     中位数为 1，最大 14（syn-lap3d-22）。默认 auto 下界的计算时间是不计算界时总时间的中位数 1.6%（最大 12.7%，
+     cav2d-rect-pert-1e5）；on 在 auto 只有估计的 3 个 GHEP 测例上都证明了 λ_min(B)，界的计算时间为不计算界时总时间的
+     13%–100%。其中 syn-ghep-near-singular-real-1e5 在 θ/2（auto 的估计）处的计数有负主元、在 θ/20 处证明：auto 的估计
+     偏大 10 倍，它的（非严格）界比 on 的严格界小 0.11%。
+
 9. **零模（零空间）处理**：EM 零空间可达 n 的 20% 以上，**不得显式 deflation 或剔除重算**；零簇
    靠位移放置排除，不靠事后过滤。`zero_filter_tol` 定义为相对 scale（< 0 关闭）。
    - HEP/GHEP（仅当 `zero_filter_tol` ≥ 0；带宽 band = zero_filter_tol·scale）：在 −band、+band 两点
@@ -1559,7 +1627,7 @@ gpu 节点同型，无 GPU，与其他用户共用）只在空闲时使用：
 - **GPU 实验**（P10，§3.10）：只用 gpu02 的 GPU 7（与测量槽同在 NUMA node 1；其余卡属于其他作业，不得触碰）。带 GPU 的
   计时运行经 `tools/bench/gpu_slot.sh 7 TIMEOUT -- CMD`：先用 nvidia-smi 确认该卡空闲（无计算进程、显存占用 ≤ 64 MiB），
   再以 `CUDA_VISIBLE_DEVICES=7` 和 `guard.py --exclusive` 占用测量槽。默认构建的 GPU 模式为 off，单元测试默认看不到任何
-  GPU（§3.10 测试），所以其它 agent 的测量与测试不受影响；GPU 测试用 `HSOLVE_TEST_GPU_DEVICE=7` 显式打开。
+  GPU（§3.10 测试），所以同一节点上其它并行作业的测量与测试不受影响；GPU 测试用 `HSOLVE_TEST_GPU_DEVICE=7` 显式打开。
 
 **所有编译之外的运行都必须经过 `tools/run/guard.py`**（下列默认值为开发服务器的，`env/hosts/CISL-NF5468M6.sh`；
 集群节点见上；没有主机文件的机器——用户或评测机——`HS_CORES` 默认取该 shell 可用的全部 CPU，`env/activate.sh`，
@@ -1571,7 +1639,7 @@ gpu 节点同型，无 GPU，与其他用户共用）只在空闲时使用：
 - 峰值内存报告取采样和、内核高水位 VmHWM 之和、ru_maxrss 三者最大值（不漏短时尖峰）。
 - 重型实验加 `--exclusive`（全机串行）；单元测试用 `--skip-busy-check`。计时运行不要加
   `--skip-busy-check`：槽内的核若被别的进程占用，guard 会拒绝启动。
-- 多 agent 并行阶段（开发服务器）：每个 agent 使用不相交的 `HS_CORES`（各 2 核）与 `HS_JOBS=2`，并设置
+- 并行开发阶段（开发服务器）：每个并行作业使用不相交的 `HS_CORES`（各 2 核）与 `HS_JOBS=2`，并设置
   `HS_MAX_SHARED_MEM_GB=8`（超过 8 GiB 的运行必须 `--exclusive`）。集群节点上改用上面的测量槽与构建道。
 - 预估内存（MUMPS 分析）超过 28 GiB 的实验不运行，记录并上报。
 - **MPI 绑核**：`mpiexec --bind-to core` 无视 guard 的 cpuset（40,41 下 SLEPc 的 rank 被绑到 CPU 0/48
@@ -1590,7 +1658,7 @@ gpu 节点同型，无 GPU，与其他用户共用）只在空闲时使用：
 - 提交信息：`<module>: <summary>`（如 `factor: add single-precision MUMPS backend`）。
 - 生成数据（`data/`）、构建目录与原始实验输出不入库；实验汇总（`results/*.md|json`）入库。
 - 文件所有权（P1）：`include/hsolve/<m>.hpp` 与 `src/<m>/` 归该模块；`src/linalg/*`、
-  `tests/cpp/support/*`、`tools/case.py`、`CMakeLists.txt`、`docs/*` 归 lead——其他人需要改动时
+  `tests/cpp/support/*`、`tools/case.py`、`CMakeLists.txt`、`docs/*` 归维护者——其他人需要改动时
   在交付说明中提出。
 
 ## 8. 路线图

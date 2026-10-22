@@ -404,7 +404,11 @@ Solution<T> solve_with_factors(Ctx& c, const ShiftedPencil<T>& pencil, const Dia
                          {"pattern_predicted_s", proof.pattern_predicted_s}, {"attempts_s", proof.attempts_s},
                          {"stored_bytes", proof.stored_bytes}, {"level1_bound", proof.level1_bound},
                          {"level1_entries", static_cast<std::int64_t>(proof.level1_entries)}});
+    c.b_proof_settled = proof.proven || proof.outcome == "nearly_singular" || proof.outcome == "breakdown" ||
+                        proof.outcome == "gershgorin";
+    c.b_theta_min = proof.theta_min;
     if (proof.proven) {
+      c.b_scaled_lower = proof.lower_bound;
       Inertia ib;
       ib.neg = ib.zero = 0;
       ib.pos = n;
@@ -564,6 +568,10 @@ Solution<T> driver::solve_with_helpers(const CsrMatrix<T>& a_in, const CsrMatrix
   cfg.memory_budget_gb = mb.gb;
   rep.memory = MemoryReport{mb.gb,     mb.source,  mb.limit_gb,    mb.limit_source,
                             mb.limits, mb.measure, mb.reserved_gb};
+  // Secure mode: where a limit was read (a cgroup's path names the user, job or container) is
+  // reduced to the file's name; the report carries no file system paths (docs/FORMATS.md §5).
+  if (cfg_in.secure)
+    for (MemoryLimitSource& l : rep.memory.limits) l.detail = strip_paths(l.detail);
   event(c, "memory_budget", {{"budget_gb", mb.gb}, {"source", mb.source}, {"limit_gb", mb.limit_gb},
                              {"limit_source", mb.limit_source}, {"measure", to_string(mb.measure)},
                              {"reserved_gb", mb.reserved_gb}});
@@ -640,6 +648,9 @@ Solution<T> driver::solve_with_helpers(const CsrMatrix<T>& a_in, const CsrMatrix
     rep.precision.decision = decision;
     rep.warnings.insert(rep.warnings.end(), auto_warnings.begin(), auto_warnings.end());
     c.held = driver::FactorHeld{};
+    c.certified.clear();
+    c.unreturned_lambda.clear();
+    driver::unreturned_vectors<T>(c) = DenseMatrix<T>{};
     cfg.factor_precision = FactorPrecision::Double;
     if (cfg.blr == Toggle::On) cfg.blr = Toggle::Off;
     rep.precision.fallback = true;
@@ -653,6 +664,11 @@ Solution<T> driver::solve_with_helpers(const CsrMatrix<T>& a_in, const CsrMatrix
     event(c, "precision_fallback", {{"reason", fallback}, {"attempt_s", attempt_s}, {"blr", was_blr}});
     sol = solve_with_factors(c, pencil, d, type, fac, std::move(order));
   }
+  // Eigenvector subspace-angle bounds of the returned pairs (DESIGN §3.6-8c); the factors are
+  // released first: the bound needs only A, B and the vectors.
+  fac.reset();
+  driver::attach_subspace_bound(c, *a, b, sol);
+  driver::unreturned_vectors<T>(c) = DenseMatrix<T>{};
   // Exclusive phase times: they add up to the total by construction (driver::PhaseClock).
   rep.time_setup_s = clock.seconds(driver::Phase::Setup);
   rep.time_factor_s = clock.seconds(driver::Phase::Factor);

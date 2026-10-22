@@ -75,6 +75,44 @@ TEST(DriverConfig, BlockSizeAndInertiaCounterRoundTrip) {
   EXPECT_TRUE(bad(R"({"inertia_counter": "yes"})"));
 }
 
+// structure_candidates (off | auto, default off), subspace_bound (auto | on | off, default auto)
+// and secure (default false): defaults, round trip, and other values rejected.
+TEST(DriverConfig, StructureCandidatesSubspaceBoundAndSecure) {
+  const hs::SolverConfig def;
+  EXPECT_EQ(def.structure_candidates, hs::Toggle::Off);
+  EXPECT_EQ(def.subspace_bound, hs::Toggle::Auto);
+  EXPECT_FALSE(def.secure);
+  const auto j = nlohmann::json::parse(hs::config_to_json(def));
+  EXPECT_EQ(j["structure_candidates"], "off");
+  EXPECT_EQ(j["subspace_bound"], "auto");
+  EXPECT_EQ(j["secure"], false);
+  const auto c = hs::parse_config(R"({"structure_candidates": "auto", "subspace_bound": "off", "secure": true})");
+  EXPECT_EQ(c.structure_candidates, hs::Toggle::Auto);
+  EXPECT_EQ(c.subspace_bound, hs::Toggle::Off);
+  EXPECT_TRUE(c.secure);
+  const auto again = hs::parse_config(hs::config_to_json(c));
+  EXPECT_EQ(hs::config_to_json(again), hs::config_to_json(c));
+  auto bad = [](const char* doc) {
+    try {
+      (void)hs::parse_config(doc);
+      return false;
+    } catch (const hs::Error& e) {
+      return e.code() == hs::Error::Code::InvalidInput;
+    }
+  };
+  EXPECT_TRUE(bad(R"({"structure_candidates": "on"})"));
+  // On (accepted by the C++ API as Auto) is written as "auto": the document parses again, as the
+  // helpers of a multi-process solve and the command line's re-validation parse it.
+  hs::SolverConfig on;
+  on.structure_candidates = hs::Toggle::On;
+  EXPECT_EQ(nlohmann::json::parse(hs::config_to_json(on))["structure_candidates"], "auto");
+  EXPECT_EQ(hs::parse_config(hs::config_to_json(on)).structure_candidates, hs::Toggle::Auto);
+  EXPECT_TRUE(bad(R"({"structure_candidates": true})"));
+  EXPECT_EQ(hs::parse_config(R"({"subspace_bound": "on"})").subspace_bound, hs::Toggle::On);
+  EXPECT_TRUE(bad(R"({"subspace_bound": "exact"})"));
+  EXPECT_TRUE(bad(R"({"secure": "yes"})"));
+}
+
 // ordering: -1 adaptive, MUMPS ICNTL(7) 0 / 2..7, or 10 = hsolve's nested dissection
 // (kOrderingNestedDissection); 1 (a caller-given pivot order) and anything else are rejected.
 TEST(DriverConfig, OrderingAcceptsMumpsCodesAndOwnNestedDissection) {
@@ -174,8 +212,8 @@ TEST(DriverReport, JsonHasDocumentedKeysAndNullForInfiniteBounds) {
                           "scale", "method", "candidate_source", "sigma_requested", "sigma_used", "shift_retries", "factor_options",
                           "factor_stats", "restarts", "op_applies", "time_total_s", "time_setup_s", "time_factor_s",
                           "time_iterate_s", "time_verify_s", "time_certificate_s", "peak_rss_bytes", "pairs",
-                          "certificate", "slices", "zero_cluster_dim", "zero_modes_filtered", "success", "warnings",
-                          "block_size", "solver", "version"})
+                          "certificate", "subspace", "slices", "zero_cluster_dim", "zero_modes_filtered", "success",
+                          "warnings", "block_size", "solver", "version"})
     EXPECT_TRUE(j.contains(key)) << key;
   EXPECT_EQ(j["problem"], "generalized_definite");
   EXPECT_EQ(j["solver"], "hsolve");
@@ -196,6 +234,9 @@ TEST(DriverReport, JsonHasDocumentedKeysAndNullForInfiniteBounds) {
   EXPECT_EQ(j["zero_cluster_dim"], 30);
   EXPECT_EQ(j["zero_modes_filtered"], 12);
   EXPECT_EQ(j["pairs"][0]["lambda_re"], 1.5);
+  EXPECT_TRUE(j["pairs"][0]["subspace_sin_bound"].is_null());  // no bound computed
+  EXPECT_FALSE(j["subspace"]["performed"]);
+  EXPECT_TRUE(j["subspace"]["max_sin_bound"].is_null());
   EXPECT_TRUE(j["factor_stats"].contains("estimate"));
 }
 

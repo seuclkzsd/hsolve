@@ -8,10 +8,20 @@
 // the mode is not off, report.json gets a "gpu" object (device, what was offloaded, or why the CPU
 // path ran - also when this hsolve was built without the GPU module or without the hook).
 //
+// --secure (or "secure": true in config.json; docs/FORMATS.md §5): the report and the event log
+// carry no file system paths - report.json records the inputs by shape, nnz, dtype and SHA-256 of
+// their bytes, and the solve keeps only the file names of where the memory limits were read - and
+// every file this process creates (results, report, log, MUMPS out-of-core files) is created with
+// mode 0600 (umask 077; result files that exist are replaced).
+//
 // Exit status: 0 = all pairs accepted (and certificate passed), 1 = finished but not successful,
 // 2 = error (message on stderr).
 #include "cli.hpp"
 
+#include <sys/stat.h>
+
+#include <cmath>
+#include <cstdint>
 #include <cstdio>
 #include <filesystem>
 #include <fstream>
@@ -19,6 +29,8 @@
 #include <optional>
 #include <sstream>
 #include <string>
+#include <system_error>
+#include <utility>
 #include <variant>
 #include <vector>
 
@@ -65,28 +77,82 @@ nlohmann::json gpu_report(const std::string& asked) {
           {"reason", j.value("reason", std::string("the BLAS hook did not take the GPU mode"))}};
 }
 
+// Secure mode: an output file is created anew (an existing one keeps its mode when truncated), so
+// that the umask 077 gives it mode 0600, which is then also set explicitly.
+class OutputFile {
+ public:
+  OutputFile(fs::path path, bool secure) : path_(std::move(path)), secure_(secure) {
+    if (secure_) fs::remove(path_);
+  }
+  ~OutputFile() {
+    std::error_code ec;
+    if (secure_ && fs::exists(path_, ec))
+      fs::permissions(path_, fs::perms::owner_read | fs::perms::owner_write, fs::perm_options::replace, ec);
+  }
+  OutputFile(const OutputFile&) = delete;
+  OutputFile& operator=(const OutputFile&) = delete;
+  const fs::path& path() const { return path_; }
+
+ private:
+  fs::path path_;
+  bool secure_;
+};
+
+// The input as report.json records it in secure mode: shape, nnz, dtype, file format and the
+// SHA-256 of the file's bytes - no path.
+nlohmann::json describe_input(const std::string& path, const hs::LoadedMatrix& m) {
+  const auto nnz = std::visit([](const auto& csr) { return static_cast<std::int64_t>(csr.nnz()); }, m.matrix);
+  const auto n = static_cast<std::int64_t>(m.order());
+  return {{"shape", {n, n}},
+          {"nnz", nnz},
+          {"dtype", m.is_complex() ? "complex128" : "float64"},
+          {"format", m.source_format},
+          {"sha256", hs::file_sha256(path)}};
+}
+
 template <class T>
-void write_outputs(const fs::path& out, const hs::Solution<T>& sol, const nlohmann::json& gpu) {
+void write_outputs(const fs::path& out, const hs::Solution<T>& sol, const nlohmann::json& gpu,
+                   const nlohmann::json& input, bool secure) {
   fs::create_directories(out);
-  hs::write_npy_vector(out / "eigenvalues.npy", sol.eigenvalues);
-  hs::write_npy_matrix(out / "eigenvectors.npy", sol.eigenvectors);
+  {
+    const OutputFile f(out / "eigenvalues.npy", secure);
+    hs::write_npy_vector(f.path(), sol.eigenvalues);
+  }
+  {
+    const OutputFile f(out / "eigenvectors.npy", secure);
+    hs::write_npy_matrix(f.path(), sol.eigenvectors);
+  }
   const fs::path cev = out / "complex_eigenvalues.npy", cvec = out / "complex_eigenvectors.npy";
   if (!sol.complex_eigenvalues.empty()) {
-    hs::write_npy_vector(cev, sol.complex_eigenvalues);
-    hs::write_npy_matrix(cvec, sol.complex_eigenvectors);
+    const OutputFile fv(cev, secure), fx(cvec, secure);
+    hs::write_npy_vector(fv.path(), sol.complex_eigenvalues);
+    hs::write_npy_matrix(fx.path(), sol.complex_eigenvectors);
   } else {
     fs::remove(cev);
     fs::remove(cvec);
   }
-  std::ofstream rep(out / "report.json");
-  if (gpu.is_null()) {
+  const OutputFile f(out / "report.json", secure);
+  std::ofstream rep(f.path());
+  if (gpu.is_null() && input.is_null()) {
     rep << sol.report.to_json(2) << '\n';
   } else {
     nlohmann::json r = nlohmann::json::parse(sol.report.to_json(2));
-    r["gpu"] = gpu;
+    if (!gpu.is_null()) r["gpu"] = gpu;
+    if (!input.is_null()) r["input"] = input;
     rep << r.dump(2) << '\n';
   }
-  if (!rep) HS_THROW(Io, "cannot write " << (out / "report.json").string());
+  if (!rep) HS_THROW(Io, "cannot write " << f.path().string());
+}
+
+// Whether the run is in secure mode: --secure, or "secure": true in the config file (helper ranks
+// of hsolve-mpi read it for their own log file; a config the leader rejects counts as not secure).
+bool secure_requested(bool flag, const std::string& config_path) {
+  if (flag || config_path.empty()) return flag;
+  try {
+    return hs::parse_config(read_text(config_path)).secure;
+  } catch (const std::exception&) {
+    return false;
+  }
 }
 
 void print_gpu(const nlohmann::json& g) {
@@ -135,17 +201,24 @@ void print_summary(const hs::Solution<T>& sol) {
                 "wait=%.3fs\n",
                 p.processes, p.threads, p.helper_threads, static_cast<long long>(p.helper_counts),
                 static_cast<long long>(p.helper_slices), static_cast<long long>(p.fallbacks), p.wait_s);
+  const auto& sub = r.subspace;
+  if (sub.performed && std::isfinite(sub.max_sin_bound))
+    std::printf("eigenvector subspace angles: sin <= %.3g (%s%s)\n", sub.max_sin_bound,
+                sub.rigorous ? "rigorous" : "not rigorous",
+                sub.failure_probability > 0.0 ? ", with the certificate's failure probability" : "");
+  else if (sub.performed)
+    std::printf("eigenvector subspace angles: no bound for every pair (%s)\n", sub.note.c_str());
   for (const auto& w : r.warnings) std::printf("warning: %s\n", w.c_str());
 }
 
 template <class T>
 int run_solve(const hs::CsrMatrix<T>& a, const hs::CsrMatrix<T>* b, const hs::SolverConfig& cfg, hs::Logger& log,
               const fs::path& out, const std::vector<std::string>& load_notes, bool quiet, hs::Transport* peers,
-              const hs::ParallelOptions& popts, const std::string& gpu_asked) {
+              const hs::ParallelOptions& popts, const std::string& gpu_asked, const nlohmann::json& input) {
   hs::Solution<T> sol = peers ? hs::solve_parallel(a, b, cfg, &log, *peers, popts) : hs::solve(a, b, cfg, &log);
   for (const auto& note : load_notes) sol.report.warnings.push_back("input: " + note);
   const nlohmann::json gpu = gpu_report(gpu_asked);
-  write_outputs(out, sol, gpu);
+  write_outputs(out, sol, gpu, input, cfg.secure);
   if (!quiet) {
     print_summary(sol);
     print_gpu(gpu);
@@ -180,9 +253,11 @@ int hs::cli::run(int argc, char** argv, hs::Transport* peers) {
   std::vector<double> interval;
   int threads = -1;
   std::string precision, certificate, budget, gpu_mode, helper_counts = "auto", helper_slices = "auto";
-  bool verbose = false, quiet = false, version = false;
+  std::string structure, subspace;
+  bool verbose = false, quiet = false, version = false, secure = false;
 
-  app.add_option("--A", a_path, "matrix A (.npz scipy sparse, .npy dense, .mtx)")->required();
+  auto* o_a =
+      app.add_option("--A", a_path, "matrix A (.npz scipy sparse, .npy dense, .mtx); required except with --version");
   app.add_option("--B", b_path, "matrix B (generalized problem)");
   app.add_option("--config", config_path, "config.json (docs/FORMATS.md section 2)");
   app.add_option("--out", out_dir, "output directory")->capture_default_str();
@@ -211,6 +286,20 @@ int hs::cli::run(int argc, char** argv, hs::Transport* peers) {
                                 "B is not proven) | auto (the cheapest that certifies, predicted from measured "
                                 "times) | off")
                      ->check(CLI::IsMember({"exact", "randomized", "auto", "off"}));
+  auto* o_structure = app.add_option("--structure-candidates", structure,
+                                     "optional, experimental structure-exploiting path of nearest targets for "
+                                     "matrices verified to be separable Cartesian / Bloch curl-curl operators: off "
+                                     "(default) | auto; the exact certificate follows either way")
+                          ->check(CLI::IsMember({"off", "auto"}));
+  auto* o_subspace = app.add_option("--subspace-bound", subspace,
+                                    "a-posteriori bound on the eigenvector subspace angles (report.subspace): auto "
+                                    "(default; HEP/GHEP with a passed certificate) | on (lambda_min(B) also "
+                                    "proven by an inertia count where no cheaper proof applies; when the count "
+                                    "does not prove it, report.subspace.note says why) | off")
+                         ->check(CLI::IsMember({"auto", "on", "off"}));
+  app.add_flag("--secure", secure,
+               "data protection: no file system paths in the report and the log (inputs recorded by shape, nnz, "
+               "dtype and SHA-256), files created with mode 0600 (docs/FORMATS.md section 5)");
   auto* o_gpu = app.add_option("--gpu", gpu_mode,
                                "GPU offload of the factorizations' large dense updates (BLAS hook, FP64 cuBLAS on the "
                                "first visible GPU, loaded at run time): off (default; or HS_GPU) | auto (when the "
@@ -233,6 +322,8 @@ int hs::cli::run(int argc, char** argv, hs::Transport* peers) {
 
   try {
     app.parse(argc, argv);
+    // --A is required for a solve; --version answers without it.
+    if (!version && o_a->count() == 0) throw CLI::RequiredError("--A");
   } catch (const CLI::ParseError& e) {
     return app.exit(e) == 0 ? 0 : 2;
   }
@@ -244,6 +335,7 @@ int hs::cli::run(int argc, char** argv, hs::Transport* peers) {
     // A helper: the same arguments on every rank; it only needs the log settings. Its events go to
     // <log>.rank<r> (not to stderr unless -v: one summary, the leader's).
     try {
+      if (secure_requested(secure, config_path)) ::umask(0077);
       const std::string own = log_path.empty() ? std::string() : log_path + ".rank" + std::to_string(peers->rank());
       if (!own.empty() && fs::path(own).has_parent_path()) fs::create_directories(fs::path(own).parent_path());
       hs::Logger log(verbose ? 2 : 0, own);
@@ -297,8 +389,14 @@ int hs::cli::run(int argc, char** argv, hs::Transport* peers) {
     if (*o_zero) cfg.zero_filter_tol = zero_filter;
     if (*o_prec) cfg = hs::parse_config("{\"factor_precision\": \"" + precision + "\"}", cfg);
     if (*o_cert) cfg = hs::parse_config("{\"certificate\": \"" + certificate + "\"}", cfg);
+    if (*o_structure) cfg = hs::parse_config("{\"structure_candidates\": \"" + structure + "\"}", cfg);
+    if (*o_subspace) cfg = hs::parse_config("{\"subspace_bound\": \"" + subspace + "\"}", cfg);
+    if (secure) cfg.secure = true;
     // Re-validate the merged configuration (overrides bypass parse_config's checks otherwise).
     cfg = hs::parse_config(hs::config_to_json(cfg));
+    // Secure mode: every file and directory this process creates from here on is private (0600 /
+    // 0700), including the log, the results and MUMPS' out-of-core files.
+    if (cfg.secure) ::umask(0077);
     if (*o_gpu) {
       const hs::GpuControl rc = hs::gpu_offload_set_mode(gpu_mode);
       if (rc != hs::GpuControl::Ok && gpu_mode != "off")
@@ -311,8 +409,12 @@ int hs::cli::run(int argc, char** argv, hs::Transport* peers) {
     // Create the output directory (and the log's directory) before anything writes into them.
     fs::create_directories(out_dir);
     if (!log_path.empty() && fs::path(log_path).has_parent_path()) fs::create_directories(fs::path(log_path).parent_path());
+    const OutputFile log_file(log_path, cfg.secure && !log_path.empty());
     hs::Logger log(quiet ? 0 : (verbose ? 2 : 1), log_path);
-    log.event("start", {{"version", std::string(hs::version())}, {"A", a_path}, {"B", b_path}, {"out", out_dir}});
+    if (cfg.secure)
+      log.event("start", {{"version", std::string(hs::version())}, {"secure", true}});
+    else
+      log.event("start", {{"version", std::string(hs::version())}, {"A", a_path}, {"B", b_path}, {"out", out_dir}});
 
     hs::LoadOptions lo;
     lo.hermitian_tol = cfg.hermitian_tol;
@@ -325,6 +427,17 @@ int hs::cli::run(int argc, char** argv, hs::Transport* peers) {
       for (const auto& n : lb->notes) notes.push_back("B: " + n);
     }
     log.event("loaded", {{"n", static_cast<std::int64_t>(la.order())}, {"complex", la.is_complex() || (lb && lb->is_complex())}});
+    nlohmann::json input;  // secure mode: the inputs by content, in report.json and the log
+    if (cfg.secure) {
+      input["A"] = describe_input(a_path, la);
+      input["B"] = lb ? describe_input(b_path, *lb) : nlohmann::json(nullptr);
+      log.event("input", {{"A_sha256", input["A"]["sha256"].get<std::string>()},
+                          {"A_nnz", input["A"]["nnz"].get<std::int64_t>()},
+                          {"A_dtype", input["A"]["dtype"].get<std::string>()},
+                          {"B_sha256", lb ? input["B"]["sha256"].get<std::string>() : std::string()},
+                          {"B_nnz", lb ? input["B"]["nnz"].get<std::int64_t>() : std::int64_t{0}},
+                          {"B_dtype", lb ? input["B"]["dtype"].get<std::string>() : std::string()}});
+    }
 
     const bool complex_problem = la.is_complex() || (lb && lb->is_complex());
     if (complex_problem) {
@@ -334,11 +447,12 @@ int hs::cli::run(int argc, char** argv, hs::Transport* peers) {
       hs::CsrMatrix<hs::cplx> b;
       if (lb)
         b = lb->is_complex() ? std::get<1>(std::move(lb->matrix)) : hs::to_complex(std::get<0>(std::move(lb->matrix)));
-      return run_solve<hs::cplx>(a, lb ? &b : nullptr, cfg, log, out_dir, notes, quiet, peers, popts, gpu_asked);
+      return run_solve<hs::cplx>(a, lb ? &b : nullptr, cfg, log, out_dir, notes, quiet, peers, popts, gpu_asked,
+                                 input);
     }
     const auto& a = std::get<0>(la.matrix);
     const hs::CsrMatrix<double>* b = lb ? &std::get<0>(lb->matrix) : nullptr;
-    return run_solve<double>(a, b, cfg, log, out_dir, notes, quiet, peers, popts, gpu_asked);
+    return run_solve<double>(a, b, cfg, log, out_dir, notes, quiet, peers, popts, gpu_asked, input);
   } catch (const hs::Error& e) {
     std::fprintf(stderr, "hsolve: error [%s]: %s\n", hs::to_string(e.code()), e.what());
     return 2;

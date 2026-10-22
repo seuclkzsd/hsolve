@@ -395,8 +395,11 @@ Solution<T> solve_nearest(Ctx& c, const ShiftedPencil<T>& pencil, SparseFactoriz
   index_t p = 1;
   DefiniteRun<T> run;
   bool structured = false;
-  if (cfg.method == Method::Auto && cfg.certificate == CertificateMode::Exact &&
-      cfg.inertia_check != Toggle::Off && !inexact_factor(fac.options())) {
+  // The optional structure-recognition path (SolverConfig::structure_candidates, off by default):
+  // with it off the solve below is exactly the general one.
+  if (cfg.structure_candidates != Toggle::Off && cfg.method == Method::Auto &&
+      cfg.certificate == CertificateMode::Exact && cfg.inertia_check != Toggle::Off &&
+      !inexact_factor(fac.options())) {
     std::string why;
     PhaseScope phase(c.clock, Phase::Iterate);
     // AX/BX, RR replacements, selection, and the small projected eigensystems beside X.
@@ -727,6 +730,29 @@ Solution<T> solve_nearest(Ctx& c, const ShiftedPencil<T>& pencil, SparseFactoriz
                   std::to_string(cert.count_found));
   }
   if (!want_cert) cert.note = "disabled by configuration";
+  // The certified window of the subspace bound (DESIGN §3.6-8c): counted, or the radius the
+  // randomized check cleared (every eigenvalue in it is among the found pairs).
+  if (cert.performed && cert.passed) {
+    c.certified = {CertifiedWindow{cert.lower, cert.upper,
+                                   cert.count_inertia >= 0 ? cert.count_inertia : cert.count_found}};
+    // Pairs found in the window but not selected (further copies of a multiple eigenvalue cut by k).
+    index_t zd = 0;
+    std::vector<char> chosen(static_cast<std::size_t>(run.all.size()), 0);
+    for (index_t j : select_nearest(run.all.lambda, t.sigma, k, zero_tol, zd)) chosen[static_cast<std::size_t>(j)] = 1;
+    std::vector<index_t> extra;
+    for (index_t j = 0; j < run.all.size(); ++j) {
+      const double l = run.all.lambda[static_cast<std::size_t>(j)];
+      if (!chosen[static_cast<std::size_t>(j)] && std::isfinite(l) && l >= cert.lower && l < cert.upper)
+        extra.push_back(j);
+    }
+    DenseMatrix<T>& vectors = unreturned_vectors<T>(c);
+    vectors.resize(n, static_cast<index_t>(extra.size()));
+    c.unreturned_lambda.clear();
+    for (std::size_t i = 0; i < extra.size(); ++i) {
+      std::copy(run.all.x.col(extra[i]), run.all.x.col(extra[i]) + n, vectors.col(static_cast<index_t>(i)));
+      c.unreturned_lambda.push_back(run.all.lambda[static_cast<std::size_t>(extra[i])]);
+    }
+  }
 
   Solution<T> sol;
   sol.eigenvalues = sel.lambda;
@@ -2107,6 +2133,20 @@ Solution<T> WindowSolver<T>::solve() {
     std::stable_sort(in.begin(), in.end(), [&](index_t p, index_t q) {
       return std::abs(pool_.lambda[p] - t.sigma) < std::abs(pool_.lambda[q] - t.sigma);
     });
+  if (cert.passed) {
+    // The certified windows of the subspace bound (DESIGN §3.6-8c), with the pairs found in them
+    // beyond k, which the target does not return.
+    c_.certified.clear();
+    for (const auto& w : windows) c_.certified.push_back({w.lo.s, w.hi.s, w.count()});
+    const std::size_t keep = mode == TargetMode::Interval ? in.size() : std::min(in.size(), static_cast<std::size_t>(k));
+    DenseMatrix<T>& vectors = unreturned_vectors<T>(c_);
+    vectors.resize(n_, static_cast<index_t>(in.size() - keep));
+    c_.unreturned_lambda.clear();
+    for (std::size_t i = keep; i < in.size(); ++i) {
+      std::copy(pool_.x.col(in[i]), pool_.x.col(in[i]) + n_, vectors.col(static_cast<index_t>(i - keep)));
+      c_.unreturned_lambda.push_back(pool_.lambda[static_cast<std::size_t>(in[i])]);
+    }
+  }
   if (mode != TargetMode::Interval && static_cast<index_t>(in.size()) > k) in.resize(static_cast<std::size_t>(k));
   std::vector<index_t> perm = in;
   {

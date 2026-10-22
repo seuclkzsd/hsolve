@@ -199,6 +199,31 @@ struct SolverConfig {
   /// performed but not completed, a window target the pairs of its completed slices
   /// (docs/FORMATS.md §3).
   index_t certificate_fault_count = 0;
+  /// Optional, experimental structure-exploiting path of nearest targets (DESIGN §3.6-5): Off (the
+  /// default) - the general shift-invert path only; Auto - with method auto, the exact certificate
+  /// and double factors, first try a candidate space for matrices verified entry by entry to be a
+  /// separable Cartesian (real, PEC) or Bloch-periodic (complex) curl-curl operator with a constant
+  /// diagonal mass (src/eigen/separable_*). Candidates are accepted only after Rayleigh-Ritz and a
+  /// backward error <= tol/2 on the original A, B; the exact Sylvester certificate and the
+  /// deflated reruns follow as on the general path (report.candidate_source says which ran).
+  /// config.json takes "off" | "auto"; in the C++ API On acts as Auto (config_to_json writes it
+  /// as "auto").
+  Toggle structure_candidates = Toggle::Off;
+  /// A-posteriori bound on the eigenvector subspace angles (DESIGN §3.6-8c, SolveReport::subspace):
+  /// Auto (the default) - computed for HEP/GHEP results whose certificate passed, lambda_min(B)
+  /// proven where a cheap proof applies (diagonal, Gershgorin, incomplete Cholesky) and estimated
+  /// otherwise (report.subspace.rigorous false); On - the same, and when nothing cheaper applies
+  /// an inertia count of B - mu diag(B) proves it (one or two more factorizations of B's pattern);
+  /// where the counts do not prove it (lambda_min below their shifts, a failed factorization)
+  /// the estimate stays below every shift a count showed to be too large, rigorous is false and
+  /// the note gives the counts' outcome; Off - not computed (report.subspace.note says so).
+  Toggle subspace_bound = Toggle::Auto;
+  /// Data protection (docs/FORMATS.md §5): the report and the event log carry no file system
+  /// paths - the solve reduces where a memory limit was read (report.memory.limits[].detail) to
+  /// the file's name (strip_paths, util.hpp); the command line records the inputs by shape, nnz,
+  /// dtype and SHA-256 instead of their paths and creates its output and log files with mode
+  /// 0600. The computation and its results are unchanged.
+  bool secure = false;
   double zero_filter_tol = -1.0;  ///< < 0 disables; else |lambda| <= zero_filter_tol*scale is a
                                   ///< (non-physical) zero mode, avoided by shift placement (§3.6)
   double complex_tol = 1e-8;      ///< GHIEP: a pair is complex only if |Im lambda| >
@@ -289,6 +314,61 @@ struct PairReport {
   double rel_residual = 0.0;    ///< abs_residual / (|lambda| ||B x||_2)
   double backward_error = 0.0;  ///< abs_residual / ((||A||_2 + |lambda| ||B||_2) ||x||_2)
   bool accepted = false;        ///< backward_error <= tol
+  /// Bound on the sine of the angle (B inner product) between this pair's vector - more precisely
+  /// the span of its group, SubspaceGroup - and the exact eigenspace it approximates; NaN (JSON
+  /// null) when SubspaceReport has no bound for it.
+  double subspace_sin_bound = std::numeric_limits<double>::quiet_NaN();
+};
+
+/// The returned pairs of one SubspaceReport group and the bound on their subspace (DESIGN §3.6-8c).
+/// A "cluster" group compares the span of its vectors with the exact spectral subspace of the
+/// interval [lower, upper], which holds exactly `dimension` = pairs.size() + unreturned
+/// eigenvalues (located by the certificate's counts and Kahan's residual intervals). A "window"
+/// group holds the pairs of a certified window that contains more eigenvalues than pairs computed
+/// (a partial cluster of a smallest / largest target), or whose clusters cannot be separated
+/// inside it: its subspace is compared with the `dimension`-dimensional spectral subspace of the
+/// window [lower, upper].
+struct SubspaceGroup {
+  std::string kind = "cluster";  ///< "cluster" or "window"
+  std::vector<index_t> pairs;    ///< indices into SolveReport::pairs (= Solution::eigenvalues)
+  /// Further pairs of the group that were computed inside the window but are not returned (a
+  /// nearest target's other copies of a multiple eigenvalue cut by k, a smallest / largest window's
+  /// pairs beyond k): their vectors belong to the bounded span, which contains the returned ones.
+  index_t unreturned = 0;
+  double lower = 0.0;            ///< interval of the exact eigenvalues the subspace is compared with
+  double upper = 0.0;
+  index_t dimension = 0;         ///< their number (dimension of the exact spectral subspace)
+  double gap = 0.0;              ///< delta: distance of the pairs' eigenvalues to every other eigenvalue
+  double residual = 0.0;         ///< >= ||B^{-1/2} (A X - B X Lambda)||_F, rounding included
+  double orthogonality = 0.0;    ///< >= ||X^H B X - I||_2
+  double sin_bound = 0.0;        ///< residual / (gap sqrt(1 - orthogonality)), at most 1
+};
+
+/// A-posteriori bound on the eigenvector subspace angles of a HEP/GHEP result (DESIGN §3.6-8c,
+/// SolverConfig::subspace_bound): the Davis-Kahan sin(Theta) theorem in the B inner product,
+///   ||sin Theta(span X_c, E_c)||_F <= ||B^{-1/2} R_c||_F / (delta_c sqrt(1 - eps_c)),
+/// with the gap delta_c taken from the certificate's windows (no further eigenvalue inside; those
+/// outside lie beyond the window ends) and from Kahan's residual intervals of the other groups.
+/// Computed only when the certificate passed; otherwise performed == false and `note` says why.
+struct SubspaceReport {
+  bool performed = false;
+  /// Largest pair bound; NaN (JSON null) when not performed or when some pair has no bound.
+  double max_sin_bound = std::numeric_limits<double>::quiet_NaN();
+  /// A proof (up to rounding, which is bounded a priori): the certificate counted (or was a
+  /// rigorous randomized check) and lambda_min(B) - which weighs the B^{-1}-norm's remainder and
+  /// rounding terms - is proven (B = I, diagonal B, Gershgorin, the incomplete-Cholesky proof or an
+  /// inertia count of B - mu diag(B)).
+  bool rigorous = false;
+  double failure_probability = 1.0;  ///< the certificate's (0 for counts, the randomized check's delta)
+  /// "2" (B = I), "b_inverse_diagonal" (diagonal B), "b_inverse_cg" (general B: preconditioned CG
+  /// with a bounded remainder).
+  std::string residual_norm;
+  double b_min = 0.0;        ///< lower bound (or estimate) of lambda_min(B) used; 1 for B = I
+  /// "identity", "diagonal", "gershgorin", "incomplete_cholesky", "inertia_count", "estimate"
+  std::string b_min_source;
+  std::vector<SubspaceGroup> groups;
+  std::string note;          ///< why not performed, pairs without a bound, caveats
+  double seconds = 0.0;      ///< wall time (part of time_verify_s)
 };
 
 /// Completeness certificate (HEP/GHEP only; DESIGN §3.6 step 8). Windows by target mode:
@@ -420,6 +500,7 @@ struct SolveReport {
   // results
   std::vector<PairReport> pairs;
   InertiaCertificate certificate;
+  SubspaceReport subspace;          ///< eigenvector subspace-angle bounds (HEP/GHEP, passed certificate)
   std::vector<SliceReport> slices;  ///< per-run records of sliced / one-sided solves
   index_t zero_cluster_dim = -1;    ///< GHIEP: dim null(A) (zero pivots of A), when it was needed;
                                     ///< -1 = not computed
@@ -451,7 +532,8 @@ struct Solution {
 /// enums are snake_case strings. Keys absent from the document keep the values of `base`;
 /// unknown keys, wrong types and invalid enum strings throw InvalidInput.
 SolverConfig parse_config(const std::string& json_text, const SolverConfig& base = {});
-/// Serialize every field of cfg (round-trips through parse_config).
+/// Serialize every field of cfg (round-trips through parse_config; structure_candidates = On
+/// comes back as its equivalent Auto).
 std::string config_to_json(const SolverConfig& cfg, int indent = 2);
 
 /// Solve A x = lambda B x (B == nullptr -> B = I) according to cfg. A and B must be square,

@@ -91,6 +91,7 @@ hs::SolverConfig target(const TestPencil<T>& p, index_t minimum = 3) {
   hs::SolverConfig c;
   c.threads = 2;
   c.memory_budget_gb = 2;
+  c.structure_candidates = hs::Toggle::Auto;  // the optional path these tests exercise (off by default)
   const std::size_t first = hs::is_complex_v<T> ? std::min<std::size_t>(8, positive.size() - 2) : 0;
   c.target.sigma = 0.5 * (positive[first] + positive[first + 1]);
   std::sort(w.begin(), w.end(), [&](double a, double b) {
@@ -374,5 +375,42 @@ TEST(SeparableBloch, OriginalCertificateAndRerunRemainRequired) {
   solution = hs::solve(p.a, &p.b, cfg);
   expect_reference(p, cfg, solution);
   EXPECT_EQ(solution.report.candidate_source, "iterative");
+}
+
+// The structure-recognition path is off by default: a matrix it would accept takes exactly the
+// general path, as with the key off or an explicit method.
+TEST(SeparableCurl, OffByDefaultTakesTheGeneralPath) {
+  EXPECT_EQ(hs::SolverConfig{}.structure_candidates, hs::Toggle::Off);
+  const auto real = assemble({4, 5, 6}, {9.2, 13.7, 21.3}, {.3, .5, .7});
+  const auto bloch = assemble_bloch({3, 4, 5}, {11.2, 17.1, 20.3}, {.3, .5, .7}, {.7, -1.1, .3});
+  const auto check = [](const auto& p) {
+    auto cfg = target(p, 4);
+    cfg.deterministic = true;
+    cfg.structure_candidates = hs::Toggle::Auto;
+    const auto structured = hs::solve(p.a, &p.b, cfg);
+    EXPECT_NE(structured.report.candidate_source, "iterative");
+    cfg.structure_candidates = hs::Toggle::Off;
+    const auto off = hs::solve(p.a, &p.b, cfg);
+    expect_reference(p, cfg, off);
+    EXPECT_EQ(off.report.candidate_source, "iterative");
+    EXPECT_GT(off.report.op_applies, 0);
+    EXPECT_GT(off.report.block_size, 0);
+    auto def = hs::parse_config("{}");
+    def.target = cfg.target;
+    def.threads = cfg.threads;
+    def.memory_budget_gb = cfg.memory_budget_gb;
+    def.deterministic = true;
+    const auto by_default = hs::solve(p.a, &p.b, def);
+    EXPECT_EQ(by_default.report.candidate_source, "iterative");
+    // Bitwise the same run as the explicit general method (deterministic factorizations).
+    cfg.method = hs::Method::ShiftInvertLanczos;
+    const auto general = hs::solve(p.a, &p.b, cfg);
+    ASSERT_EQ(by_default.eigenvalues.size(), general.eigenvalues.size());
+    for (std::size_t i = 0; i < general.eigenvalues.size(); ++i)
+      EXPECT_EQ(by_default.eigenvalues[i], general.eigenvalues[i]) << i;
+    EXPECT_EQ(by_default.report.op_applies, general.report.op_applies);
+  };
+  check(real);
+  check(bloch);
 }
 }  // namespace
