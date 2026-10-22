@@ -272,6 +272,29 @@ SCENARIOS: tuple[Scenario, ...] = (
 )
 
 
+# English row labels of the figures (their font has no CJK glyphs; the pages use the titles above).
+SHORT_LABELS: dict[str, str] = {
+    "multiplet-cube": "PEC cube: 3/6/12-fold levels",
+    "te-tm-pairs-box": "PEC box: TE/TM pairs (GHEP)",
+    "sigma-on-eigenvalue": "shift exactly on an eigenvalue",
+    "sigma-1e-13": "shift 1e-13 from an eigenvalue",
+    "lowfreq-null-space": "lowest modes above a null space",
+    "zero-cluster": "1e4 eigenvalues in [-1e-5, 1e-5]",
+    "waveguide-square": "square waveguide, indefinite B",
+    "waveguide-slab": "slab-loaded waveguide, indefinite B",
+    "interval-box": "all eigenvalues in [40, 200]",
+    "bloch-1e4": "Bloch cell, complex Hermitian",
+    "bloch-1e5": "Bloch cell n=1e5, complex Hermitian",
+    "bloch-interval": "Bloch cell, complex interval",
+    "ss-2cubes-sphere": "SuiteSparse 2cubes_sphere",
+    "ss-qa8fk": "SuiteSparse qa8fk/qa8fm (GHEP)",
+    "ss-tem27623": "SuiteSparse TEM27623 (GHEP)",
+    "ss-tem152078": "SuiteSparse TEM152078 (GHEP)",
+    "pec-box-1e6": "PEC box n=1.03e6 (GHEP)",
+    "waveguide-1e6": "square waveguide n=1.0e6",
+}
+
+
 def by_id(ids: list[str] | None = None) -> list[Scenario]:
     """The scenarios with these ids (all when None), in catalogue order; unknown ids are an error."""
     known = {s.id: s for s in SCENARIOS}

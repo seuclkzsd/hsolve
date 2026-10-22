@@ -24,6 +24,7 @@ def test_catalogue_is_consistent():
             assert s.target in scn.RESOLVERS
         assert (s.source is None) == (s.reference == "generated")
     assert {s.group for s in scn.SCENARIOS} == set(scn.GROUPS)    # every hard scenario has a row
+    assert set(scn.SHORT_LABELS) == set(ids) and all(lbl.isascii() for lbl in scn.SHORT_LABELS.values())
     assert scn.by_id(["zero-cluster"])[0].case == "syn-zero-cluster-real-1e5"
     with pytest.raises(SystemExit):
         scn.by_id(["no-such-scenario"])
