@@ -41,14 +41,14 @@
    ]
   }
  },
- "started": "2026-10-22T22:06:54",
- "finished": "2026-10-22T22:07:35",
+ "started": "2026-10-23T02:17:35",
+ "finished": "2026-10-23T02:18:14",
  "conditions": {
   "host": "c005",
   "cpu": "Intel(R) Xeon(R) Silver 4314 CPU @ 2.40GHz",
   "os": "Linux-3.10.0-1160.el7.x86_64-x86_64-with-glibc2.17",
   "python": "3.11.17",
-  "git_commit": "ddd14a90fa6e0bb65eab9e5a4fcacb41f5b61abf",
+  "git_commit": "d9baedc010fb947c5de47756d3c7f877102b83cb",
   "source_commit": "b9aadc47b09db34f9b72870ee912d7d1e8715c50",
   "hsolve_binary": "build/release/hsolve",
   "hsolve_md5": "8d69a98bc60e327e479a591ef93742c0",
@@ -68,7 +68,7 @@
    "eigsh",
    "identity"
   ],
-  "seconds": 0.1386471688747406
+  "seconds": 0.141803540289402
  },
  "reference": {
   "kind": "solver",
@@ -99,50 +99,132 @@
    285038731.306126,
    285225612.0415919
   ],
-  "truncated": false
+  "truncated": false,
+  "levels": [
+   [
+    282380217.22746724,
+    1
+   ],
+   [
+    282452505.43944985,
+    1
+   ],
+   [
+    282728344.5439461,
+    1
+   ],
+   [
+    282832089.8626916,
+    1
+   ],
+   [
+    282902916.97396046,
+    1
+   ],
+   [
+    283149535.0351208,
+    1
+   ],
+   [
+    283365903.9190009,
+    1
+   ],
+   [
+    283652028.60990757,
+    1
+   ],
+   [
+    283708783.59779066,
+    1
+   ],
+   [
+    283876054.78174627,
+    1
+   ],
+   [
+    284007460.6936174,
+    1
+   ],
+   [
+    284451889.75455976,
+    1
+   ],
+   [
+    284605192.8724611,
+    1
+   ],
+   [
+    284640381.7284485,
+    1
+   ],
+   [
+    284868558.93001807,
+    1
+   ],
+   [
+    284950535.93518007,
+    1
+   ],
+   [
+    285007682.98460823,
+    1
+   ],
+   [
+    285014189.01495934,
+    1
+   ],
+   [
+    285038731.306126,
+    1
+   ],
+   [
+    285225612.0415919,
+    1
+   ]
+  ]
  },
  "runs": [
   {
    "solver": "hsolve",
-   "wall_s": 2.375,
-   "peak_rss_gib": 0.684,
+   "wall_s": 2.327,
+   "peak_rss_gib": 0.71,
    "rc": 0,
    "killed": null,
    "claimed_success": true,
    "success": true,
-   "solver_max_eta": 1.677868744692523e-12,
-   "max_eta": 1.677868744035501e-12,
+   "solver_max_eta": 1.6792183976341005e-12,
+   "max_eta": 1.6792183905537657e-12,
    "pairs": 10,
    "eigenvalues": [
-    283876054.78174627,
-    283708783.59779096,
-    283652028.6099076,
-    284007460.69361776,
-    283365903.919001,
+    283876054.7817463,
+    283708783.5977909,
+    283652028.60990804,
+    284007460.69361746,
+    283365903.91900104,
     284451889.7545597,
-    283149535.0351209,
-    284605192.87246126,
-    284640381.7284486,
-    282902916.9739606
+    283149535.0351207,
+    284605192.8724612,
+    284640381.7284487,
+    282902916.9739605
    ],
-   "solver_peak_bytes": 733999104,
+   "solver_peak_bytes": 762376192,
    "verdict": "pass",
    "eval_reasons": [],
    "completeness": "consistent",
    "certified": false,
    "valid": true,
    "why": [],
-   "solver_s": 2.14460507,
+   "solver_s": 2.136574962,
    "solver_s_scope": "report time_total_s",
    "phases": {
-    "analysis_s": 0.328017476,
-    "numeric_s": 1.020621029,
+    "analysis_s": 0.327789613,
+    "numeric_s": 1.020539255,
     "factorizations": 3,
     "solves": 88,
-    "solve_s": 0.555538078,
+    "solve_s": 0.55235374,
     "ortho_s": null,
-    "iterate_s": 0.6338552199999999,
-    "verify_s": 0.008552616000000124
+    "iterate_s": 0.6301085270000001,
+    "verify_s": 0.008240387999999599
    },
    "evaluation": {
     "verdict": "pass",
@@ -158,9 +240,9 @@
     "distinct_returned": 10,
     "duplicates": 0,
     "rejected_pairs": 0,
-    "max_backward_error": 1.677868744035501e-12,
-    "max_eig_scaled_error": 1.2522469953805965e-17,
-    "max_subspace_angle": 4.006297772760455e-09
+    "max_backward_error": 1.6792183905537657e-12,
+    "max_eig_scaled_error": 1.6696834406925508e-17,
+    "max_subspace_angle": 4.0063046535072615e-09
    },
    "outcome": [],
    "report": {
@@ -172,8 +254,8 @@
     "block_size": 4,
     "zero_cluster_dim": -1,
     "zero_modes_filtered": 0,
-    "time_total_s": 2.14460507,
-    "time_certificate_s": 0.6442842329999998,
+    "time_total_s": 2.136574962,
+    "time_certificate_s": 0.6445620510000003,
     "warnings": [],
     "certificate": {
      "count_found": 10,
@@ -186,7 +268,7 @@
      "passed": true,
      "performed": true,
      "rigorous": true,
-     "seconds": 0.6442842329999998,
+     "seconds": 0.6445620510000003,
      "solves": 0,
      "statement": "double-precision Sylvester counts (main factorization): nu(b) - nu(a) = 10 eigenvalue(s) in [2.82868e+08, 2.84796e+08], 10 distinct found pair(s) there: every eigenvalue in the window is found",
      "upper": 284795654.0956926
@@ -202,28 +284,28 @@
    "config": "1x16",
    "config_source": "default",
    "config_scope": "default",
-   "wall_s": 4.85,
-   "peak_rss_gib": 0.806,
+   "wall_s": 4.98,
+   "peak_rss_gib": 0.803,
    "rc": 0,
    "killed": null,
    "claimed_success": false,
    "success": false,
-   "solver_max_eta": 8.830031873126592e-06,
-   "max_eta": 1.3152259560314211e-05,
+   "solver_max_eta": 8.83003187327502e-06,
+   "max_eta": 1.3152259560535299e-05,
    "pairs": 10,
    "eigenvalues": [
     283876054.7817462,
     283708783.5977906,
     283652028.60990757,
-    284007460.69361705,
-    283365903.9190009,
-    284451889.7545598,
+    284007460.6936173,
+    283365903.919001,
+    284451889.75455976,
     283149535.0351198,
-    284605193.7892633,
-    284640382.01897097,
-    282902916.7096989
+    284605193.7892634,
+    284640382.0189707,
+    282902916.709699
    ],
-   "solver_peak_bytes": 841170944,
+   "solver_peak_bytes": 836042752,
    "verdict": "fail",
    "eval_reasons": [
     "5 of 10 pairs have backward error > tol=1e-10"
@@ -235,15 +317,15 @@
     "solver claims no success",
     "5 of 10 pairs have backward error > tol=1e-10"
    ],
-   "solver_s": 2.6844403,
+   "solver_s": 2.7202737999999997,
    "solver_s_scope": "log_view setup+solve+vectors",
    "phases": {
-    "analysis_s": 1.2118,
-    "numeric_s": 0.46071,
+    "analysis_s": 1.2127,
+    "numeric_s": 0.48704,
     "factorizations": 1,
     "solves": 25,
-    "solve_s": 0.96288,
-    "ortho_s": 0.018149,
+    "solve_s": 0.97675,
+    "ortho_s": 0.018741,
     "iterate_s": null,
     "verify_s": null
    },
@@ -263,9 +345,9 @@
     "distinct_returned": 10,
     "duplicates": 0,
     "rejected_pairs": 5,
-    "max_backward_error": 1.3152259560314211e-05,
-    "max_eig_scaled_error": 3.210149172193603e-11,
-    "max_subspace_angle": 0.0014632014785316235
+    "max_backward_error": 1.3152259560535299e-05,
+    "max_eig_scaled_error": 3.2101495896005324e-11,
+    "max_subspace_angle": 0.0014632014787296708
    },
    "outcome": [
     "residual"
@@ -282,28 +364,28 @@
     ],
     "unused_options": [],
     "warnings": [],
-    "time_setup_s": 1.6925570890307426,
-    "time_solve_s": 0.9918337166309357,
+    "time_setup_s": 1.7143288627266884,
+    "time_solve_s": 1.0059973895549774,
     "success": false
    },
-   "stderr_tail": "[guard] {\"cmd\": [\"~/envs/os2026-ref/bin/mpiexec\", \"-n\", \"1\", \"--bind-to\", \"none\", \"-x\", \"OMP_NUM_THREADS=16\", \"-x\", \"OPENBLAS_NUM_THREADS=16\", \"~/envs/os2026-ref/bin/python\", \"~/os2026-wt/rb-evidence/tools/bench/baseline_slepc.py\", \"--case\", \"ss-2cubes_sphere\", \"--out\", \"~/rb-evidence/runs/ss-2cubes-sphere/slepc-default-r0\", \"--root\", \"~/rb-evidence/data\", \"-log_view\", \":~/rb-evidence/runs/ss-2cubes-sphere/log_view-slepc-default-r0.txt\"], \"returncode\": 0, \"killed\": null, \"wall_s\": 4.85, \"peak_rss_gib\": 0.806, \"peak_sampled_gib\": 0.783, \"cpu_s\": 27.719, \"cores\": \"16-31\", \"threads\": 16, \"mem_limit_gib\": 32.0, \"exclusive\": true}\n",
-   "stdout_tail": "slepc: n=101492 target=nearest nconv=25 its=1 setup=1.69s solve=0.99s total=2.89s peak=0.78GiB\n",
+   "stderr_tail": "[guard] {\"cmd\": [\"~/envs/os2026-ref/bin/mpiexec\", \"-n\", \"1\", \"--bind-to\", \"none\", \"-x\", \"OMP_NUM_THREADS=16\", \"-x\", \"OPENBLAS_NUM_THREADS=16\", \"~/envs/os2026-ref/bin/python\", \"~/os2026-wt/rb-evidence/tools/bench/baseline_slepc.py\", \"--case\", \"ss-2cubes_sphere\", \"--out\", \"~/rb-evidence/runs/ss-2cubes-sphere/slepc-default-r0\", \"--root\", \"~/rb-evidence/data\", \"-log_view\", \":~/rb-evidence/runs/ss-2cubes-sphere/log_view-slepc-default-r0.txt\"], \"returncode\": 0, \"killed\": null, \"wall_s\": 4.98, \"peak_rss_gib\": 0.803, \"peak_sampled_gib\": 0.803, \"cpu_s\": 29.172, \"cores\": \"16-31\", \"threads\": 16, \"mem_limit_gib\": 32.0, \"exclusive\": true}\n",
+   "stdout_tail": "slepc: n=101492 target=nearest nconv=25 its=1 setup=1.71s solve=1.01s total=2.93s peak=0.78GiB\n",
    "rep": 0,
    "position": 1
   },
   {
    "solver": "slepc-tuned",
-   "config": "1x16",
-   "config_source": "class profile HEP/nearest",
-   "config_scope": "class",
-   "wall_s": 5.785,
-   "peak_rss_gib": 0.787,
+   "config": "1x16 eps_ncv=4k",
+   "config_source": "case profile ss-2cubes_sphere",
+   "config_scope": "case",
+   "wall_s": 5.535,
+   "peak_rss_gib": 0.822,
    "rc": 0,
    "killed": null,
-   "claimed_success": false,
-   "success": false,
-   "solver_max_eta": 8.83003187244278e-06,
-   "max_eta": 1.3152259559295703e-05,
+   "claimed_success": true,
+   "success": true,
+   "solver_max_eta": 1.1701925694887112e-12,
+   "max_eta": 1.7430263128960151e-12,
    "pairs": 10,
    "eigenvalues": [
     283876054.7817462,
@@ -311,41 +393,34 @@
     283652028.60990757,
     284007460.69361717,
     283365903.9190009,
-    284451889.7545598,
-    283149535.0351198,
-    284605193.78926325,
-    284640382.01897097,
-    282902916.709699
+    284451889.75455976,
+    283149535.0351208,
+    284605192.872461,
+    284640381.7284482,
+    282902916.9739604
    ],
-   "solver_peak_bytes": 818380800,
-   "verdict": "fail",
-   "eval_reasons": [
-    "5 of 10 pairs have backward error > tol=1e-10"
-   ],
+   "solver_peak_bytes": 858275840,
+   "verdict": "pass",
+   "eval_reasons": [],
    "completeness": "consistent",
    "certified": false,
-   "valid": false,
-   "why": [
-    "solver claims no success",
-    "5 of 10 pairs have backward error > tol=1e-10"
-   ],
-   "solver_s": 2.710635,
+   "valid": true,
+   "why": [],
+   "solver_s": 3.3357923,
    "solver_s_scope": "log_view setup+solve+vectors",
    "phases": {
-    "analysis_s": 1.208,
-    "numeric_s": 0.4791,
+    "analysis_s": 1.2123,
+    "numeric_s": 0.4846,
     "factorizations": 1,
-    "solves": 25,
-    "solve_s": 0.97914,
-    "ortho_s": 0.018589,
+    "solves": 40,
+    "solve_s": 1.5638,
+    "ortho_s": 0.041217,
     "iterate_s": null,
     "verify_s": null
    },
    "evaluation": {
-    "verdict": "fail",
-    "reasons": [
-     "5 of 10 pairs have backward error > tol=1e-10"
-    ],
+    "verdict": "pass",
+    "reasons": [],
     "status": "consistent",
     "certified": false,
     "expected": 10,
@@ -356,32 +431,30 @@
     "unmatched": 0,
     "distinct_returned": 10,
     "duplicates": 0,
-    "rejected_pairs": 5,
-    "max_backward_error": 1.3152259559295703e-05,
-    "max_eig_scaled_error": 3.210148963490139e-11,
-    "max_subspace_angle": 0.0014632014783838151
+    "rejected_pairs": 0,
+    "max_backward_error": 1.7430263128960151e-12,
+    "max_eig_scaled_error": 1.0435160364561491e-17,
+    "max_subspace_angle": 3.0836835278978173e-10
    },
-   "outcome": [
-    "residual"
-   ],
+   "outcome": [],
    "report": {
     "slepc_version": "3.26.0",
-    "nconv": 25,
+    "nconv": 40,
     "iterations": 1,
     "mpi_ranks": 1,
     "omp_threads": 16,
     "petsc_options": [
+     "-eps_ncv",
+     "40",
      "-log_view",
      ":~/rb-evidence/runs/ss-2cubes-sphere/log_view-slepc-tuned-r0.txt"
     ],
     "unused_options": [],
     "warnings": [],
-    "time_setup_s": 1.7018006816506386,
-    "time_solve_s": 1.0087850019335747,
-    "success": false
+    "time_setup_s": 1.7141032963991165,
+    "time_solve_s": 1.6216435432434082,
+    "success": true
    },
-   "stderr_tail": "[guard] {\"cmd\": [\"~/envs/os2026-ref/bin/mpiexec\", \"-n\", \"1\", \"--bind-to\", \"none\", \"-x\", \"OMP_NUM_THREADS=16\", \"-x\", \"OPENBLAS_NUM_THREADS=16\", \"~/envs/os2026-ref/bin/python\", \"~/os2026-wt/rb-evidence/tools/bench/baseline_slepc.py\", \"--case\", \"ss-2cubes_sphere\", \"--out\", \"~/rb-evidence/runs/ss-2cubes-sphere/slepc-tuned-r0\", \"--root\", \"~/rb-evidence/data\", \"-log_view\", \":~/rb-evidence/runs/ss-2cubes-sphere/log_view-slepc-tuned-r0.txt\"], \"returncode\": 0, \"killed\": null, \"wall_s\": 5.785, \"peak_rss_gib\": 0.787, \"peak_sampled_gib\": 0.787, \"cpu_s\": 29.486, \"cores\": \"16-31\", \"threads\": 16, \"mem_limit_gib\": 32.0, \"exclusive\": true}\n",
-   "stdout_tail": "slepc: n=101492 target=nearest nconv=25 its=1 setup=1.70s solve=1.01s total=2.94s peak=0.76GiB\n",
    "rep": 0,
    "position": 2
   },
@@ -390,28 +463,28 @@
    "config": "1x16",
    "config_source": "default",
    "config_scope": "default",
-   "wall_s": 7.395,
-   "peak_rss_gib": 0.785,
+   "wall_s": 4.983,
+   "peak_rss_gib": 0.796,
    "rc": 0,
    "killed": null,
    "claimed_success": false,
    "success": false,
-   "solver_max_eta": 8.830031872640801e-06,
-   "max_eta": 1.3152259559590647e-05,
+   "solver_max_eta": 8.830031873351377e-06,
+   "max_eta": 1.3152259560648996e-05,
    "pairs": 10,
    "eigenvalues": [
     283876054.7817462,
     283708783.5977906,
     283652028.60990757,
-    284007460.6936171,
+    284007460.693617,
     283365903.9190009,
-    284451889.7545598,
+    284451889.7545599,
     283149535.0351198,
-    284605193.78926307,
-    284640382.0189707,
+    284605193.78926325,
+    284640382.01897097,
     282902916.7096989
    ],
-   "solver_peak_bytes": 816537600,
+   "solver_peak_bytes": 830648320,
    "verdict": "fail",
    "eval_reasons": [
     "5 of 10 pairs have backward error > tol=1e-10"
@@ -423,15 +496,15 @@
     "solver claims no success",
     "5 of 10 pairs have backward error > tol=1e-10"
    ],
-   "solver_s": 2.7386914,
+   "solver_s": 2.7309457999999998,
    "solver_s_scope": "log_view setup+solve+vectors",
    "phases": {
-    "analysis_s": 1.2146,
-    "numeric_s": 0.50366,
+    "analysis_s": 1.2105,
+    "numeric_s": 0.50766,
     "factorizations": 1,
     "solves": 25,
-    "solve_s": 0.97529,
-    "ortho_s": 0.018661,
+    "solve_s": 0.96957,
+    "ortho_s": 0.018518,
     "iterate_s": null,
     "verify_s": null
    },
@@ -451,9 +524,9 @@
     "distinct_returned": 10,
     "duplicates": 0,
     "rejected_pairs": 5,
-    "max_backward_error": 1.3152259559590647e-05,
-    "max_eig_scaled_error": 3.210148337379746e-11,
-    "max_subspace_angle": 0.001463201478281839
+    "max_backward_error": 1.3152259560648996e-05,
+    "max_eig_scaled_error": 3.210148963490139e-11,
+    "max_subspace_angle": 0.0014632014784366066
    },
    "outcome": [
     "residual"
@@ -470,150 +543,59 @@
     ],
     "unused_options": [],
     "warnings": [],
-    "time_setup_s": 1.733795054256916,
-    "time_solve_s": 1.0048676133155823,
+    "time_setup_s": 1.7320417687296867,
+    "time_solve_s": 0.9988417029380798,
     "success": false
    },
-   "stderr_tail": "[guard] {\"cmd\": [\"~/envs/os2026-ref/bin/mpiexec\", \"-n\", \"1\", \"--bind-to\", \"none\", \"-x\", \"OMP_NUM_THREADS=16\", \"-x\", \"OPENBLAS_NUM_THREADS=16\", \"~/envs/os2026-ref/bin/python\", \"~/os2026-wt/rb-evidence/tools/bench/baseline_slepc.py\", \"--case\", \"ss-2cubes_sphere\", \"--out\", \"~/rb-evidence/runs/ss-2cubes-sphere/slepc-default-r1\", \"--root\", \"~/rb-evidence/data\", \"-log_view\", \":~/rb-evidence/runs/ss-2cubes-sphere/log_view-slepc-default-r1.txt\"], \"returncode\": 0, \"killed\": null, \"wall_s\": 7.395, \"peak_rss_gib\": 0.785, \"peak_sampled_gib\": 0.785, \"cpu_s\": 29.822, \"cores\": \"16-31\", \"threads\": 16, \"mem_limit_gib\": 32.0, \"exclusive\": true}\n",
-   "stdout_tail": "slepc: n=101492 target=nearest nconv=25 its=1 setup=1.73s solve=1.00s total=2.96s peak=0.76GiB\n",
+   "stderr_tail": "[guard] {\"cmd\": [\"~/envs/os2026-ref/bin/mpiexec\", \"-n\", \"1\", \"--bind-to\", \"none\", \"-x\", \"OMP_NUM_THREADS=16\", \"-x\", \"OPENBLAS_NUM_THREADS=16\", \"~/envs/os2026-ref/bin/python\", \"~/os2026-wt/rb-evidence/tools/bench/baseline_slepc.py\", \"--case\", \"ss-2cubes_sphere\", \"--out\", \"~/rb-evidence/runs/ss-2cubes-sphere/slepc-default-r1\", \"--root\", \"~/rb-evidence/data\", \"-log_view\", \":~/rb-evidence/runs/ss-2cubes-sphere/log_view-slepc-default-r1.txt\"], \"returncode\": 0, \"killed\": null, \"wall_s\": 4.983, \"peak_rss_gib\": 0.796, \"peak_sampled_gib\": 0.796, \"cpu_s\": 28.971, \"cores\": \"16-31\", \"threads\": 16, \"mem_limit_gib\": 32.0, \"exclusive\": true}\n",
+   "stdout_tail": "slepc: n=101492 target=nearest nconv=25 its=1 setup=1.73s solve=1.00s total=2.93s peak=0.77GiB\n",
    "rep": 1,
    "position": 0
   },
   {
    "solver": "slepc-tuned",
-   "config": "1x16",
-   "config_source": "class profile HEP/nearest",
-   "config_scope": "class",
-   "wall_s": 5.022,
-   "peak_rss_gib": 0.796,
+   "config": "1x16 eps_ncv=4k",
+   "config_source": "case profile ss-2cubes_sphere",
+   "config_scope": "case",
+   "wall_s": 5.541,
+   "peak_rss_gib": 0.804,
    "rc": 0,
    "killed": null,
-   "claimed_success": false,
-   "success": false,
-   "solver_max_eta": 8.830031872267897e-06,
-   "max_eta": 1.3152259559035197e-05,
+   "claimed_success": true,
+   "success": true,
+   "solver_max_eta": 1.1721472005455068e-12,
+   "max_eta": 1.7459377768911122e-12,
    "pairs": 10,
    "eigenvalues": [
     283876054.7817462,
     283708783.5977906,
     283652028.60990757,
-    284007460.6936171,
+    284007460.69361705,
     283365903.9190009,
-    284451889.75455976,
-    283149535.0351198,
-    284605193.7892634,
-    284640382.0189707,
-    282902916.7096989
-   ],
-   "solver_peak_bytes": 830312448,
-   "verdict": "fail",
-   "eval_reasons": [
-    "5 of 10 pairs have backward error > tol=1e-10"
-   ],
-   "completeness": "consistent",
-   "certified": false,
-   "valid": false,
-   "why": [
-    "solver claims no success",
-    "5 of 10 pairs have backward error > tol=1e-10"
-   ],
-   "solver_s": 2.6856799000000002,
-   "solver_s_scope": "log_view setup+solve+vectors",
-   "phases": {
-    "analysis_s": 1.2109,
-    "numeric_s": 0.47106,
-    "factorizations": 1,
-    "solves": 25,
-    "solve_s": 0.96073,
-    "ortho_s": 0.018445,
-    "iterate_s": null,
-    "verify_s": null
-   },
-   "evaluation": {
-    "verdict": "fail",
-    "reasons": [
-     "5 of 10 pairs have backward error > tol=1e-10"
-    ],
-    "status": "consistent",
-    "certified": false,
-    "expected": 10,
-    "found": 10,
-    "missing": [],
-    "boundary_deficit": 0,
-    "spurious": 0,
-    "unmatched": 0,
-    "distinct_returned": 10,
-    "duplicates": 0,
-    "rejected_pairs": 5,
-    "max_backward_error": 1.3152259559035197e-05,
-    "max_eig_scaled_error": 3.2101495896005324e-11,
-    "max_subspace_angle": 0.0014632014787833714
-   },
-   "outcome": [
-    "residual"
-   ],
-   "report": {
-    "slepc_version": "3.26.0",
-    "nconv": 25,
-    "iterations": 1,
-    "mpi_ranks": 1,
-    "omp_threads": 16,
-    "petsc_options": [
-     "-log_view",
-     ":~/rb-evidence/runs/ss-2cubes-sphere/log_view-slepc-tuned-r1.txt"
-    ],
-    "unused_options": [],
-    "warnings": [],
-    "time_setup_s": 1.6962904185056686,
-    "time_solve_s": 0.989371120929718,
-    "success": false
-   },
-   "stderr_tail": "[guard] {\"cmd\": [\"~/envs/os2026-ref/bin/mpiexec\", \"-n\", \"1\", \"--bind-to\", \"none\", \"-x\", \"OMP_NUM_THREADS=16\", \"-x\", \"OPENBLAS_NUM_THREADS=16\", \"~/envs/os2026-ref/bin/python\", \"~/os2026-wt/rb-evidence/tools/bench/baseline_slepc.py\", \"--case\", \"ss-2cubes_sphere\", \"--out\", \"~/rb-evidence/runs/ss-2cubes-sphere/slepc-tuned-r1\", \"--root\", \"~/rb-evidence/data\", \"-log_view\", \":~/rb-evidence/runs/ss-2cubes-sphere/log_view-slepc-tuned-r1.txt\"], \"returncode\": 0, \"killed\": null, \"wall_s\": 5.022, \"peak_rss_gib\": 0.796, \"peak_sampled_gib\": 0.796, \"cpu_s\": 28.719, \"cores\": \"16-31\", \"threads\": 16, \"mem_limit_gib\": 32.0, \"exclusive\": true}\n",
-   "stdout_tail": "slepc: n=101492 target=nearest nconv=25 its=1 setup=1.70s solve=0.99s total=2.88s peak=0.77GiB\n",
-   "rep": 1,
-   "position": 1
-  },
-  {
-   "solver": "hsolve",
-   "wall_s": 2.376,
-   "peak_rss_gib": 0.684,
-   "rc": 0,
-   "killed": null,
-   "claimed_success": true,
-   "success": true,
-   "solver_max_eta": 1.6774978027153504e-12,
-   "max_eta": 1.6774977880603127e-12,
-   "pairs": 10,
-   "eigenvalues": [
-    283876054.7817465,
-    283708783.5977908,
-    283652028.609908,
-    284007460.6936176,
-    283365903.91900104,
     284451889.7545598,
-    283149535.03512096,
-    284605192.8724613,
-    284640381.72844857,
-    282902916.9739605
+    283149535.0351208,
+    284605192.87246096,
+    284640381.7284484,
+    282902916.97396046
    ],
-   "solver_peak_bytes": 734408704,
+   "solver_peak_bytes": 838135808,
    "verdict": "pass",
    "eval_reasons": [],
    "completeness": "consistent",
    "certified": false,
    "valid": true,
    "why": [],
-   "solver_s": 2.175880494,
-   "solver_s_scope": "report time_total_s",
+   "solver_s": 3.3241142,
+   "solver_s_scope": "log_view setup+solve+vectors",
    "phases": {
-    "analysis_s": 0.333503625,
-    "numeric_s": 1.055690742,
-    "factorizations": 3,
-    "solves": 88,
-    "solve_s": 0.5515194600000001,
-    "ortho_s": null,
-    "iterate_s": 0.6295200980000001,
-    "verify_s": 0.008627934999999809
+    "analysis_s": 1.2132,
+    "numeric_s": 0.47539,
+    "factorizations": 1,
+    "solves": 40,
+    "solve_s": 1.5612,
+    "ortho_s": 0.040841,
+    "iterate_s": null,
+    "verify_s": null
    },
    "evaluation": {
     "verdict": "pass",
@@ -629,9 +611,91 @@
     "distinct_returned": 10,
     "duplicates": 0,
     "rejected_pairs": 0,
-    "max_backward_error": 1.6774977880603127e-12,
-    "max_eig_scaled_error": 1.460973010605982e-17,
-    "max_subspace_angle": 4.006358175760998e-09
+    "max_backward_error": 1.7459377768911122e-12,
+    "max_eig_scaled_error": 1.2522469953805965e-17,
+    "max_subspace_angle": 3.080925459693711e-10
+   },
+   "outcome": [],
+   "report": {
+    "slepc_version": "3.26.0",
+    "nconv": 40,
+    "iterations": 1,
+    "mpi_ranks": 1,
+    "omp_threads": 16,
+    "petsc_options": [
+     "-eps_ncv",
+     "40",
+     "-log_view",
+     ":~/rb-evidence/runs/ss-2cubes-sphere/log_view-slepc-tuned-r1.txt"
+    ],
+    "unused_options": [],
+    "warnings": [],
+    "time_setup_s": 1.7056837901473045,
+    "time_solve_s": 1.6184342354536057,
+    "success": true
+   },
+   "rep": 1,
+   "position": 1
+  },
+  {
+   "solver": "hsolve",
+   "wall_s": 2.33,
+   "peak_rss_gib": 0.702,
+   "rc": 0,
+   "killed": null,
+   "claimed_success": true,
+   "success": true,
+   "solver_max_eta": 1.6792860791663407e-12,
+   "max_eta": 1.6792860899147221e-12,
+   "pairs": 10,
+   "eigenvalues": [
+    283876054.78174645,
+    283708783.5977909,
+    283652028.60990745,
+    284007460.6936176,
+    283365903.9190006,
+    284451889.75455976,
+    283149535.0351209,
+    284605192.8724612,
+    284640381.7284485,
+    282902916.97396034
+   ],
+   "solver_peak_bytes": 753905664,
+   "verdict": "pass",
+   "eval_reasons": [],
+   "completeness": "consistent",
+   "certified": false,
+   "valid": true,
+   "why": [],
+   "solver_s": 2.146752418,
+   "solver_s_scope": "report time_total_s",
+   "phases": {
+    "analysis_s": 0.329401423,
+    "numeric_s": 1.031023789,
+    "factorizations": 3,
+    "solves": 88,
+    "solve_s": 0.5518343280000002,
+    "ortho_s": null,
+    "iterate_s": 0.6299897319999999,
+    "verify_s": 0.008291226999999957
+   },
+   "evaluation": {
+    "verdict": "pass",
+    "reasons": [],
+    "status": "consistent",
+    "certified": false,
+    "expected": 10,
+    "found": 10,
+    "missing": [],
+    "boundary_deficit": 0,
+    "spurious": 0,
+    "unmatched": 0,
+    "distinct_returned": 10,
+    "duplicates": 0,
+    "rejected_pairs": 0,
+    "max_backward_error": 1.6792860899147221e-12,
+    "max_eig_scaled_error": 1.043562605766433e-17,
+    "max_subspace_angle": 4.006292970394288e-09
    },
    "outcome": [],
    "report": {
@@ -643,8 +707,8 @@
     "block_size": 4,
     "zero_cluster_dim": -1,
     "zero_modes_filtered": 0,
-    "time_total_s": 2.175880494,
-    "time_certificate_s": 0.6796961020000001,
+    "time_total_s": 2.146752418,
+    "time_certificate_s": 0.6547811720000001,
     "warnings": [],
     "certificate": {
      "count_found": 10,
@@ -657,10 +721,10 @@
      "passed": true,
      "performed": true,
      "rigorous": true,
-     "seconds": 0.6796961020000001,
+     "seconds": 0.6547811720000001,
      "solves": 0,
      "statement": "double-precision Sylvester counts (main factorization): nu(b) - nu(a) = 10 eigenvalue(s) in [2.82868e+08, 2.84796e+08], 10 distinct found pair(s) there: every eigenvalue in the window is found",
-     "upper": 284795654.0956926
+     "upper": 284795654.09569263
     },
     "slices": 0,
     "factorizations": 3
@@ -670,139 +734,48 @@
   },
   {
    "solver": "slepc-tuned",
-   "config": "1x16",
-   "config_source": "class profile HEP/nearest",
-   "config_scope": "class",
-   "wall_s": 4.938,
-   "peak_rss_gib": 0.81,
+   "config": "1x16 eps_ncv=4k",
+   "config_source": "case profile ss-2cubes_sphere",
+   "config_scope": "case",
+   "wall_s": 5.584,
+   "peak_rss_gib": 0.821,
    "rc": 0,
    "killed": null,
-   "claimed_success": false,
-   "success": false,
-   "solver_max_eta": 8.830031872499081e-06,
-   "max_eta": 1.3152259559379556e-05,
+   "claimed_success": true,
+   "success": true,
+   "solver_max_eta": 1.170159385406223e-12,
+   "max_eta": 1.742976884588389e-12,
    "pairs": 10,
    "eigenvalues": [
     283876054.7817462,
     283708783.5977906,
     283652028.60990757,
-    284007460.6936172,
-    283365903.919001,
-    284451889.7545599,
-    283149535.0351198,
-    284605193.7892633,
-    284640382.018971,
-    282902916.70969903
+    284007460.69361717,
+    283365903.9190009,
+    284451889.7545597,
+    283149535.0351208,
+    284605192.8724611,
+    284640381.7284482,
+    282902916.9739604
    ],
-   "solver_peak_bytes": 845201408,
-   "verdict": "fail",
-   "eval_reasons": [
-    "5 of 10 pairs have backward error > tol=1e-10"
-   ],
-   "completeness": "consistent",
-   "certified": false,
-   "valid": false,
-   "why": [
-    "solver claims no success",
-    "5 of 10 pairs have backward error > tol=1e-10"
-   ],
-   "solver_s": 2.7019363,
-   "solver_s_scope": "log_view setup+solve+vectors",
-   "phases": {
-    "analysis_s": 1.213,
-    "numeric_s": 0.46666,
-    "factorizations": 1,
-    "solves": 25,
-    "solve_s": 0.97771,
-    "ortho_s": 0.018778,
-    "iterate_s": null,
-    "verify_s": null
-   },
-   "evaluation": {
-    "verdict": "fail",
-    "reasons": [
-     "5 of 10 pairs have backward error > tol=1e-10"
-    ],
-    "status": "consistent",
-    "certified": false,
-    "expected": 10,
-    "found": 10,
-    "missing": [],
-    "boundary_deficit": 0,
-    "spurious": 0,
-    "unmatched": 0,
-    "distinct_returned": 10,
-    "duplicates": 0,
-    "rejected_pairs": 5,
-    "max_backward_error": 1.3152259559379556e-05,
-    "max_eig_scaled_error": 3.210149172193603e-11,
-    "max_subspace_angle": 0.0014632014785682216
-   },
-   "outcome": [
-    "residual"
-   ],
-   "report": {
-    "slepc_version": "3.26.0",
-    "nconv": 25,
-    "iterations": 1,
-    "mpi_ranks": 1,
-    "omp_threads": 16,
-    "petsc_options": [
-     "-log_view",
-     ":~/rb-evidence/runs/ss-2cubes-sphere/log_view-slepc-tuned-r2.txt"
-    ],
-    "unused_options": [],
-    "warnings": [],
-    "time_setup_s": 1.694803573191166,
-    "time_solve_s": 1.0071678906679153,
-    "success": false
-   },
-   "stderr_tail": "[guard] {\"cmd\": [\"~/envs/os2026-ref/bin/mpiexec\", \"-n\", \"1\", \"--bind-to\", \"none\", \"-x\", \"OMP_NUM_THREADS=16\", \"-x\", \"OPENBLAS_NUM_THREADS=16\", \"~/envs/os2026-ref/bin/python\", \"~/os2026-wt/rb-evidence/tools/bench/baseline_slepc.py\", \"--case\", \"ss-2cubes_sphere\", \"--out\", \"~/rb-evidence/runs/ss-2cubes-sphere/slepc-tuned-r2\", \"--root\", \"~/rb-evidence/data\", \"-log_view\", \":~/rb-evidence/runs/ss-2cubes-sphere/log_view-slepc-tuned-r2.txt\"], \"returncode\": 0, \"killed\": null, \"wall_s\": 4.938, \"peak_rss_gib\": 0.81, \"peak_sampled_gib\": 0.788, \"cpu_s\": 28.826, \"cores\": \"16-31\", \"threads\": 16, \"mem_limit_gib\": 32.0, \"exclusive\": true}\n",
-   "stdout_tail": "slepc: n=101492 target=nearest nconv=25 its=1 setup=1.69s solve=1.01s total=2.90s peak=0.79GiB\n",
-   "rep": 2,
-   "position": 0
-  },
-  {
-   "solver": "hsolve",
-   "wall_s": 2.378,
-   "peak_rss_gib": 0.726,
-   "rc": 0,
-   "killed": null,
-   "claimed_success": true,
-   "success": true,
-   "solver_max_eta": 1.6773295384652115e-12,
-   "max_eta": 1.6773295493101322e-12,
-   "pairs": 10,
-   "eigenvalues": [
-    283876054.78174645,
-    283708783.5977905,
-    283652028.60990757,
-    284007460.6936177,
-    283365903.919001,
-    284451889.75455976,
-    283149535.0351207,
-    284605192.8724612,
-    284640381.72844857,
-    282902916.9739605
-   ],
-   "solver_peak_bytes": 779706368,
+   "solver_peak_bytes": 857014272,
    "verdict": "pass",
    "eval_reasons": [],
    "completeness": "consistent",
    "certified": false,
    "valid": true,
    "why": [],
-   "solver_s": 2.1458556499999997,
-   "solver_s_scope": "report time_total_s",
+   "solver_s": 3.3419711000000003,
+   "solver_s_scope": "log_view setup+solve+vectors",
    "phases": {
-    "analysis_s": 0.328229064,
-    "numeric_s": 1.027387262,
-    "factorizations": 3,
-    "solves": 88,
-    "solve_s": 0.553783413,
-    "ortho_s": null,
-    "iterate_s": 0.6320195789999999,
-    "verify_s": 0.008180206000000134
+    "analysis_s": 1.2094,
+    "numeric_s": 0.4886,
+    "factorizations": 1,
+    "solves": 40,
+    "solve_s": 1.5698,
+    "ortho_s": 0.040575,
+    "iterate_s": null,
+    "verify_s": null
    },
    "evaluation": {
     "verdict": "pass",
@@ -818,9 +791,91 @@
     "distinct_returned": 10,
     "duplicates": 0,
     "rejected_pairs": 0,
-    "max_backward_error": 1.6773295493101322e-12,
-    "max_eig_scaled_error": 1.0435391628171637e-17,
-    "max_subspace_angle": 4.006333670421148e-09
+    "max_backward_error": 1.742976884588389e-12,
+    "max_eig_scaled_error": 1.0435160364561491e-17,
+    "max_subspace_angle": 3.08217717563497e-10
+   },
+   "outcome": [],
+   "report": {
+    "slepc_version": "3.26.0",
+    "nconv": 40,
+    "iterations": 1,
+    "mpi_ranks": 1,
+    "omp_threads": 16,
+    "petsc_options": [
+     "-eps_ncv",
+     "40",
+     "-log_view",
+     ":~/rb-evidence/runs/ss-2cubes-sphere/log_view-slepc-tuned-r2.txt"
+    ],
+    "unused_options": [],
+    "warnings": [],
+    "time_setup_s": 1.7151502519845963,
+    "time_solve_s": 1.6267680078744888,
+    "success": true
+   },
+   "rep": 2,
+   "position": 0
+  },
+  {
+   "solver": "hsolve",
+   "wall_s": 2.328,
+   "peak_rss_gib": 0.679,
+   "rc": 0,
+   "killed": null,
+   "claimed_success": true,
+   "success": true,
+   "solver_max_eta": 1.6786215570920045e-12,
+   "max_eta": 1.678621548513947e-12,
+   "pairs": 10,
+   "eigenvalues": [
+    283876054.7817464,
+    283708783.59779096,
+    283652028.6099075,
+    284007460.6936173,
+    283365903.91900104,
+    284451889.75455976,
+    283149535.03512037,
+    284605192.8724612,
+    284640381.728449,
+    282902916.9739605
+   ],
+   "solver_peak_bytes": 728748032,
+   "verdict": "pass",
+   "eval_reasons": [],
+   "completeness": "consistent",
+   "certified": false,
+   "valid": true,
+   "why": [],
+   "solver_s": 2.1418762409999994,
+   "solver_s_scope": "report time_total_s",
+   "phases": {
+    "analysis_s": 0.329914915,
+    "numeric_s": 1.018500687,
+    "factorizations": 3,
+    "solves": 88,
+    "solve_s": 0.551292388,
+    "ortho_s": null,
+    "iterate_s": 0.629063743,
+    "verify_s": 0.008461893000000442
+   },
+   "evaluation": {
+    "verdict": "pass",
+    "reasons": [],
+    "status": "consistent",
+    "certified": false,
+    "expected": 10,
+    "found": 10,
+    "missing": [],
+    "boundary_deficit": 0,
+    "spurious": 0,
+    "unmatched": 0,
+    "distinct_returned": 10,
+    "duplicates": 0,
+    "rejected_pairs": 0,
+    "max_backward_error": 1.678621548513947e-12,
+    "max_eig_scaled_error": 1.6696256583298384e-17,
+    "max_subspace_angle": 4.006326475804424e-09
    },
    "outcome": [],
    "report": {
@@ -832,8 +887,8 @@
     "block_size": 4,
     "zero_cluster_dim": -1,
     "zero_modes_filtered": 0,
-    "time_total_s": 2.1458556499999997,
-    "time_certificate_s": 0.6480713579999999,
+    "time_total_s": 2.1418762409999994,
+    "time_certificate_s": 0.6430646269999998,
     "warnings": [],
     "certificate": {
      "count_found": 10,
@@ -846,7 +901,7 @@
      "passed": true,
      "performed": true,
      "rigorous": true,
-     "seconds": 0.6480713579999999,
+     "seconds": 0.6430646269999998,
      "solves": 0,
      "statement": "double-precision Sylvester counts (main factorization): nu(b) - nu(a) = 10 eigenvalue(s) in [2.82868e+08, 2.84796e+08], 10 distinct found pair(s) there: every eigenvalue in the window is found",
      "upper": 284795654.09569263
@@ -862,28 +917,28 @@
    "config": "1x16",
    "config_source": "default",
    "config_scope": "default",
-   "wall_s": 4.935,
-   "peak_rss_gib": 0.777,
+   "wall_s": 4.937,
+   "peak_rss_gib": 0.771,
    "rc": 0,
    "killed": null,
    "claimed_success": false,
    "success": false,
-   "solver_max_eta": 8.830031872156492e-06,
-   "max_eta": 1.3152259558869242e-05,
+   "solver_max_eta": 8.830031872917644e-06,
+   "max_eta": 1.3152259560003015e-05,
    "pairs": 10,
    "eigenvalues": [
     283876054.7817462,
     283708783.5977906,
     283652028.60990757,
-    284007460.6936171,
+    284007460.69361705,
     283365903.9190009,
-    284451889.7545598,
+    284451889.7545599,
     283149535.0351198,
-    284605193.7892633,
-    284640382.0189706,
-    282902916.7096989
+    284605193.7892634,
+    284640382.018971,
+    282902916.709699
    ],
-   "solver_peak_bytes": 810160128,
+   "solver_peak_bytes": 803520512,
    "verdict": "fail",
    "eval_reasons": [
     "5 of 10 pairs have backward error > tol=1e-10"
@@ -895,15 +950,15 @@
     "solver claims no success",
     "5 of 10 pairs have backward error > tol=1e-10"
    ],
-   "solver_s": 2.7300530000000003,
+   "solver_s": 2.6945987,
    "solver_s_scope": "log_view setup+solve+vectors",
    "phases": {
-    "analysis_s": 1.2103,
-    "numeric_s": 0.49499,
+    "analysis_s": 1.2137,
+    "numeric_s": 0.46145,
     "factorizations": 1,
     "solves": 25,
-    "solve_s": 0.97991,
-    "ortho_s": 0.018929,
+    "solve_s": 0.97552,
+    "ortho_s": 0.017971,
     "iterate_s": null,
     "verify_s": null
    },
@@ -923,9 +978,9 @@
     "distinct_returned": 10,
     "duplicates": 0,
     "rejected_pairs": 5,
-    "max_backward_error": 1.3152259558869242e-05,
-    "max_eig_scaled_error": 3.210149172193603e-11,
-    "max_subspace_angle": 0.0014632014786711545
+    "max_backward_error": 1.3152259560003015e-05,
+    "max_eig_scaled_error": 3.2101495896005324e-11,
+    "max_subspace_angle": 0.0014632014786848827
    },
    "outcome": [
     "residual"
@@ -942,12 +997,12 @@
     ],
     "unused_options": [],
     "warnings": [],
-    "time_setup_s": 1.7203661873936653,
-    "time_solve_s": 1.0096801817417145,
+    "time_setup_s": 1.6902154758572578,
+    "time_solve_s": 1.0044153109192848,
     "success": false
    },
-   "stderr_tail": "[guard] {\"cmd\": [\"~/envs/os2026-ref/bin/mpiexec\", \"-n\", \"1\", \"--bind-to\", \"none\", \"-x\", \"OMP_NUM_THREADS=16\", \"-x\", \"OPENBLAS_NUM_THREADS=16\", \"~/envs/os2026-ref/bin/python\", \"~/os2026-wt/rb-evidence/tools/bench/baseline_slepc.py\", \"--case\", \"ss-2cubes_sphere\", \"--out\", \"~/rb-evidence/runs/ss-2cubes-sphere/slepc-default-r2\", \"--root\", \"~/rb-evidence/data\", \"-log_view\", \":~/rb-evidence/runs/ss-2cubes-sphere/log_view-slepc-default-r2.txt\"], \"returncode\": 0, \"killed\": null, \"wall_s\": 4.935, \"peak_rss_gib\": 0.777, \"peak_sampled_gib\": 0.754, \"cpu_s\": 28.779, \"cores\": \"16-31\", \"threads\": 16, \"mem_limit_gib\": 32.0, \"exclusive\": true}\n",
-   "stdout_tail": "slepc: n=101492 target=nearest nconv=25 its=1 setup=1.72s solve=1.01s total=2.94s peak=0.75GiB\n",
+   "stderr_tail": "[guard] {\"cmd\": [\"~/envs/os2026-ref/bin/mpiexec\", \"-n\", \"1\", \"--bind-to\", \"none\", \"-x\", \"OMP_NUM_THREADS=16\", \"-x\", \"OPENBLAS_NUM_THREADS=16\", \"~/envs/os2026-ref/bin/python\", \"~/os2026-wt/rb-evidence/tools/bench/baseline_slepc.py\", \"--case\", \"ss-2cubes_sphere\", \"--out\", \"~/rb-evidence/runs/ss-2cubes-sphere/slepc-default-r2\", \"--root\", \"~/rb-evidence/data\", \"-log_view\", \":~/rb-evidence/runs/ss-2cubes-sphere/log_view-slepc-default-r2.txt\"], \"returncode\": 0, \"killed\": null, \"wall_s\": 4.937, \"peak_rss_gib\": 0.771, \"peak_sampled_gib\": 0.747, \"cpu_s\": 28.522, \"cores\": \"16-31\", \"threads\": 16, \"mem_limit_gib\": 32.0, \"exclusive\": true}\n",
+   "stdout_tail": "slepc: n=101492 target=nearest nconv=25 its=1 setup=1.69s solve=1.00s total=2.89s peak=0.75GiB\n",
    "rep": 2,
    "position": 2
   }
