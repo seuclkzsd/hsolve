@@ -318,9 +318,9 @@ seconds}, slices[...], zero_cluster_dim, zero_modes_filtered, success, warnings[
     λ_min(D^{-1/2}BD^{-1/2}) 的下界界定，D = diag(B)）。`b_min` / `b_min_source`：所用的 λ_min(B) 下界（或估计）及其来源
     （`identity`、`diagonal`、`gershgorin`、`incomplete_cholesky`、`inertia_count`、`estimate`）。`seconds`：计入
     `time_verify_s`。
-  - 松紧（实测，`results/subspace_bound.md`）：有参考特征向量的 18 个测例共 118 组中界都不小于实测夹角，界 / 实测的
-    中位数约 1.6e3（最小 46，最大 8.6e6）。Davis–Kahan 只用残差范数与间隙 δ，残差主要落在远处特征方向时（谱跨度大、
-    目标处间隙小）偏松，原因与逐组数据见该文件。默认 auto 的计算时间为求解时间的中位数 1.9%（最大 15.6%）。
+  - 松紧（实测，`results/subspace_bound.md`）：有参考特征向量的 18 个测例各 5 次 auto 运行共 590 组中界都不小于实测
+    夹角，界 / 实测的中位数约 1.5e3（最小 43，最大 8.6e6）。Davis–Kahan 只用残差范数与间隙 δ，残差主要落在远处特征方向时
+    （谱跨度大、目标处间隙小）偏松，原因与逐组数据见该文件。默认 auto 的计算时间为求解时间的中位数 1.6%（最大 12.7%）。
 - `gpu`（P10，可选，只在 GPU 模式不是 off——`--gpu` 或 `HS_GPU`——时由命令行写入，`docs/DESIGN.md` §3.10、
   `docs/BLAS.md` §10）：GPU 卸载的报告——`mode`、`available`（true / false / null = auto 低于阈值、未加载 CUDA）、
   `device`、分解数与卸载的分解数、GPU 上的 GFlop 与占估计的份额、`init_s`；不能卸载时 `reason` 说明为何走 CPU 路径
