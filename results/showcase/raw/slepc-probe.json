@@ -1,0 +1,34 @@
+{
+ "schema_version": 1,
+ "case": "yee-bloch-1e4",
+ "target": {
+  "mode": "interval",
+  "lower": 34.47805199848732,
+  "upper": 137.53029469876827
+ },
+ "python": "/tmp/os2026-p28/ref-complex/bin/python",
+ "attempts": [
+  {
+   "pc_type": "cholesky",
+   "solver": "mumps",
+   "returncode": 59,
+   "stderr_tail": "[0]PETSC ERROR: ------------------------------------------------------------------------\n[0]PETSC ERROR: Caught signal number 11 SEGV: Segmentation Violation, probably memory access out of range\n[0]PETSC ERROR: Try option -start_in_debugger or -on_error_attach_debugger\n[0]PETSC ERROR: or see https://petsc.org/release/faq/#valgrind and https://petsc.org/release/faq/\n[0]PETSC ERROR: configure using --with-debugging=yes, recompile, link, and run \n[0]PETSC ERROR: to get more information on the crash.\n[0]PETSC ERROR: Run with -malloc_debug to check if memory corruption is causing the crash.\n--------------------------------------------------------------------------\nMPI_ABORT was invoked on rank 0 in communicator MPI_COMM_WORLD\n  Proc: [[26995,0],0]\n  Errorcode: 59\n\nNOTE: invoking MPI_ABORT causes Open MPI to kill all MPI processes.\nYou may or may not see output from other processes, depending on\nexactly when Open MPI kills them.\n--------------------------------------------------------------------------\n",
+   "petsc_message": "PETSC ERROR: Caught signal number 11 SEGV: Segmentation Violation, probably memory access out of range; PETSC ERROR: Try option -start_in_debugger or -on_error_attach_debugger; PETSC ERROR: or see https://petsc.org/release/faq/#valgrind and https://petsc.org/release/faq/; PETSC ERROR: configure using --with-debugging=yes, recompile, link, and run; PETSC ERROR: to get more information on the crash.",
+   "status": "crashed"
+  },
+  {
+   "pc_type": "lu",
+   "solver": "mumps",
+   "scalar": "complex128",
+   "slepc_version": "3.26.0",
+   "n": 10080,
+   "status": "error",
+   "petsc_error_code": 56,
+   "message": "error code 56\n[0] EPSSetUp() at /home/conda/feedstock_root/build_artifacts/bld/rattler-build_slepc_1790692660/work/src/eps/interface/epssetup.c:363\n[0] EPSSetUp_KrylovSchur() at /home/conda/feedstock_root/build_artifacts/bld/rattler-build_slepc_1790692660/work/src/eps/impls/krylov/krylovschur/krylovschur.c:105\n[0] EPSSetUp_KrylovSchur_Slice() at /home/conda/feedstock_root/build_artifacts/bld/rattler-build_slepc_1790692660/work/src/eps/impls/krylov/krylovschur/ks-slice.c:345\n[0] EPSSliceGetEPS() at /home/conda/feedstock_root/build_artifacts/bld/rattler-build_slepc_1790692660/work/src/eps/impls/krylov/krylovschur/ks-slice.c:216\n[0] EPSSetUp() at /home/conda/feedstock_root/build_artifacts/bld/rattler-build_slepc_1790692660/work/src/eps/interface/epssetup.c:363\n[0] EPSSetUp_KrylovSchur() at /home/conda/feedstock_root/build_artifacts/bld/rattler-build_slepc_1790692660/work/src/eps/impls/krylov/krylovschur/krylovschur.c:105\n[0] EPSSetUp_KrylovSchur_Slice() at /home/conda/feedstock_root/build_artifacts/bld/rattler-build_slepc_1790692660/work/src/eps/impls/krylov/krylovschur/ks-slice.c:402\n[0] EPSSliceGetInertia() at /home/conda/feedstock_root/build_artifacts/bld/rattler-build_slepc_1790692660/work/src/eps/impls/krylov/krylovschur/ks-slice.c:261\n[0] MatGetInertia() at /home/conda/feedstock_root/build_artifacts/bld/rattler-build_petsc_1790685604/work/src/mat/interface/matrix.c:9785\n[0] No support for this operation for this object type\n[0] No method getinertia for Mat of type mumps",
+   "seconds": 0.32674282789230347,
+   "returncode": 0,
+   "stderr_tail": "",
+   "petsc_message": "No support for this operation for this object type; No method getinertia for Mat of type mumps"
+  }
+ ]
+}
