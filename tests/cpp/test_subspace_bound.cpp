@@ -570,4 +570,42 @@ TEST(SubspaceBoundSolveReport, NullWithAReasonUnlessACertificatePassed) {
   EXPECT_NE(s.report.subspace.note.find("indefinite B"), std::string::npos);
 }
 
+// subspace_bound = on when the inertia counts do not prove lambda_min(B): the 1-D Laplacian of order
+// 2000 has a Jacobi-scaled lambda_min of 1.2e-6, far below the counts' shifts theta/2 and theta/20
+// (theta: a 20-step Lanczos estimate from inside, orders of magnitude larger), so both counts find
+// negative pivots. The estimate
+// that remains (rigorous false) must not exceed the shifts the counts showed to be above
+// lambda_min - the default estimate theta/2 is one of them - and the note says what was counted.
+TEST(SubspaceBoundSolveReport, OnModeNeverEstimatesAboveAFailedCount) {
+  const index_t n = 2000;
+  const auto a = hs::identity<double>(n);
+  const auto b = hs::test::laplacian_1d<double>(n);
+  auto cfg = base_config<double>();
+  cfg.target.sigma = 1.0;
+  cfg.target.k = 3;
+  const auto est = hs::solve(a, &b, cfg);
+  ASSERT_TRUE(est.report.success) << est.report.to_json();
+  ASSERT_TRUE(est.report.subspace.performed) << est.report.subspace.note;
+  EXPECT_EQ(est.report.subspace.b_min_source, "estimate");
+  cfg.subspace_bound = hs::Toggle::On;
+  const auto on = hs::solve(a, &b, cfg);
+  ASSERT_TRUE(on.report.success) << on.report.to_json();
+  const auto& sub = on.report.subspace;
+  ASSERT_TRUE(sub.performed) << sub.note;
+  EXPECT_EQ(sub.b_min_source, "estimate") << sub.note;
+  EXPECT_FALSE(sub.rigorous);
+  const std::string counted = "the inertia counts of B - mu diag(B) found ";
+  ASSERT_NE(sub.note.find(counted), std::string::npos) << sub.note;
+  EXPECT_NE(sub.note.find("negative and 0 zero pivot(s) at mu = "), std::string::npos) << sub.note;
+  const std::string upper = "lambda_min(D^{-1/2} B D^{-1/2}) <= ";
+  const auto at = sub.note.find(upper);
+  ASSERT_NE(at, std::string::npos) << sub.note;
+  const double below = std::stod(sub.note.substr(at + upper.size()));
+  const double dmin = 2.0;  // min_i b_ii; S = B / 2
+  EXPECT_LE(sub.b_min, 0.5 * below * dmin * (1.0 + 1e-5)) << sub.note;  // the note prints 6 digits
+  EXPECT_LE(sub.b_min, 0.5 * est.report.subspace.b_min) << sub.note;
+  EXPECT_GT(sub.b_min, 0.0);
+  EXPECT_LT(2.0 * std::pow(std::sin(M_PI / (2.0 * (n + 1))), 2.0), below);  // the count was right
+}
+
 }  // namespace

@@ -62,6 +62,8 @@ struct BMinBound {
   /// are bounded by both, v^H B^{-1} v <= min(||v||^2 / value, ||D^{-1/2} v||^2 / scaled): the
   /// second is far smaller for a badly scaled B (value = scaled * min_i b_ii at best).
   double scaled = 0.0;
+  /// Not proven although subspace_bound = on: why (the inertia counts' outcome); else empty.
+  std::string note;
 };
 
 /// Where the time of a bound goes (for the event log; filled when SubspaceOptions::diagnostics is

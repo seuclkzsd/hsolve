@@ -701,7 +701,8 @@ double min_diagonal(const CsrMatrix<T>& b) {
 /// where one is cheap - the diagonal of a diagonal B, Gershgorin, the definiteness proof the solve
 /// made (Ctx::b_scaled_lower), the incomplete-Cholesky proof of norms.hpp within half the solve's
 /// mean factorization time (at least 0.05 s) - else, with subspace_bound = on, an inertia count of
-/// B - mu D (one or two more factorizations of B's pattern), and otherwise an estimate (not proven).
+/// B - mu D (one or two more factorizations of B's pattern), and otherwise an estimate (not proven;
+/// never above a mu at which a count found lambda_min(S) <= mu; BMinBound::note says why).
 template <class T>
 BMinBound b_min_bound(Ctx& c, const CsrMatrix<T>& b, bool diagonal) {
   BMinBound r;
@@ -758,8 +759,13 @@ BMinBound b_min_bound(Ctx& c, const CsrMatrix<T>& b, bool diagonal) {
   // of it without negative and zero pivots proves lambda_min(S) > mu - the counting argument of the
   // completeness certificate (compute_inertia: own analysis, double precision, no BLR, factors
   // discarded). mu = theta_min / 2 (the Lanczos estimate, from inside), then theta_min / 20. The
-  // assembly rounds the diagonal (1 - mu) b_ii by at most 4u b_ii: lambda_min(S) > mu - 4u.
-  if (c.cfg.subspace_bound == Toggle::On && proof.theta_min > 0.0 && dmin > 0.0) {
+  // assembly rounds the diagonal (1 - mu) b_ii by at most 4u b_ii: lambda_min(S) > mu - 4u. A
+  // count with a negative or zero pivot shows lambda_min(S) <= mu instead (below).
+  double below = kInfinity;
+  std::string counted;  // the counts that did not prove it
+  if (c.cfg.subspace_bound == Toggle::On && !(proof.theta_min > 0.0 && dmin > 0.0)) {
+    r.note = "no inertia count: no positive Lanczos estimate of lambda_min(D^{-1/2} B D^{-1/2}) to place its shift";
+  } else if (c.cfg.subspace_bound == Toggle::On) {
     CsrMatrix<T> diag = identity<T>(b.nrows);
     const std::vector<double> inv = inverse_diagonal(b);
     for (index_t i = 0; i < b.nrows; ++i)
@@ -789,12 +795,24 @@ BMinBound b_min_bound(Ctx& c, const CsrMatrix<T>& b, bool diagonal) {
         r.source = "inertia_count";
         return r;
       }
-      if (!error.empty()) break;  // no memory or no factorization: a smaller mu does not help
+      if (!error.empty()) {  // no memory or no factorization: a smaller mu does not help
+        r.note = "the inertia count of B - mu diag(B) at mu = " + fmt(mu) + " failed: " + error;
+        break;
+      }
+      // Counted, but S - mu I has a negative or zero pivot or is singular (compute_inertia: valid
+      // false): lambda_min(S) <= mu (up to the 4u of the assembly), so no estimate may exceed mu.
+      below = std::min(below, mu);
+      counted += std::string(counted.empty() ? "" : ", ") + std::to_string(in.neg) + " negative and " +
+                 std::to_string(in.zero) + " zero pivot(s)" + (in.valid ? "" : " (singular)") + " at mu = " + fmt(mu);
     }
+    if (!counted.empty())
+      r.note = "the inertia counts of B - mu diag(B) found " + counted + ": lambda_min(D^{-1/2} B D^{-1/2}) <= " +
+               fmt(below) + (r.note.empty() ? "" : "; " + r.note);
   }
-  // Not proven: half the Lanczos estimate (from inside) of lambda_min of S, times its smallest
-  // diagonal entry for B, or half that of B itself.
-  r.scaled = proof.theta_min > 0.0 && dmin > 0.0 ? 0.5 * proof.theta_min : 0.0;
+  // Not proven: half the Lanczos estimate (from inside) of lambda_min of S, or half the smallest
+  // mu a count showed to be above it, times its smallest diagonal entry for B; or half the
+  // estimate of lambda_min(B) itself.
+  r.scaled = proof.theta_min > 0.0 && dmin > 0.0 ? 0.5 * std::min(proof.theta_min, below) : 0.0;
   double estimate = r.scaled * dmin;
   if (!(estimate > 0.0)) estimate = 0.5 * estimate_norm2(b, 30, c.cfg.seed).ritz_min;
   r.value = estimate > 0.0 ? estimate : std::numeric_limits<double>::min();
@@ -844,10 +862,11 @@ void attach_subspace_bound(Ctx& c, const CsrMatrix<T>& a, const CsrMatrix<T>* b,
       if (b && !opt.b_min.proven) {
         const std::string why =
             "lambda_min(B) is estimated, not proven: the B^{-1}-norm remainder and rounding terms rest on that "
-            "estimate" +
-            std::string(c.cfg.subspace_bound == Toggle::On
-                            ? ""
-                            : " (subspace_bound = on proves it by an inertia count of B - mu diag(B))");
+            "estimate (" +
+            (c.cfg.subspace_bound == Toggle::On ? opt.b_min.note
+                                                : "subspace_bound = on tries to prove it by an inertia count of B - "
+                                                  "mu diag(B)") +
+            ")";
         out.note = out.note.empty() ? why : why + "; " + out.note;
       }
     } catch (const Error& e) {

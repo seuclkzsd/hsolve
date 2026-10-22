@@ -293,8 +293,9 @@ int hs::cli::run(int argc, char** argv, hs::Transport* peers) {
                           ->check(CLI::IsMember({"off", "auto"}));
   auto* o_subspace = app.add_option("--subspace-bound", subspace,
                                     "a-posteriori bound on the eigenvector subspace angles (report.subspace): auto "
-                                    "(default; HEP/GHEP with a passed certificate) | on (lambda_min(B) always "
-                                    "proven, by an inertia count if needed) | off")
+                                    "(default; HEP/GHEP with a passed certificate) | on (lambda_min(B) also "
+                                    "proven by an inertia count where no cheaper proof applies; when the count "
+                                    "does not prove it, report.subspace.note says why) | off")
                          ->check(CLI::IsMember({"auto", "on", "off"}));
   app.add_flag("--secure", secure,
                "data protection: no file system paths in the report and the log (inputs recorded by shape, nnz, "

@@ -212,9 +212,11 @@ struct SolverConfig {
   /// A-posteriori bound on the eigenvector subspace angles (DESIGN §3.6-8c, SolveReport::subspace):
   /// Auto (the default) - computed for HEP/GHEP results whose certificate passed, lambda_min(B)
   /// proven where a cheap proof applies (diagonal, Gershgorin, incomplete Cholesky) and estimated
-  /// otherwise (report.subspace.rigorous false); On - the same, with lambda_min(B) always proven,
-  /// by an inertia count of B - mu diag(B) when nothing cheaper applies (one or two more
-  /// factorizations of B's pattern); Off - not computed (report.subspace.note says so).
+  /// otherwise (report.subspace.rigorous false); On - the same, and when nothing cheaper applies
+  /// an inertia count of B - mu diag(B) proves it (one or two more factorizations of B's pattern);
+  /// where the counts do not prove it (lambda_min below their shifts, a failed factorization)
+  /// the estimate stays below every shift a count showed to be too large, rigorous is false and
+  /// the note gives the counts' outcome; Off - not computed (report.subspace.note says so).
   Toggle subspace_bound = Toggle::Auto;
   /// Data protection (docs/FORMATS.md §5): the report and the event log carry no file system
   /// paths - the solve reduces where a memory limit was read (report.memory.limits[].detail) to
