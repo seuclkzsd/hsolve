@@ -26,7 +26,7 @@ PEC 立方腔（n = 92,256）求 21 个特征值、目标集里有 3、6、12 �
 | 规模与内存 | 十万阶三维广义问题 2.29 s、峰值内存 0.75 GiB；百万阶 65.7 s、11.5 GiB；百万阶 B 不定方波导 5.31 s、1.91 GiB。内存预算自动由 cgroup / ulimit / 物理内存推出，放不下时转外存 | [资源需求](docs/INSTALL.md#5-资源需求) |
 | 问题覆盖 | HEP、GHEP、GHIEP（B 不定的波导）；实对称与复厄密；σ 附近最近 k 个、区间内全部、代数两端 | [求解边界](docs/SOLUTION.md#12-求解边界能处理--不能处理) |
 | 正确性复核 | 独立评测器由原矩阵重算后向误差、特征值误差与子空间夹角，并按参考谱检查漏解与虚报。上述 54 次 hsolve 运行全部通过，最大后向误差 7.5e-11（容差 1e-10）；谐振腔频率与离散精确值的相对差 ≤ 3.1e-14 | [评测方法](docs/guide/evaluation.md) |
-| 并行 | OpenMP 多线程；多 socket 机器上每 socket 一个进程（`hsolve-mpi`）；可选的 cuBLAS 卸载；没有 MPI 与 GPU 时走默认的单进程 CPU 路径，开启时证书的条件与保证不变 | [并行方案](docs/PARALLEL.md) |
+| 并行 | OpenMP 多线程；多 socket 机器上的多进程模式（启动器 `hsolve-mpirun` 运行 MPI 程序 `hsolve-mpi`，每个 socket 一个 helper 进程）；可选的 cuBLAS 卸载；没有 MPI 与 GPU 时走默认的单进程 CPU 路径，开启时证书的条件与保证不变 | [并行方案](docs/PARALLEL.md) |
 | 开源治理 | Apache-2.0；构建与默认运行只依赖开源组件，逐项登记（可选的 GPU 卸载在运行时加载用户已安装的 CUDA 库，NVIDIA 许可，不随包分发）；CI、带 SHA256SUMS 的 Release；贡献、治理与安全策略 | [NOTICE](NOTICE) · [CONTRIBUTING](CONTRIBUTING.md) · [GOVERNANCE](GOVERNANCE.md) |
 
 测试条件：Intel Xeon Silver 4314 节点（2 × 16 核），每次运行绑定一个 socket 的 16 个物理核、内存上限 32 GiB，同一时刻

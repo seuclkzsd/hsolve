@@ -11,7 +11,8 @@ hsolve 的目标：让电磁仿真中的大规模厄密特征值问题——谐�
   单精度计数两种更便宜的检验，`certificate = auto` 按实测代价选择。
 - B 不定的广义问题（GHIEP，波导模式分析），含零空间的自动排除。
 - 求解目标：σ 附近最近 k 个、区间内全部（谱切片，每片单独认证）、代数最小 / 最大 k 个。
-- 多线程（OpenMP）、每 socket 一个进程的多进程模式 `hsolve-mpi`、运行时加载的 cuBLAS 卸载（可选，默认关闭）。
+- 多线程（OpenMP）、每 socket 一个 helper 进程的多进程模式（启动器 `hsolve-mpirun` 运行 MPI 程序 `hsolve-mpi`）、
+  运行时加载的 cuBLAS 卸载（可选，默认关闭）。
 - 命令行与 Python 接口（SciPy 稀疏矩阵进、NumPy 数组出），同一条求解路径、同一份配置格式。
 
 ## 计划

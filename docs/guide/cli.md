@@ -101,7 +101,8 @@ Python 的 `hsolve.solve(...).config` 返回本次生效的完整配置，存成
 
 ## 多进程与 GPU
 
-- 多 socket 的机器上可以用 `hsolve-mpirun`（多进程模式 `hsolve-mpi`）：每个 socket 一个 helper 进程，同时做证书的两次
-  计数、分担谱切片；结果与单进程相同。只有一个 NUMA 节点时，它直接运行普通的 `hsolve`。见[并行方案](../PARALLEL.md)。
+- 多 socket 的机器上可以用启动器 `hsolve-mpirun` 运行多进程模式（它按本机的 NUMA 拓扑启动 MPI 程序 `hsolve-mpi`）：
+  每个 socket 一个 helper 进程，同时做证书的两次计数、分担谱切片；结果与单进程相同。只有一个 NUMA 节点时，它直接
+  运行普通的 `hsolve`。见[并行方案](../PARALLEL.md)。
 - `--gpu auto` 只在分解足够大（估计 ≥ 3e12 flops）时使用 GPU；每次惯性计数仍是双精度 LDLᵀ 的精确 Sylvester 惯性，
   证书的条件与保证与 CPU 路径相同。`report.json` 的 `gpu` 对象记录是否卸载以及原因。
