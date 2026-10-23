@@ -14,8 +14,11 @@
 #     portability  tools/release/check_isa.py: no AVX-class instruction outside the CPUID dispatch
 #     ctest        the C++ tests (ctest --preset release); CI_CTEST_EXCLUDE: a regex of tests to skip
 #     ctest-avx2   the C++ tests again as on a CPU with AVX2 but without AVX-512: hsolve's dispatched
-#                  kernels and OpenBLAS take their AVX2 paths (HS_KERNELS_NO_AVX512, HS_BLAS_NO_AVX512,
-#                  OPENBLAS_CORETYPE=Haswell); skipped on a CPU without AVX2
+#                  kernels take their AVX2 paths (HS_KERNELS_NO_AVX512, HS_BLAS_NO_AVX512), and on Intel
+#                  CPUs OpenBLAS too (OPENBLAS_CORETYPE=Haswell); skipped on a CPU without AVX2. OpenBLAS
+#                  is not forced on AMD: on Zen 4 (AVX-512, GitHub's EPYC 9V74 runners) its forced Haswell
+#                  or Zen dgemm kernel writes out of bounds (dgemm_kernel_HASWELL, OpenBLAS 0.3.34), with
+#                  or without hsolve; a real AVX2 CPU selects those kernels by itself
 #     pytest       the Python tests (tests/py)
 #     examples     examples/SHA256SUMS: the committed example files are intact
 #     demo         scripts/demo.sh --quick: two examples solved and checked independently by
@@ -59,8 +62,9 @@ for s in "${steps[@]}"; do
     ctest) step ctest "${guard[@]}" ctest "${ctest_args[@]}" ;;
     ctest-avx2)
       if grep -qw avx2 /proc/cpuinfo; then
-        step ctest-avx2 env HS_KERNELS_NO_AVX512=1 HS_BLAS_NO_AVX512=1 OPENBLAS_CORETYPE=Haswell \
-            "${guard[@]}" ctest "${ctest_args[@]}"
+        avx2_env=(HS_KERNELS_NO_AVX512=1 HS_BLAS_NO_AVX512=1)
+        ! grep -q GenuineIntel /proc/cpuinfo || avx2_env+=(OPENBLAS_CORETYPE=Haswell)
+        step ctest-avx2 env "${avx2_env[@]}" "${guard[@]}" ctest "${ctest_args[@]}"
       else
         echo "ci: ctest-avx2 skipped - this CPU has no AVX2"
       fi ;;
