@@ -233,9 +233,10 @@ TEST(GpuAffinity, NoEffectWithoutOpenMpBinding) {
 }
 
 // Under OMP_PROC_BIND=close OMP_PLACES=cores the OpenMP runtime binds this (initial) thread to one
-// core. Threads started inside a ScopedPlacesAffinity - and the engine's pipeline threads, named
-// hs-gpu-* - may run on every place; this thread's binding is restored. (P10 review finding: the
-// engine's threads inherited the one core and offloaded calls took 1.3-1.4x as long.)
+// core - its place, which holds every hardware thread of that core (2 CPUs with SMT, e.g. on
+// GitHub's runners). Threads started inside a ScopedPlacesAffinity - and the engine's pipeline
+// threads, named hs-gpu-* - may run on every place; this thread's binding is restored. (P10 review
+// finding: the engine's threads inherited the one core and offloaded calls took 1.3-1.4x as long.)
 TEST(GpuAffinityBound, EngineThreadsMayUseEveryPlace) {
   if (std::getenv("HSOLVE_TEST_OMP_BOUND") == nullptr)
     GTEST_SKIP() << "runs as test_gpu.AffinityUnderOmpProcBind (OMP_PROC_BIND=close OMP_PLACES=cores)";
@@ -249,8 +250,11 @@ TEST(GpuAffinityBound, EngineThreadsMayUseEveryPlace) {
   cpu_set_t places;
   ASSERT_TRUE(hs::gpu::openmp_places_cpuset(&places)) << "no OpenMP places: OMP_PLACES not applied";
   const int n = CPU_COUNT(&places);
-  if (n < 2) GTEST_SKIP() << "a single CPU in the OpenMP places";
-  ASSERT_EQ(hs::gpu::thread_cpu_count(), 1) << "the initial thread is not bound to one core";
+  const int place = omp_get_place_num();
+  ASSERT_GE(place, 0) << "the initial thread is not bound to an OpenMP place";
+  const int bound = omp_get_place_num_procs(place);  // the CPUs of one core
+  if (n <= bound) GTEST_SKIP() << "a single place (one core) in the OpenMP places";
+  ASSERT_EQ(hs::gpu::thread_cpu_count(), bound) << "the initial thread is not bound to its core";
   {
     const hs::gpu::ScopedPlacesAffinity wide;
     EXPECT_TRUE(wide.widened());
@@ -259,14 +263,14 @@ TEST(GpuAffinityBound, EngineThreadsMayUseEveryPlace) {
     std::thread([&] { started = hs::gpu::thread_cpu_count(); }).join();
     EXPECT_EQ(started, n);
   }
-  EXPECT_EQ(hs::gpu::thread_cpu_count(), 1);  // restored
+  EXPECT_EQ(hs::gpu::thread_cpu_count(), bound);  // restored
   if (!gpu_requested()) return;
   std::string why;
   auto e = hs::gpu::GemmEngine::create(small_engine(), &why);
   ASSERT_NE(e, nullptr) << why;
   EXPECT_TRUE(e->info().pipeline_affinity_widened);
   EXPECT_EQ(e->info().pipeline_cpus, n);
-  EXPECT_EQ(hs::gpu::thread_cpu_count(), 1);  // the creating thread keeps its binding
+  EXPECT_EQ(hs::gpu::thread_cpu_count(), bound);  // the creating thread keeps its binding
   const auto threads = threads_named("hs-gpu-");
   EXPECT_EQ(threads.size(), 3u);  // 2 issuing threads + the completing thread
   for (const auto& [tid, name] : threads) EXPECT_EQ(task_cpu_count(tid), n) << name;
