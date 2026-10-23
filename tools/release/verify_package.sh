@@ -14,7 +14,7 @@
 # .github/workflows/release.yml in plain distribution containers (CentOS 7 = glibc 2.17, Debian,
 # Ubuntu) and on the cluster nodes (docs/INSTALL.md). Exit status 0 when everything passed.
 set -euo pipefail
-[ $# -ge 1 ] || { sed -n '2,13p' "$0" >&2; exit 2; }
+[ $# -ge 1 ] || { sed -n '4,15p' "$0" >&2; exit 2; }
 tarball="$(cd "$(dirname "$1")" && pwd)/$(basename "$1")"
 shift
 work=""

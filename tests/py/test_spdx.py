@@ -1,9 +1,12 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
-"""tools/dev/spdx.py: every source file carries its SPDX header, and --fix places it correctly."""
+"""tools/dev/spdx.py: every source file carries its SPDX header, and --fix places it correctly; the
+shell scripts that print their own header as usage text skip the SPDX lines."""
 from __future__ import annotations
 
 import importlib.util
+import os
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -72,3 +75,35 @@ def test_outside_a_git_work_tree_the_covered_roots_are_walked(tmp_path):
     assert spdx.main(["--check", "--root", str(tmp_path)]) == 1
     assert spdx.main(["--fix", "--root", str(tmp_path)]) == 0
     assert spdx.main(["--check", "--root", str(tmp_path)]) == 0
+
+
+USAGE = re.compile(r"""sed -n '(\d+),(\d+)p' "\$0\"""")
+
+
+def usage_scripts() -> list[Path]:
+    """Shell scripts printing lines A-B of themselves as their usage text."""
+    found = []
+    for top in (*spdx.ROOTS, "results/"):
+        for dirpath, dirnames, filenames in os.walk(ROOT / top):
+            dirnames[:] = [d for d in dirnames if not d.startswith(".") and d != "__pycache__"]
+            for name in filenames:
+                path = Path(dirpath) / name
+                if (name.endswith(".sh") or spdx.is_script(path)) and USAGE.search(path.read_text(errors="replace")):
+                    found.append(path)
+    return found
+
+
+def test_usage_text_is_the_whole_header_comment_without_the_spdx_lines():
+    scripts = usage_scripts()
+    assert len(scripts) >= 7, scripts
+    for path in scripts:
+        lines = path.read_text().splitlines()
+        first, last = (int(x) for x in USAGE.search(path.read_text()).groups())
+        start = 1  # after the shebang
+        while start < len(lines) and "SPDX-" in lines[start]:
+            start += 1
+        end = start
+        while end < len(lines) and lines[end].startswith("#"):
+            end += 1
+        rel = path.relative_to(ROOT)
+        assert (first, last) == (start + 1, end), f"{rel}: prints lines {first}-{last}, header is {start + 1}-{end}"

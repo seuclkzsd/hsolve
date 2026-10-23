@@ -26,7 +26,7 @@
 #   tools/dev/cluster_run.sh gpu02 -- python3 tools/run/guard.py --status
 # The home directory is shared by all nodes, so one <name> must not build on two nodes at once.
 set -euo pipefail
-usage() { sed -n '2,25p' "$0" >&2; exit 2; }
+usage() { sed -n '4,27p' "$0" >&2; exit 2; }
 [ $# -ge 3 ] || usage
 HOST="$1"; shift
 dirty_ok=0 wip=0

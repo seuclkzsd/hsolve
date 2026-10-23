@@ -14,7 +14,7 @@
 # with --exclusive (the slot: cores 16-31, <= 32 GiB, one run at a time) and --timeout TIMEOUT_S.
 # Run it from the repository root inside the project environment (tools/dev/cluster_run.sh does).
 set -euo pipefail
-[ $# -ge 4 ] || { sed -n '2,13p' "$0" >&2; exit 2; }
+[ $# -ge 4 ] || { sed -n '4,15p' "$0" >&2; exit 2; }
 gpu="$1"; timeout_s="$2"; shift 2
 gopts=()
 while [ $# -gt 0 ] && [ "$1" != "--" ]; do gopts+=("$1"); shift; done
