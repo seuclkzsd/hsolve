@@ -27,6 +27,11 @@ a summary are skipped (resume). Timings need the measurement slot (guard.py --ex
 whole `run`). `table` gives per (case, threads, cap): median solve time [min-max] (report
 time_total_s, the solve after loading), median wall time of the process, peak RSS (max over the
 repetitions), the memory mode chosen and whether every run succeeded with a passed certificate.
+
+The tiers describe the default general path (shift-invert Krylov from the start): every report must
+give candidate_source = "iterative" (docs/FORMATS.md §3). A report from the structure fast path
+(structure_candidates = auto, off by default since 1.0) stops `run` after it is logged, and `table`
+refuses raw data with such a report or without the field.
 """
 from __future__ import annotations
 
@@ -52,6 +57,8 @@ YEE = {"1e4": ((20, 16, 12), (1.0, 0.7, 0.45)), "1e5": ((44, 34, 26), (1.0, 0.75
 # Waveguide grids (cells per side, union-jack triangles) of tools/gen/waveguide.py; 1e5 and 1e6 are the
 # grids of the data campaign's wg-square-1e5 / wg-square-1e6.
 WAVEGUIDE = {"1e4": 50, "1e5": 158, "1e6": 500}
+# report candidate_source of the general path; the structure fast path writes separable_* instead.
+GENERAL_PATH = "iterative"
 
 
 def generate(root: Path, sizes: list[str]) -> None:
@@ -175,6 +182,9 @@ def run(a: argparse.Namespace) -> int:
                         log.flush()
                         print(f"{name:20s} {run_id:14s} rc={rec['rc']} t={rec.get('time_total_s')} "
                               f"wall={rec.get('wall_s')} peak={rec.get('peak_rss_gib')} GiB", flush=True)
+                        off_path = not_general_path(rec)
+                        if off_path:
+                            raise SystemExit(f"resource_tiers: {off_path}")
     return 0
 
 
@@ -182,10 +192,25 @@ def report_fields(rep: dict[str, Any]) -> dict[str, Any]:
     fo, fs, cert = rep.get("factor_options") or {}, rep.get("factor_stats") or {}, rep.get("certificate") or {}
     return {"success": rep.get("success"), "time_total_s": rep.get("time_total_s"), "problem": rep.get("problem"),
             "n": rep.get("n"), "nnz_a": rep.get("nnz_a"), "nnz_b": rep.get("nnz_b"), "pairs": len(rep.get("pairs") or []),
+            "candidate_source": rep.get("candidate_source"),
             "budget_gb": (rep.get("memory") or {}).get("budget_gb"), "out_of_core": bool(fo.get("out_of_core")),
             "ooc_switches": fs.get("ooc_switches"), "factorizations": fs.get("factorizations"),
             "flops": (fs.get("estimate") or {}).get("flops"), "certificate": cert.get("method"),
             "certificate_passed": bool(cert.get("passed")) if cert.get("performed") else None}
+
+
+def not_general_path(rec: dict[str, Any]) -> str | None:
+    """Why a run record is no measurement of the general path - its report gives another
+    candidate_source than "iterative", or none (raw data from before the field was recorded) - else
+    None. A run without a report (the solver refused, e.g. out_of_memory_budget) has nothing to check."""
+    if "error" in rec:
+        return None
+    src = rec.get("candidate_source")
+    if src == GENERAL_PATH:
+        return None
+    return (f"{rec.get('case')} t{rec.get('threads')}-m{rec.get('mem_gb', 0):g}-r{rec.get('rep')}: report "
+            f"candidate_source = {json.dumps(src)}, not \"{GENERAL_PATH}\" - the tiers measure the default general "
+            "path (structure_candidates off)")
 
 
 def summarize(raws: list[Path]) -> list[dict[str, Any]]:
@@ -193,6 +218,9 @@ def summarize(raws: list[Path]) -> list[dict[str, Any]]:
     for raw in raws:
         for line in (raw / "runs.jsonl").read_text().splitlines():
             r = json.loads(line)
+            off_path = not_general_path(r)
+            if off_path:
+                raise SystemExit(f"resource_tiers: {raw}: {off_path}")
             if r.get("rc") != 0:  # the solver's error kind, e.g. out_of_memory_budget
                 err = raw / r["case"] / f"stderr-t{r['threads']}-m{r['mem_gb']:g}-r{r['rep']}.txt"
                 m = re.search(r"hsolve: error \[(\w+)\]", err.read_text()) if err.is_file() else None
@@ -214,6 +242,8 @@ def summarize(raws: list[Path]) -> list[dict[str, Any]]:
             "peak_rss_gib": max((r.get("peak_rss_gib") or 0) for r in runs),
             "memory_mode": "/".join(sorted(ooc)) or "-",
             "certificate": first.get("certificate"),
+            # "iterative" where a run gave a report (summarize checked them all), None where none did
+            "candidate_source": GENERAL_PATH if any("error" not in r for r in runs) else None,
             # passed: every run succeeded with a passed certificate; none: every run succeeded, none
             # performed one (e.g. B indefinite); failed: anything else
             "certified": ("failed" if len(ok) < len(runs) else
@@ -250,7 +280,8 @@ def table(a: argparse.Namespace) -> int:
     versions = sorted({r["version"] for r in rows})
     lines += ["", f"Hosts: {', '.join(hosts)}; build: {'; '.join(versions)}. Solve = report time_total_s (after the "
               "matrices are loaded), median over the runs; wall = whole process incl. loading the .npz files; peak RSS "
-              "= tools/run/guard.py's peak of the process tree, max over the runs."]
+              "= tools/run/guard.py's peak of the process tree, max over the runs. Every report gives "
+              f"candidate_source = {GENERAL_PATH} (the general path; the structure fast path is off by default)."]
     Path(a.md).write_text("\n".join(lines) + "\n")
     Path(a.json).write_text(json.dumps(rows, indent=2) + "\n")
     if a.summary_md:
