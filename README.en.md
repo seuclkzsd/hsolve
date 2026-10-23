@@ -15,10 +15,11 @@
 Finite-element models of cavities, waveguides and photonic crystals lead to sparse Hermitian eigenproblems
 A x = λ B x in which A is indefinite and, for waveguides, B is indefinite too, while engineers need only the dozen modes
 near a target frequency. Shift-invert Krylov solvers miss modes at repeated (degenerate) eigenvalues, null spaces and
-near-singular shifts, sometimes while reporting success: asked for 21 eigenvalues of a PEC cube (n = 92,256) whose target
-set holds 3-, 6- and 12-fold levels, SLEPc with its default settings returned 21 pairs in each of 3 runs and missed 7 of
-them every time; on the 1e6-size box cavity and square waveguide, 4 default SLEPc runs reported success while eigenvalues
-of the target set were missing.
+near-singular shifts. Asked for 21 eigenvalues of a PEC cube (n = 92,256) whose target set holds 3-, 6- and 12-fold
+levels, SLEPc with its default settings returned 21 pairs in each of 3 runs, yet 7 eigenvalues of the target set were
+missing every time and residuals exceeded the tolerance (up to 2.0e-08); SLEPc itself reported no success. Missed modes
+can also go unnoticed: on the 1e6-size box cavity and square waveguide, 4 default SLEPc runs reported success while
+eigenvalues of the target set were missing - only a completeness count or a reference spectrum reveals that.
 hsolve counts Sylvester inertia at both ends of the target window, compares "how many there must be" with "how many
 were found", and computes the missing ones; when B is positive definite the result carries a completeness certificate
 that can be checked.
