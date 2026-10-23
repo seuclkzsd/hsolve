@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Unit tests of the MUMPS block sizes of P9 "factspeed" (src/factor/mumps_api.hpp Blocking,
 // mumps_factorization.cpp, docs/DESIGN.md §3.4): with HS_MUMPS_BLOCKING unset a MumpsFactorization
 // takes the build's default (CMake: MUMPS' own block sizes, P9 ones with HSOLVE_MUMPS_ROOT);

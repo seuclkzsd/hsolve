@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Synthetic robustness study of jacobi_davidson (fix round of module lobpcg_jd): small problems
 // with known spectra where the target lies ON an eigenvalue (simple, 25-fold, an exact null
 // space) and where an eigenvalue of multiplicity >= nev lies next to the target, run with the

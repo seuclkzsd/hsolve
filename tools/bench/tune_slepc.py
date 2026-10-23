@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 """Tune the SLEPc baseline (tools/bench/baseline_slepc.py) per case and core budget P: find the
 fastest configuration whose result passes tools/eval at the case tolerance, so that a speedup
 claimed against it is a claim against the strongest open-source setup we can build.

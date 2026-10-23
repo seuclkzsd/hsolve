@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 """Command-line features of hsolve (docs/FORMATS.md §2, §3, §5): the data-protection mode --secure
 (no paths in report and log, inputs by SHA-256, files 0600), the eigenvector subspace-angle bound in
 report.json, the structure-candidates switch, and the refusal of pickled numpy input.

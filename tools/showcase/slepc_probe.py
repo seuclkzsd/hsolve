@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 """Record SLEPc's own answer for a query the baseline wrapper refuses: all eigenvalues of an interval
 of a complex Hermitian problem (spectrum slicing).
 

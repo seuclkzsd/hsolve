@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 """Tests of the P10 "mpi" layout campaign tool (tools/bench/mpi_layouts.py): the layout names, the
 bench table (one count, the pair of counts - the slower of two concurrent ones -, factorization,
 solve; ratios to a base layout; a failed inertia check or run counts against "runs ok") and the

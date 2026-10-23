@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Binary messages of multi-process solves (module src/parallel, internal; DESIGN §3.9): the
 // session protocol between the leader (rank 0) and its helpers and its encoding. Both sides run the
 // same build of hsolve on one machine, so values are copied in native byte order and layout; every

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // GPU offload through the BLAS hook linked into an executable (P10 "gpu"; src/gpu/offload.hpp,
 // docs/BLAS.md §10): MUMPS factorizations made by hsolve's backend in this process pass their
 // dgemm calls through the hook (CMake hsolve_link_blas_hook), whose dmumps_c wrapper opens the

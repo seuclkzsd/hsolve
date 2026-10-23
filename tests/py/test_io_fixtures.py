@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 """The committed src/io fixtures (tests/data/io) are what tests/data/make_io_fixtures.py produces,
 and scipy reads them as expected.json claims (an independent check of the C++ test oracle)."""
 import json

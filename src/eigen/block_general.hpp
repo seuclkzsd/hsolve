@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Internals of hs::krylov_schur_general shared by the single-vector solver and its block mode
 // (options.block_size = p > 1), and the block Krylov-Schur basis (module-internal, src/eigen).
 // The solver loop and the projected-problem logic live in krylov_schur_general.cpp; this header

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Proven condition bounds of a general HPD B (P8 "certcost", src/driver/norms.* prove_condition_bound,
 // src/driver/certificate.* b_bounds, src/verify/single_count.cpp SingleCountRule::b_min_proven): the
 // incomplete-Cholesky proof of lambda_min(W B W) plus a Gershgorin bound of lambda_max give a

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Completeness checks that cost solves instead of factorizations (module src/verify, "certfast").
 // Scalar set: T in {double, cplx}.
 //

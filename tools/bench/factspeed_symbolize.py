@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 """Symbolise and aggregate the SIGPROF samples of bench_factspeed_factor (P9 "factspeed").
 
     python3 tools/bench/factspeed_symbolize.py SAMPLES [--job JOB] [--t0 S] [--t1 S]

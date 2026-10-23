@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 """results/subspace_bound.md from the raw runs of tools/bench/subspace_bound_run.py.
 
   python3 tools/bench/subspace_bound_table.py results/subspace_bound.json > results/subspace_bound.md

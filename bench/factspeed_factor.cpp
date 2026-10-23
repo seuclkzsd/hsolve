@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Numeric LDL^T throughput of the factorizations a nearest solve makes (P9 "factspeed"): the main
 // factorization at sigma (factors kept) and the certificate's two inertia-only counts at the window
 // ends a, b on the main analysis' pivot order - exactly as the driver makes them (main object:

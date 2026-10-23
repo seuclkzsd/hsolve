@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // block_size = 1 must keep the single-vector general Krylov-Schur solver of the base commit
 // 0acb863 bit for bit (module ghiep, P4: the block mode shares the selection, certification and
 // output code). This file pins that behaviour, as test_lanczos_bitwise.cpp does for the Hermitian

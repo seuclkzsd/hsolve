@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 """Measure the ||.||_2 estimate of tools/eval/evaluate.py against the settings it replaced.
 
 For every case and matrix (A, and B when present) ARPACK eigsh(k=1, which='LM') runs twice from the

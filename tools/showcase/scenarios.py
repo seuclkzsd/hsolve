@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 """Catalogue of the hard-scenario campaign (docs/showcase/困难场景对比.md) and its data root.
 
 Each Scenario is one row of results/showcase/scenarios.md: the matrices of a data case, the target

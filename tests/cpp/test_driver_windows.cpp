@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Interval / smallest / largest targets of hs::solve (B HPD): spectrum slicing, inertia search for
 // the window ends, zero-band exclusion and the output memory budget. Every case has an analytic or
 // a dense reference (n <= 2000 for dense ones).

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // factorize_near's choice between a perturbed shift and a factorization at the shift without
 // null-pivot detection (module anaint, P5c fix; src/driver/steps.cpp). Regression: on
 // syn-zero-cluster-real-1e5 (sigma0 = 0 inside 10^4 eigenvalues spaced 2e-9) the factors of the

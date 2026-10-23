@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Unit tests of the P9 additions to hsolve's nested dissection (src/factor/ordering*.cpp,
 // compute_ordering): merging indistinguishable vertices (compress_graph,
 // OrderingOptions::compress), weighted minimum degree on the leaves, trial separators refined down

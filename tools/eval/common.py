@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 """Helpers shared by the evaluation tools (reference, baseline, evaluator).
 
 Case interpretation follows docs/FORMATS.md: the problem type comes from meta.json (the source of

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // End-to-end GHIEP solves (hs::solve) for a list of Krylov block sizes p (module ghiep, P4 fixes):
 // the measurement behind the driver's block-size rule (indefinite.cpp, ghiep_block_size), with the
 // target shift and k overridable so that the one-sided zero-cluster path (sigma = 0) of a data case

@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 """Merge compare.py documents of one campaign split over several nodes into one table.
 
   python3 tools/bench/compare_merge.py --tag cmp-p5c-best --out-dir results \\

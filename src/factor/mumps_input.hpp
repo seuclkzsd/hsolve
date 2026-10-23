@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Centralized assembled MUMPS input for K = alpha*A + beta*B (module-internal to src/factor).
 // T in {double, cplx} is the pencil scalar, U in {double, float} the MUMPS arithmetic.
 #pragma once

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // hs::solve - the driver (docs/DESIGN.md §3.6). Orchestrates the memory budget, diagnosis,
 // analysis within the budget, the problem-type decision, the solve path (definite.cpp /
 // indefinite.cpp) and the fallback from inexact (single / BLR) to double factors; all numerics

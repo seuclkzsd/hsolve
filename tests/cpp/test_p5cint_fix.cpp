@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Regression tests of the P5c integration review fixes (src/eigen, src/driver):
 //   * KrylovSchurOptions::lead_nev: a run whose extra wanted pairs lie in a cluster wider than
 //     tol (they never converge) ends once its leading pairs have converged, and the driver's

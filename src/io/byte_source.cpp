@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Byte sources and helpers shared by the src/io readers (see byte_source.hpp).
 #include "io/byte_source.hpp"
 

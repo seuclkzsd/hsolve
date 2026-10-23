@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Multi-process solves over MPI (src/mpi, DESIGN §3.9): run by ctest as MPI jobs of 1, 2, 3 and 5 ranks
 // (CMakeLists.txt: test_mpi_session.ranks<R>). Rank 0 runs the tests below - each a solve_parallel
 // of the session - while ranks 1..R-1 serve them (hs::serve) until rank 0 releases them at the end.

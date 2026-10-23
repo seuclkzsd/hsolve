@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 # Build LIBXSMM 1.17 from the pinned tag tarball (docs/BLAS.md).
 #
 #   env/run.sh tools/deps/build_libxsmm.sh NAME [MAKEVAR=VALUE ...]

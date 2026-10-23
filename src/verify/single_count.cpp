@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Single-precision Sylvester counts that certify a window (include/hsolve/verify.hpp, "(2)").
 //
 // eta(s) = backward_factor * u_s * ||K(s)||_1 / min b_ii bounds how far the eigenvalues of the

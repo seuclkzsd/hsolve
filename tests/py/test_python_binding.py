@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 """Tests of the in-process Python API (python/hsolve, docs/PYTHON.md).
 
 The extension is imported from the build tree: $HSOLVE_PYTHON_DIR, default build/release/python

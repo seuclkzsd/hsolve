@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // SHA-256 (FIPS 180-4), for the content digests of the command line's secure mode
 // (include/hsolve/util.hpp; docs/FORMATS.md §5). Plain portable C++: no crypto library dependency.
 #include <algorithm>

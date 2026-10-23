@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // make_thread_transports (include/hsolve/parallel.hpp): a session between threads of one process,
 // for tests of the protocol without MPI. One mailbox per rank; FIFO per (sender, receiver) pair.
 #include <condition_variable>

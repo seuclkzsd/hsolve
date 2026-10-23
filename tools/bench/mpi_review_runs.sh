@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 # P10 "mpi", review fix (results/p10_mpi.md sections 3.1 and 7): plain hsolve against its
 # multi-process mode where the review found it wrong. Run from the repository root on a cluster
 # node (tools/dev/cluster_run.sh), detached; each run is its own guard call.

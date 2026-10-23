@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // GHIEP zero-cluster handling of hs::solve (DESIGN §3.6-9): pencils with indefinite B whose A has
 // a large null space, like the Lee-Sun-Cendes waveguide pencils (A = blkdiag(A_tt, 0)). The
 // cluster lambda = 0 is never wanted: one-sided shifts keep it at the unwanted end.

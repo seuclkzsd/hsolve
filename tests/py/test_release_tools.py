@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 """The reproducibility tooling: example files, the demo, the portability check, the package
 archive, the CI and release workflows and the container build (examples/, scripts/, tools/release/,
 tools/dev/ci.sh, .github/workflows/, Dockerfile; docs/INSTALL.md).

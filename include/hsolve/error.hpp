@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Error type used across the library. Input/runtime errors throw hs::Error; internal
 // invariants use HS_ASSERT (active in all build types: a wrong eigenvalue is worse than a crash).
 #pragma once

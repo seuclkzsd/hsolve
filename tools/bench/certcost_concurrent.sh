@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 # P8 task 2: are concurrent certificate counts (two inertia-only factorizations, 8 + 8 of the 16
 # slot threads) faster than the driver's sequential ones (16 threads each)? Runs, for every case
 # line of CASES (name lower upper ordering), inside ONE measurement-slot guard call (the caller's):

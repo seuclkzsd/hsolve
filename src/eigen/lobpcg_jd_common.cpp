@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Helpers shared by lobpcg and jacobi_davidson (see src/eigen/lobpcg_jd_common.hpp).
 #include "eigen/lobpcg_jd_common.hpp"
 

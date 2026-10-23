@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 """Tests of the SLEPc baseline tooling (tools/bench): option handling of baseline_slepc.py, the
 -log_view parser, configurations/profiles, the tuner's search logic (descent and confirmation on
 synthetic trials) and reports, and compare.py's runs (guard mocked, tools/eval on tiny cases) and

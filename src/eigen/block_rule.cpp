@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Block-size rule of shift-invert block Lanczos; see block_rule.hpp. Calibration below.
 #include "eigen/block_rule.hpp"
 

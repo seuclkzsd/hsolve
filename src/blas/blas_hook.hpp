@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // BLAS hook (module blas, P5 "asmkern"; docs/BLAS.md): routes selected shape classes of the dense
 // BLAS calls MUMPS makes (and hsolve's own) to other existing kernels and forwards everything else
 // to the real BLAS, plus a per-call profiler (blas_profile.hpp).

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Internal to src/io: sequential byte sources (memory, file; zip members live in zip.hpp) and
 // little-endian field decoding shared by the npy, zip and MatrixMarket readers.
 #pragma once

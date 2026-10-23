@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Driver building blocks shared by the solve paths: context helpers, pair blocks and the
 // factorization steps (shift retries, inertia counts, analysis and memory budget, adaptive
 // ordering). See internal.hpp.

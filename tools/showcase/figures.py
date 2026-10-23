@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 """Figures of the README and the showcase pages, drawn from committed data only (matplotlib + numpy).
 
     hero                 mode pictures and the number of hard scenarios each solver gets right

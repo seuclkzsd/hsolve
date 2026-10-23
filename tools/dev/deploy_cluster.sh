@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 # Deploy the project environments, code and test data to the cluster share (gpu01 / gpu02 / c001:
 # CentOS 7, glibc 2.17, no internet), from the development server's conda package cache.
 #

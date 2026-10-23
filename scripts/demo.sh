@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 # hsolve demo: solve every example case (examples/), check each result independently and print a
 # summary table - scripts/demo.py does the work (needs Python 3 with numpy and scipy).
 #

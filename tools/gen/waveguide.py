@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 """Waveguide-family test cases: 2-D vector finite-element eigenproblems from electromagnetics.
 
 Families

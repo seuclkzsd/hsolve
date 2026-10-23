@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // hs::resolve_memory_budget (include/hsolve/solver.hpp): the memory budget of a solve, configured
 // or derived from the memory limits of the process (docs/DESIGN.md §3.6-3).
 #include <algorithm>

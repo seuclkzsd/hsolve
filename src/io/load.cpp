@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // load_matrix: format readers (scipy npz, dense npy, MatrixMarket) feeding one post-processing
 // pipeline (include/hsolve/io.hpp).
 //

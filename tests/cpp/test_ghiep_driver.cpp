@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // GHIEP path of hs::solve with block Krylov-Schur runs (module ghiep, P4): pencils of order
 // >= 20000, where the driver's automatic rule picks block sizes > 1, with known spectra (sparse,
 // block diagonal), so the computed sets are checked against analytic eigenvalues. Covers the

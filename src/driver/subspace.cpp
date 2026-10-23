@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Eigenvector subspace-angle bounds (src/driver/subspace.hpp; docs/DESIGN.md §3.6-8c).
 #include "driver/subspace.hpp"
 

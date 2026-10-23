@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Fixed-step time split of the real shift-invert eigensolver path (review of the ortho module).
 // Same setup as bench/ortho_shift_invert.cpp (load A and B, factorize K = A - sigma B with MUMPS
 // at the case's shift, run the driver's Krylov solver on Op = K^{-1} B: Lanczos in the B inner

@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 # P10 "mpi": ONE run of a process / thread layout on the cores this script inherits - the cpuset of
 # the caller's guard (`guard.py --exclusive --cores C`; C = 16-31: one socket, 8-15,16-23: 8 cores of
 # each socket on the cluster nodes). tools/bench/mpi_layouts.py runs it once per (case, layout,

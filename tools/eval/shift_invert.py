@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 """Shift-invert eigensolves with scipy/ARPACK, shared by the scipy baseline and solver-based references.
 
 K = A - sigma B is factorized once with SuperLU (scipy.sparse.linalg.splu with scipy's default COLAMD

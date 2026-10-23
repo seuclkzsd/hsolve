@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Driver-internal building blocks shared by the solve paths (src/driver/*.cpp only).
 // Scalar set of the templates: T in {double, cplx}, instantiated in the .cpp that defines them.
 #pragma once

@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 # Check a release tarball the way a user meets it: unpack it into a new directory away from the
 # source tree, then - with whatever the machine offers, no build environment needed - print the
 # version and run the self-check (scripts/demo.sh --quick: two examples; with Python 3 + numpy +

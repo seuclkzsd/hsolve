@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Unit tests of the BLAS hook (src/blas, module blas, P5 "asmkern"; docs/BLAS.md): the route
 // configuration parser, the router (dgemm N = 1 / M = 1 -> dgemv, dtrsm N = 1 -> dtrsv, narrow
 // kernels, parallel splits) against the real BLAS for every routed shape class - edge sizes,

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Block Krylov-Schur on the GHIEP path (module ghiep, P4): block size p against p = 1 on real
 // indefinite-B cases (wg-* waveguides), at equal tolerance with accuracy and set checks.
 //

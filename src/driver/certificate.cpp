@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // The nearest target's fast completeness checks: the auto choice, the randomized exclusion check
 // and single-precision counts (certificate.hpp; the exact counts stay in definite.cpp).
 #include "driver/certificate.hpp"

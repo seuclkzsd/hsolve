@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Internal to src/io: canonical CSR from the index/value arrays stored in matrix files, without
 // widening them. Inputs reach ~1e8 entries: hs::csr_from_coo takes int64 triplets and a
 // (column, value) workspace (~40 bytes per complex entry on top of the input), whereas these

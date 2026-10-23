@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Peak memory of hs::load_matrix on inputs with few entries per row (module memio, review fixes).
 //
 //   bench_memio_fix_rows [--n N] [--band B]... [--dir DIR] [--only SUBSTR] [--keep]

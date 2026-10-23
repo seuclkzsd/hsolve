@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Thick-restart Lanczos == Hermitian Krylov-Schur (Stewart 2001; Wu & Simon 2000) with full CGS2
 // reorthogonalization, locking by zeroing couplings, and an optional deflation block D.
 // options.block_size > 1 dispatches to the block variant (block_lanczos.cpp), which shares the

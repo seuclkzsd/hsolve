@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 # Source this file to enter the project environment:  source env/activate.sh
 # Activates the conda environment of env/environment.yml and sets the resource policy defaults
 # (docs/DESIGN.md §6, docs/INSTALL.md).

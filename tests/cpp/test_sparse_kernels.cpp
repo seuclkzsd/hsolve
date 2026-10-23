@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Unit tests for the sparse kernel paths of src/sparse/kernels.cpp (P4 "solvephase"): spmv,
 // spmm and shifted_residual on every KernelPath against the Reference path (the P1 loops), for
 // real and complex scalars, rectangular matrices with empty rows, orders that are not multiples

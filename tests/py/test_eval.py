@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 """Tests of the evaluation tools (tools/eval): metrics, references, scipy baseline, report.
 
 Every case is tiny and created in tmp_path through tools/case.py; exact eigenpairs come from the

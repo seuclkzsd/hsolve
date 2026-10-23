@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // End-to-end cost of a fill-reducing ordering for the driver (module analysis, P4 review fix):
 // not analysis + one factorization, but what the driver pays with it - the analysis, the main
 // factorization, the two certificate inertia counts at the window endpoints (refactorizations

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Regression tests of the BLAS hook's review fixes (module blas, P5c; docs/BLAS.md):
 //   * the parallel routes (dgemv split, gemv1 + par, parallel_gemm, split-K, narrow + par) compute
 //     every block when the OpenMP runtime forms a smaller team than they ask for - one thread

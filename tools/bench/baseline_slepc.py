@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 """SLEPc reference solver (strong open-source baseline): Krylov-Schur + shift-and-invert with an
 MUMPS factorization, using the same upstream MUMPS version as hsolve. hsolve also uses its own
 BLAS kernels and MUMPS patches, so the comparison includes their effects.

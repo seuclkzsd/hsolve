@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Regression tests of src/linalg/dense_ops through its consumers: configurations where a change of
 // the CGS defaults showed only at solver level.
 #include <gtest/gtest.h>

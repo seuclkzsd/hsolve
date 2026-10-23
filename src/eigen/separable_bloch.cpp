@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Matrix-verified Bloch curl-curl candidates. The forward difference has symbol
 // d_j = sqrt(alpha_j) * (exp(i theta_j) - 1); each Fourier block is
 // ||d||^2 I - d d^H. Its transverse space supplies candidates, not a certificate.

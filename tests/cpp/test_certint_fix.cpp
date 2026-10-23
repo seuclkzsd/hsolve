@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Regression tests of the certint review fixes (src/driver/certificate.*, definite.cpp):
 //   * fewer than k selected pairs never pass a completeness check: the deflated rerun looks for
 //     the missing ones (fault injection removing the FARTHEST pair, all modes);

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Feasibility and gain of CONCURRENT certificate counts (P8 "certcost", task 2). The two exact
 // counts nu(a), nu(b) of a nearest certificate are independent inertia-only factorizations on the
 // same pivot order; run concurrently with the threads split (8 + 8 of 16) they could take one

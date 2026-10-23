@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // GPU module: the process-level GPU offload of the BLAS hook (P10 "gpu"; docs/DESIGN.md §3.10,
 // docs/BLAS.md §10). Scalar set: double.
 //

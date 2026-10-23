@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // P7 safe single precision: a single-precision (or BLR) factor never yields a wrong answer. Its
 // refined applications are checked (ShiftInvertOperator::last_apply_converged, the driver's
 // DriverShiftInvert), an inexact factor flagged singular is not used, and an attempt that fails

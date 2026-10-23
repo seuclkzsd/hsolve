@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 """Per-phase medians of a tools/bench/compare.py campaign, from the runs' own reports (P9).
 
 compare.py's table gives the MUMPS phases (analysis, numeric, solves) of every solver; this adds

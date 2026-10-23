@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Inside one MUMPS solve (JOB=3) of the shift-invert operator (module ops, P4 "solvephase").
 //
 // Drives dmumps directly (the library's MUMPS input assembly, src/factor/mumps_input.hpp, with the

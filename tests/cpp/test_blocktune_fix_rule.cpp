@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Regression tests of the block-size rule (src/eigen/block_rule) for the P5c review of "blocktune":
 // the floor at the P4 auto width from kRuleFloorMinNev wanted pairs on (low-fill multiplicity
 // cases were slower at the model's p = 2), the measured picks below nev = 8 (blocks for a few

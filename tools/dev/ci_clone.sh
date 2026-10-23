@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 # Run tools/dev/ci.sh the way a CI runner does: in a fresh clone of the current commit - no build
 # tree, no data/ link, an empty MUMPS cache - so that nothing of the work tree leaks into the result.
 #

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Jacobi-Davidson option study for the memory-limited fallback (fix round of module lobpcg_jd):
 // jacobi_davidson preconditioned by solves with a single- (or double-) precision factor of
 // A - s I (standard problems only), with explicit extraction and start-iteration options,

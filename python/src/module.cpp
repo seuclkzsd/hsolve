@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // pybind11 extension hsolve._hsolve: the in-process Python API (docs/PYTHON.md).
 //
 // The pure-Python package (python/hsolve/__init__.py) normalises the arguments - scipy formats,

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 """Parser of PETSc's ASCII -log_view report, reduced to the phases of a SLEPc shift-invert solve.
 
 Pure Python (no numpy/PETSc): used by tools/bench/tune_slepc.py and compare.py in the project env

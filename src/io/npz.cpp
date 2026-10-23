@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // .npz reading (include/hsolve/io.hpp read_npz; internal NpzFile, see npz.hpp).
 #include "io/npz.hpp"
 

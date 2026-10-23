@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Internals of hs::lanczos_krylov_schur shared by the single-vector solver
 // (src/eigen/lanczos_krylov_schur.cpp, which also defines them) and the block solver
 // (src/eigen/block_lanczos.cpp), and the block solver's entry point. Module-internal (src/eigen).

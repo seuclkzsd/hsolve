@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Module-internal entry point of the thick-restart Lanczos solver that also reports where the
 // wall-clock time went (benchmarks: tests/cpp/test_lanczos_perf.cpp). Not part of the public API:
 // hs::lanczos_krylov_schur is exactly this function with the timings discarded.

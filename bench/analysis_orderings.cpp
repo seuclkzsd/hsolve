@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Measurements behind the ordering/analysis options of src/factor (module analysis, P4): what
 // MUMPS' symbolic phase (JOB=1) costs with each fill-reducing ordering, how it splits into the
 // ordering itself and the rest (symbolic factorization, tree, mapping, estimates), and what the

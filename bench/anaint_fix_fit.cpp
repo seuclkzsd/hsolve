@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // The fit of the ordering cost model (src/driver/steps.cpp, OrderingModel) and the replay of the
 // adaptive ordering on the measured components (module anaint, P5c fix: the fit used to live in an
 // uncommitted script, and its quoted replay error was in-sample only).

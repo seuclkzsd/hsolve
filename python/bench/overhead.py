@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 """Overhead of the in-process Python API on a test case (numbers in docs/PYTHON.md).
 
     PYTHONPATH=build/release/python python python/bench/overhead.py CASE --mode memory|path

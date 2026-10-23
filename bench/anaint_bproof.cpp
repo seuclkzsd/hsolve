@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // The B-definiteness test of hs::solve on a data case (module anaint, P5): the rigorous incomplete-
 // Cholesky proof of driver::prove_positive_definite (src/driver/norms.hpp) against the numeric
 // factorization of B it replaces - MUMPS on the pencil's analysis, as the driver counts B's inertia

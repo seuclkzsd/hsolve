@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Reading/writing numpy (.npy/.npz, incl. scipy.sparse.save_npz) and MatrixMarket files
 // (module src/io). Scalar sets are stated per function. File formats: docs/FORMATS.md.
 //

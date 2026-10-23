@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 """Tests for tools/gen/waveguide.py: FEM identities, inertia structure, real spectrum, O(h^2)
 convergence to the analytic modes, the a-priori error bound, and the case generator / CLI.
 

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 """The MUMPS the built hsolve executable and Python module load (P9 integration; CMakeLists.txt
 HSOLVE_MUMPS_ROOT, tools/dev/build.sh HS_MUMPS, docs/DESIGN.md §3.4).
 

@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 """Eigenvector subspace-angle bounds on the data cases: the bound against the measured angle, and its cost.
 
 Every case is solved with its default configuration (data/cases/<case>/config.json) by

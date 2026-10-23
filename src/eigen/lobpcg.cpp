@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // LOBPCG (A. V. Knyazev, "Toward the optimal preconditioned eigensolver: locally optimal block
 // preconditioned conjugate gradient method", SISC 23(2), 2001) with soft locking and the robust
 // basis of U. Hetmaniuk & R. Lehoucq ("Basis selection in LOBPCG", JCP 218, 2006) and J. A.

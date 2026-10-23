@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 """3-D Yee-grid curl-curl eigenproblems: PEC cavities, Bloch-periodic cells, photonic crystals.
 
 Discretization: the Yee scheme in matrix form (Weiland's finite integration technique, FIT) on a

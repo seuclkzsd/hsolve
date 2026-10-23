@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 # The MUMPS of the default build: MUMPS 5.8.2 from third_party/mumps/, patched with
 # the L0-blocking, pivot-extrema and local-scatter patches, built by tools/dev/build_mumps.sh with portable defaults
 # (nocona -O2: conda-forge's flags) against the project environment - built once per cache key and

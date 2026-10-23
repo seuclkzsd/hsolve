@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // hsolve command-line front end: read matrices (+ config), solve, write results (docs/FORMATS.md).
 //
 //   hsolve --A A.npz [--B B.npz] [--config config.json] --out DIR [overrides...]

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Orthogonalization kernel of a block step of krylov_schur_general's block mode (module ghiep, P4
 // fixes): the fast path eigen_detail::block_cgs_cholqr2 (block CGS with the DGKS test + CholQR2)
 // against the two-pass kernel eigen_detail::BlockOrthonormalizer it falls back to (two passes of

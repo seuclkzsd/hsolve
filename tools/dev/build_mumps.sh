@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 # Build sequential MUMPS 5.8.2 (OpenMP) from the official source tarball against the project
 # environment's METIS, SCOTCH, OpenBLAS and gfortran (P9 "factspeed"; results/p9_factspeed.md,
 # docs/BLAS.md section 9).

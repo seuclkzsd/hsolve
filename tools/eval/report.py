@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 """Aggregate evaluation JSONs (tools/eval/evaluate.py) into a markdown table under results/.
 
 Inputs are evaluation files or directories searched recursively for evaluation.json. Verdict counts

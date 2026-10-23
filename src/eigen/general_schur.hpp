@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Projected eigenproblem of the general Krylov-Schur solver (module-internal, src/eigen).
 //
 // The Rayleigh quotient H (m x m, m = basis size, at most a few hundred) is reduced to Schur

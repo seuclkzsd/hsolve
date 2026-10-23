@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Nested-dissection orderings for the adaptive analysis (driver fix of the drvint module): analysis
 // time, fill and run-to-run stability of AMD, SCOTCH and METIS analyses of K(sigma), next to the
 // driver's ordering decision (driver::decide_ordering on the AMD probe, nearest target with

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // End-to-end CLI runs per Krylov block size (module eigen, "blocktune"): the method of the
 // end-to-end table of the block-size rule (src/eigen/block_rule.cpp), reproducible from the repo.
 //

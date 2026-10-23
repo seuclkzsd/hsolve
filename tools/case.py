@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 """Single owner of every on-disk format shared by generators, evaluator, baselines and the CLI.
 
 Formats are specified in docs/FORMATS.md; this module is the reference implementation. Nothing

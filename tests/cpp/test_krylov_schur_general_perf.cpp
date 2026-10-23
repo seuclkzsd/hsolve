@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Performance probe of hs::krylov_schur_general on a cheap matrix-free operator, with the run time
 // split by phase (src/eigen/general_krylov_schur.hpp). The default size keeps it a fast unit
 // test; the measurement run sets the size explicitly, e.g.

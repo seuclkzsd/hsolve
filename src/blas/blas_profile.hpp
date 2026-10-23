@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // BLAS call profiler of the BLAS hook (module blas; docs/BLAS.md). Scalar set: none (records).
 //
 // Enabled when the environment variable HS_BLAS_PROFILE names an output file ("%p" in it is

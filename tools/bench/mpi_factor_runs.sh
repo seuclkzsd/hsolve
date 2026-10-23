@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 # P9 "mpi": run bench/mpi_factor_bench.c (built by tools/bench/mpi_build.sh) for several MPI-rank x
 # OpenMP-thread layouts of the 16 slot cores, interleaved (the layout order rotates per
 # repetition), each run under its own nested guard (the caller's guard holds the slot):

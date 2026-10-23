@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Candidate subspaces for a verified Cartesian curl-curl stencil. This is not a certificate:
 // the caller must check the original residuals, rank and completeness on the actual pencil.
 #pragma once

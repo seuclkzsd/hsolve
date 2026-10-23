@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // GHIEP path of hs::solve, review fixes of module ghiep (P4): outputs that the earlier tests
 // (test_ghiep_driver.cpp) do not check.
 //   * Complex eigenvectors of the block runs (real and complex Hermitian pencils): every returned

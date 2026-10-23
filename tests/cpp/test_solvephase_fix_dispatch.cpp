@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Runtime-dispatch fallback of the sparse kernels and operators (P4 "solvephase"), exercised on
 // any host. This executable sets HS_KERNELS_NO_AVX512=1 before main(), so the library behaves as
 // on a CPU without AVX-512F (src/sparse/kernels.cpp reads the variable once, at the first kernel

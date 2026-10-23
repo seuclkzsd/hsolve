@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Completeness check of the NEAREST target (HEP / GHEP) by the method SolverConfig::certificate
 // selects (driver-internal; definite.cpp calls it once per certificate round). Scalar set of the
 // templates: T in {double, cplx}, instantiated in certificate.cpp.

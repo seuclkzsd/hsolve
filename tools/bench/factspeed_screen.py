@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 """Interleaved A/B screening of factorization variants with bench_factspeed_factor (P9 "factspeed").
 
     python3 tools/bench/factspeed_screen.py run SPEC.json RUNDIR

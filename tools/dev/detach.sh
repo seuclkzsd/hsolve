@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 # Start a command in the background, detached from the terminal and the ssh session (nohup, own
 # session), with its output in LOG and, once it has finished, its exit status in LOG.status:
 #

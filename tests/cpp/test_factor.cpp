@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Unit tests for src/factor (MUMPS backend): exact inertia, null-pivot (singular) detection in
 // double and single precision, multi-RHS solve accuracy, refactorization with one analysis and
 // bitwise reproducibility, error paths (workspace retries and their exhaustion, memory cap,

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 # Development server (2x Xeon Gold 6336Y, 48 physical cores, 125 GB, shared with other users). Since
 # the end of P4 it runs no builds, tests or experiments (docs/DESIGN.md §6); these are the limits
 # that applied while it did. Sourced by env/activate.sh (short hostname).

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Data protection helpers (docs/FORMATS.md §5): the SHA-256 digests the command line's secure mode
 // records instead of input paths (include/hsolve/util.hpp), and the matrix readers' refusal of
 // numpy object arrays (whose payload would be a pickle).

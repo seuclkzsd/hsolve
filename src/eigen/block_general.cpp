@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Block Krylov-Schur basis of hs::krylov_schur_general (block mode); see block_general.hpp.
 //
 // Block steps. W = Op U for the residual block U (one op.apply of p columns) is orthonormalized

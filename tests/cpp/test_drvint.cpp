@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Tests of the P4 driver integration (src/driver): the O(nnz) definiteness screen of B, block
 // Krylov runs in the definite path (block_size, auto rule, deflated reruns), certificate counts on
 // an InertiaCounter, the deterministic run-time models and the exclusive phase times.

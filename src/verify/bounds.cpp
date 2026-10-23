@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Failure-probability bound of the randomized exclusion check (include/hsolve/verify.hpp, "(1)"),
 // evaluated in logarithms: T_k(x) overflows double for k acosh(x) > 709, which happens at the
 // step counts used for delta = 1e-12 with wide gaps.

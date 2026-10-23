@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Deterministic standard Gaussian vectors for the randomized checks of src/verify (module-internal).
 // Scalar set: T in {double, cplx}.
 //

@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 """hsolve demo: solve every example case with the hsolve command line, check each result
 independently (tools/eval: residuals recomputed from the matrices, completeness against the
 reference spectrum, duplicate vectors, subspace angles) and print one summary table.

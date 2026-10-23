@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Scratch memory of orthogonalize_block_cgs2 against its documented bound. The global operator
 // new / delete of this test executable count the live bytes, so the peak during a call is the
 // scratch the call allocates (inputs are DenseMatrix, which uses aligned_alloc and is not counted;

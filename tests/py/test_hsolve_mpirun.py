@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 """Tests of the multi-process launcher apps/hsolve-mpirun (DESIGN §3.9, docs/PARALLEL.md) with stand-ins
 for hsolve, hsolve-mpi and mpiexec - no MPI, no solve:
 

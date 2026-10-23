@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Block-size rule of shift-invert block Lanczos (module eigen, "blocktune"): which Krylov block
 // width p a nearest-target run of lanczos_krylov_schur should use, from what the driver knows once
 // the shift is factorized. Module-internal (src/eigen), meant for the driver (see "Driver hook-up").

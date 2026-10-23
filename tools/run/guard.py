@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 """Resource-guarded command runner for the shared development machine.
 
 Every experiment and every non-trivial test must be launched through this

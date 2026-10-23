@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 """Assemble the relocatable binary package hsolve-<version>-linux-x86_64.tar.gz from a build tree.
 
 Run through tools/release/package.sh (it builds the release preset first). Layout of the package:

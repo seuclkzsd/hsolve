@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 """Merge the raw runs of the ordering cost model fit (bench/anaint_fix_fit.cpp) after a change of
 hsolve's nested dissection (P9, results/p9_ordering.md section 6).
 

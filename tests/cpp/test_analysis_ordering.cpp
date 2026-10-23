@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Unit tests for hsolve's own fill-reducing ordering (src/factor/ordering*.cpp, compute_ordering,
 // FactorOptions::ordering = kOrderingNestedDissection): graph construction, vertex separators,
 // minimum degree, the parallel nested dissection (permutation validity, independence of the

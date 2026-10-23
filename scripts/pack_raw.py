@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 """Pack a measurement run directory (tools/bench/ab_cases.py, scripts/resource_tiers.py) as a
 reproducible raw-data archive for the repository (results/).
 

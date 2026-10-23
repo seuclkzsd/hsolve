@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 """Tests of the P9 "mpi" measurement tools (tools/bench): the K(sigma) converter of
 bench/mpi_factor_bench.c (mpi_dump_kernel.py: hsolve's pencil pattern and values, the file format,
 the exact inertia from a complete reference), the layout tables (mpi_factor_table.py: medians,

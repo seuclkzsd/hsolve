@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 """Thread scaling of one hsolve binary on data cases: interleaved runs at several thread counts and
 configurations, and a speedup / parallel-efficiency table with the phase split (P9 integration,
 results/p9_measurements.md §5).

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Measurements behind include/hsolve/verify.hpp (module certfast): seconds of the exact Sylvester
 // certificate (two counts) against the randomized exclusion check on the factorization held at
 // sigma, and detection of artificially removed eigenvectors, with hsolve's own solution as X.

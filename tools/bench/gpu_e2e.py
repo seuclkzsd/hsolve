@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 """Whole hsolve runs with the GPU offload off / on (P10 "gpu", results/p10_gpu.md).
 
 Every run is tools/bench/compare.py's hsolve run (run_once: its own nested guard on the given cores

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // BLAS hook: the Fortran BLAS entry points and MUMPS entry-point wrappers (blas_hook.hpp).
 // Only in libhsolve_blashook.so (LD_PRELOAD) and, with -DHSOLVE_BLAS_HOOK=ON, in the hsolve
 // executable (CMake hsolve_link_blas_hook, which keeps MUMPS loaded and exports the entry

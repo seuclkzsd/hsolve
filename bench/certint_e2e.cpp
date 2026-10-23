@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // End-to-end measurement of the completeness-check modes (module certint, SolverConfig::certificate
 // = exact | auto | randomized) on one data case: hs::solve with the case's config.json, the modes
 // interleaved over the repetitions (the order rotating), plus the detection experiment

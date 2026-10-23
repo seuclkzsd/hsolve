@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 # Build OpenBLAS 0.3.34 from the pinned release tarball (docs/BLAS.md).
 #
 #   env/run.sh tools/deps/build_openblas.sh NAME [MAKEVAR=VALUE ...]

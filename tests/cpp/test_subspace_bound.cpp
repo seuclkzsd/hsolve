@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Eigenvector subspace-angle bounds (src/driver/subspace.hpp, SolveReport::subspace; DESIGN §3.6-8c).
 // Small dense problems with exactly known eigenvectors: A = W^H diag(lambda) W, B = W^H W, so that the
 // B-orthonormal eigenvectors are V = W^{-1} and W maps the B geometry to the Euclidean one with the

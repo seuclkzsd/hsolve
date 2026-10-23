@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Thin RAII layer over the MUMPS C interface (module-internal to src/factor).
 // hsolve drives only the real arithmetics: dmumps (U = double) and smumps (U = float). Complex
 // Hermitian matrices are factorized through their real symmetric embedding (see factor.hpp),

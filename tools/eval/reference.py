@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 """Reference eigenpairs for cases that lack an exact one (data/refs/<case>, docs/FORMATS.md §1).
 
 Kinds written here:

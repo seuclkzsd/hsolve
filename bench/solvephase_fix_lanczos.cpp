@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // End-to-end effect of the P4 "solvephase" sparse kernels on a shift-invert Lanczos run, with the
 // noise controls bench/solvephase_lanczos.cpp lacks: the order of the two arms alternates from one
 // repetition to the next (that bench always runs the Reference arm first), and the time the

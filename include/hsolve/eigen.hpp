@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Krylov eigensolvers operating on a LinearOperator (module src/eigen).
 // Scalar set: T in {double, cplx}. Depends only on linear_operator.hpp and src/linalg.
 //

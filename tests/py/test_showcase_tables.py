@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 """Tests for tools/showcase/tables.py and the pure helpers of tools/showcase/campaign.py: verdicts and
 failure classes from raw runs, the generated page regions, the tuning records and the merged
 tuned-profile file, and that the committed tables and pages match the committed raw data."""

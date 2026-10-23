@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // End-to-end memory profile of hsolve (module memio): where does the peak RSS come from?
 //
 //   bench_memio_e2e --A A.npz [--B B.npz] [--config config.json] [--out DIR] [--sample-ms 2]

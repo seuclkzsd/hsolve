@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 """tools/bench/thread_scaling.py: the phase split of a report, the configurations (--variant) and their
 run order, and the speedup / efficiency table over a raw run directory - against the configuration's
 own smallest thread count and against the case's fastest configuration there (synthetic runs; the

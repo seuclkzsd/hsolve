@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // End-to-end A/B runs of the hsolve CLI under different BLAS configurations (module blas, P5
 // "asmkern"; docs/BLAS.md): each configuration is a set of environment assignments (LD_PRELOAD
 // of the BLAS hook or of another BLAS, HS_BLAS_ROUTE, OPENBLAS_CORETYPE, ...) given to the CLI

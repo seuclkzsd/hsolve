@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Concrete linear operators (module src/ops). Scalar set: T in {double, cplx}.
 // Non-owning: every referenced object must outlive the operator (rvalue constructors deleted).
 // Sparse products go through the kernels of sparse.hpp; `kernels` selects their KernelPath

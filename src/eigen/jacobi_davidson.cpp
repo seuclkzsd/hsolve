@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Hermitian Jacobi-Davidson (G. L. G. Sleijpen & H. A. van der Vorst, "A Jacobi-Davidson
 // iteration method for linear eigenvalue problems", SIMAX 17(2), 1996) with JDQR-style locking,
 // deflated correction equations and thick restart (D. R. Fokkema, G. L. G. Sleijpen & H. A. van

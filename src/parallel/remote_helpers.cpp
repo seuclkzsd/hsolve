@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // The leader's side of a multi-process session (remote_helpers.hpp; DESIGN §3.9).
 #include "parallel/remote_helpers.hpp"
 

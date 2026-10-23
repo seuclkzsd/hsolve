@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 # Build the P9 standalone MUMPS bench (bench/mpi_factor_bench.c) twice, outside the CMake build:
 #   build/mpi/mpi_factor_bench   MPI MUMPS 5.8.2 of the os2026-ref env (Open MPI 5, ScaLAPACK,
 #                                PT-SCOTCH, ParMETIS), through its mpicc

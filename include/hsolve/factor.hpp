@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Sparse direct factorization of a Hermitian K = alpha*A + beta*B (module src/factor, MUMPS).
 // Scalar set: T in {double, cplx}.
 //

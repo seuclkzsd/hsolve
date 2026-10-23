@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 """P7 memory budget and precision through the Python API: memory_budget_gb "auto" (the default)
 derived from HSOLVE_MEMORY_LIMIT_GB and the other limits, a configured budget, the report's
 "memory" and "precision" records, and factor_precision "single" that falls back to double instead

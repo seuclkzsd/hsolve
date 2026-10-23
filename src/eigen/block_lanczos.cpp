@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Block thick-restart Lanczos == block Hermitian Krylov-Schur (Zhou & Saad, Numer. Algorithms 47,
 // 2008), the block_size > 1 mode of hs::lanczos_krylov_schur. The single-vector solver
 // (lanczos_krylov_schur.cpp) documents the shared design decisions (dropped couplings, locking at

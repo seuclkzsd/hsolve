@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Regression tests for the review fixes of hsolve's nested-dissection ordering (src/factor/
 // ordering*.cpp, compute_ordering): coarsening with small targets on graphs with many components,
 // calls from inside an OpenMP parallel region (threads = 1 included), the documented option

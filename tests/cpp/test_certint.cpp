@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Tests of the completeness-check integration (module certint, src/driver/certificate.*): the
 // certificate = exact | randomized | auto | off configuration and its report, the randomized check
 // and single-precision counts in the nearest path, detection of an artificially removed copy of a

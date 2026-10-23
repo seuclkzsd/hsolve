@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 """Check that an hsolve build is portable: no AVX / AVX2 / AVX-512 / FMA instruction outside the
 kernels that are only called after a CPUID check.
 

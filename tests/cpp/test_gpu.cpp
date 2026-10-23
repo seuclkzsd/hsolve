@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // GPU module (src/gpu, P10 "gpu"; docs/BLAS.md §10): options, run-time loading, the dgemm engine,
 // the CPU affinity of its threads and the process-level offload controller.
 //

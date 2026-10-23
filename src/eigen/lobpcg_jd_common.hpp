@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Module-internal helpers shared by lobpcg and jacobi_davidson (src/eigen): operator norm
 // estimates, B-orthonormalization of blocks with rank dropping, in-place basis rotations, the
 // robust Rayleigh-Ritz step for a nearly B-orthonormal basis, and the final residual check.

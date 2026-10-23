@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // The B proof's memory and time limits hold before anything is allocated or built (module anaint,
 // P5c fix; src/driver/norms.cpp prove_positive_definite). Regression: a B with one dense column (an
 // arrowhead) has a fill-level-1 pattern of n^2 / 2 entries, which used to be built before the

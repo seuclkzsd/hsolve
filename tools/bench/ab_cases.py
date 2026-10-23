@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 """A/B regression of two hsolve binaries on data cases: interleaved runs and a ratio table.
 
   run    run every (case, binary, repetition) in ABBA order inside the measurement slot: repetition r

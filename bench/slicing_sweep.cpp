@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Measurement program for spectrum slicing and one-sided targets (module driver, P3 "slicing").
 // Runs hs::solve on a case for several settings and prints one JSON line per run (stdout):
 //

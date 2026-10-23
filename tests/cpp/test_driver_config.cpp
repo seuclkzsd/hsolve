@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Tests for config.json parsing/serialization and report.json serialization (src/driver).
 #include <gtest/gtest.h>
 

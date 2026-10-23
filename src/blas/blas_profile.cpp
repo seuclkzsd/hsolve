@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // BLAS call profiler (blas_profile.hpp).
 #include "blas/blas_profile.hpp"
 

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 """Synthetic Hermitian eigenproblems with exactly known spectra, plus a memory-stress family.
 
 Families (all matrices are written through tools/case.py):

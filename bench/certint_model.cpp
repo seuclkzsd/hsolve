@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Re-evaluates the auto choice of the completeness check (hs::certificate_cost, verify.hpp) of one
 // solve with other measured times - e.g. a 16-thread run's factorization and solve times - for
 // the module certint's "what would auto pick at 16 threads" estimate.

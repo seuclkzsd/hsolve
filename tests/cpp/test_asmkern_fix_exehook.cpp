@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // The BLAS hook linked into an executable (CMake function hsolve_link_blas_hook - what
 // -DHSOLVE_BLAS_HOOK=ON does to hsolve; module blas, P5c; docs/BLAS.md section 4): this test
 // executable carries the hook's dgemm_ / dtrsm_ / ... and dmumps_c / smumps_c wrappers itself.

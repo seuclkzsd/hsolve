@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 """tools/bench/gpu_factor_ab.py, gpu_e2e.py and gpu_slot.sh (P10 "gpu"): summaries of synthetic runs,
 case specs, and the slot wrapper's argument checks (no GPU, no guard needed)."""
 import json

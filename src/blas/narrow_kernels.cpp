@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0 AND BSD-3-Clause
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // BLAS hook: narrow dgemm kernels, C = alpha * op(A) * B + beta * C for 1 <= N <= 64 columns,
 // a small triangular solve, and their parallel split (blas_hook.hpp). Shapes of MUMPS'
 // multi-right-hand-side solves (N = p = 1..16) and of hsolve's block products: memory-bound, so

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Kernel-level measurements of src/linalg/dense_ops: deterministic reductions and CGS
 // orthogonalization, against copies of the previous implementations (OpenMP `reduction` clauses,
 // CGS2 as four multithreaded BLAS gemv sweeps). Prints one JSON line per measurement.

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Tests of hs::lobpcg (include/hsolve/eigen_iterative.hpp) on operators with known spectra and
 // against dense references, for both scalar types.
 #include <gtest/gtest.h>

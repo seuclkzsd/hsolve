@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Tests of the building blocks of the block Krylov-Schur mode of hs::lanczos_krylov_schur: the
 // block orthonormalization kernel (src/eigen/block_ortho), the block basis layout, and the
 // rejection of block_size by krylov_schur_general. The solver itself is tested next to the

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // JSON serialization of the driver's public structs: SolverConfig (config.json, both ways) and
 // SolveReport (report.json). Schemas: docs/FORMATS.md §2 and §3. Key names equal field names.
 #include <cmath>

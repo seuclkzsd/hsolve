@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 # Run a command in the node's measurement slot with exactly one GPU visible, after checking that
 # this GPU is idle (P10 "gpu"; results/p10_gpu.md). On the shared cluster nodes most GPUs belong to
 # other jobs: the command sees only the named GPU (CUDA_VISIBLE_DEVICES), and it does not start

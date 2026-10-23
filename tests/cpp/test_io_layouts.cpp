@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Unit tests for src/io, part 3: the low-memory assembly paths of load_matrix (module memio).
 // scipy csc / coo files are scattered straight into CSR slots with the values streamed from the
 // archive (io::NpzFile::read_chunks), and MatrixMarket coordinate files are read in two passes.

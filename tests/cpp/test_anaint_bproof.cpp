@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // The rigorous positive-definiteness proof of B (module anaint, P5; src/driver/norms.hpp
 // prove_positive_definite) and its use by hs::solve: the bound never exceeds lambda_min of the
 // scaled matrix (dense reference), indefinite matrices are never proven definite - down to a

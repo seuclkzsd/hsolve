@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 """Evaluate every result directory of a raw benchmark run and write the markdown summary.
 
 Raw run layout (tools/bench/compare.py and the experiment scripts):

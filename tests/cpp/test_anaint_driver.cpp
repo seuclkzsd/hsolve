@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Driver hygiene and GHIEP planning (module anaint, P5; src/driver/solver.cpp, indefinite.cpp):
 // the in-memory Hermitian check by the loader's rules (scaled defect, exact-value test) at extreme
 // magnitudes, non-finite and all-zero inputs, the OpenMP thread count restored on exit, B proven

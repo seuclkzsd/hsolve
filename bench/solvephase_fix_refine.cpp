@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Iterative refinement of the shift-invert apply Y = (A - sigma B)^{-1} B X (module ops, P4
 // "solvephase"): the three P4 changes measured one at a time, against a replica of the P1 operator
 // (base 0acb863), at equal accuracy.

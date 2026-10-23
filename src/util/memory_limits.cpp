@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // detect_memory_limits (include/hsolve/util.hpp): the memory limits of this process from the
 // memory cgroup, the caller's declaration (HSOLVE_MEMORY_LIMIT_GB), the resource limits and the
 // machine's MemTotal. Input of the automatic memory budget (hs::resolve_memory_budget, solver.hpp).

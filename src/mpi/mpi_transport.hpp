@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // hs::Transport over MPI (module src/mpi, built only with -DHSOLVE_WITH_MPI=ON; DESIGN §3.9).
 // The ranks of MPI_COMM_WORLD are the session's processes. hsolve itself links the SEQUENTIAL
 // MUMPS: MPI here only carries the session's messages, MUMPS never sees it.

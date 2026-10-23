@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 """Tables of the showcase pages, generated from the committed raw data (nothing is typed by hand).
 
     results/showcase/raw/<scenario>.json      campaign.py, one per scenario (every run, failures kept)

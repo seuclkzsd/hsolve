@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // BLAS profile report (module blas, P5 "asmkern"; docs/BLAS.md): turns the JSON files written by
 // the BLAS hook's profiler (HS_BLAS_PROFILE, src/blas/blas_profile.hpp) into markdown tables.
 //

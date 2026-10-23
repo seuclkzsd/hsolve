@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Unit tests for the certificate-cost facilities of src/factor: InertiaCounter (exact counts for
 // shifted Laplacians, prescribed spectra, generalized pencils and saddle points, real and through
 // the complex embedding; the source factorization stays valid; single-precision counts at wide

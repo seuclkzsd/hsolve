@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Separator balance vs fill of hsolve's nested dissection (module analysis, P4 review fix): the
 // MUMPS flops of the order hs::ordering::nested_dissection computes on grid Laplacians for a range
 // of SeparatorParams::imbalance values - the measurement behind kMaxImbalance (the largest

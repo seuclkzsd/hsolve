@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Unit tests for the P4 "solvephase" changes of src/ops: the operators on every sparse KernelPath
 // (results unchanged within rounding / within the refinement tolerance against the P1 Reference
 // kernels), the fused refinement residual, refinement that stops at the rounding level and

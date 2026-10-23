@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Driver hook-up of the blocktune block-size rule (P5c integration, src/driver): nearest-target
 // runs take eigen_detail::recommended_block_size on the shape of their shift's factorization
 // (block_size_for(cfg, ShiftInvertShape)), spectrum slices keep the P4 width

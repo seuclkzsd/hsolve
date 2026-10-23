@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Conversion of borrowed numpy / scipy.sparse buffers into hs::CsrMatrix for the Python module
 // (python/src/module.cpp) and its measurement program (bench/pybind_convert.cpp).
 // Header-only and free of pybind11, so the bench program can compile it on its own.

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // A matrix-verified separable Cartesian curl-curl candidate space (P25 measurements).
 // D has +1 on its diagonal and -1 on its subdiagonal. Normalized node sine and cell cosine
 // bases diagonalize D; each modal curl-curl block is ||s||^2 I - s s^T. The two transverse

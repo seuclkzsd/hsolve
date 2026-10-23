@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Building blocks of hsolve's own fill-reducing ordering (module-internal to src/factor; the
 // public entry point is hs::compute_ordering in include/hsolve/factor.hpp).
 //

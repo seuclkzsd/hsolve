@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // The MUMPS this process runs (P9 "factspeed", CMakeLists.txt HSOLVE_MUMPS_ROOT): the libraries the
 // dynamic loader mapped are the configured ones - those of tools/dev/build_mumps.sh's install when
 // HSOLVE_MUMPS_ROOT is set (its lib/ must win over the environment's in the RPATH), else the

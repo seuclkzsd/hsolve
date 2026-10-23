@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 """End-to-end A/B of tools/bench/ab_cases.py runs, pooled and normalised for the pivot order's flops.
 
     python3 tools/bench/factspeed_gate_flops.py [--base main] [--new new] [--boot 10000]

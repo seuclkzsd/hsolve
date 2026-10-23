@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Measures the input conversion of the Python module (python/src/csr_convert.hpp): the cost of
 // turning scipy/numpy buffers into the owning hs::CsrMatrix, per input layout and dtype, against
 // the floor for an owning copy (memcpy of indices and values + widening indptr to int64) and

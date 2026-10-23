@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 """Resource needs of hsolve by problem size: the measurements behind docs/INSTALL.md's tier table.
 
 Two problem families at n ~ 1e4, 1e5 and 1e6, generated deterministically by tools/gen:

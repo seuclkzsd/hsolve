@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // InertiaCounter (include/hsolve/factor.hpp): inertia-only MUMPS instances (ICNTL(31)=1) that
 // reuse the pivot order of an analysed SparseFactorization (PERM_IN, ICNTL(7)=1). The design
 // choices and their measurements are in the class comment; the measurement program is

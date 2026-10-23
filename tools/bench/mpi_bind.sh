@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 # Pin this MPI rank to its block of the CPUs it inherited, then exec the command (P9, used by
 # tools/bench/mpi_factor_runs.sh as `mpiexec -n R --bind-to none tools/bench/mpi_bind.sh CMD...`).
 #

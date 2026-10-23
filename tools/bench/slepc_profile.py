@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 """SLEPc baseline configurations and the tuned-profile file.
 
 A configuration (SlepcConfig) is an MPI-rank x OpenMP-thread layout, the mpiexec binding and a set

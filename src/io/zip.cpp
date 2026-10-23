@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Zip archive reader for .npz files (see zip.hpp).
 #include "io/zip.hpp"
 

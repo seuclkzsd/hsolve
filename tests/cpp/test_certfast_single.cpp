@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Tests of the single-precision certificate rule and the certificate cost model (src/verify,
 // include/hsolve/verify.hpp "(2)" and "(3)").
 #include <gtest/gtest.h>

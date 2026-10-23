@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // The level-1 pattern of the B proof (module anaint, P5c fix; src/driver/norms.cpp): its O(n)
 // bounds (Level1Size: visits of a construction pass, entries bound) against the pattern built -
 // exact entries, time of the first pass and of the whole construction - and the predictions

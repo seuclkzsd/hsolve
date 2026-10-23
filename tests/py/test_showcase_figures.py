@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 """Smoke tests of tools/showcase/figures.py on synthetic raw data (skipped without matplotlib, which
 the project environment does not ship; any Python with numpy + matplotlib runs them)."""
 import json

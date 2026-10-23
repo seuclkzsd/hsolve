@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Robustness of the certificate's factorizations (P8 "certcost", src/driver/steps.cpp CountSource,
 // src/driver/certificate.*, src/driver/definite.cpp): a count that fails - an InertiaCounter whose
 // MUMPS factorization runs out of memory (INFO -19 under its ICNTL(23) cap), a count on the main

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Unit tests for src/ops: CsrOperator and ShiftInvertOperator (with B, with B = I, with
 // double-precision iterative refinement of a single-precision factor, including shifts too close
 // to an eigenvalue for refinement to converge, and the guard against refactorizing the factor

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 """Tests for tools/gen/yee.py: exact discrete Yee spectra against dense eigensolvers."""
 import numpy as np
 import pytest

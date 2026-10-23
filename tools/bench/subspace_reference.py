@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 """Reference eigenvectors for checking hsolve's eigenvector subspace-angle bounds.
 
 The bound in report.json (docs/DESIGN.md §3.6-8c, docs/FORMATS.md §3 `subspace`) compares the span

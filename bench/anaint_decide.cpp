@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // The driver's ordering choice on a data case (module anaint, P5), without solving: the planned
 // work (driver::plan_work for the problem type known before the analysis), the analyses and
 // prices of driver::adaptive_analysis (its "ordering" log event) and, for comparison, the P4 rule

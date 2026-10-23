@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Top-level driver (module src/driver): problem diagnosis, strategy selection, shift management,
 // inertia certificate, refinement, residual verification and reporting (docs/DESIGN.md §3.6).
 // Scalar set: T in {double, cplx}.

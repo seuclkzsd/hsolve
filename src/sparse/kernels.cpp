@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Sparse matrix times dense vectors / blocks (docs/DESIGN.md §3.2; P4 "solvephase").
 //
 // Three paths (KernelPath), dispatched at run time:

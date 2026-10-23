@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // InertiaCounter with the double-precision instance deferred (include/hsolve/factor.hpp): a
 // counter used for single counts only pays one analysis, the double instance is analysed at its
 // first use (double count or estimate()) and then counts exactly as an eager counter does.

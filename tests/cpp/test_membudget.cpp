@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // P7 memory budget: the memory limits of the process (detect_memory_limits: cgroup v1/v2, the
 // caller's HSOLVE_MEMORY_LIMIT_GB, rlimits, MemTotal), the automatic budget derived from them
 // (resolve_memory_budget) in the measure of its limit (resident memory, or the address space under

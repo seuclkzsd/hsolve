@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 """P10 "mpi": process / thread layouts on one socket and on two sockets, at 16 cores per run.
 
 Each (repetition, case, layout) is ONE top-level guard call - `guard.py --exclusive --cores C

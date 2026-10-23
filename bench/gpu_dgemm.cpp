@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // GPU offload of dense dgemm (P10 "gpu", src/gpu, docs/BLAS.md §10, results/p10_gpu.md §2): the
 // machine's transfer and FP64 rates, and the offload engine (gemm_engine.hpp) against the CPU BLAS on
 // the shapes of MUMPS' factorization updates.

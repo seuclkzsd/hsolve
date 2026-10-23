@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Internal to src/io: read-only access to zip archives (the container of .npz files).
 // Spec: PKWARE APPNOTE.TXT 6.3. Supported: stored and deflate members, zip64 (extra field 0x0001,
 // zip64 end-of-central-directory record + locator), archive comments and bytes appended after

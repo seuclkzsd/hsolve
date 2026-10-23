@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 """Geometric nested dissection of the data cases' structured grids - a reference for hsolve's
 graph-only ordering (results/p9_ordering.md section 2). The solver never sees coordinates; this
 script knows the generators' index layouts and cuts boxes by planes:

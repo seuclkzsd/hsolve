@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 # Which cluster nodes are free for hsolve runs right now (docs/DESIGN.md §6), and pick one.
 #
 #   tools/dev/cluster_nodes.sh [--pick] [HOST...]

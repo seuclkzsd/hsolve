@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // The adaptive ordering of P5 (module anaint; src/driver/steps.cpp): the planned work of a solve,
 // the ordering cost model, the choice among AMD / hsolve's nested dissection / METIS / PORD and the
 // analysis loop of adaptive_analysis (determinism, second analyses only where they pay).

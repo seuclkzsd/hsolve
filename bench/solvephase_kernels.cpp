@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Sparse kernel paths on the case matrices (module ops/sparse, P4 "solvephase"): time of
 // spmm (Y = M X, M = B when the case has one, else A) and of the refinement residual
 // shifted_residual (R = B X - (A Y - sigma B Y)) for p vectors, on KernelPath Reference (the P1

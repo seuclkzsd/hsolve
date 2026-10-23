@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Column-major dense matrix with 64-byte aligned storage (ld == rows).
 // Used for Krylov bases, eigenvector blocks and small projected problems. Never used to
 // hold a densified copy of a sparse input matrix (see docs/DESIGN.md §5).

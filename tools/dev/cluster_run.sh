@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 # Run a command on a cluster node (gpu01 / gpu02 / c001) on exactly the committed state of the
 # current git worktree, in its own remote work directory (tools/dev/deploy_cluster.sh must have run).
 #

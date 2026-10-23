@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 """Independent evaluation of an eigensolver result directory against a case (docs/FORMATS.md §4).
 
 Everything is recomputed from the case matrices and the stored vectors; the solver's report.json is

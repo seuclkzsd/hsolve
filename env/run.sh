@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 # Run a command inside the project environment without sourcing anything into the caller:
 #   env/run.sh <cmd> [args...]        (works from any working directory, e.g. a git worktree)
 # Equivalent to `source env/activate.sh && <cmd>`; needed where sourcing is not possible.

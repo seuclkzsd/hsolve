@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // The helpers' side of a multi-process session (hs::serve, include/hsolve/parallel.hpp;
 // DESIGN §3.9): per solve the problem the leader shares (its matrices, configuration, pivot order),
 // an inertia-only MUMPS instance for certificate counts and a main object for slices, both on the

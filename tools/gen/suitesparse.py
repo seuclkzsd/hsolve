@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 """Curated SuiteSparse Matrix Collection cases (electromagnetics and related indefinite problems).
 
 Pipeline per matrix (archives are untrusted data):

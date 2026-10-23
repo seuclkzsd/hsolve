@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 """tools/dev/mumps_cache.sh when the MUMPS build fails: the make log that build_mumps.sh names survives
 (the cache builds in a temporary directory that is removed on exit; p9int review), and no install is
 left at the cache prefix. The Fortran compiler is replaced by one that answers --version and

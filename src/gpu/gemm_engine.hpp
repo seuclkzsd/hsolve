@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // GPU module: dgemm offload for the large dense updates of MUMPS' factorizations (P10 "gpu";
 // docs/DESIGN.md §3.10, docs/BLAS.md §10, results/p10_gpu.md). Scalar set: double (FP64 on both
 // the CPU and the GPU: cublasDgemm is IEEE double arithmetic like any BLAS).

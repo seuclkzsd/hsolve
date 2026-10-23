@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 """MkDocs hooks of the hsolve documentation site (registered in mkdocs.yml under `hooks:`).
 
 The repository keeps one copy of every document, written for reading on GitHub, where relative

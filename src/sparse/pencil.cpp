@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // ShiftedPencil: index-only upper-triangle union pattern of A and B plus one flag byte per row;
 // assemble() merges the sorted upper rows of A and B into the pattern rows (no scatter maps).
 #include <algorithm>

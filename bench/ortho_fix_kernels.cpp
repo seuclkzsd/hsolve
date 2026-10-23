@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Follow-up measurements of src/linalg/dense_ops (review of the ortho module). Every section runs
 // its methods interleaved, one call each per round with the method order rotated from round to
 // round (so that neither load drift on the shared machine nor cache state left by the previous

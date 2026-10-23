@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Cost model of the completeness checks (include/hsolve/verify.hpp, "(3)").
 #include <cmath>
 #include <limits>

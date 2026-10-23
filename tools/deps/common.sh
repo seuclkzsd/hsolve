@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 # Shared helpers of tools/deps/build_*.sh (sourced, not executed). docs/BLAS.md describes the builds.
 #
 # Layout (all under $HS_DEPS, default $HOME/deps):

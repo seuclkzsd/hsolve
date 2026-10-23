@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 # Entry point of the hsolve container image (Dockerfile), with IMAGE = ghcr.io/seuclkzsd/hsolve:
 #   docker run --rm IMAGE demo [--threads N ...]   every example solved, checked independently, summary table
 #   docker run --rm IMAGE selfcheck                two small examples (scripts/demo.sh --quick)

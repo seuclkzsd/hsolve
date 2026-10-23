@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // The randomized exclusion check and its start scaling (include/hsolve/verify.hpp, "(1)"; the
 // header derives the probability statement). Implementation outline:
 //   1. B-orthonormalize X (column-equilibrated Cholesky-QR, repeated until max |X^H B X - I| <=

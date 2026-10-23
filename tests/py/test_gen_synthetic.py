@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 """Tests for tools/gen/synthetic.py: exact spectra against dense eigensolvers on small sizes."""
 import json
 import re

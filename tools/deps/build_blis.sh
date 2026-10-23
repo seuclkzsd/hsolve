@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 # Build BLIS 2.1 from the pinned tag tarball (docs/BLAS.md).
 #
 #   env/run.sh tools/deps/build_blis.sh NAME [configure arguments ...]

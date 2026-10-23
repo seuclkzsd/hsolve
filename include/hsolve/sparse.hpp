@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Compressed sparse row matrices and the sparse kernels the solver needs.
 // Scalar set: T in {double, cplx} unless noted otherwise (instantiated in src/sparse/).
 #pragma once

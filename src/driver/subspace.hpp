@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // A-posteriori bounds on the eigenvector subspace angles of a HEP/GHEP result (driver-internal;
 // docs/DESIGN.md §3.6-8c, SolveReport::subspace).
 //

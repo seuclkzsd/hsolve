@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Peak memory of hs::load_matrix per input layout (module memio, docs/DESIGN.md §3.1).
 //
 //   bench_memio_load [--grid M] [--mtx-grid M] [--dir DIR] [--only SUBSTR] [--keep]

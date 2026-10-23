@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 """GPU offload of the numeric factorizations, A/B at equal pivot order (P10 "gpu", results/p10_gpu.md).
 
 Runs build/release/bench_factspeed_factor (the driver's main factorization at sigma and the exact

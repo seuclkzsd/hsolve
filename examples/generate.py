@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 """Generate the example cases of examples/ with the repository's generators (tools/gen).
 
 Every example is a case directory in the layout of tools/case.py (docs/FORMATS.md):

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // BLAS hook: real-BLAS resolution, configuration and the router (blas_hook.hpp).
 #include <dlfcn.h>
 #include <link.h>

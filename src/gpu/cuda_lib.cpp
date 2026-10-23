@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // GPU module: run-time loading of the CUDA runtime and cuBLAS (cuda_lib.hpp).
 #include "gpu/cuda_lib.hpp"
 

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Measurement / regression probes for the driver's sliced and one-sided targets (P3 slicing review
 // fixes). Each probe builds a small problem with a known spectrum, runs hs::solve and prints one
 // JSON line per run (stdout): correctness against the reference (set error, duplicates,

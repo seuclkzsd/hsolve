@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Tests of the general (non-Hermitian) Krylov-Schur solver hs::krylov_schur_general and its
 // projected-problem helpers (src/eigen/general_*). Operators are small dense nonsymmetric
 // matrices with known spectra and generalized pencils with indefinite B (via shift-invert), so

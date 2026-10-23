@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Regression tests of the drvint review fixes (src/driver): the deterministic nested-dissection
 // ordering, when certificate counts on an InertiaCounter release the main factors, the
 // counter_pays rule, and the up-front Krylov reservation of explicit block widths.

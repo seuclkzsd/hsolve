@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 """Generate the src/io test fixtures in tests/data/io/ (run from the project environment).
 
     python tests/data/make_io_fixtures.py [--out tests/data/io]

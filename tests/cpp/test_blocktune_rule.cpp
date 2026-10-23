@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Tests of the block-size rule of shift-invert block Lanczos (src/eigen/block_rule): the measured
 // step table, the choice from given step costs (margin, layout feasibility), the modelled step
 // costs, and the rule's picks on the shapes of the calibration cases (pinned: a change of the

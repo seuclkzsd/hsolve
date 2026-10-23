@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Unit tests for src/io, part 2: load_matrix (scipy npz, dense npy, MatrixMarket) against the
 // fixtures of tests/data/make_io_fixtures.py, MatrixMarket parsing, and the CSR assembly helpers
 // behind the loader (src/io/csr_assembly.hpp).

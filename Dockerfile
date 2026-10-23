@@ -1,4 +1,6 @@
 # syntax=docker/dockerfile:1
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 # hsolve container image (docs/INSTALL.md):
 #   build stage   the project's conda-forge toolchain (env/environment.yml), MUMPS 5.8.2 from
 #                 third_party/ with the project's patches, the portable release preset and the

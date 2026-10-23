@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // hs::solve_parallel (include/hsolve/parallel.hpp; DESIGN §3.9): hs::solve on the leader with the
 // helpers of the session behind driver::HelpersOf (RemoteHelpers).
 #include <chrono>

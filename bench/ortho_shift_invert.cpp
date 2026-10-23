@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Time split of the real shift-invert eigensolver path on a data case: load A (and B), factorize
 // K = A - sigma B at the case's configured shift (MUMPS, as the driver does), then run the Krylov
 // solver the driver uses on Op = K^{-1} B: thick-restart Lanczos in the B inner product for

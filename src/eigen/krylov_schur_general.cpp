@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // General (non-self-adjoint) Krylov-Schur eigensolver (G. W. Stewart, "A Krylov-Schur algorithm
 // for large eigenproblems", SIMAX 23(3), 2001) in the Euclidean inner product.
 // Contract: include/hsolve/eigen.hpp; design: docs/DESIGN.md §3.5.

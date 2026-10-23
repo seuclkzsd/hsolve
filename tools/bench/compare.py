@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 """Head-to-head benchmark: hsolve vs reference solvers on the same cases, cores and tolerance.
 
 Every solver run goes through tools/run/guard.py (core pinning, RSS watchdog, peak memory incl. all

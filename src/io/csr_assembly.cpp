@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // CSR assembly from file arrays (see csr_assembly.hpp).
 #include "io/csr_assembly.hpp"
 

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 """Round-trip tests for tools/case.py (the single owner of on-disk formats)."""
 import numpy as np
 import pytest

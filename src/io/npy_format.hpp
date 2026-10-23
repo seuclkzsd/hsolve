@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Internal to src/io: the .npy format in streaming form, shared by read_npy, read_npz and the
 // scipy-npz loader. Splitting header and payload lets callers inspect the header first (e.g. the
 // dtype of scipy's `data` member) and then read a payload whose layout already matches the target

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // What a fill-reducing ordering costs a whole solve (P9 "ordering"): the analysis (with the
 // ordering itself), the MUMPS estimates (flops, factor entries, in-core memory), the main numeric
 // factorization, the certificate's inertia-only counts (an InertiaCounter on the main order after

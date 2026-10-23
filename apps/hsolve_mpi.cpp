@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // hsolve-mpi: the hsolve command line (apps/cli.cpp) as one MPI job (built with HSOLVE_WITH_MPI;
 // DESIGN §3.9, docs/PARALLEL.md). Rank 0 is hsolve - it reads, solves and writes the results -
 // and hands independent work (the nearest certificate's two counts, spectrum slices) to the other

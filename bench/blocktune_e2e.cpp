@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // End-to-end hs::solve per Krylov block size (module eigen, P5b "blocktune").
 //
 // For each case: load A (and B) with hs::load_matrix, parse its config.json (hs::parse_config,

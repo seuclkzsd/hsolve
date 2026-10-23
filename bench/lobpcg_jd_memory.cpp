@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Memory-limited fallback study: shift-invert Lanczos with a double-precision factor versus
 // Jacobi-Davidson preconditioned by a SINGLE-precision factor of A - sigma B (P3, module
 // lobpcg_jd). One mode per process, so that the peak RSS reported by tools/run/guard.py belongs to

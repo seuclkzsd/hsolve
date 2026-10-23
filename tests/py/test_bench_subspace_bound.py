@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 """tools/bench/subspace_reference.py and subspace_bound_table.py: the exact eigenvectors recomputed
 from the synthetic generators' parameters reproduce the generated matrices (small cases written by
 the real generators), the B-inner-product angle, and the tables over a fabricated raw file (the

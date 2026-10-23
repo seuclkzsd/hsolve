@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // block_size = 1 must keep the single-vector thick-restart Lanczos solver of the base commit
 // e95db77 bit for bit (module eigen, P3 "blockks"). This file pins that behaviour:
 //   * exact integers (operator applications, restarts, converged count, history length) of a set

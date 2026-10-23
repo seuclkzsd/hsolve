@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // .npy reading, writing and element conversion (include/hsolve/io.hpp, src/io/npy_format.hpp).
 // Format reference: numpy/lib/_format_impl.py (NEP 1). A file is
 //   "\x93NUMPY" | major | minor | header length (u16 for 1.0, u32 for 2.0/3.0) | header | payload

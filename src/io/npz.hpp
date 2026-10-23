@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Internal to src/io: lazily read .npz archives. Members are inflated one at a time on request,
 // so a caller that needs a few arrays (the scipy loader) never holds the others, nor a raw copy
 // of a payload whose dtype already matches the requested type.

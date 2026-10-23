@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Problems and checks shared by the multi-process tests (test_parallel_session.cpp over thread
 // transports, mpi/test_mpi_session.cpp over MPI): a 3-D Dirichlet Laplacian with analytic spectrum,
 // real or (gauge-transformed, every coupling complex) complex, and the targets the helpers serve.

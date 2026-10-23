@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 """Markdown tables from bench_gpu_dgemm's JSON lines (P10 "gpu", results/p10_gpu.md section 2).
 
   build/release/bench_gpu_dgemm gemm ... > gemm.jsonl

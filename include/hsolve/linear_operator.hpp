@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Abstract linear operator: the only way eigensolvers touch matrices. Kept free of factor/sparse
 // dependencies so that src/eigen depends on nothing but this header and src/linalg.
 // Scalar set: T in {double, cplx}.

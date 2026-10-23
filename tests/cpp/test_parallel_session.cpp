@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Multi-process solves without MPI (module src/parallel; DESIGN §3.9): the session protocol between
 // a leader and its helpers over thread transports (make_thread_transports - the helpers' MUMPS calls
 // are serialized by the process-wide MUMPS lock, so this checks the logic, not the speed), the

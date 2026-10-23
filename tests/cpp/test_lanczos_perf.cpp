@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Benchmarks of the thick-restart Lanczos solver. Disabled in the unit-test run; execute explicitly
 // under the resource guard, e.g. (one line)
 //   python3 tools/run/guard.py --skip-busy-check --mem-gb 4 --timeout 1800 --

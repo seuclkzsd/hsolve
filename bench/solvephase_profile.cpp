@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Time split of one shift-invert application Y = (A - sigma B)^{-1} B X (module ops, P4
 // "solvephase"), the inner loop of every Krylov method, for p = 1, 2, 4, ... right-hand sides,
 // before (P1 kernels, KernelPath::Reference) and after (KernelPath::Auto) the P4 kernels, in the

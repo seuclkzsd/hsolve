@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // The GHIEP path (B Hermitian indefinite): shift-invert general Krylov-Schur, refinement on the
 // projected pencil and real/complex classification (docs/DESIGN.md §3.6-10), and the zero-cluster
 // handling of §3.6-9.

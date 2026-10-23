@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Block orthonormalization kernel of the block Krylov-Schur solver (module-internal, src/eigen).
 // Scalar set: T in {double, cplx} (instantiated in src/eigen/block_ortho.cpp).
 //

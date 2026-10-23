@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Unit tests for src/sparse (CSR construction, structure ops, norms, kernels, pencil, embedding).
 #include <gtest/gtest.h>
 

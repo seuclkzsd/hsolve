@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Graphs of the ordering module: construction from an upper-triangle pattern, induced
 // subgraphs, separator checks and the counter-based random numbers (ordering_detail.hpp).
 #include <algorithm>

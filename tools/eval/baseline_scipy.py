@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 """scipy/ARPACK baseline solver: writes a result directory (docs/FORMATS.md §3) for one case.
 
   HEP/GHEP  eigsh(A, k, M=B, sigma=sigma, which='LM')

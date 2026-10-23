@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // The leader's side of a multi-process session (module src/parallel, internal; DESIGN §3.9):
 // driver::HelpersOf<T> over an hs::Transport. Scalar set: T in {double, cplx}.
 #pragma once

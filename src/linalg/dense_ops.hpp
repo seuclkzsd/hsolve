@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Dense vector/block helpers shared by the eigensolvers and the driver (module-internal API).
 // Single owner of: deterministic random vectors, inner products/norms, CGS2 orthogonalization.
 // T in {double, cplx}. Vectors are contiguous; blocks are column-major with explicit ld.

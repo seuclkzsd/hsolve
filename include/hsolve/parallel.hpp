@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Multi-process solves (module src/parallel; DESIGN §3.9): one solve spread over several processes
 // - MPI ranks of hsolve-mpi (src/mpi, optional build) - that each own a sequential MUMPS and their
 // OpenMP threads. Process 0 (the leader) runs the solve exactly as hs::solve does; the others

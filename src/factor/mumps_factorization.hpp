@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // MUMPS-backed SparseFactorization (module-internal to src/factor). Declared here so that
 // InertiaCounter (inertia_counter.cpp) can build inertia-only instances and reuse the pivot order
 // of an analysed object; everything outside src/factor uses include/hsolve/factor.hpp.

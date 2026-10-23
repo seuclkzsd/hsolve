@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Regression tests of the P4 review fixes of src/verify (include/hsolve/verify.hpp "(1)", "(3)"),
 // on diagonal operators with known spectra:
 //   * a start scaling without b_inner (B = I) is charged in kappa = cond(S^2); before the fix

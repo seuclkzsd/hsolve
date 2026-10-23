@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 """Write K(sigma) = A - sigma B of a data case as the binary input of bench/mpi_factor_bench.c (P9).
 
 The bench is a standalone C program built against either MUMPS library (the MPI MUMPS of the

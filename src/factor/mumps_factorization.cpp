@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // MUMPS-backed SparseFactorization (docs/DESIGN.md §3.4). See include/hsolve/factor.hpp for the
 // contract and the MUMPS facts it relies on; the class is declared in mumps_factorization.hpp.
 #include <algorithm>

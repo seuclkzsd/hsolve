@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // CSR construction, structural operations and norms (include/hsolve/sparse.hpp).
 #include <algorithm>
 #include <cmath>

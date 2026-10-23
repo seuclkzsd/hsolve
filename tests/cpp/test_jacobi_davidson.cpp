@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Tests of hs::jacobi_davidson (include/hsolve/eigen_iterative.hpp): interior targets with exact,
 // perturbed ("single-precision-like") and real single-precision MUMPS preconditioners, harmonic
 // and standard extraction, locking of multiple eigenvalues, restarts, both inner solvers and the

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Cost components of a fill-reducing ordering for the driver's adaptive choice (module anaint, P5):
 // what one solve pays per ordering - the analysis (with the ordering itself), the numeric
 // factorization, one refactorization (a certificate count on the main object), an InertiaCounter

@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 """Tables of the P9 MPI x OpenMP MUMPS runs (tools/bench/mpi_factor_runs.sh output, P9 "mpi").
 
 Reads the JSON lines of one or more runs files (bench/mpi_factor_bench.c events annotated with

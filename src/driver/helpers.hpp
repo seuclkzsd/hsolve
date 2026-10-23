@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Helper processes of a multi-process solve as the driver sees them (DESIGN §3.9; driver-internal).
 // src/parallel implements this interface over hs::Transport (include/hsolve/parallel.hpp) and runs
 // the helpers' side; the driver never sees messages or MPI. Scalar set of the templates: T in

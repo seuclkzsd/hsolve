@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // The analysis loop of the adaptive ordering never chooses a candidate whose analysis it released
 // (module anaint, P5c fix; src/driver/steps.cpp run_ordering_choice). Regression: the loop kept the
 // best of ALL analysed candidates by choose_ordering, which is not monotone - AMD 100, METIS 90,

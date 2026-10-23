@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // The hsolve command line (docs/FORMATS.md), shared by the two executables:
 //   hsolve      run(argc, argv, nullptr): one process, hs::solve;
 //   hsolve-mpi  run(argc, argv, &transport) on every MPI rank (apps/hsolve_mpi.cpp): rank 0 parses,

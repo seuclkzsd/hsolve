@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 // Block Krylov-Schur in the real shift-invert setting (module eigen, P3 "blockks").
 //
 // For each data case: load A (and B) with hs::load_matrix, factorize K = A - sigma B at the case's
