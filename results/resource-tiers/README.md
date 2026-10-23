@@ -7,7 +7,7 @@
 |---|---|
 | `tiers.md` / `tiers.json` | 全表：每个（算例、线程数、内存上限）的中位求解时间 [最小–最大]、进程墙钟时间、峰值 RSS、分解方式、证书、成功次数 |
 | `tiers-summary.md` | INSTALL.md 引用的中文精简表（同一脚本生成） |
-| `raw-tiers-gpu01.tar.gz` | 原始数据：每次运行的 `report.json`、特征值、guard 摘要、stderr 与 `runs.jsonl`（不含特征向量，家目录写作 `$HOME`） |
+| `raw-tiers-c005.tar.gz` | 原始数据：每次运行的 `report.json`、特征值、guard 摘要、stderr 与 `runs.jsonl`（不含特征向量；运行目录在节点本地的 `/tmp`） |
 | `reproduce.sh` | 生成算例、测量、制表、打包的全部命令 |
 
 ## 算例
@@ -22,23 +22,30 @@
 
 ## 测试条件
 
-- 机器：gpu01，2 × Intel Xeon Silver 4314（Ice Lake-SP，2.4 GHz，每路 16 核，AVX-512），251 GB，CentOS 7.9
-  （glibc 2.17）。
-- 构建：hsolve 的默认可移植构建（`release` 预设，GCC 13.4 `-O3`，MUMPS 5.8.2 打本项目补丁，OpenBLAS 0.3.34），
-  提交 6b9382f；二进制与 `results/portable-vs-native/` 中的 `hsolve_portable` 相同。
+- 机器：c005，2 × Intel Xeon Silver 4314（Ice Lake-SP，2.4 GHz，每路 16 核，AVX-512），251 GB，CentOS 7.9
+  （glibc 2.17）；2026-10-23 测量。
+- 构建：hsolve 1.0.0 的默认可移植构建（`release` 预设，GCC 13.4 `-O3`，MUMPS 5.8.2 打本项目补丁，OpenBLAS
+  0.3.34），提交 cbced74 的源码（`build/release/hsolve` 的 md5 为 cea301090c963d441260574698566ade）；构建行见
+  `tiers.md` 表下的说明。
+- 配置：只用算例的 `config.json`，不加其他选项，即 1.0 的默认配置，结构识别快速路径（`structure_candidates`）关闭：
+  全部 42 份报告的 `candidate_source` 都是 `iterative`（通用的位移反演路径）。`scripts/resource_tiers.py` 记录每次
+  运行的这个字段，`run` 遇到其他值即停止，`table` 拒绝为这样的数据制表。
 - 运行：测量槽独占（`tools/run/guard.py --exclusive`，NUMA 节点 1 的 16 个物理核 16–31）；16 线程用全部 16 核，
   4 线程用核 16–19；每次运行由各自的 guard 限制内存（上限 32 / 8 / 4 GiB），hsolve 据此自动定内存预算。每个
-  （算例、线程数）在 32 GiB 下跑 3 次，上限 8 / 4 GiB 的各跑 1 次；只用算例的 `config.json`，不加其他选项。
+  （算例、线程数）在 32 GiB 下跑 3 次，上限 8 / 4 GiB 的各跑 1 次。
 - 求解时间是 `report.json` 的 `time_total_s`（读入矩阵之后的整个求解，含残差检查与惯性证书），取中位数；峰值内存
   是 guard 测得的进程树峰值 RSS，取最大值。
 
 ## 结论
 
-- 32 GiB 上限下全部 36 次运行成功，B 正定的算例惯性证书全部通过；10⁶ 阶三维腔体峰值 5.8–6.0 GiB，16 线程 40 s、
-  4 线程 78 s；10⁶ 阶二维波导峰值 1.8 GiB，16 线程 5.9 s。
-- 8 GiB 上限下，10⁶ 阶三维腔体按自动预算改走外存分解，峰值 5.8 GiB，时间几乎不变（41 s 对 40 s）；4 GiB 上限下外存分解
-  的预估（4827 MB）也超出预算，hsolve 在分析之后报 `out_of_memory_budget` 退出（退出码 2），没有被系统强行终止。
-  二维波导在 4 GiB 下仍是内存内分解。
+- 32 GiB 上限下全部 36 次运行成功，B 正定的算例惯性证书全部通过；10⁶ 阶三维腔体峰值 10.8–11.4 GiB，16 线程 66 s、
+  4 线程 122 s；10⁶ 阶二维波导峰值 1.8–1.9 GiB，16 线程 5.35 s。
+- 8 GiB 上限下，10⁶ 阶三维腔体按自动预算（6.8 GiB）改走外存分解，峰值 5.9 GiB，证书照常通过；16 线程用时 122 s，
+  内存内为 66 s，多出的时间主要在迭代阶段（报告的 `time_iterate_s` 62 s 对 11 s）。4 GiB 上限下外存分解的预估
+  （16 线程 4827 MB、4 线程 4944 MB）也超出预算，hsolve 在分析之后报 `out_of_memory_budget` 退出（退出码 2），
+  没有被系统强行终止。二维波导在 4 GiB 下仍是内存内分解。
+- 此前的版本（提交 6b9382f，gpu01）测量时结构识别快速路径还是默认开启，三维腔体的 20 份报告都是
+  `candidate_source = separable_cartesian_curl`，不代表 1.0 的默认行为；本次重测替换了它（旧数据在版本历史中）。
 
 ## 复现
 
