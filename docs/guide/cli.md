@@ -56,9 +56,13 @@ hsolve --A A.npz --B B.npz --config config.json --out out/         # 目标与�
 | `--log FILE` | — | 把 JSON-lines 事件日志写到 FILE（分析、排序决策、分解、计数、每次 Krylov 运行、证书各轮） |
 | `-q` / `-v` | — | 不打印摘要 / 打印调试信息 |
 | `--version` | — | 打印版本与构建信息（编译选项、所用的 MUMPS 及其块参数）；仍需给出 `--A`，例如 `hsolve --A x --version` |
+| `--subspace-bound auto\|on\|off` | auto | 特征向量子空间夹角的后验上界（Davis–Kahan），证书通过时写入报告的 `subspace` 与 `pairs[].subspace_sin_bound`；on 在廉价证明不适用时多做一次惯性计数，使界严格成立 |
+| `--secure` | 关闭 | 数据保护模式：报告与日志不含文件路径，输入按形状、非零元数与 SHA-256 记录，输出文件权限 0600（[FORMATS](../FORMATS.md) §5） |
+| `--structure-candidates off\|auto` | off | 实验性的结构识别快速路径，见下文 |
 
 结构识别快速路径（从矩阵中识别可分离的笛卡尔或 Bloch 周期 curl-curl 结构后直接构造候选向量）默认关闭，
-开启方式见 {{TODO:rb-features 的开关说明，及其在 docs/FORMATS.md 中的位置}}。开启后最终残差与完备性证书照常执行。
+用 `--structure-candidates auto` 或配置键 `"structure_candidates": "auto"` 开启（[FORMATS](../FORMATS.md) §2）。
+开启后最终残差与完备性证书照常执行。
 
 ## 配置文件
 

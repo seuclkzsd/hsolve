@@ -12,7 +12,7 @@
 不需要编译，适合先看效果：
 
 ```bash
-docker run --rm {{TODO:rb-eng 的镜像名与标签，例如 ghcr.io/seuclkzsd/hsolve:1.0.0}} {{TODO:rb-eng 的演示命令}}
+docker run --rm ghcr.io/seuclkzsd/hsolve:1.0.0 demo
 ```
 
 镜像内置样例：依次求解、用独立评测器复核，并打印结果表。
@@ -20,13 +20,13 @@ docker run --rm {{TODO:rb-eng 的镜像名与标签，例如 ghcr.io/seuclkzsd/h
 ### Release 二进制包
 
 ```bash
-curl -LO https://github.com/seuclkzsd/hsolve/releases/download/v1.0.0/{{TODO:rb-eng 的压缩包名}}
-curl -LO https://github.com/seuclkzsd/hsolve/releases/download/v1.0.0/{{TODO:rb-eng 的 SHA256SUMS 文件名}}
-sha256sum -c {{TODO:rb-eng 的 SHA256SUMS 文件名}} --ignore-missing
-tar xf {{TODO:rb-eng 的压缩包名}}
+curl -LO https://github.com/seuclkzsd/hsolve/releases/download/v1.0.0/hsolve-1.0.0-linux-x86_64.tar.gz
+curl -LO https://github.com/seuclkzsd/hsolve/releases/download/v1.0.0/SHA256SUMS
+sha256sum -c SHA256SUMS && tar -xzf hsolve-1.0.0-linux-x86_64.tar.gz
 ```
 
-压缩包是可移植构建（不依赖构建机的指令集），解压即可运行其中的 `hsolve`。
+压缩包是可移植构建（不依赖构建机的指令集，glibc ≥ 2.17），解压到任意目录即可运行
+`hsolve-1.0.0-linux-x86_64/bin/hsolve`，不需要 conda 或 root；包内的目录结构见[安装与运行](../INSTALL.md#2-二进制包)。
 
 ### 从源码构建
 

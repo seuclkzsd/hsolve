@@ -118,6 +118,7 @@ extra:
 nav:
   - 首页: index.md
   - 快速开始: guide/quickstart.md
+  - 安装与运行: INSTALL.md
   - 用户指南:
       - 命令行: guide/cli.md
       - Python 接口: PYTHON.md
@@ -131,7 +132,8 @@ nav:
       - BLAS 内核与 GPU 卸载: BLAS.md
   - 评测与对比:
       - 评测方法: guide/evaluation.md
-      # The showcase pages (hard-scenario comparisons, physics examples) are listed here.
+      - 困难场景对比: showcase/困难场景对比.md
+      - 物理场景: showcase/物理场景.md
       - 研发记录: guide/history.md
   - 设计文档:
       - 设计契约: DESIGN.md

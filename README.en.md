@@ -10,12 +10,15 @@
 > This is a translation of [README.md](README.md); the Chinese version is authoritative. The full documentation is
 > written in Chinese.
 
-![{{TODO:rb-evidence hero image caption}}](docs/images/hero.png)
+![Left: mode fields of a PEC cavity and a square waveguide computed by hsolve; right: hard scenarios solved correctly in every repetition - hsolve 18/18, SLEPc default use 6/18, SLEPc tuned per case 12/18](docs/images/hero.png)
 
 Finite-element models of cavities, waveguides and photonic crystals lead to sparse Hermitian eigenproblems
 A x = λ B x in which A is indefinite and, for waveguides, B is indefinite too, while engineers need only the dozen modes
-near a target frequency. Shift-invert Krylov solvers can miss one copy of a repeated (degenerate) eigenvalue and still
-report success — {{TODO:rb-evidence concrete example: case, SLEPc usage, how often and under which conditions}}.
+near a target frequency. Shift-invert Krylov solvers miss modes at repeated (degenerate) eigenvalues, null spaces and
+near-singular shifts, sometimes while reporting success: asked for 21 eigenvalues of a PEC cube (n = 92,256) whose target
+set holds 3-, 6- and 12-fold levels, SLEPc with its default settings returned 21 pairs in each of 3 runs and missed 7 of
+them every time; on the 1e6-size box cavity and square waveguide, 4 default SLEPc runs reported success while eigenvalues
+of the target set were missing.
 hsolve counts Sylvester inertia at both ends of the target window, compares "how many there must be" with "how many
 were found", and computes the missing ones; when B is positive definite the result carries a completeness certificate
 that can be checked.
@@ -24,30 +27,32 @@ that can be checked.
 
 | Capability | What it does | Evidence |
 |---|---|---|
-| Nothing missed | For positive definite B (including B = I) inertia counts prove that every eigenvalue in the target window was found; the report states the method and the failure probability bound. {{TODO:rb-evidence valid runs of SLEPc and hsolve on the hard cases}} | [Algorithms](docs/guide/algorithms.md) · {{TODO:hard-case page}} |
-| Speed | {{TODO:rb-evidence summary against per-case tuned SLEPc at 16 cores, including the slower configurations}} | {{TODO:performance page}} |
-| Scale and memory | {{TODO:rb-evidence time and peak memory at 1e5 and 1e6}}; the memory budget follows the cgroup / ulimit / physical memory, with out-of-core factorization when needed | {{TODO:performance page}} |
+| Nothing missed | For positive definite B (including B = I) inertia counts prove that every eigenvalue in the target window was found; the report states the method and the failure probability bound. On 18 hard scenarios hsolve was correct in every run (18/18); SLEPc 6/18 with its defaults, 12/18 tuned per case | [Algorithms](docs/guide/algorithms.md) · [Hard cases](docs/showcase/困难场景对比.md) |
+| Speed | Where both are correct (12 scenarios), against SLEPc tuned per case: faster on 6 (1.05–3.30×), comparable on 1, slower on 5 (0.63–0.92×: two complex Hermitian problems, two SuiteSparse edge-element GHEPs, 1e4 eigenvalues near zero); 1.37–4.29× faster than default SLEPc. hsolve's times include the certificate | [Hard cases](docs/showcase/困难场景对比.md#时间) |
+| Scale and memory | 3-D GHEP n = 1.1e5: 2.29 s, 0.75 GiB peak; n = 1.0e6: 65.7 s, 11.5 GiB; indefinite-B waveguide n = 1.0e6: 5.31 s, 1.91 GiB. The memory budget follows the cgroup / ulimit / physical memory, with out-of-core factorization when needed | [Resources](docs/INSTALL.md#5-资源需求) |
 | Problem classes | HEP, GHEP and GHIEP (indefinite B, waveguides); real symmetric and complex Hermitian; k nearest to σ, all in an interval, algebraic extremes | [Scope](docs/SOLUTION.md#12-求解边界能处理--不能处理) |
-| Independent checking | An independent evaluator recomputes backward errors, eigenvalue errors and subspace angles from the original matrices and checks completeness against reference spectra. {{TODO:rb-evidence number of cases, passes, largest backward error}} | [Evaluation](docs/guide/evaluation.md) |
+| Independent checking | An independent evaluator recomputes backward errors, eigenvalue errors and subspace angles from the original matrices and checks completeness against reference spectra. All 54 hsolve runs above pass; largest backward error 7.5e-11 (tolerance 1e-10); cavity frequencies agree with the exact discrete values to 3.1e-14 | [Evaluation](docs/guide/evaluation.md) |
 | Parallelism | OpenMP threads; one process per socket on multi-socket machines (`hsolve-mpi`); optional cuBLAS offload; without MPI or GPU the default single-process CPU path runs, and with them the certificate's conditions and guarantees are unchanged | [Parallel scheme](docs/PARALLEL.md) |
 | Open governance | Apache-2.0; building and the default run depend only on open-source components, each one listed (optional GPU offload loads the user's installed CUDA libraries at run time, NVIDIA license, not distributed); CI; releases with SHA256SUMS; contribution, governance and security policies | [NOTICE](NOTICE) · [CONTRIBUTING](CONTRIBUTING.md) · [GOVERNANCE](GOVERNANCE.md) |
 
-Test conditions: {{TODO:rb-evidence hardware, cores, memory cap, version and commit, repetitions and statistic}}.
-Raw data and the scripts that generate the tables: {{TODO:rb-evidence results path}}.
+Test conditions: Intel Xeon Silver 4314 nodes (2 × 16 cores); every run pinned to the 16 physical cores of one socket
+with a 32 GiB cap and no other timed run at the same time; hsolve solver source commit b9aadc4, SLEPc/PETSc 3.26.0 +
+MUMPS 5.8.2; 3 interleaved repetitions per scenario, medians. Raw records: [`results/showcase/`](results/showcase/);
+tables and figures are generated by [`tools/showcase/`](tools/showcase/).
 
 ## Quick start
 
 With the container image, nothing to compile (bundled samples: solve → independent evaluation → result table):
 
 ```bash
-docker run --rm {{TODO:rb-eng image:1.0.0}} {{TODO:rb-eng demo command}}
+docker run --rm ghcr.io/seuclkzsd/hsolve:1.0.0 demo
 ```
 
 Or download the portable binary package and solve your own matrices:
 
 ```bash
-curl -LO https://github.com/seuclkzsd/hsolve/releases/download/v1.0.0/{{TODO:rb-eng archive name}}
-tar xf {{TODO:rb-eng archive name}} && cd {{TODO:rb-eng directory; check the path of hsolve in the package}}
+curl -LO https://github.com/seuclkzsd/hsolve/releases/download/v1.0.0/hsolve-1.0.0-linux-x86_64.tar.gz
+tar -xzf hsolve-1.0.0-linux-x86_64.tar.gz && cd hsolve-1.0.0-linux-x86_64
 ./bin/hsolve --A A.npz --B B.npz --sigma 0.5 --k 10 --out out/     # the 10 eigenpairs nearest to σ = 0.5
 ```
 
@@ -82,7 +87,24 @@ print(res.success, res.eigenvalues, res.report["certificate"]["statement"])
 
 ## Hard cases
 
-{{TODO:rb-evidence hard-case comparison table (scenario · case · hsolve · SLEPc default usage · SLEPc tuned · remarks), with the test conditions}}
+On the same 16 cores and 32 GiB, hsolve and SLEPc (Krylov-Schur + shift-and-invert + MUMPS) each solve every case 3
+times, and every result is judged by the solver-independent evaluator `tools/eval` (backward error ≤ 1e-10,
+completeness against a reference spectrum). "Default" is SLEPc and MUMPS with their default settings; "tuned" is the
+fastest valid configuration found for each case by the same tuning program. Eight of the 18 scenarios
+(all of them: [hard cases](docs/showcase/困难场景对比.md), in Chinese):
+
+| Scenario | Case | hsolve | SLEPc default | SLEPc tuned |
+|---|---|---|---|---|
+| Multiple eigenvalues: PEC cube, target set with 3-, 6- and 12-fold levels | n = 92,256, HEP | correct 3/3, 2.55 s | **wrong** 0/3: 7 missed, residual up to 2.0e-08 | **wrong** 2/3: residual up to 3.5e-09 |
+| Near-singular shift: σ exactly on an eigenvalue (K = A − σB singular) | n = 109,744, GHEP | correct 3/3, 2.84 s | **wrong** 0/3: 1 missed, residual up to 1.8e-03 | **wrong** 0/3: residual up to 3.6e-06 |
+| Low-frequency breakdown: PEC cavity σ = 0, lowest k physical modes (35,475-dim gradient null space) | n = 109,744, GHEP | correct 3/3, 19.4 s | **wrong** 0/3: 10 null-space modes returned | **wrong** 0/3: 10 null-space modes, error exit |
+| Indefinite B: 10 × 10 mm square waveguide at 50 GHz, 18 propagating modes | n = 99,225, GHIEP | correct 3/3, 0.442 s | correct 3/3, 1.81 s | **wrong** 2/3: 3 missed |
+| All eigenvalues in an interval: PEC box, [40, 200] (about 500, double) | n = 109,744, GHEP | correct 3/3, 3.14 s | correct 3/3, 13.5 s | correct 3/3, 10.4 s |
+| Complex Hermitian (Bloch-periodic cell): all eigenvalues in an interval | n = 10,080, HEP, complex | correct 3/3, 1.2 s | **not supported** (PETSc error) | **not supported** (PETSc error) |
+| SuiteSparse 2cubes_sphere (EM finite elements) | n = 101,492, HEP | correct 3/3, 2.14 s | **wrong** 0/3: residual up to 1.3e-05 | correct 3/3, 2.15 s |
+| 1e6 size: PEC box (generalized) | n = 1,027,733, GHEP | correct 3/3, 65.7 s | **wrong** 0/3: 1 missed | correct 3/3, 79.3 s |
+
+![Solver time per scenario; results that failed the independent check are crossed out](docs/images/scenarios.png)
 
 ## Physics examples
 
@@ -100,20 +122,39 @@ hsolve --A data/cases/wg-square-2e4/A.npz --B data/cases/wg-square-2e4/B.npz --s
 hsolve detects the indefinite B, excludes the null space and returns exactly the 18 propagating modes. With indefinite
 B Sylvester inertia does not count eigenvalues, so this problem has no completeness certificate (the `certificate` of
 `report.json` says it is not available); the result is checked by the residual acceptance of every pair and against
-reference solutions.
-{{TODO:rb-evidence result table: mode, analytic β, computed β, relative difference, backward error, time and conditions}}
+reference solutions. On two meshes (n ≈ 1e5 and 1e6) all 18 propagating modes are found with no spurious ones; hsolve's
+propagation constants agree with the exact values of the same discrete problem to 1.5e-12 / 7.7e-12, and their
+difference from the analytic β = √(k₀² − k_c²) (the discretization error) falls from 1.48e-3 to 1.48e-4, as h² - the
+accuracy limit is the mesh, not the solver. The 1e6 mesh is solved in 5.31 s on 16 cores.
+
+![Transverse electric field of the propagating modes](docs/images/waveguide_modes.png)
 
 ### A rectangular cavity (positive definite B, with a completeness certificate)
 
-{{TODO:rb-evidence cavity example (docs/showcase/物理场景.md, "矩形谐振腔"): structure and grid, generation and solve commands (σ, k, zero_filter_tol), the gradient null-space modes excluded by inertia, the exact certificate's expected / found counts, both copies of the double TE111 / TM111 mode returned, largest backward error and the independent evaluation, test conditions}}
+A metal cavity with a WR-90 cross-section (22.86 × 10.16 mm) and length 30 mm, discretized on a 46 × 20 × 60 Yee grid,
+n = 155,966. The curl-curl operator has a 50,445-dimensional gradient null space at 0, to which ordinary shift-invert
+near σ = 0 converges (low-frequency breakdown). With `zero_filter_tol = 1e-8` hsolve cuts the whole zero band out by
+inertia and returns the lowest 10 physical resonances; the exact certificate passes ("24 expected, 24 found"), both
+copies of the double TE111 / TM111 mode are returned, the largest backward error is 1.8e-12 and the independent
+evaluation passes.
+
+| Mode | Analytic (GHz) | hsolve (GHz) | hsolve vs exact discrete | Mesh error |
+|---|---|---|---|---|
+| TE101 | 8.243877 | 8.242518 | 3.1e-14 | 0.02% |
+| TE102 | 11.952313 | 11.947797 | 1.5e-14 | 0.04% |
+| TE201 | 14.033880 | 14.024152 | 9.3e-15 | 0.07% |
+| TE111 / TM111 (double) | 16.900569 | 16.886670 | 1.5e-14 | 0.08% |
+
+All 10 modes, mode pictures and the command to reproduce them (`tools/showcase/run_all.sh physics`):
+[physics examples](docs/showcase/物理场景.md) (in Chinese).
 
 ## Parallel scheme
 
 | Layer | Work | Measured |
 |---|---|---|
-| Threads (OpenMP) | all numerical work: ordering, MUMPS factorization and solves, sparse kernels, orthogonalization | {{TODO:rb-evidence 1 → 16 thread speedups and conditions}} |
-| Processes (`hsolve-mpirun`) | one helper process per socket: the certificate's two counts at once, spectrum slices spread over the sockets | {{TODO:rb-evidence two sockets against one process}} |
-| GPU (`--gpu auto`) | large dense updates of 1e6-size factorizations (FP64 cuBLAS, loaded at run time) | {{TODO:rb-evidence whole-run speedup}} |
+| Threads (OpenMP) | all numerical work: ordering, MUMPS factorization and solves, sparse kernels, orthogonalization | 1 → 16 threads: 3.6–4.5× on 3-D 1e5 problems, 2.3–2.7× on 2-D and complex ones ([P9 record](results/p9_measurements.md) §5) |
+| Processes (`hsolve-mpirun`) | one helper process per socket: the certificate's two counts at once, spectrum slices spread over the sockets | two sockets (8 + 8 cores) against one process on the same cores: 1.09–1.11× at 1e6, 1.15–1.74× on windows with several slices; no gain on one socket, so not the default ([P10 record](results/p10_mpi.md)) |
+| GPU (`--gpu auto`) | large dense updates of 1e6-size factorizations (FP64 cuBLAS, loaded at run time) | one V100: 1.06–1.07× per whole run at 1e6; below 5e5 nothing is offloaded and the CPU path runs ([P10 record](results/p10_gpu.md)) |
 
 Without MPI or a GPU the single-process CPU path is the default. Multi-process runs and GPU offload keep the
 completeness certificate's conditions and guarantees, and their results pass the same residual acceptance. In the
@@ -132,7 +173,7 @@ Highlights: [quick start](docs/guide/quickstart.md), [command line](docs/guide/c
 
 ## Roadmap
 
-- **2026Q4**: release 1.0; report our MUMPS patches and findings upstream.
+- **2026Q4**: release 1.0; 1.1 brings the residual-correction improvements for extreme stress inputs and reports our MUMPS patches and findings upstream.
 - **2027Q1**: PyPI and conda-forge packages; aarch64 (Kunpeng + openEuler) and CPUs without AVX-512; cheaper certificates.
 - **2027Q2**: native complex Hermitian LDLᴴ; examples with MFEM, NGSolve and Elmer.
 - **2027Q3–Q4**: distributed spectrum slicing across nodes; a GPU path with resident factors.
@@ -156,7 +197,7 @@ Please cite hsolve as described in [CITATION.cff](CITATION.cff) ("Cite this repo
   author  = {seuclkzsd},
   title   = {hsolve: a certified shift-invert eigensolver for large sparse Hermitian (indefinite) eigenproblems from electromagnetic simulation},
   year    = {2026},
-  version = {{{TODO:release version = CMakeLists.txt project(VERSION) = CHANGELOG}}},
+  version = {1.0.0},
   url     = {https://github.com/seuclkzsd/hsolve},
   license = {Apache-2.0}
 }
@@ -181,11 +222,17 @@ hsolve started as an entry for the COMAC enterprise topic "eigenvalues of indefi
 - Only Hermitian problems are solved; non-Hermitian input (e.g. complex symmetric PML) is rejected.
 - Complex Hermitian matrices are factorized through a real symmetric embedding of order 2n, which costs about as much as
   complex LU and more than a native LDLᴴ (roadmap 2027Q2).
-- The certificate needs two extra factorizations per round; {{TODO:rb-evidence configurations slower than tuned SLEPc and why}}.
+- The certificate needs two extra factorizations per round: in the 5 scenarios where hsolve is slower than tuned SLEPc
+  it takes 17–57% of hsolve's time; complex Hermitian problems also pay for the 2n real embedding (previous item), and
+  the Bloch cell at n ≈ 1e5 runs at 0.65× the speed of tuned SLEPc.
 - Validated on Linux x86-64; the SIMD kernels of the BLAS hook target AVX-512 / AVX2 and other CPUs use the portable
   path (aarch64 validation: roadmap 2027Q1).
 - Shared-memory solves on one node; distributed solves across nodes are not supported yet (roadmap 2027Q3). GPU offload
   covers only the large dense updates of the factorization and pays off at 1e6 scale.
 - The structure-recognition fast path (separable / Bloch-periodic curl-curl candidates) is off by default; none of the
   numbers above relies on it.
-- {{TODO:rb-features if 1.0 does not include the P34 residual-correction improvements, state the known failure types of the stress tests here}}
+- On constructed extreme stress inputs (3- to 25-fold eigenvalue clusters 2⁻²²–2⁻³² away from the shift, matrix scales
+  2^±16) the residual correction can fall short of the 1e-10 backward error or of the missing pairs: of 60 such inputs
+  of development stage P34 the 1.0 solver passes 27, and each of the other 33 reports failure (32 with
+  `success = false`, 1 over the 30 s limit) - none reports success with a wrong result. An improvement that passes all
+  60 has been validated in a prototype and is planned for 1.1 ([P34 record](results/p34_measurements.md)).

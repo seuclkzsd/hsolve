@@ -349,7 +349,7 @@ seconds}, slices[...], zero_cluster_dim, zero_modes_filtered, success, warnings[
   缺时取 SLEPc 基线的 `peak_rss_bytes_sum`）；`measured{wall_s, peak_rss_bytes, returncode, killed,
   cores, threads}`（guard 摘要，没有时为 null）；`solver_success`；`solver_warnings`。
 - `norms{norm2_a, norm2_b, scale, norm_method{A, B}}`（n ≤ 4000 稠密精确，否则 ARPACK 下界，
-  tol 1e-6、ncv 40）。
+  tol 1e-6、ncv 40；ARPACK 一个 Ritz 值也没给出时退回 1-范数，它是上界，η 因此可能偏小，`norm_method` 记为此值）。
 - `reference{kind, comparable, complete, window, count, has_eigenvectors}`：`kind` 取自 `ref.json`，
   或 `"pooled"`——没有可比参考解的测例由同一次运行中多个求解器已接受且互异的特征对合并而成的
   未认证参考（只在内存中，从不保存；不报对它的特征值误差）。连续模型参考（partial-analytic）

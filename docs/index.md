@@ -40,7 +40,7 @@ hide:
 
     ---
 
-    自研并行嵌套剖分、块 Krylov 多右端回代与调过的 MUMPS。{{TODO:rb-evidence 的一句话性能结论，带测试条件}}
+    自研并行嵌套剖分、块 Krylov 多右端回代与调过的 MUMPS。16 核、32 GiB 内的实测：十万阶三维广义问题 2.29 s，百万阶 65.7 s、峰值内存 11.5 GiB（均含完备性证书）。
 
     [:octicons-arrow-right-24: 评测方法](guide/evaluation.md)
 

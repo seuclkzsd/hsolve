@@ -13,7 +13,7 @@
 | 进程（MPI，P10） | 彼此独立的大块分解：nearest 证书的两次 Sylvester 计数（同时），窗口目标（区间 / 最小 / 最大 k 个）的谱切片（每片一次分解 + Krylov） | 每个 socket（NUMA 节点）一个 helper 进程，各用本 socket 的核与内存带宽；leader 跨全部核做顺序部分，二者从不同时计算 | 多 socket 机器上可选：`hsolve-mpirun`；单 socket 机器上不用（实测更慢） |
 
 **降级（评测机只有 CPU、或没有 MPI）**：普通的单进程 `hsolve` 就是默认路径，不需要 MPI 也不需要 GPU；多进程模式的
-结果与它相同（下文 §4），只是在多 socket 机器上更快。
+惯性计数与谱切片和它相同、结果照常经残差验收（实测见下文 §4），只是在多 socket 机器上更快。
 
 ## 2. 为什么是「每个 socket 一个进程」
 
@@ -89,7 +89,7 @@ build/release/hsolve-mpirun [--ranks R] [--interleave-leader] [--dry-run] -- --A
 测量节点 c005（2×Xeon Silver 4314，每 socket 16 核，无 GPU），每次运行 16 核、32 GiB，5 次交错、每次结果经
 tools/eval 判定有效；时间为报告的 `time_total_s`（求解本身，不含读矩阵与 MPI 启动），括号内为对同一两 socket 核上
 单进程 hsolve 的加速比。「单 socket」= 一个 socket 的 16 核；「两 socket」= 每个 socket 8 核（共 16 核）。二进制为
-审查修复后的 54e5219（`results/p10_mpi.md` §4、§7）。
+审查修复后的 29550cd（`results/p10_mpi.md` §4、§7）。
 
 | 布局（16 核） | 位置 | 1e6 nearest：syn-mem27-100 / yee-pec-box-1e6 | 1e5 三维 nearest：syn-mem27-46 / yee-pec-box-1e5 / ss-qa8fk-qa8fm | 多片窗口：syn-mem27-46 [0.1, 0.3] / yee-pec-cube-32 [40, 400] |
 |---|---|---|---|---|
