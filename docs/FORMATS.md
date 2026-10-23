@@ -165,8 +165,9 @@ data/refs/<name>/ref.json        {"kind","note","count","complete","window"}
   （`subspace.note` 为 "disabled by configuration"）。代价：返回向量上各一次 A、B 乘积与 |A|、|B| 乘积、簇内 Gram 矩阵，一般 B 另有每列一次
   Jacobi 预条件 CG（B = I 与对角 B 不需要），计入 `time_verify_s` 与 `time_total_s`；实测见 `results/subspace_bound.md`
   （默认 auto 的界的时间为不计算界时总时间的中位数 1.6%、最大 12.7%）。小而快的求解上占比较高：困难场景对比用 1.0.0
-  重测时（`results/showcase/recheck-1.0.0.md`），「零附近 1e4 个特征值」（n = 1e5，求最近的 21 个）的界用 0.036 s，
-  总时间比不计算界的 0.9.0 多 5.7%（0.798 → 0.843 s）；百万阶三维问题上界用 0.20 s，约为总时间的 0.3%。
+  重测时（`results/showcase/recheck-1.0.0.md`），「零附近 1e4 个特征值」（n = 1e5，求最近的 21 个）的总时间
+  比不计算界的 0.9.0 多 5.7%（0.798 → 0.843 s），其中界占 0.036 s（约 4.5%）；百万阶三维问题上界用 0.20 s，
+  约为总时间的 0.3%。
 - `secure`（数据保护，§5）：true 时命令行的报告与事件日志不含任何文件路径（输入改记形状、nnz、dtype 与输入文件字节的
   SHA-256，内存上限的来源只记文件名），命令行创建的全部文件（结果、报告、日志、MUMPS 外存文件）权限为 0600、目录 0700。
   计算与结果不变。
@@ -327,7 +328,8 @@ seconds}, slices[...], zero_cluster_dim, zero_modes_filtered, success, warnings[
   - 松紧（实测，`results/subspace_bound.md`）：有参考特征向量的 18 个测例各 5 次 auto 运行共 590 组中界都不小于实测
     夹角，界 / 实测的中位数约 1.5e3（最小 43，最大 8.6e6）。Davis–Kahan 只用残差范数与间隙 δ，残差主要落在远处特征方向时
     （谱跨度大、目标处间隙小）偏松，原因与逐组数据见该文件。默认 auto 的计算时间为求解时间的中位数 1.6%（最大 12.7%）；
-    在困难场景对比的 1.0.0 重测中，它使「零附近 1e4 个特征值」的总时间多 5.7%（§2 `subspace_bound`）。
+    在困难场景对比的 1.0.0 重测中，「零附近 1e4 个特征值」的总时间比 0.9.0 多 5.7%（0.798 → 0.843 s），
+    其中界占 0.036 s（约 4.5%，§2 `subspace_bound`）。
 - `gpu`（P10，可选，只在 GPU 模式不是 off——`--gpu` 或 `HS_GPU`——时由命令行写入，`docs/DESIGN.md` §3.10、
   `docs/BLAS.md` §10）：GPU 卸载的报告——`mode`、`available`（true / false / null = auto 低于阈值、未加载 CUDA）、
   `device`、分解数与卸载的分解数、GPU 上的 GFlop 与占估计的份额、`init_s`；不能卸载时 `reason` 说明为何走 CPU 路径
