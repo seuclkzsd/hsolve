@@ -4,6 +4,7 @@
  "new_dir": "results/showcase/recheck-1.0.0",
  "base_dir": "results/showcase/raw",
  "slower_threshold": 0.05,
+ "slepc_summary": "results/showcase/scenarios.json",
  "conditions": {
   "host": "c005",
   "cpu": "Intel(R) Xeon(R) Silver 4314 CPU @ 2.40GHz",
@@ -70,7 +71,25 @@
   "max_backward_error": 6.066373893256938e-11,
   "ratio_min": 0.9130947150993671,
   "ratio_max": 1.056584085998656,
-  "ratio_median": 1.0044182216782815
+  "ratio_median": 1.0044182216782815,
+  "slepc": {
+   "slepc-tuned": {
+    "scenarios": 12,
+    "scenarios_now": 12,
+    "base_min": 0.6324640125216217,
+    "base_max": 3.296396181116603,
+    "new_min": 0.6090862351036453,
+    "new_max": 3.220520432414118
+   },
+   "slepc-default": {
+    "scenarios": 6,
+    "scenarios_now": 6,
+    "base_min": 1.3706937556019596,
+    "base_max": 4.286870919855149,
+    "new_min": 1.2972879052086186,
+    "new_max": 4.18819663352445
+   }
+  }
  },
  "rows": [
   {
@@ -188,7 +207,14 @@
    "version": "1.0.0",
    "base_version": "0.1.0",
    "host": "c005",
-   "base_host": "gpu02"
+   "base_host": "gpu02",
+   "slepc": {
+    "slepc-tuned": {
+     "slepc_time_s": 0.72569895,
+     "base": 0.9049323745252741,
+     "new": 0.9368528156487265
+    }
+   }
   },
   {
    "scenario": "bloch-1e5",
@@ -305,7 +331,14 @@
    "version": "1.0.0",
    "base_version": "0.1.0",
    "host": "c005",
-   "base_host": "gpu02"
+   "base_host": "gpu02",
+   "slepc": {
+    "slepc-tuned": {
+     "slepc_time_s": 15.6648942,
+     "base": 0.6490889056384322,
+     "new": 0.7108670052567279
+    }
+   }
   },
   {
    "scenario": "bloch-interval",
@@ -422,7 +455,8 @@
    "version": "1.0.0",
    "base_version": "0.1.0",
    "host": "c005",
-   "base_host": "gpu02"
+   "base_host": "gpu02",
+   "slepc": {}
   },
   {
    "scenario": "interval-box",
@@ -539,7 +573,19 @@
    "version": "1.0.0",
    "base_version": "0.1.0",
    "host": "c005",
-   "base_host": "c005"
+   "base_host": "c005",
+   "slepc": {
+    "slepc-tuned": {
+     "slepc_time_s": 10.3665591,
+     "base": 3.296396181116603,
+     "new": 3.220520432414118
+    },
+    "slepc-default": {
+     "slepc_time_s": 13.481419800000001,
+     "base": 4.286870919855149,
+     "new": 4.18819663352445
+    }
+   }
   },
   {
    "scenario": "lowfreq-null-space",
@@ -656,7 +702,8 @@
    "version": "1.0.0",
    "base_version": "0.1.0",
    "host": "c005",
-   "base_host": "c005"
+   "base_host": "c005",
+   "slepc": {}
   },
   {
    "scenario": "multiplet-cube",
@@ -773,7 +820,8 @@
    "version": "1.0.0",
    "base_version": "0.1.0",
    "host": "c005",
-   "base_host": "c005"
+   "base_host": "c005",
+   "slepc": {}
   },
   {
    "scenario": "pec-box-1e6",
@@ -890,7 +938,14 @@
    "version": "1.0.0",
    "base_version": "0.1.0",
    "host": "c005",
-   "base_host": "c005"
+   "base_host": "c005",
+   "slepc": {
+    "slepc-tuned": {
+     "slepc_time_s": 79.3308,
+     "base": 1.207535610055885,
+     "new": 1.203516365224436
+    }
+   }
   },
   {
    "scenario": "sigma-1e-13",
@@ -1007,7 +1062,8 @@
    "version": "1.0.0",
    "base_version": "0.1.0",
    "host": "c005",
-   "base_host": "c005"
+   "base_host": "c005",
+   "slepc": {}
   },
   {
    "scenario": "sigma-on-eigenvalue",
@@ -1124,7 +1180,8 @@
    "version": "1.0.0",
    "base_version": "0.1.0",
    "host": "c005",
-   "base_host": "c005"
+   "base_host": "c005",
+   "slepc": {}
   },
   {
    "scenario": "ss-2cubes-sphere",
@@ -1241,7 +1298,14 @@
    "version": "1.0.0",
    "base_version": "0.1.0",
    "host": "c005",
-   "base_host": "c005"
+   "base_host": "c005",
+   "slepc": {
+    "slepc-tuned": {
+     "slepc_time_s": 2.14609057,
+     "base": 1.0032715833875656,
+     "new": 0.9850914495954463
+    }
+   }
   },
   {
    "scenario": "ss-qa8fk",
@@ -1358,7 +1422,19 @@
    "version": "1.0.0",
    "base_version": "0.1.0",
    "host": "c005",
-   "base_host": "c005"
+   "base_host": "c005",
+   "slepc": {
+    "slepc-tuned": {
+     "slepc_time_s": 1.4054157800000002,
+     "base": 1.0483362313554665,
+     "new": 1.0251716974446712
+    },
+    "slepc-default": {
+     "slepc_time_s": 2.61032,
+     "base": 1.9471056682114394,
+     "new": 1.9040814991231805
+    }
+   }
   },
   {
    "scenario": "ss-tem152078",
@@ -1475,7 +1551,19 @@
    "version": "1.0.0",
    "base_version": "0.1.0",
    "host": "c005",
-   "base_host": "c005"
+   "base_host": "c005",
+   "slepc": {
+    "slepc-tuned": {
+     "slepc_time_s": 2.7909809800000005,
+     "base": 0.7468127376475807,
+     "new": 0.7133348760845057
+    },
+    "slepc-default": {
+     "slepc_time_s": 6.146599999999999,
+     "base": 1.644711736166908,
+     "new": 1.570983170706173
+    }
+   }
   },
   {
    "scenario": "ss-tem27623",
@@ -1592,7 +1680,19 @@
    "version": "1.0.0",
    "base_version": "0.1.0",
    "host": "c005",
-   "base_host": "c005"
+   "base_host": "c005",
+   "slepc": {
+    "slepc-tuned": {
+     "slepc_time_s": 0.29815382,
+     "base": 0.6324640125216217,
+     "new": 0.6090862351036453
+    },
+    "slepc-default": {
+     "slepc_time_s": 0.66859,
+     "base": 1.4182582471417975,
+     "new": 1.3658351448522317
+    }
+   }
   },
   {
    "scenario": "te-tm-pairs-box",
@@ -1709,7 +1809,14 @@
    "version": "1.0.0",
    "base_version": "0.1.0",
    "host": "c005",
-   "base_host": "c005"
+   "base_host": "c005",
+   "slepc": {
+    "slepc-tuned": {
+     "slepc_time_s": 3.32485,
+     "base": 1.4536369216025586,
+     "new": 1.4390122073489289
+    }
+   }
   },
   {
    "scenario": "waveguide-1e6",
@@ -1814,7 +1921,14 @@
    "version": "1.0.0",
    "base_version": "0.1.0",
    "host": "c005",
-   "base_host": "c005"
+   "base_host": "c005",
+   "slepc": {
+    "slepc-tuned": {
+     "slepc_time_s": 12.1761,
+     "base": 2.291208473348038,
+     "new": 2.2786828756422524
+    }
+   }
   },
   {
    "scenario": "waveguide-slab",
@@ -1919,7 +2033,14 @@
    "version": "1.0.0",
    "base_version": "0.1.0",
    "host": "c005",
-   "base_host": "c005"
+   "base_host": "c005",
+   "slepc": {
+    "slepc-tuned": {
+     "slepc_time_s": 0.8718079,
+     "base": 1.2957746895876716,
+     "new": 1.33364119289847
+    }
+   }
   },
   {
    "scenario": "waveguide-square",
@@ -2024,7 +2145,14 @@
    "version": "1.0.0",
    "base_version": "0.1.0",
    "host": "c005",
-   "base_host": "c005"
+   "base_host": "c005",
+   "slepc": {
+    "slepc-default": {
+     "slepc_time_s": 1.80599,
+     "base": 4.082977246083879,
+     "new": 4.174332335364213
+    }
+   }
   },
   {
    "scenario": "zero-cluster",
@@ -2141,7 +2269,19 @@
    "version": "1.0.0",
    "base_version": "0.1.0",
    "host": "c005",
-   "base_host": "c005"
+   "base_host": "c005",
+   "slepc": {
+    "slepc-tuned": {
+     "slepc_time_s": 0.7371989,
+     "base": 0.9241430707936857,
+     "new": 0.8746517035794737
+    },
+    "slepc-default": {
+     "slepc_time_s": 1.0934171999999998,
+     "base": 1.3706937556019596,
+     "new": 1.2972879052086186
+    }
+   }
   }
  ]
 }

@@ -18,6 +18,11 @@ time_total_s now and in the committed record and their ratio, the certificate of
 the peak memory, and the medians of the exclusive phases of the total (setup + factorization,
 iteration, verification, certificate; they add up to time_total_s). A scenario slower by more than
 SLOWER names the phase whose median grew most.
+
+SLEPc is not re-measured. Where the committed comparison (results/showcase/scenarios.json, written by
+tools/showcase/tables.py) has SLEPc correct in every repetition, the ratio of its median time to
+hsolve's (SLEPc / hsolve, as the showcase states it) is given with the committed hsolve median and
+with the new one - the latter only where hsolve is valid in every new repetition.
 """
 from __future__ import annotations
 
@@ -30,7 +35,9 @@ from typing import Any
 
 REPO = Path(__file__).resolve().parents[2]
 BASE_DIR = REPO / "results/showcase/raw"
+SLEPC_SUMMARY = REPO / "results/showcase/scenarios.json"
 SOLVER = "hsolve"
+SLEPC = {"slepc-tuned": "SLEPc tuned per case", "slepc-default": "SLEPc default use"}
 SLOWER = 0.05          # a median more than 5 % above the committed one is a slowdown
 # Exclusive phases of hsolve's time_total_s (src/driver/solver.cpp: setup + factor + iterate + verify
 # + certificate). The committed records keep iterate, verify and certificate; setup + factor is the
@@ -140,6 +147,40 @@ def compare_scenario(base: dict[str, Any], new: dict[str, Any], slower: float = 
     }
 
 
+def slepc_ratios(row: dict[str, Any], committed: dict[str, Any] | None) -> dict[str, Any]:
+    """Per SLEPc variant that is correct in the committed comparison (its scenarios.json row), the ratio
+    of SLEPc's median time to hsolve's: "base" as committed (speedup_vs, hsolve correct too), "new" with
+    this measurement's hsolve median (None unless hsolve is valid in every new repetition)."""
+    out: dict[str, Any] = {}
+    if not committed:
+        return out
+    hs_ok = row["runs"] > 0 and row["valid"] == row["runs"] and bool(row["time_s"])
+    for s in SLEPC:
+        e, base = (committed.get("solvers") or {}).get(s) or {}, (committed.get("speedup_vs") or {}).get(s)
+        if base is None or not e.get("correct") or not e.get("time_s"):
+            continue
+        out[s] = {"slepc_time_s": e["time_s"], "base": base, "new": e["time_s"] / row["time_s"] if hs_ok else None}
+    return out
+
+
+def _slepc_summary(rows: list[dict[str, Any]]) -> dict[str, Any]:
+    out = {}
+    for s in SLEPC:
+        base = [r["slepc"][s]["base"] for r in rows if s in r["slepc"]]
+        new = [r["slepc"][s]["new"] for r in rows if s in r["slepc"] and r["slepc"][s]["new"] is not None]
+        if base:
+            out[s] = {"scenarios": len(base), "scenarios_now": len(new), "base_min": min(base), "base_max": max(base),
+                      "new_min": min(new, default=None), "new_max": max(new, default=None)}
+    return out
+
+
+def load_committed_summary(path: Path | None) -> dict[str, dict[str, Any]]:
+    """The committed comparison's rows by scenario id (empty without the file)."""
+    if path is None or not Path(path).exists():
+        return {}
+    return {r["id"]: r for r in json.loads(Path(path).read_text()).get("scenarios", [])}
+
+
 def _conditions(docs: list[dict[str, Any]]) -> dict[str, Any]:
     """What the records of one side share (or list where they differ)."""
     keys = ("host", "cpu", "cores", "ncores", "mem_gb", "reps", "solvers", "source_commit", "git_commit",
@@ -162,20 +203,27 @@ def load_dir(path: Path) -> dict[str, dict[str, Any]]:
     return docs
 
 
-def build(new_dir: Path, base_dir: Path = BASE_DIR, slower: float = SLOWER) -> dict[str, Any]:
+def build(new_dir: Path, base_dir: Path = BASE_DIR, slower: float = SLOWER,
+          slepc_summary: Path | None = SLEPC_SUMMARY) -> dict[str, Any]:
     new, base = load_dir(new_dir), load_dir(base_dir)
     missing = sorted(set(base) - set(new))
     extra = sorted(set(new) - set(base))
     if extra:
         raise SystemExit(f"recheck: no committed record for {', '.join(extra)} in {base_dir}")
     rows = [compare_scenario(base[s], new[s], slower) for s in sorted(new)]
+    committed = load_committed_summary(slepc_summary)
+    for r in rows:
+        r["slepc"] = slepc_ratios(r, committed.get(r["scenario"]))
 
-    def rel(p: Path) -> str:
+    def rel(p: Path | None) -> str | None:
+        if p is None:
+            return None
         p = Path(p).resolve()
         return str(p.relative_to(REPO)) if p.is_relative_to(REPO) else str(p)
     return {"schema_version": 1,
             "note": "written by tools/showcase/recheck.py from the raw records; do not edit",
             "new_dir": rel(new_dir), "base_dir": rel(base_dir), "slower_threshold": slower,
+            "slepc_summary": rel(slepc_summary) if committed else None,
             "conditions": _conditions([new[s] for s in sorted(new)]),
             "base_conditions": _conditions([base[s] for s in sorted(new)]),
             "not_remeasured": missing,
@@ -192,7 +240,8 @@ def build(new_dir: Path, base_dir: Path = BASE_DIR, slower: float = SLOWER) -> d
                                                    if r["max_backward_error"] is not None), default=None),
                         "ratio_min": min((r["ratio"] for r in rows if r["ratio"] is not None), default=None),
                         "ratio_max": max((r["ratio"] for r in rows if r["ratio"] is not None), default=None),
-                        "ratio_median": _median(r["ratio"] for r in rows)},
+                        "ratio_median": _median(r["ratio"] for r in rows),
+                        "slepc": _slepc_summary(rows)},
             "rows": rows}
 
 
@@ -216,6 +265,42 @@ def _commit(c: Any) -> str:
 
 def _list(v: Any) -> str:
     return ", ".join(str(x) for x in v) if isinstance(v, list) else str(v)
+
+
+def render_slepc(doc: dict[str, Any]) -> list[str]:
+    """The section on the committed SLEPc medians against the hsolve medians (none without them)."""
+    sm = doc["summary"].get("slepc") or {}
+    if not sm:
+        return []
+
+    def rng(lo: float | None, hi: float | None) -> str:
+        return "-" if lo is None or hi is None else f"{lo:.2f} to {hi:.2f}"
+    out = ["",
+           "## Against the committed SLEPc medians",
+           "",
+           "SLEPc was not re-measured. Ratio = SLEPc median time / hsolve median time (above 1: hsolve is faster), "
+           f"with SLEPc's median from the committed comparison (`{doc['slepc_summary']}`) and hsolve's committed -> now; "
+           "only scenarios where SLEPc is correct in every committed repetition and hsolve in every repetition of both "
+           "measurements.",
+           ""]
+    for s, label in SLEPC.items():
+        if s in sm:
+            x = sm[s]
+            out.append(f"- {label} / hsolve: {rng(x['new_min'], x['new_max'])} over {x['scenarios_now']} scenarios now "
+                       f"(committed: {rng(x['base_min'], x['base_max'])} over {x['scenarios']}).")
+    out += ["",
+            "| scenario | " + " | ".join(f"{label}: median (s) | {label} / hsolve: committed -> now" for label in SLEPC.values())
+            + " |",
+            "|---|" + "---|---|" * len(SLEPC)]
+    for r in doc["rows"]:
+        if not r.get("slepc"):
+            continue
+        cells = []
+        for s in SLEPC:
+            x = r["slepc"].get(s)
+            cells += ["-", "-"] if x is None else [_t(x["slepc_time_s"]), f"{_r(x['base'])} -> {_r(x['new'])}"]
+        out.append(f"| `{r['scenario']}` | " + " | ".join(cells) + " |")
+    return out
 
 
 def render(doc: dict[str, Any]) -> str:
@@ -296,6 +381,7 @@ def render(doc: dict[str, Any]) -> str:
         sol = f"{_n(p['solves']['base'])} -> {_n(p['solves']['new'])}"
         out.append(f"| `{r['scenario']}` | {pair('setup_factor_s')} | {pair('iterate_s')} | {ver} | "
                    f"{pair('certificate_s')} | {fac} | {sol} |")
+    out += render_slepc(doc)
     bad = [r for r in doc["rows"] if r["invalid"]]
     if bad:
         out += ["", "## Invalid runs", ""]
@@ -312,9 +398,11 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--base", type=Path, default=BASE_DIR, help="the committed campaign records")
     ap.add_argument("--out", type=Path, default=None, help="output prefix (default: --new; writes .md and .json)")
     ap.add_argument("--slower", type=float, default=SLOWER)
+    ap.add_argument("--slepc", type=Path, default=SLEPC_SUMMARY,
+                    help="the committed comparison summary with the SLEPc medians (tools/showcase/tables.py)")
     ap.add_argument("--check", action="store_true", help="only check that the written files are current")
     args = ap.parse_args(argv)
-    doc = build(args.new, args.base, args.slower)
+    doc = build(args.new, args.base, args.slower, args.slepc)
     prefix = args.out or args.new
     md, js = prefix.with_name(prefix.name + ".md"), prefix.with_name(prefix.name + ".json")
     text_md, text_js = render(doc), json.dumps(doc, indent=1, ensure_ascii=False) + "\n"

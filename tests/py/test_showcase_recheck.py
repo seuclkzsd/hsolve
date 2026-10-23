@@ -137,6 +137,38 @@ def test_written_files_and_check(dirs, capsys):
     assert "out of date" in capsys.readouterr().out
 
 
+def test_slepc_ratios_against_the_committed_medians(dirs, tmp_path):
+    base, new = dirs
+    summary = tmp_path / "scenarios.json"
+    summary.write_text(json.dumps({"scenarios": [
+        # a: both SLEPc variants correct; b: the default one failed; c: hsolve is invalid in one new repetition
+        {"id": "a", "solvers": {"slepc-default": {"correct": True, "time_s": 8.04},
+                                "slepc-tuned": {"correct": True, "time_s": 4.02}},
+         "speedup_vs": {"slepc-default": 4.0, "slepc-tuned": 2.0}},
+        {"id": "b", "solvers": {"slepc-default": {"correct": False, "time_s": 0.5},
+                                "slepc-tuned": {"correct": True, "time_s": 1.4}},
+         "speedup_vs": {"slepc-tuned": 1.4}},
+        {"id": "c", "solvers": {"slepc-tuned": {"correct": True, "time_s": 6.0}}, "speedup_vs": {"slepc-tuned": 2.0}},
+    ]}))
+    doc = recheck.build(new, base, slepc_summary=summary)
+    rows = {r["scenario"]: r for r in doc["rows"]}
+    assert rows["a"]["slepc"]["slepc-tuned"] == {"slepc_time_s": 4.02, "base": 2.0, "new": pytest.approx(4.02 / 2.02)}
+    assert rows["a"]["slepc"]["slepc-default"]["new"] == pytest.approx(8.04 / 2.02)
+    assert set(rows["b"]["slepc"]) == {"slepc-tuned"} and rows["b"]["slepc"]["slepc-tuned"]["new"] == pytest.approx(1.0)
+    assert rows["c"]["slepc"]["slepc-tuned"]["new"] is None
+    s = doc["summary"]["slepc"]
+    assert s["slepc-tuned"] == {"scenarios": 3, "scenarios_now": 2, "base_min": 1.4, "base_max": 2.0,
+                                "new_min": pytest.approx(1.0), "new_max": pytest.approx(4.02 / 2.02)}
+    assert (s["slepc-default"]["scenarios"], s["slepc-default"]["scenarios_now"]) == (1, 1)
+    md = recheck.render(doc)
+    assert "## Against the committed SLEPc medians" in md
+    assert "- SLEPc tuned per case / hsolve: 1.00 to 1.99 over 2 scenarios now (committed: 1.40 to 2.00 over 3)." in md
+    assert "| `a` | 4.02 | 2.000 -> 1.990 | 8.04 | 4.000 -> 3.980 |" in md
+    assert "| `c` | 6 | 2.000 -> - | - | - |" in md
+    # without the committed summary there is no such section
+    assert "SLEPc medians" not in recheck.render(recheck.build(new, base, slepc_summary=None))
+
+
 def test_a_record_without_a_committed_one_is_an_error(dirs):
     base, new = dirs
     (new / "e.json").write_text(json.dumps(_doc("e", [_run(0, 1.0)], "47d03dc")))
