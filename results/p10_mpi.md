@@ -1,6 +1,6 @@
 # P10 "mpi": hsolve over several processes - one per socket
 
-P10 task "mpi" (branch `p10mpi` from p9-merge 90e7483). Question: can multi-process (MPI) execution
+P10 task "mpi" (branch `p10mpi` from p9-merge cdb0054). Question: can multi-process (MPI) execution
 make hsolve faster at the judging budget of 16 cores per run, and where? P9 measured that on ONE
 16-core socket MPI loses (`results/p9_mpi.md`: MPI MUMPS 2 x 8 .. 16 x 1 = 0.85 .. 0.59x of 1 x 16,
 two concurrent 8-thread counts 0.92x): every factorization is limited by the socket's memory
@@ -292,7 +292,7 @@ iterate). Peak: the guard's sampled process tree (all ranks) / the sum of the pr
 Layouts: `one:` = 16 cores of one socket, `two:` = 8 cores of each socket; `1x16` = hsolve,
 `1+2x8` = hsolve's multi-process mode (leader 16 threads, two helpers x 8 threads).
 
-Binaries are those of the review fix (section 7), at 54e5219: hsolve-mpi with the memory rules
+Binaries are those of the review fix (section 7), at 29550cd: hsolve-mpi with the memory rules
 predicted before the problem is sent, and Drop. Tags g1e5, giv1-3 and g1e6, 192/192 runs valid. At
 32 GiB the helpers get the same work as before the fix: 2 counts each nearest target, the same slices.
 The drops of the problem after each batch take 0.012-0.016 s at 1e6. Before the fix (tags d1e5,
@@ -385,9 +385,9 @@ What the claims say:
 * **A bug the campaign caught.** The first version gave each slice helper only the memory one slice
   needs. On yee-pec-cube-32's 167-pair slice its Krylov basis did not fit, so the helper halved its
   block width to 1 and missed 4 pairs (tools/eval: invalid, campaign C tag civ3). Helpers now get an
-  equal share of what the budget leaves (e2c443d), measured above (giv3).
+  equal share of what the budget leaves (ee76848), measured above (giv3).
 
-### 4.1 What the helpers do (tag f1e5, binary f265491 before the review fix, 5 repetitions, all valid)
+### 4.1 What the helpers do (tag f1e5, binary 6b6afdd before the review fix, 5 repetitions, all valid)
 
 Two controls on two sockets:
 - `two:1x16r` is hsolve-mpi with ONE rank through the launcher (`--ranks 1`): the same start-up,
@@ -438,7 +438,7 @@ on the same two sockets):
 | 1 x 16 (hsolve) | two sockets | - | 1.14 / 1.13 | 0.84 / 0.85 / 0.83 | 0.94 / 0.91 / 0.92 |
 | **1 + 2 x 8 (hsolve-mpi)** | **two sockets** | counts, slices | **1.26 / 1.23** (1.11 / 1.09) | **1.00 / 0.98 / 0.92** (1.20 / 1.16 / 1.10) | **1.64 / 1.36 / 1.05** (1.74 / 1.50 / 1.15) |
 
-(Binary of the review fix, 54e5219; tags g1e6, g1e5, giv1-3.)
+(Binary of the review fix, 29550cd; tags g1e6, g1e5, giv1-3.)
 
 Per phase in those runs (two sockets, hsolve -> hsolve-mpi):
 - the certificate: 36.0 -> 29.2 s and 29.9 -> 24.2 s at 1e6, 0.97-1.01 -> 0.73-0.77 s at 1e5;
@@ -512,7 +512,7 @@ python3 tools/bench/mpi_layouts.py table --tag a1e5        # (a1e6c, a1e6)
 # 4: whole solves (each run: guard.py --exclusive --cores <placement> --mem-gb 32); L = the four layouts
 L=one:1x16,two:1x16,two:1+2x8,one:1+2x8
 python3 tools/bench/mpi_layouts.py run --tag c1e6 --kind hsolve --reps 5 --layouts $L \
-  --case syn-mem27-100 --case yee-pec-box-1e6 --root $D --timeout 1500                    # at 1c39bf6
+  --case syn-mem27-100 --case yee-pec-box-1e6 --root $D --timeout 1500                    # at f2f4beb
 python3 tools/bench/mpi_layouts.py run --tag d1e5 --kind hsolve --reps 5 --layouts $L \
   --case syn-mem27-46 --case yee-pec-box-1e5 --case ss-qa8fk-qa8fm --case cav2d-rect-pert-1e5 --timeout 600
 python3 tools/bench/mpi_layouts.py run --tag div1 --kind hsolve --reps 5 --layouts $L --case syn-mem27-46 \
@@ -524,7 +524,7 @@ python3 tools/bench/mpi_layouts.py run --tag f1e5 --kind hsolve --reps 5 --layou
 python3 tools/run/guard.py --skip-busy-check --mem-gb 12 --timeout 2700 -- \
   python3 tools/bench/mpi_layouts.py eval --tag d1e5                                       # (--root $D for 1e6)
 python3 tools/bench/mpi_layouts.py table --tag d1e5                                        # (f1e5: --base two:1x16)
-# 7 (review fix, at 54e5219; raw output in $HOME/p10mpi/fix/): memory-tight budgets and the launcher on
+# 7 (review fix, at 29550cd; raw output in $HOME/p10mpi/fix/): memory-tight budgets and the launcher on
 # one NUMA node (interleaved, each run its own guard --exclusive), then the end-to-end tags with event logs
 bash tools/bench/mpi_review_runs.sh tight $HOME/p10mpi/fix/tight
 bash tools/bench/mpi_review_runs.sh launch $HOME/p10mpi/fix/launch
@@ -546,19 +546,19 @@ The review of P10 found six problems. All six are fixed. Each fix comes with a r
 
 | # | finding | disposition | commit |
 |---|---|---|---|
-| 1 | major: hsolve-mpi did not certify where hsolve certifies under the same budget. The helpers were prepared before the memory rule ran; their copies and analyses stayed until the end of the solve and were charged to the leader's count allowance. | fixed: memory rule predicted before sending, Drop / Dropped, budget charged above the helpers' idle level (sections 3, 3.1, 7.1, 7.2) | 1279778 |
-| 2 | major: the window was cut into one slice per helper before it was known that a helper would take a slice | fixed: cut only when the cost rule passes and two helpers' slices are predicted to fit; the leader releases its main factors only when the helpers take the slices (section 7.1) | 1279778 |
-| 3 | major: on one NUMA node the launcher started a one-rank MPI job (+1.7-1.9 s) instead of plain hsolve | fixed: the launcher execs the plain hsolve (section 7.3) | 8b1db53 |
-| 4 | minor: the launcher and the ctest registration used Open MPI-only options | fixed: the plan reaches the ranks through the environment, with the rank read from OMPI_COMM_WORLD_RANK / PMIX_RANK / PMI_RANK / MV2_COMM_WORLD_RANK; Open MPI options are passed only to Open MPI (launcher and tests). The docs say only Open MPI was tested: no other MPI is installed or in the offline package cache, so MPICH / Intel MPI are covered by stand-in tests only | 8b1db53, a7c5583 |
-| 5 | minor: THIRD_PARTY_NOTICES, DEPENDENCIES and FORMATS were not updated for hsolve-mpi | fixed: notices 3.7 (Open MPI and its run-time libraries, from hsolve-mpi's ldd and the conda packages' licenses), DEPENDENCIES P10 entry, FORMATS (fault bit 128, 0..255; report.parallel; --helper-counts / --helper-slices) | 2258ffd |
-| 6 | minor: the certificate statement named the InertiaCounter even when the leader's fallback count used the main factorization | fixed: the statement names each count's source (count_sources) | cca48b1 |
+| 1 | major: hsolve-mpi did not certify where hsolve certifies under the same budget. The helpers were prepared before the memory rule ran; their copies and analyses stayed until the end of the solve and were charged to the leader's count allowance. | fixed: memory rule predicted before sending, Drop / Dropped, budget charged above the helpers' idle level (sections 3, 3.1, 7.1, 7.2) | a61ca92 |
+| 2 | major: the window was cut into one slice per helper before it was known that a helper would take a slice | fixed: cut only when the cost rule passes and two helpers' slices are predicted to fit; the leader releases its main factors only when the helpers take the slices (section 7.1) | a61ca92 |
+| 3 | major: on one NUMA node the launcher started a one-rank MPI job (+1.7-1.9 s) instead of plain hsolve | fixed: the launcher execs the plain hsolve (section 7.3) | d386416 |
+| 4 | minor: the launcher and the ctest registration used Open MPI-only options | fixed: the plan reaches the ranks through the environment, with the rank read from OMPI_COMM_WORLD_RANK / PMIX_RANK / PMI_RANK / MV2_COMM_WORLD_RANK; Open MPI options are passed only to Open MPI (launcher and tests). The docs say only Open MPI was tested: no other MPI is installed or in the offline package cache, so MPICH / Intel MPI are covered by stand-in tests only | d386416, dbf96b5 |
+| 5 | minor: THIRD_PARTY_NOTICES, DEPENDENCIES and FORMATS were not updated for hsolve-mpi | fixed: notices 3.7 (Open MPI and its run-time libraries, from hsolve-mpi's ldd and the conda packages' licenses), DEPENDENCIES P10 entry, FORMATS (fault bit 128, 0..255; report.parallel; --helper-counts / --helper-slices) | 74ff6a5 |
+| 6 | minor: the certificate statement named the InertiaCounter even when the leader's fallback count used the main factorization | fixed: the statement names each count's source (count_sources) | 4499539 |
 
 ### 7.1 Memory-tight budgets (findings 1 and 2; two sockets, 5 interleaved repetitions)
 
 The review's experiment ran again on the fixed binary. Each run had its own guard: `--exclusive
 --cores 8-15,16-23 --mem-gb 32` and the same explicit `--memory-budget-gb` for both modes. Plain
 hsolve used 16 threads; the other mode was `hsolve-mpirun --ranks 3` (`tools/bench/mpi_review_runs.sh
-tight`). "Before" is the review's result at f265491.
+tight`). "Before" is the review's result at 6b6afdd.
 
 | case, budget | mode | runs ok / certified | solver s | wall s | certificate s | leader factorizations, slices | helper work | before the fix |
 |---|---|---|---|---|---|---|---|---|
@@ -613,7 +613,7 @@ of wall time per run and 0.95-0.99x of solver time. On a single-socket judging m
 
 ### 7.4 End to end after the fix (32 GiB; section 4)
 
-The claims of section 4 were measured again on the fixed binary (54e5219). The later commit 4a7029c
+The claims of section 4 were measured again on the fixed binary (29550cd). The later commit 873298e
 changes only an error path that these runs never take: a helper that fails to prepare is dropped
 as well. Tags:
 - g1e5: 1e5 nearest;
@@ -630,7 +630,7 @@ pass with room:
 
 The two-socket speedup over hsolve on the same cores, before and after the fix:
 
-| target | before (f265491 / 1c39bf6; d1e5, div1-3, c1e6) | after (54e5219; g1e5, giv1-3, g1e6) |
+| target | before (6b6afdd / f2f4beb; d1e5, div1-3, c1e6) | after (29550cd; g1e5, giv1-3, g1e6) |
 |---|---|---|
 | syn-mem27-100 / yee-pec-box-1e6 nearest | 1.10 / 1.10 (68.28 / 58.49 s) | 1.11 / 1.09 (68.53 / 58.97 s) |
 | syn-mem27-46 / yee-pec-box-1e5 / ss-qa8fk-qa8fm nearest | 1.14 / 1.10 / 1.06 (1.988 / 2.540 / 1.637 s) | 1.20 / 1.16 / 1.10 (2.008 / 2.483 / 1.654 s) |
@@ -650,7 +650,7 @@ the received pivot order directly: one analysis per helper. The automatic cost r
 analysis as well. This changes the certificate preparation path, with the same exact-count
 certificate and tolerances; the helper's task cap and memory-budget checks remain enforced.
 
-Baseline: main `6d408b0` plus the preceding count-budget, helper-selection and CLI-failure fixes.
+Baseline: main `982ad83` plus the preceding count-budget, helper-selection and CLI-failure fixes.
 Those fixes are present in both binaries. Measurements use gpu01, 16 physical cores split across
 two sockets (`8-15,16-23`), rank 0 on all 16 and two helpers with 8 cores each, 32 GiB, default case
 configuration, `certificate=exact`, GPU off. The independent old/new executables are alternated
@@ -671,7 +671,7 @@ Five repetitions per binary on each 1e5 case (40 runs), all independently valid 
 Preparation is the sum of the `helpers_share` and `helpers_ready` event times: 16-30% less for the
 three cases using helpers. End-to-end savings are smaller, including MPI startup. The short 2-D
 control keeps its counts on the leader and is unchanged in wall time; no speedup is claimed there.
-Raw outputs: gpu01 `/tmp/os2026-perf-ab-small`; data root `/share/home/linzihan/os2026/data`.
+Raw outputs: gpu01 `/tmp/os2026-perf-ab-small`; data root `~/os2026/data`.
 
 The million-row `syn-mem27-100` was then measured in three interleaved repetitions per binary,
 all six independently valid against the discrete exact reference (`tol=1e-10`, 12/12 pairs,
@@ -681,14 +681,14 @@ exact certificate). Preparation falls from 2.005 to 1.328 s (34%); the entire ce
 improvement is consistent, but factorization and iteration vary enough to obscure it in individual
 whole-run comparisons. This is a preparation optimization, with modest end-to-end gain at 1e6.
 Raw outputs: gpu01 `/tmp/os2026-perf-ab-large`; data root
-`/share/home/linzihan/p7_p7-membudget/data`.
+`~/p7_p7-membudget/data`.
 
 Reproduce using two wrapper executables that each set `HSOLVE_MPI` to the corresponding binary
 and exec `hsolve-mpirun --ranks 3 -- "$@"` (the wrappers used here also append
 `--log <out>/events.jsonl`):
 
 ```bash
-env/run.sh env HS_DATA_ROOT=/share/home/linzihan/os2026/data \
+env/run.sh env HS_DATA_ROOT=~/os2026/data \
   python3 tools/run/guard.py --exclusive --cores 8-15,16-23 --mem-gb 32 --timeout 600 -- \
   python3 tools/bench/ab_cases.py run --bin before=/tmp/os2026-perf-before-mpi \
   --bin after=/tmp/os2026-perf-after-mpi --reps 0,1,2,3,4 --cores 8-15,16-23 \
@@ -696,7 +696,7 @@ env/run.sh env HS_DATA_ROOT=/share/home/linzihan/os2026/data \
   syn-mem27-46 yee-pec-box-1e5 ss-qa8fk-qa8fm cav2d-rect-pert-1e5
 env/run.sh python3 tools/run/guard.py --skip-busy-check --mem-gb 10 --timeout 240 -- \
   python3 -m tools.eval.sweep /tmp/os2026-perf-ab-small \
-  --root /share/home/linzihan/os2026/data --out /tmp/os2026-perf-ab-small/eval.md
+  --root ~/os2026/data --out /tmp/os2026-perf-ab-small/eval.md
 env/run.sh python3 tools/bench/ab_cases.py table --base before --new after /tmp/os2026-perf-ab-small
 ```
 

@@ -9,7 +9,7 @@
  "small_cores": "16-31",
  "large_cores": "8-15,16-23",
  "profile_counter_cores": "8-15 (one isolated eight-thread counter at a time)",
- "base_head": "6d408b0786d3c7cbf63995edeb66840ea958f703",
+ "base_head": "982ad83c31798c43d896ff33f639b93678979aa2",
  "base_note": "Existing uncommitted P10 changes, including p10_nearest; this is not clean HEAD.",
  "source_repo": "/tmp/os2026-p10-repair.9doyhO",
  "raw_dir": "/tmp/os2026-nextperf",

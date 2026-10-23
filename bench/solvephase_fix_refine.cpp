@@ -1,6 +1,6 @@
 // Iterative refinement of the shift-invert apply Y = (A - sigma B)^{-1} B X (module ops, P4
 // "solvephase"): the three P4 changes measured one at a time, against a replica of the P1 operator
-// (base a8ed8f4), at equal accuracy.
+// (base 0acb863), at equal accuracy.
 //
 // Arms (same factorization; repetitions interleaved over p and arms, the arm order rotated from
 // one repetition to the next; each sample the mean of --inner applies):
@@ -123,7 +123,7 @@ double median(std::vector<double> v) {
   return v.size() % 2 ? v[m] : 0.5 * (v[m - 1] + v[m]);
 }
 
-/// Replica of the P1 refinement operator (ShiftInvertOperator::do_apply at base a8ed8f4), with the
+/// Replica of the P1 refinement operator (ShiftInvertOperator::do_apply at base 0acb863), with the
 /// sparse products on a chosen KernelPath: Reference reproduces P1 exactly (its spmm was the
 /// Reference loop, its residual the three passes shifted_residual's Reference path computes).
 template <class T>

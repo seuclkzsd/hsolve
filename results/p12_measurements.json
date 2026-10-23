@@ -1,7 +1,7 @@
 {
  "date": "2026-10-16",
  "objective_status": "active; cavity remains slower than the tuned SLEPc baseline; million-size gap not retested",
- "base_commit": "6d408b0786d3c7cbf63995edeb66840ea958f703 plus the existing P10/P11 worktree changes",
+ "base_commit": "982ad83c31798c43d896ff33f639b93678979aa2 plus the existing P10/P11 worktree changes",
  "conditions": {
   "host": "gpu02",
   "cpu": "2 x Xeon Silver 4314",
@@ -11,7 +11,7 @@
   "exclusive_guard": true,
   "build_and_test_cores": "8-15",
   "build_and_test_memory_limit_gib": 12,
-  "data_root": "/share/home/linzihan/os2026/data",
+  "data_root": "~/os2026/data",
   "source_root": "/tmp/os2026-p10-repair.9doyhO",
   "raw_experiment_root": "/tmp/os2026-p12",
   "accuracy": "case tolerances and applicable default exact certificates unchanged; independent tools/eval acceptance"
@@ -26386,7 +26386,7 @@
      "tools.eval.sweep",
      "/tmp/os2026-p12/broad",
      "--root",
-     "/share/home/linzihan/os2026/data",
+     "~/os2026/data",
      "--out",
      "/tmp/os2026-p12/broad-eval.md"
     ],
@@ -26406,7 +26406,7 @@
    {
     "cmd": [
      "env",
-     "HS_DATA_ROOT=/share/home/linzihan/os2026/data",
+     "HS_DATA_ROOT=~/os2026/data",
      "python",
      "tools/bench/ab_cases.py",
      "run",
@@ -26600,7 +26600,7 @@
    {
     "cmd": [
      "env",
-     "HS_DATA_ROOT=/share/home/linzihan/os2026/data",
+     "HS_DATA_ROOT=~/os2026/data",
      "python",
      "tools/bench/ab_cases.py",
      "run",
@@ -26643,7 +26643,7 @@
      "tools.eval.sweep",
      "/tmp/os2026-p12/count-ab",
      "--root",
-     "/share/home/linzihan/os2026/data",
+     "~/os2026/data",
      "--out",
      "/tmp/os2026-p12/count-eval.md"
     ],
@@ -26665,7 +26665,7 @@
      "python",
      "results/p12_compare.py",
      "--root",
-     "/share/home/linzihan/os2026/data",
+     "~/os2026/data",
      "--tag",
      "p12-direct-count",
      "--out-dir",
@@ -26699,7 +26699,7 @@
     "cmd": [
      "build/release/bench_factspeed_factor",
      "--case",
-     "/share/home/linzihan/os2026/data/cases/cav2d-rect-pert-1e5",
+     "~/os2026/data/cases/cav2d-rect-pert-1e5",
      "--jobs",
      "main",
      "--ordering",
@@ -26750,7 +26750,7 @@
    {
     "cmd": [
      "env",
-     "HS_DATA_ROOT=/share/home/linzihan/os2026/data",
+     "HS_DATA_ROOT=~/os2026/data",
      "python",
      "tools/bench/ab_cases.py",
      "run",
@@ -26793,7 +26793,7 @@
      "tools.eval.sweep",
      "/tmp/os2026-p12/final-ab",
      "--root",
-     "/share/home/linzihan/os2026/data",
+     "~/os2026/data",
      "--out",
      "/tmp/os2026-p12/final-eval.md"
     ],
@@ -26817,7 +26817,7 @@
      "--binary",
      "hsolve-final=/tmp/os2026-p12/hsolve-final",
      "--root",
-     "/share/home/linzihan/os2026/data",
+     "~/os2026/data",
      "--tag",
      "p12-final-slepc",
      "--out-dir",
@@ -26855,7 +26855,7 @@
      "--binary",
      "hsolve-final=/tmp/os2026-p12/hsolve-final",
      "--root",
-     "/share/home/linzihan/os2026/data",
+     "~/os2026/data",
      "--tag",
      "p12-qa-workspace",
      "--out-dir",
@@ -26894,7 +26894,7 @@
      "tools.eval.sweep",
      "/tmp/os2026-p12/recheck",
      "--root",
-     "/share/home/linzihan/os2026/data",
+     "~/os2026/data",
      "--out",
      "/tmp/os2026-p12/recheck-eval.md"
     ],
@@ -26914,7 +26914,7 @@
    {
     "cmd": [
      "env",
-     "HS_DATA_ROOT=/share/home/linzihan/os2026/data",
+     "HS_DATA_ROOT=~/os2026/data",
      "python",
      "tools/bench/ab_cases.py",
      "run",
@@ -27034,7 +27034,7 @@
    {
     "cmd": [
      "env",
-     "LD_PRELOAD=/share/home/linzihan/envs/os2026/lib/libsmumps_seq.so:/share/home/linzihan/envs/os2026/lib/libdmumps_seq.so:/share/home/linzihan/envs/os2026/lib/libcmumps_seq.so:/share/home/linzihan/envs/os2026/lib/libzmumps_seq.so:/share/home/linzihan/envs/os2026/lib/libmumps_common_seq.so:/share/home/linzihan/envs/os2026/lib/libpord_seq.so:/share/home/linzihan/envs/os2026/lib/libmpiseq_seq.so",
+     "LD_PRELOAD=~/envs/os2026/lib/libsmumps_seq.so:~/envs/os2026/lib/libdmumps_seq.so:~/envs/os2026/lib/libcmumps_seq.so:~/envs/os2026/lib/libzmumps_seq.so:~/envs/os2026/lib/libmumps_common_seq.so:~/envs/os2026/lib/libpord_seq.so:~/envs/os2026/lib/libmpiseq_seq.so",
      "build/release/test_factor_counter",
      "--gtest_filter=FactorDiscard*"
     ],

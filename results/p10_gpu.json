@@ -1,5 +1,5 @@
 {
- "description": "P10 gpu raw runs (results/p10_gpu.md): gpu02 measurement slot + GPU 7, hsolve ce76a37",
+ "description": "P10 gpu raw runs (results/p10_gpu.md): gpu02 measurement slot + GPU 7, hsolve 8feb386",
  "factorizations": [
   {
    "rc": 0,
@@ -11895,7 +11895,7 @@
   }
  ],
  "review_fix": {
-  "description": "p10gpu-fix (results/p10_gpu.md section 10): bench_gpu_dgemm with OpenMP unbound / bound (OMP_PROC_BIND=close OMP_PLACES=cores) before the affinity fix (052031f build) and after it (74d2240), a chunk larger than the staging ring (gpu-k65536), and the three factorizations of yee-pec-box-1e6 at equal pivot order, GPU off / on, unbound and bound, 5 repetitions (74d2240).",
+  "description": "p10gpu-fix (results/p10_gpu.md section 10): bench_gpu_dgemm with OpenMP unbound / bound (OMP_PROC_BIND=close OMP_PLACES=cores) before the affinity fix (a737669 build) and after it (6968af4), a chunk larger than the staging ring (gpu-k65536), and the three factorizations of yee-pec-box-1e6 at equal pivot order, GPU off / on, unbound and bound, 5 repetitions (6968af4).",
   "micro_before_fix": [
    {
     "bind": "unbound",

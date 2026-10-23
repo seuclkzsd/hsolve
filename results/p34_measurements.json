@@ -35143,199 +35143,199 @@
       "size": 239,
       "sha256": "3f7a4b0239861015fa057757544ee6015cdc6c93592725cbc8f5fa15bf5a9c12"
     },
-    "/share/home/linzihan/os2026/data/cases/syn-ghep-zero-cluster-complex-1e4/config.json": {
+    "~/os2026/data/cases/syn-ghep-zero-cluster-complex-1e4/config.json": {
       "size": 91,
       "sha256": "577e4136bcd5e8de93cfcc3165f0d30a7f25b5fdf6406a51db99ad1b96c733d1"
     },
-    "/share/home/linzihan/os2026/data/cases/syn-ghep-zero-cluster-complex-1e4/B.npz": {
+    "~/os2026/data/cases/syn-ghep-zero-cluster-complex-1e4/B.npz": {
       "size": 753275,
       "sha256": "dc5338ebed25909a37bd0653384e30ff1b56dcc5a479f34793d4712345b471fb"
     },
-    "/share/home/linzihan/os2026/data/cases/syn-ghep-zero-cluster-complex-1e4/meta.json": {
+    "~/os2026/data/cases/syn-ghep-zero-cluster-complex-1e4/meta.json": {
       "size": 1207,
       "sha256": "1a86b1088c39003a0534f1f32e1582504df399003460b14f5a9d7fa6eaae2a0e"
     },
-    "/share/home/linzihan/os2026/data/cases/syn-ghep-zero-cluster-complex-1e4/A.npz": {
+    "~/os2026/data/cases/syn-ghep-zero-cluster-complex-1e4/A.npz": {
       "size": 4766017,
       "sha256": "bbeaafde120984ed9dbd38dee2204a252a2ad33938d6afdadf5c5a6c807e6a1e"
     },
-    "/share/home/linzihan/os2026/data/refs/syn-ghep-zero-cluster-complex-1e4/ref.json": {
+    "~/os2026/data/refs/syn-ghep-zero-cluster-complex-1e4/ref.json": {
       "size": 265,
       "sha256": "7ff162e9a8a7840918a603643efc2049e63beaacc3f2dac0b210e61596c9d3b1"
     },
-    "/share/home/linzihan/os2026/data/refs/syn-ghep-zero-cluster-complex-1e4/eigenvalues.npy": {
+    "~/os2026/data/refs/syn-ghep-zero-cluster-complex-1e4/eigenvalues.npy": {
       "size": 80128,
       "sha256": "5413449a64c0073b73b047342d0b3192f61ba18106237f064a313f3bde15f4fb"
     },
-    "/share/home/linzihan/os2026/data/cases/syn-multiplicity-complex-1e4/config.json": {
+    "~/os2026/data/cases/syn-multiplicity-complex-1e4/config.json": {
       "size": 107,
       "sha256": "ebcf0fe08f61dd952874b55b9cb0680b5b3e1e442016d9b2792235d20de56cd1"
     },
-    "/share/home/linzihan/os2026/data/cases/syn-multiplicity-complex-1e4/meta.json": {
+    "~/os2026/data/cases/syn-multiplicity-complex-1e4/meta.json": {
       "size": 940,
       "sha256": "6a3d6812ea8db536d33ce2500bebffb920ea1af5b7b8d1c04c5869294c36fbba"
     },
-    "/share/home/linzihan/os2026/data/cases/syn-multiplicity-complex-1e4/A.npz": {
+    "~/os2026/data/cases/syn-multiplicity-complex-1e4/A.npz": {
       "size": 4000597,
       "sha256": "1530a8d1ec4d3ccc05cd1041ede5e5d70c71479273426e76734fa27aed45c367"
     },
-    "/share/home/linzihan/os2026/data/refs/syn-multiplicity-complex-1e4/ref.json": {
+    "~/os2026/data/refs/syn-multiplicity-complex-1e4/ref.json": {
       "size": 292,
       "sha256": "a63564436c09a41408a5c4e240ee7a9293d659ec44d4da8e5553eb689077bf74"
     },
-    "/share/home/linzihan/os2026/data/refs/syn-multiplicity-complex-1e4/eigenvalues.npy": {
+    "~/os2026/data/refs/syn-multiplicity-complex-1e4/eigenvalues.npy": {
       "size": 80128,
       "sha256": "780a025c72f67bb6a18b041a3359bac9c484dfc472ab0def3f316651177595a1"
     },
-    "/share/home/linzihan/os2026/data/cases/syn-near-singular-complex-1e4/config.json": {
+    "~/os2026/data/cases/syn-near-singular-complex-1e4/config.json": {
       "size": 107,
       "sha256": "56f18938c9155b9ccf38049aecce036466048e62454d6990ad335ed7e96c0c6c"
     },
-    "/share/home/linzihan/os2026/data/cases/syn-near-singular-complex-1e4/meta.json": {
+    "~/os2026/data/cases/syn-near-singular-complex-1e4/meta.json": {
       "size": 975,
       "sha256": "2997607c0b3cc390990c382291dfb835093814672b69733f2bc774ab251a5d3e"
     },
-    "/share/home/linzihan/os2026/data/cases/syn-near-singular-complex-1e4/A.npz": {
+    "~/os2026/data/cases/syn-near-singular-complex-1e4/A.npz": {
       "size": 4001712,
       "sha256": "885858ff2a236bd6a45da25449e1e1a5d46d819470a32677e04fb1e843af1730"
     },
-    "/share/home/linzihan/os2026/data/refs/syn-near-singular-complex-1e4/ref.json": {
+    "~/os2026/data/refs/syn-near-singular-complex-1e4/ref.json": {
       "size": 292,
       "sha256": "a63564436c09a41408a5c4e240ee7a9293d659ec44d4da8e5553eb689077bf74"
     },
-    "/share/home/linzihan/os2026/data/refs/syn-near-singular-complex-1e4/eigenvalues.npy": {
+    "~/os2026/data/refs/syn-near-singular-complex-1e4/eigenvalues.npy": {
       "size": 80128,
       "sha256": "ff27585bd024aca1f43597c07ae0587f41443be6597f6f7172ba37e93f7ea1e8"
     },
-    "/share/home/linzihan/os2026/data/cases/syn-near-singular-complex-1e5/config.json": {
+    "~/os2026/data/cases/syn-near-singular-complex-1e5/config.json": {
       "size": 106,
       "sha256": "baaa6f9f5403f94baf6332ea6a99924f5fdb7721989d73faa1aba6ba3ebcfaeb"
     },
-    "/share/home/linzihan/os2026/data/cases/syn-near-singular-complex-1e5/meta.json": {
+    "~/os2026/data/cases/syn-near-singular-complex-1e5/meta.json": {
       "size": 978,
       "sha256": "2dd97186af7321ddc984578d3d3bbff4edaf99b95dd1c6174daa761e9ca30fcb"
     },
-    "/share/home/linzihan/os2026/data/cases/syn-near-singular-complex-1e5/A.npz": {
+    "~/os2026/data/cases/syn-near-singular-complex-1e5/A.npz": {
       "size": 42649583,
       "sha256": "504f7f8c89ec1c43b86e2bfacbcc4132ebb72c4b73c697f4a36f2b8f9c6dee6f"
     },
-    "/share/home/linzihan/os2026/data/refs/syn-near-singular-complex-1e5/ref.json": {
+    "~/os2026/data/refs/syn-near-singular-complex-1e5/ref.json": {
       "size": 293,
       "sha256": "3680e53d0749c94de887f8db471412ed2af91cb9063f536b8fa9e12edf223e46"
     },
-    "/share/home/linzihan/os2026/data/refs/syn-near-singular-complex-1e5/eigenvalues.npy": {
+    "~/os2026/data/refs/syn-near-singular-complex-1e5/eigenvalues.npy": {
       "size": 800128,
       "sha256": "2ed51e3be8cd6588f63f3cb44e97639ef3e428b822793da16d4b806bb6d77643"
     },
-    "/share/home/linzihan/os2026/data/cases/syn-wide-range-complex-1e4/config.json": {
+    "~/os2026/data/cases/syn-wide-range-complex-1e4/config.json": {
       "size": 91,
       "sha256": "251c63d14c8b71697961a604538c6ddf9468593d01f0c905c6822ec068720395"
     },
-    "/share/home/linzihan/os2026/data/cases/syn-wide-range-complex-1e4/meta.json": {
+    "~/os2026/data/cases/syn-wide-range-complex-1e4/meta.json": {
       "size": 957,
       "sha256": "18034980dc536388606e65189448b8c8c7966165fb5034db38d9f7866bb3c773"
     },
-    "/share/home/linzihan/os2026/data/cases/syn-wide-range-complex-1e4/A.npz": {
+    "~/os2026/data/cases/syn-wide-range-complex-1e4/A.npz": {
       "size": 4073124,
       "sha256": "7e29ec8f846b785bb4f46a642a2b131f289e6380e6e25a7b7073b5e2cbc7c3af"
     },
-    "/share/home/linzihan/os2026/data/refs/syn-wide-range-complex-1e4/ref.json": {
+    "~/os2026/data/refs/syn-wide-range-complex-1e4/ref.json": {
       "size": 292,
       "sha256": "a63564436c09a41408a5c4e240ee7a9293d659ec44d4da8e5553eb689077bf74"
     },
-    "/share/home/linzihan/os2026/data/refs/syn-wide-range-complex-1e4/eigenvalues.npy": {
+    "~/os2026/data/refs/syn-wide-range-complex-1e4/eigenvalues.npy": {
       "size": 80128,
       "sha256": "af2aad1ad22fcb983571365a3d855caffd2f6611908def2f0cbdda3f4a45ae15"
     },
-    "/share/home/linzihan/os2026/data/cases/syn-zero-cluster-complex-1e4/config.json": {
+    "~/os2026/data/cases/syn-zero-cluster-complex-1e4/config.json": {
       "size": 91,
       "sha256": "b98b325ec1a4e5ca3b1696c91a88da5ce0ca7f621c8d942da47141123083989d"
     },
-    "/share/home/linzihan/os2026/data/cases/syn-zero-cluster-complex-1e4/meta.json": {
+    "~/os2026/data/cases/syn-zero-cluster-complex-1e4/meta.json": {
       "size": 1010,
       "sha256": "fad8cb2684180ccc291337cb1816ebc6fadabe72b46674a99b0531c4f9f7aab3"
     },
-    "/share/home/linzihan/os2026/data/cases/syn-zero-cluster-complex-1e4/A.npz": {
+    "~/os2026/data/cases/syn-zero-cluster-complex-1e4/A.npz": {
       "size": 3999858,
       "sha256": "6a46338767684fb6ee5731a766dce61d5e474c82772a6da42af587a051662143"
     },
-    "/share/home/linzihan/os2026/data/refs/syn-zero-cluster-complex-1e4/ref.json": {
+    "~/os2026/data/refs/syn-zero-cluster-complex-1e4/ref.json": {
       "size": 292,
       "sha256": "a63564436c09a41408a5c4e240ee7a9293d659ec44d4da8e5553eb689077bf74"
     },
-    "/share/home/linzihan/os2026/data/refs/syn-zero-cluster-complex-1e4/eigenvalues.npy": {
+    "~/os2026/data/refs/syn-zero-cluster-complex-1e4/eigenvalues.npy": {
       "size": 80128,
       "sha256": "7a33d4bad7648b7799913e95cc3cd37d69eff61a3a01cf268558df87e2ccf815"
     },
-    "/share/home/linzihan/os2026/data/cases/yee-bloch-1e4/config.json": {
+    "~/os2026/data/cases/yee-bloch-1e4/config.json": {
       "size": 106,
       "sha256": "de982201d3d6a1041ccd13e5869203d87845f556a33fde925b9e5ba27eb0f094"
     },
-    "/share/home/linzihan/os2026/data/cases/yee-bloch-1e4/meta.json": {
+    "~/os2026/data/cases/yee-bloch-1e4/meta.json": {
       "size": 997,
       "sha256": "3da199c5ca22c9d8d2d6e8d055388d00ed1fc2c3397be83a115c73c05d0b206d"
     },
-    "/share/home/linzihan/os2026/data/cases/yee-bloch-1e4/A.npz": {
+    "~/os2026/data/cases/yee-bloch-1e4/A.npz": {
       "size": 210065,
       "sha256": "7917fe08362c1e8d430a9dc6c0859905ecbbf0e17ad8421ede984287a0019d83"
     },
-    "/share/home/linzihan/os2026/data/refs/yee-bloch-1e4/ref.json": {
+    "~/os2026/data/refs/yee-bloch-1e4/ref.json": {
       "size": 264,
       "sha256": "3b7b1abc4ed2e6bd659e8e411ecf14ac520dcc1938d5aa343cd02fb14cef1b50"
     },
-    "/share/home/linzihan/os2026/data/refs/yee-bloch-1e4/eigenvalues.npy": {
+    "~/os2026/data/refs/yee-bloch-1e4/eigenvalues.npy": {
       "size": 80768,
       "sha256": "711bc15d08ae786e2df82482580ba32be9e8535f7e955c6f21de8dd96007a556"
     },
-    "/share/home/linzihan/os2026/data/cases/yee-photonic-rods-1e4/config.json": {
+    "~/os2026/data/cases/yee-photonic-rods-1e4/config.json": {
       "size": 106,
       "sha256": "e88a717aa645caff9d4f62428c9ed61e5e4a0803ca3bfcf656a1a4b662bdf20b"
     },
-    "/share/home/linzihan/os2026/data/cases/yee-photonic-rods-1e4/meta.json": {
+    "~/os2026/data/cases/yee-photonic-rods-1e4/meta.json": {
       "size": 979,
       "sha256": "e2d69ddd259b6ed6b33ecd333334f43b6eb0514b96ad02b20583832777512c9c"
     },
-    "/share/home/linzihan/os2026/data/cases/yee-photonic-rods-1e4/A.npz": {
+    "~/os2026/data/cases/yee-photonic-rods-1e4/A.npz": {
       "size": 224493,
       "sha256": "00bedc939a9a04576d5bb4ce3ddebe01c287ab63af4a22ebb9fe3f27fd3bc591"
     },
-    "/share/home/linzihan/os2026/data/refs/yee-photonic-rods-1e4/ref.json": {
+    "~/os2026/data/refs/yee-photonic-rods-1e4/ref.json": {
       "size": 296,
       "sha256": "cca90915953c055c03e14dc1e68a8bc70c341c657580d327b7392d2a75482054"
     },
-    "/share/home/linzihan/os2026/data/refs/yee-photonic-rods-1e4/eigenvectors.npy": {
+    "~/os2026/data/refs/yee-photonic-rods-1e4/eigenvectors.npy": {
       "size": 3240128,
       "sha256": "01b28dc994b1ee1d7a9ca37fc997666842bffaae03a9d85ded78b32b75c787f9"
     },
-    "/share/home/linzihan/os2026/data/refs/yee-photonic-rods-1e4/eigenvalues.npy": {
+    "~/os2026/data/refs/yee-photonic-rods-1e4/eigenvalues.npy": {
       "size": 288,
       "sha256": "f15d46066eafb2b5587d7112f67a3e9ce9e72884cd0594d48f71931d1eb2bcff"
     },
-    "/share/home/linzihan/os2026/data/cases/yee-photonic-spheres-1e4/config.json": {
+    "~/os2026/data/cases/yee-photonic-spheres-1e4/config.json": {
       "size": 106,
       "sha256": "ad436f39fd71719445e2222e58805cfc3eac01c851eb07723d41c3ff7e09c364"
     },
-    "/share/home/linzihan/os2026/data/cases/yee-photonic-spheres-1e4/B.npz": {
+    "~/os2026/data/cases/yee-photonic-spheres-1e4/B.npz": {
       "size": 30373,
       "sha256": "0c2e36eea9a86f64cea3bfde74d0b0252497ca3a525eccae2abd1d89c0bffc6e"
     },
-    "/share/home/linzihan/os2026/data/cases/yee-photonic-spheres-1e4/meta.json": {
+    "~/os2026/data/cases/yee-photonic-spheres-1e4/meta.json": {
       "size": 1119,
       "sha256": "0fe2ae169863790215cfa9cebd855e6d34125c0560cc4ed3fc8843205c989e48"
     },
-    "/share/home/linzihan/os2026/data/cases/yee-photonic-spheres-1e4/A.npz": {
+    "~/os2026/data/cases/yee-photonic-spheres-1e4/A.npz": {
       "size": 222995,
       "sha256": "ad91014da0461bbdce622abb76cc9dc2e23c141986ed613314416f2961e51374"
     },
-    "/share/home/linzihan/os2026/data/refs/yee-photonic-spheres-1e4/ref.json": {
+    "~/os2026/data/refs/yee-photonic-spheres-1e4/ref.json": {
       "size": 292,
       "sha256": "be0213f379828faac56263a338feafa22ad32242017173f821bdb77fbdf379df"
     },
-    "/share/home/linzihan/os2026/data/refs/yee-photonic-spheres-1e4/eigenvectors.npy": {
+    "~/os2026/data/refs/yee-photonic-spheres-1e4/eigenvectors.npy": {
       "size": 3240128,
       "sha256": "fd2f24e92e561224d78057d1674a77669671c081e4cb21d51e1c1669e3a4a601"
     },
-    "/share/home/linzihan/os2026/data/refs/yee-photonic-spheres-1e4/eigenvalues.npy": {
+    "~/os2026/data/refs/yee-photonic-spheres-1e4/eigenvalues.npy": {
       "size": 288,
       "sha256": "24dc49f80c603aa21ad999ac6317344873985a45b66e4371d1df99cf2493545d"
     }

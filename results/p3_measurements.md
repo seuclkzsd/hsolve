@@ -7,14 +7,14 @@ Common setup unless a section says otherwise: the shared 2x Xeon Gold 6336Y serv
 `tools/run/guard.py` with 2 cores (`--skip-busy-check`, `--mem-gb` <= 8), release build, 2026-10-11.
 The machine was loaded (load average ~37-54) during the P3 runs; identical runs varied by 10-30% (up
 to ~2x for the block Krylov runs), so methods were interleaved and only same-session comparisons are
-quoted as A vs B. "Base" is commit 17a2a79 (P2) built from the same bench source.
+quoted as A vs B. "Base" is commit e95db77 (P2) built from the same bench source.
 
 ## 1. memio - input assembly, pencil, end-to-end memory
 
 **Load** (`bench_memio_load --grid 70 --mtx-grid 45`; 27-point Hermitian matrix, n = 343000,
 nnz = 9.0e6, real and complex; peak = VmHWM after the load (reset via /proc/self/clear_refs) minus
 VmRSS before, divided by the final CSR bytes; time = minimum of interleaved A,B,B,A,A,B runs, base
-library vs new) [d96d12d, de3746f, a4f3e75]. Peak / result, real / complex:
+library vs new) [83721bb, da0dd65, 8f3b4a1]. Peak / result, real / complex:
 
 | layout | base | P3 | load time |
 |---|---|---|---|
@@ -31,21 +31,21 @@ library vs new) [d96d12d, de3746f, a4f3e75]. Peak / result, real / complex:
 | MatrixMarket symmetric | 2.52 / 2.50 | 1.22 / 1.33 | +3 / -8% |
 
 csc/coo full went 1.36 / 1.22 -> 1.335 / 1.202 and csr 1.025 -> 1.002 with the per-row work arrays
-removed [a4f3e75]. Every loaded matrix equals the generator's (bitwise for exactly Hermitian input).
+removed [8f3b4a1]. Every loaded matrix equals the generator's (bitwise for exactly Hermitian input).
 Caveat: the `npz-csr-nearherm-asym` layout measures the in-place (symmetric) case when grid % 4 == 0
 (grid 40: 1.020 / 1.014, grid 41: 1.724 / 1.819); the default grid 70 is unaffected.
 
-**Few entries per row** (`bench_memio_fix_rows`, n = 3e6, cores 34,35) [4d1d680, a4f3e75], peak /
+**Few entries per row** (`bench_memio_fix_rows`, n = 3e6, cores 34,35) [3448681, 8f3b4a1], peak /
 result before -> after: diagonal real coo 1.80 -> 1.22, csc 1.80 -> 1.22, csr 1.40 -> 1.00, mtx
 1.87 -> 1.07; tridiagonal real coo/csc 1.46 -> 1.28, csr 1.18 -> 1.00, mtx 1.39 -> 1.03; tridiagonal
 complex coo/csc 1.30 -> 1.18, csr 1.12 -> 1.00, mtx 1.26 -> 1.02; one stored triangle unchanged 1.55
 / 1.59. Load times unchanged within noise (MatrixMarket tridiagonal 1.398 -> 1.395 s real).
 
 **Oversized header claims** (hsolve CLI on a 1.2 KB npz whose header claims 3.75e8 elements, cores
-34,35) [088c825]: 2.80 GiB / 1.32 s before the Io error -> 0.071 GiB / 0.035 s.
+34,35) [e5319d4]: 2.80 GiB / 1.32 s before the Io error -> 0.071 GiB / 0.035 s.
 
 **ShiftedPencil** (`bench_memio_pencil --A --B` on case files; minimum of 6 interleaved runs x 30
-assemblies, old vs new; FNV-1a hash of the assembled values identical in all cases) [5aa21e7]:
+assemblies, old vs new; FNV-1a hash of the assembled values identical in all cases) [70fe3ae]:
 
 | case | retained MB | assemble ms |
 |---|---|---|
@@ -59,7 +59,7 @@ Construction on wg-square-1e6 0.137 -> 0.063 s; no 16 MB transient per assemble.
 variant without the whole-row fast path was 35-76% slower on A-only and sparse-B cases.
 
 **End to end** (`bench_memio_e2e`: the CLI replayed in one process, VmRSS sampled every 2 ms, driver
-log events as phase marks) [b6b3fa8 and the memio report]. wg-square-1e6 (n = 998001, nnz A = 3.7e6,
+log events as phase marks) [4fa26e5 and the memio report]. wg-square-1e6 (n = 998001, nnz A = 3.7e6,
 B = 1.06e7, GHIEP, k = 18), ordering pinned to SCOTCH:
 - peak 2853 / 2861 MB with the new pencil vs 2962 / 2919 MB with the old one (-83 MB, -2.8%);
 - phases: loaded A+B 207 MB (CSR 188 MB) -> norms 224 -> SCOTCH analysis 550-610 (pencil 33, MUMPS
@@ -78,13 +78,13 @@ B = 1.06e7, GHIEP, k = 18), ordering pinned to SCOTCH:
 
 Other cases: ss-tem152078 (GHEP, n = 152078) peak 1.14 GB, the MUMPS factor ~0.7 GB of it;
 ss-ge87h76 SCOTCH in-core estimate 8.4-8.8 GB (AMD 26.9 GB, BLR 7.2 GB), not run under the 8 GiB limit
-[b6b3fa8]. The complex `mumps::Input` keeps 85 B per pattern entry: 564 MB on ss-3dspectralwave2 vs
+[4fa26e5]. The complex `mumps::Input` keeps 85 B per pattern entry: 564 MB on ss-3dspectralwave2 vs
 29 MB pencil and 261 MB input CSR.
 
 ## 2. ortho - deterministic reductions and CGS kernels
 
 **Reductions** (`bench_ortho_fix_kernels reduce`, cores 26,27, new vs the OpenMP-reduction versions
-interleaved, three runs, speedup ranges) [c25d774]:
+interleaved, three runs, speedup ranges) [8d9a42d]:
 
 | | n = 1e4 | n = 1e5 | n = 2e6 |
 |---|---|---|---|
@@ -93,11 +93,11 @@ interleaved, three runs, speedup ranges) [c25d774]:
 | real norm2 | 4.1-4.2x | 8.1x | 4.6-4.7x |
 | complex norm2 | 2.1x | 3.5-3.6x | 1.59-1.64x |
 
-The first, non-interleaved measurement [78795e6] ("dot/norm2 2-7x") overstated the complex dot.
+The first, non-interleaved measurement [8696107] ("dot/norm2 2-7x") overstated the complex dot.
 Results are bitwise identical for 1, 3 and 4 threads (tests).
 
 **One CGS call** (`bench_ortho_kernels cgs 200000 64`; legacy = four BLAS gemv sweeps; methods
-interleaved, medians of 9) [28fcce0]:
+interleaved, medians of 9) [b553906]:
 
 | mode | legacy | two passes | one DGKS pass |
 |---|---|---|---|
@@ -109,14 +109,14 @@ interleaved, medians of 9) [28fcce0]:
 
 max |V^H M q| after the call 4e-18 .. 2e-17 for legacy, Always and DGKS alike. Small n after the
 vector-extension kernels and the >= 64 row blocks rule (`bench_ortho_fix_kernels cgs`, two passes,
-speedup over the in-process legacy CGS2; before c25d774 -> after f66fc84, chained over the two
-commits' separate sessions) [c25d774, f66fc84]: complex n = 1e3, k = 30: Euclidean 0.53 -> 1.16, stored 0.62 ->
+speedup over the in-process legacy CGS2; before 8d9a42d -> after 74fa57a, chained over the two
+commits' separate sessions) [8d9a42d, 74fa57a]: complex n = 1e3, k = 30: Euclidean 0.53 -> 1.16, stored 0.62 ->
 1.16, recompute 0.46 -> 1.00; complex n = 1e4: 0.89 -> 1.25 / 0.89 -> 1.16 / 0.86 -> 1.01; real n =
 1e4: 2.01 -> 2.77 / 1.96 -> 2.30 / 1.52 -> 2.16. The complex two-pass CGS is now at least on par with
 the legacy code at every measured size (n = 1e3 .. 2e5); one DGKS pass 1.5-2x. One-thread kernel
 bandwidth (n = 1e3, L2): complex projection 25.5 -> 60.8 GB/s, real 37.8 -> 60.7 GB/s.
 
-**Block CGS2** (`bench_ortho_kernels block 200000 64 8`, two passes, medians of 5) [fc2f76f]:
+**Block CGS2** (`bench_ortho_kernels block 200000 64 8`, two passes, medians of 5) [12bfff4]:
 
 | mode | 8 legacy calls | 8 new column calls | block | speedup |
 |---|---|---|---|---|
@@ -130,21 +130,21 @@ bandwidth (n = 1e3, L2): complex projection 25.5 -> 60.8 GB/s, real 37.8 -> 60.7
 Loss max |V^H M q| 5e-18 .. 2e-17 for all three.
 
 **Lanczos** (tests/cpp/test_lanczos_perf.cpp, DISABLED benchmarks, n = 2e5, ncv = 101, Euclidean;
-same test source built against base, 4373b71 and the final branch, 5 rounds with rotated order;
-orthogonalization ms per Lanczos step, medians) [d3565c0]: shift-invert spectrum real 17.09 -> 11.28
-(1.51x), complex 36.25 -> 26.13 (1.39x); uniform spectrum real 20.95 (4373b71) -> 19.25. DGKS skipped
-pass 2 in 35% (real) / 28% (complex) of the Lanczos steps [28fcce0]. max relative eigenvalue error
+same test source built against base, 225385d and the final branch, 5 rounds with rotated order;
+orthogonalization ms per Lanczos step, medians) [31865d0]: shift-invert spectrum real 17.09 -> 11.28
+(1.51x), complex 36.25 -> 26.13 (1.39x); uniform spectrum real 20.95 (225385d) -> 19.25. DGKS skipped
+pass 2 in 35% (real) / 28% (complex) of the Lanczos steps [b553906]. max relative eigenvalue error
 unchanged (real 2.2e-15 -> 2.4e-15, complex 8.0e-15 -> 5.4e-16).
 
-**Real shift-invert path** (`bench_ortho_shift_invert <case> 1 0 <nev>`, base vs 4373b71, medians of
-3 interleaved rounds) [4373b71]: at the configured k orthogonalization is only 8-11% of the iteration:
+**Real shift-invert path** (`bench_ortho_shift_invert <case> 1 0 <nev>`, base vs 225385d, medians of
+3 interleaved rounds) [225385d]: at the configured k orthogonalization is only 8-11% of the iteration:
 cav2d-rect-pert-1e5 GHEP k = 6 0.052 -> 0.045 s (1.16x), syn-near-singular-complex-1e5 k = 10 0.251
 -> 0.215 s (1.17x), wg-square-1e5 GHIEP k = 18 0.199 -> 0.161 s (1.24x); total iteration 0.98-1.02x.
 At nev = 60 the first claim (1.65x per operator application on wg-square-1e5) compared runs with
 different restart counts; at equal work (`bench_ortho_fix_steps`, tol = 1e-300, 3 restarts = 214
-applications for every build, per-round paired ratios, base / version) [b622d6e]:
+applications for every build, per-round paired ratios, base / version) [2b635f9]:
 
-| case | 4373b71 | final branch | total time (4373b71 / final) |
+| case | 225385d | final branch | total time (225385d / final) |
 |---|---|---|---|
 | wg-square-1e5 GHIEP (3 rounds) | 1.13x (1.20x) | 1.32x (1.31x) | 0.99x / 1.09x |
 | cav2d-rect-pert-1e5 GHEP (3) | 1.01x (1.04x) | 1.05x (1.08x) | 0.99x / 1.00x |
@@ -154,9 +154,9 @@ applications for every build, per-round paired ratios, base / version) [b622d6e]
 bases: base 1e-14 .. 2.1e-14, final 9.1e-15 .. 1.5e-14.
 
 `OrthoOptions::mw_on_exit = false` (one B application less per step) gave no detectable effect on
-cav2d-rect-pert-1e5 (B 5 nnz/row) and an incomparable path on yee-pec-box-1e5 [00a3f98]; the default
+cav2d-rect-pert-1e5 (B 5 nnz/row) and an incomparable path on yee-pec-box-1e5 [9a075c9]; the default
 stays. Correctness: with DGKS reading a scratch bw in stored mode, store_bv Lanczos had returned
-max |X^H M X - I| = 12.1; after Reorth::Auto all 48 store_bv probe runs stay <= 1.7e-14 [545b321].
+max |X^H M X - I| = 12.1; after Reorth::Auto all 48 store_bv probe runs stay <= 1.7e-14 [af31563].
 
 ## 3. certpar - certificate inertia counts, InertiaCounter
 
@@ -180,7 +180,7 @@ given order +0.4% to +3.4%.
 **Concurrency**: without the lock 10 of 10 runs crashed (rc -11, "PB allocation in MUMPS_LOAD_INIT");
 with it 2 x 50 rounds were consistent. The block-diagonal pair diag(K(b), -K(a)) took 2.77 / 2.20 /
 1.13 / 0.26 s vs 2.73 / 2.16 / 1.03 / 0.25 s for two sequential counts, with 394 vs 254 MB. In the
-ASan debug preset std::mutex was a no-op (3 of 3 crashes); the pthread lock passes 5 of 5 [7ecbe1d].
+ASan debug preset std::mutex was a no-op (3 of 3 crashes); the pthread lock passes 5 of 5 [1fe4cf9].
 
 **Single precision** (pair time double -> single, factors discarded): 2.88 -> 1.66, 2.17 -> 1.25,
 1.12 -> 0.68, 0.25 -> 0.21, complex 1.18 -> 1.08 s. Largest distance at which a count was wrong, in
@@ -188,7 +188,7 @@ units of (scale + |s|): 1.6e-6 (syn-mem27), 1.3e-8 (yee), 1.2e-8 (qa8fk), 9e-8 (
 wrong at nearly every shift). The 3-D certificate endpoints lie at least 2.8e-4 from every eigenvalue.
 
 **InertiaCounter** (certificate pair with the main factors resident; driver path = refactorize the
-main object at both endpoints) [590c143, factor.hpp]:
+main object at both endpoints) [d1d3b89, factor.hpp]:
 
 | case (ordering) | driver pair | counter: analysis + pair | single pair |
 |---|---|---|---|
@@ -203,7 +203,7 @@ the main factors; RSS +228 / +168 / +79 / +9 / +166 MB with the main factors res
 `release_factors()`. Not integrated in the driver yet (P4).
 
 **Missed null pivots** (`bench_certpar_fix_probes --exp nullpivot`, shifts exactly on 24 eigenvalues
-of 2-D Dirichlet Laplacians, AMD, CNTL(3) = 1e-8) [850fbea]: 100x101 real source 0/24 missed, counter
+of 2-D Dirichlet Laplacians, AMD, CNTL(3) = 1e-8) [a63763f]: 100x101 real source 0/24 missed, counter
 1/24; complex 0/24 vs 1/24; 200x201 real 1/24 each, at different shifts. Every count reported valid lay
 within [#below, #below + multiplicity].
 
@@ -212,7 +212,7 @@ within [#below, #below + multiplicity].
 **Shift-invert path** (`bench_blockks_shiftinvert --reps 5 --ncv 0,64 syn-mem27-46 yee-pec-cube-32
 ss-qa8fk-qa8fm`, cores 24,25, 2 threads, MUMPS SCOTCH at the case sigma, nev = case k, tol 1e-11,
 B inner product, repetitions interleaved; load 38-44, absolute times varied up to ~2x between runs;
-peak RSS 0.75 GiB) [72195c9]. Auto ncv; per p = 1 / 2 / 4 / 8:
+peak RSS 0.75 GiB) [210fd3c]. Auto ncv; per p = 1 / 2 / 4 / 8:
 
 | case | iteration s | MUMPS solve s | applications | restarts | speedup vs p = 1 |
 |---|---|---|---|---|---|
@@ -228,7 +228,7 @@ eigenvalues among the 12 wanted, every p found all copies (p = 1 through roundin
 p = 8, auto ncv (64, probes from 32) vs ncv = 64 requested: mem27 48 vs 64 applications, 0.96 vs
 1.35 s; cube 96 vs 96, 1.83 vs 1.92 s; qa8fk 160 vs 160, 2.50 vs 2.44 s. With p = 4 on syn-mem27-46
 the application count (40 or 44) is decided by rounding together with the non-reproducible
-factorization [2830207].
+factorization [cdebb1d].
 
 Negative results: with the single-vector auto ncv (32 for p = 8), p = 8 was 0.66x on ss-qa8fk-qa8fm
 (272 applications vs 50): this motivated the +4 blocks rule. Without probes, p = 8 at ncv 40 / 48 /
@@ -237,12 +237,12 @@ Negative results: with the single-vector auto ncv (32 for p = 8), p = 8 was 0.66
 
 **Layout rules** (scratch sweep: random shift-invert pencils, B inner product, LargestMagnitude,
 tol 1e-11, ncv = nev + 3, n = 150/250, nev 3/5/7/12, 3 shifts, 10 seeds, real and complex = 480 runs
-per p) [9d6d94b]: wrong converged sets for p = 1 / 2 / 3 / 4 / 8 went 1 / 5 / 51 / 44 / 5 -> 1 / 1 / 1
+per p) [65e18a2]: wrong converged sets for p = 1 / 2 / 3 / 4 / 8 went 1 / 5 / 51 / 44 / 5 -> 1 / 1 / 1
 / 0 / 0 with the spare Ritz pair and two new blocks, with 40-66% fewer applications for p > 1.
 
 **Matched accuracy** (`bench_blockks_fix_matched --reps 3`, cores 24,25, 2 threads, auto ncv, 30
 nearest HEP/GHEP cases; p = 1 at tol 1e-9/1e-10/1e-11, p = 2/4/8 at 1e-11..1e-14; "matched" = the
-loosest block tol whose median largest relative residual is within 2x of p = 1's at 1e-11) [2830207].
+loosest block tol whose median largest relative residual is within 2x of p = 1's at 1e-11) [cdebb1d].
 Speedup vs p = 1, equal tol / matched ("-" = no block tol down to 1e-14 reaches it):
 
 | case | k | p = 1 s | p = 2 | p = 4 | p = 8 |
@@ -290,7 +290,7 @@ driver measurement.
 
 **Final defaults** (`bench_lobpcg_jd_memory`, 2 threads, nev = 12, tol = 1e-10, 5 runs each with a
 fresh, non-deterministic MUMPS factor; min / median / max of preconditioner solves and of the total
-time incl. analysis and factorization) [29e6bcb, eigen_iterative.hpp]:
+time incl. analysis and factorization) [4a53de7, eigen_iterative.hpp]:
 
 | case | method | solves | total s | factor | peak |
 |---|---|---|---|---|---|
@@ -310,7 +310,7 @@ JD 219-259 and 231-333 solves (5 runs each), 10-19 s, all correct; single factor
 (eta 7e-2); former JD defaults at 9.5e-9: 608 solves with a wrong set (a copy missing, converged =
 true) or 6339 solves / 241 s; at 2.5e-11 no convergence in 1000 iterations (7230 solves, 323 s).
 
-**Options** (`bench_lobpcg_jd_fix_options`, 5 fresh-factor runs, solves min/med/max) [29e6bcb]:
+**Options** (`bench_lobpcg_jd_fix_options`, 5 fresh-factor runs, solves min/med/max) [4a53de7]:
 syn-mem27-46 Ritz 129/135/136 vs harmonic 147/165/288 (432/916/1882 without the start-block
 iteration); yee-pec-cube-32 196/200/206 vs 194/201/218. **Synthetic** (`bench_lobpcg_jd_fix_synthetic`,
 6/8/10-fold eigenvalue, nev = 6): 24 of 24 preconditioned runs returned 4-5 copies with converged = true
@@ -350,41 +350,41 @@ Method: `bench_slicing_sweep` and the hsolve CLI (`--slice-size`, `--zero-filter
 **Interval slicing** (all certificates passed; multiplicity-2 spectra):
 - yee-pec-box-1e4 [1000, 2000], 1075 eigenvalues. Final binary, same session: single shift (old
   behaviour) 49.8 s, 0.89 GiB; auto (19 slices) 11.1 s, 0.20 GiB, 40 factorizations, 2964 solves;
-  max relative error vs the exact reference 2.2e-15. Earlier sweep [bec16ab]: single 70.4 s; slice
+  max relative error vs the exact reference 2.2e-15. Earlier sweep [3a94c18]: single 70.4 s; slice
   sizes 16 / 32 / 64 / 128 / 256: 29.3 / 17.8 / 11.8 / 13.1 / 17.5 s.
 - yee-pec-box-1e4 [1, 2000], 1461 eigenvalues: 26 slices, 15.1 s, 0.23 GiB, exact.
 - yee-pec-box-1e5 [382, 1209], 499 eigenvalues. Session 1: single shift 213 s; sizes 32 / 64 / 128 /
   256: 218 / 155 / 150 / 179 s; the first model's auto choice (3 slices) 180.6 s. After recalibration
-  (session 2, more load) [12d560f]: auto (4 slices) 230.1 s vs best fixed size 128 235.1 s; error
+  (session 2, more load) [0a1cd79]: auto (4 slices) 230.1 s vs best fixed size 128 235.1 s; error
   3.5e-15. yee-pec-box-1e4 [1000, 2000] then: auto 13.4-14.5 s vs fixed 64 / 96 13.8 / 14.0 s.
 
 **Smallest / largest**:
 - ss-qa8fk-qa8fm (GHEP; Unsupported before): smallest 10 in 11.0 s (7 factorizations, certificate
   16/16); largest 10 in 14.4 s (certificate 17/17). Illinois count search: smallest 10 12.35 -> 10.98 s,
-  79 -> 69 Lanczos applications [12d560f].
+  79 -> 69 Lanczos applications [0a1cd79].
 - syn-lap2d-100: smallest 10 0.13 s (1 factorization, 58 solves) vs the legacy path (nearest at 5% of
   the spread beyond the end) 0.47 s (3 factorizations, 242 solves); largest 10 0.18 vs 0.45 s.
 - syn-lap3d-aniso-1e5 smallest 10: 10.8 s (4 factorizations, 79 solves) vs legacy 17.8 s (3, 210).
 - yee-pec-box-1e4 smallest 20 with zero_filter_tol 1e-6: exact, 3135 null-space eigenvalues excluded by
   inertia, 0.9 s.
-- Review fixes [722965d, 38c23e5]: yee-pec-cube-16 largest 3: 0 pairs / 65 s -> 3 exact pairs in
+- Review fixes [ba27f9e, e5dc12d]: yee-pec-cube-16 largest 3: 0 pairs / 65 s -> 3 exact pairs in
   0.87 s; smallest 6 / 12 with zero filter: eta 1.3e-9 / 6.5e-9 and 28 / 26 factorizations ->
   7.7e-13 / 1.2e-13 and 16 / 14; PSD matrix with a 600-dim null space, smallest 5: 19 s and 600 pairs
   -> 5 null vectors in 0.06 s; yee-pec-box-1e4 smallest 10 (multiplet rerun shift at 1% of its gap
   instead of on it): 215 -> 87 solves, 1.37 -> 1.03 s.
 
-**Nearest with a zero band** [d0012f7, 82811df]: yee-pec-box-1e4, sigma = 1, k = 6, zero_filter_tol
+**Nearest with a zero band** [32bcb1e, 6865dcc]: yee-pec-box-1e4, sigma = 1, k = 6, zero_filter_tol
 1e-6: returned 1 of 6 pairs before; now 6/6 exact (1.5e-15 vs the discrete-exact reference),
 certificate 6/6 with 3135 null-space eigenvalues excluded by inertia, 5 factorizations, 68 solves,
 0.88 s. Radius mid-gap after the k-th Ritz value: far pairs eta 6.9e-11 -> 7.5e-14 / 1.1e-13.
 
-**Near-singular shift** (hsolve CLI, case default config) [e30d029]: syn-zero-cluster-real-1e5 base
+**Near-singular shift** (hsolve CLI, case default config) [336aa01]: syn-zero-cluster-real-1e5 base
 32.9 s, 10 factorizations, 549 solves -> 2.6-3.5 s, 6 factorizations, 65 solves (8.7e-17 vs the exact
 reference); syn-near-singular-{real,complex}-1e4, -complex-1e5 and syn-ghep-near-singular-real-1e5
-unchanged (exact, 4-5 factorizations). syn-zero-cluster-real-1e4: 15 -> 8 factorizations [d0012f7],
-then 7 with gap endpoints counted in place, no certificate rerun [4f90f9c].
+unchanged (exact, 4-5 factorizations). syn-zero-cluster-real-1e4: 15 -> 8 factorizations [32bcb1e],
+then 7 with gap endpoints counted in place, no certificate rerun [2c53070].
 
-**GHIEP zero cluster**, wg-square-1e5 (scale 333, dim null(A) = 24649) [3b7a4b6, 680d533]:
+**GHIEP zero cluster**, wg-square-1e5 (scale 333, dim null(A) = 24649) [d069e76, 2c5a41c]:
 - sigma = 1e-4, k = 10: base returned 10 zeros; with side shifts at the plain run's disk edge 514
   solves, 14.4 s; mid-gap shifts: the 10 nearest nonzero modes, eta <= 1e-15, 256 solves, 7.7 s; with
   zero_filter_tol 1e-6 221 solves, 6.6 s.
@@ -392,7 +392,7 @@ then 7 with gap endpoints counted in place, no certificate rerun [4f90f9c].
   now 18 propagating + 4 evanescent modes, 253 solves, 8.0 s.
 - The two case targets (sigma = -0.527 / 0.311) stay on the plain path (2 factorizations).
   wg-square-1e3, sigma = 0, k = 10: equals the dense reference (5.8e-14), cluster dimension 225.
-- Review fixes [376f27a]: wg-square-1e3 (sigma 0.01, k 40, zero_filter_tol 1e-9) eta 6.5e-11 .. 1.8e-10
+- Review fixes [4eb8474]: wg-square-1e3 (sigma 0.01, k 40, zero_filter_tol 1e-9) eta 6.5e-11 .. 1.8e-10
   -> <= 8.5e-13 in five runs; a complex pair 0.02 +- 0.1i between the side shifts (pencil with 30 zeros,
   sigma = 1e-3, k = 4) is now found (before: four real pairs, success = true).
 
@@ -425,7 +425,7 @@ too. Peak difference: ~0.07 GiB for the interpreter with numpy/scipy, plus scipy
 matrix for in-memory input. Repeats agree to within 1e-13. GIL check: with the GIL release removed a
 background thread ticked once during a 0.19 s solve (>= 16 required); with it the test passes.
 
-**load_matrix memory** (`python/bench/load_memory.py`, RSS growth after loading, 2 runs) [08b8620]:
+**load_matrix memory** (`python/bench/load_memory.py`, RSS growth after loading, 2 runs) [05bbebc]:
 yee-pec-box-1e5 A 30.7 -> 17.0 / 18.2 MiB, syn-near-singular-complex-1e5 A 66.8 / 68.2 -> 46.9 MiB,
 wg-square-1e6 A 80.6 -> 48.3 / 47.2 MiB; `scipy.sparse.load_npz` 18.6, 47.0, 48.4-49.5 MiB.
 
@@ -450,11 +450,11 @@ Method: `tools/run/guard.py` on cores 28,29, mem <= 8 GiB; `python -m tools.eval
   solve times 0.016 to 12.8 s. On complex Hermitian cases its vectors are not orthogonal inside
   degenerate eigenspaces (B-orth 0.82 on yee-bloch-1e4).
 - The committed pages' time column is `time_total_s`, whose scope differs between hsolve and SLEPc;
-  the evaluator now reports a like-for-like `solve_time_s` [4ee52ce] (e.g. SLEPc syn-ghep-near-singular
+  the evaluator now reports a like-for-like `solve_time_s` [5df55e3] (e.g. SLEPc syn-ghep-near-singular
   2.02 -> 1.46 s, cav2d-rect-pert 1.04 -> 0.842 s), and the pages are to be regenerated with it.
 
 **Norm estimate** (`tools/eval/bench_norms.py`, ARPACK eigsh k = 1 'LM', tol 1e-6 / ncv 40 vs tol 1e-8
-/ default ncv, same start vector, five ~1e5 cases) [d9533d3, 4c4a589]: agreement <= 1.4e-10 relative;
+/ default ncv, same start vector, five ~1e5 cases) [9e7f1c0, 141a0c0]: agreement <= 1.4e-10 relative;
 products 4901 -> 1121 on syn-zero-cluster-real-1e5 (wall 55.7 -> 14.1 s), 1501 -> 601 on wg-square-1e5
 A (7.4 -> 7.9 s: a restart with ncv 40 costs more), 1651 -> 601 on wg-halfslab-1e5 A; one increase, a
 diagonal B 21 -> 41 products; 93.6 -> 49.3 s summed over the nine matrices.

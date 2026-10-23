@@ -6515,9 +6515,9 @@
   "base": "main",
   "new": "new",
   "run_dirs": [
-   "/share/home/linzihan/p9_p9-factspeed/gate1e6l0p",
-   "/share/home/linzihan/p9_p9-factspeed-review/gate1e6l0p",
-   "/share/home/linzihan/p9_p9-factspeed/fix/gate_yee10"
+   "~/p9_p9-factspeed/gate1e6l0p",
+   "~/p9_p9-factspeed-review/gate1e6l0p",
+   "~/p9_p9-factspeed/fix/gate_yee10"
   ],
   "gate_reps": 5,
   "bar": 1.05,
@@ -6525,7 +6525,7 @@
    "syn-mem27-100": {
     "flops_ref": 8947277375671.0,
     "samples": {
-     "/share/home/linzihan/p9_p9-factspeed/gate1e6l0p": {
+     "~/p9_p9-factspeed/gate1e6l0p": {
       "base": {
        "runs": 5,
        "time": 112.017529588,
@@ -6548,7 +6548,7 @@
       "rate_speedup": 1.0712695153289666,
       "equal_flops_speedup": 1.054077999908282
      },
-     "/share/home/linzihan/p9_p9-factspeed-review/gate1e6l0p": {
+     "~/p9_p9-factspeed-review/gate1e6l0p": {
       "base": {
        "runs": 5,
        "time": 112.818337921,
@@ -6610,7 +6610,7 @@
    "yee-pec-box-1e6": {
     "flops_ref": 6962084958398.5,
     "samples": {
-     "/share/home/linzihan/p9_p9-factspeed/gate1e6l0p": {
+     "~/p9_p9-factspeed/gate1e6l0p": {
       "base": {
        "runs": 5,
        "time": 89.699764395,
@@ -6633,7 +6633,7 @@
       "rate_speedup": 1.070986633375367,
       "equal_flops_speedup": 1.0538193345770819
      },
-     "/share/home/linzihan/p9_p9-factspeed-review/gate1e6l0p": {
+     "~/p9_p9-factspeed-review/gate1e6l0p": {
       "base": {
        "runs": 5,
        "time": 89.181129158,
@@ -6656,7 +6656,7 @@
       "rate_speedup": 1.062082245904308,
       "equal_flops_speedup": 1.0494042226663836
      },
-     "/share/home/linzihan/p9_p9-factspeed/fix/gate_yee10": {
+     "~/p9_p9-factspeed/fix/gate_yee10": {
       "base": {
        "runs": 10,
        "time": 90.1942779765,
@@ -6721,7 +6721,7 @@
   "base": "main",
   "new": "new",
   "run_dirs": [
-   "/share/home/linzihan/p9_p9-factspeed/fix/gate_metis"
+   "~/p9_p9-factspeed/fix/gate_metis"
   ],
   "gate_reps": 5,
   "bar": 1.05,
@@ -6729,7 +6729,7 @@
    "syn-mem27-100": {
     "flops_ref": 6763255839773.0,
     "samples": {
-     "/share/home/linzihan/p9_p9-factspeed/fix/gate_metis": {
+     "~/p9_p9-factspeed/fix/gate_metis": {
       "base": {
        "runs": 5,
        "time": 98.856031511,
@@ -6791,7 +6791,7 @@
    "yee-pec-box-1e6": {
     "flops_ref": 7052199360683.0,
     "samples": {
-     "/share/home/linzihan/p9_p9-factspeed/fix/gate_metis": {
+     "~/p9_p9-factspeed/fix/gate_metis": {
       "base": {
        "runs": 5,
        "time": 98.767191318,

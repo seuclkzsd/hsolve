@@ -44,7 +44,7 @@ targets=sorted(f.stem for f in (repo/'tests/cpp').glob('test_*.cpp'))
 for target in targets:run(target,[link(target)])
 run('short-team',[out/'test_asmkern_fix','--gtest_filter=AsmkernFixShortTeam.*'],{'OMP_THREAD_LIMIT':'2'})
 run('bound-affinity',[out/'test_gpu','--gtest_filter=GpuAffinityBound.*'],{'OMP_PROC_BIND':'close','OMP_PLACES':'cores','HSOLVE_TEST_OMP_BOUND':'1'})
-mpi='/share/home/linzihan/envs/os2026-ref/bin/mpiexec';mpi_flags=['--oversubscribe','--bind-to','none']
+mpi='~/envs/os2026-ref/bin/mpiexec';mpi_flags=['--oversubscribe','--bind-to','none']
 test_mpi=link('test_mpi_session')
 for ranks in [1,2,3,5]:run('mpi-ranks'+str(ranks),[mpi,'-n',str(ranks)]+mpi_flags+[test_mpi],timeout=600)
 mpi_cli=link('hsolve-mpi')

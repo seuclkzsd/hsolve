@@ -25,7 +25,7 @@ for manifest in [p/'enclosed-manifest.json',Path('/tmp/os2026-p37/boundary-manif
 runs=[json.loads(line) for f in [p/'runs.jsonl',v/'candidate-runs.jsonl'] for line in f.read_text().splitlines()]
 for name in sorted({r['case'] for r in runs}):
  for directory in ['cases','refs']:
-  for f in (Path('/share/home/linzihan/os2026/data')/directory/name).rglob('*'):
+  for f in (Path('~/os2026/data')/directory/name).rglob('*'):
    if f.is_file():inputs[str(f)]=dict(size=f.stat().st_size,sha256=digest(f))
 (p/'input-hashes.json').write_text(json.dumps(inputs,indent=2)+'\n');meta['input_hashes']=inputs
 (p/'collected.json').write_text(json.dumps(meta,indent=2)+'\n')

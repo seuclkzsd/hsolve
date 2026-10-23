@@ -85,7 +85,7 @@ Commands (from the work tree on c005, `D=$HOME/p7_p7-membudget/data`):
 python3 tools/run/guard.py --exclusive --timeout 2700 --mem-gb 32 -- \
   python3 tools/bench/tune_slepc.py syn-mem27-100 --cores 16-31 --tag p9fix-krylov --root $D \
     --mem-gb 32 --timeout 900 --groups ncv,restart --screen-reps 1 --confirm-reps 2 --confirm-top 1 \
-    --flaky-confirm-reps 2 --profiles-file results/cmp-p9-1e6-profiles.json   # the P9 profiles (fd27a13)
+    --flaky-confirm-reps 2 --profiles-file results/cmp-p9-1e6-profiles.json   # the P9 profiles (fe7b20e)
 # yee-pec-box-1e6: the same with --from-profile
 python3 tools/bench/tune_slepc.py --report results/raw/p9fix-krylov/*/tune.json
 ```

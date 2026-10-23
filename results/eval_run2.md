@@ -1,6 +1,6 @@
 # Evaluation of run2 (hsolve, all cases)
 
-Run `/home/zhlin/gencode/os2026/results/raw/run2`, data root `/home/zhlin/gencode/os2026/data`; 39 evaluation(s) by `python -m tools.eval.sweep` (tools/eval/sweep.py), evaluation JSONs in `results/raw/eval/run2/<case>/<solver>/evaluation.json`.
+Run `~/gencode/os2026/results/raw/run2`, data root `~/gencode/os2026/data`; 39 evaluation(s) by `python -m tools.eval.sweep` (tools/eval/sweep.py), evaluation JSONs in `results/raw/eval/run2/<case>/<solver>/evaluation.json`.
 
 Verdicts - **hsolve**: 39 pass / 0 fail
 

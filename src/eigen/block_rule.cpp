@@ -100,7 +100,7 @@ constexpr double kOrthoSinglePerRow = 0.772e-9;
 // (iteration time / block steps) of 8 against 4 in the integration's end-to-end runs
 // (ss-2cubes_sphere, yee-pec-box-1e5, yee-bloch-1e4, syn-mem27-46, yee-pec-cube-32): 1.27..1.33,
 // modelled 1.12..1.23 - the model overrates the step from 4 to 8 by ~10 %. The rule against the
-// P4 width (hsolve CLI --block-size 0 vs 4, one binary at 482eba6, 16 threads in the gpu01
+// P4 width (hsolve CLI --block-size 0 vs 4, one binary at 09f6531, 16 threads in the gpu01
 // slot, 5 interleaved runs, 20 definite nearest data cases, all 200 runs certified; total time,
 // speed-up of the rule's 8) by the modelled cost(8) / cost(4) of the shape:
 //   0.79..0.80: syn-mem125-46 1.128x, ss-si34h36 1.008x;

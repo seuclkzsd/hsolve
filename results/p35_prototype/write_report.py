@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 
-root=Path('/home/zhlin/gencode/os2026')
+root=Path('~/gencode/os2026')
 local=Path('/tmp/os2026-p35-local')
 m=json.loads((local/'collected.json').read_text())
 archive=json.loads((local/'archive-result.json').read_text())

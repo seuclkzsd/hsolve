@@ -1,6 +1,6 @@
 import difflib,json,shutil
 from pathlib import Path
-root=Path('/home/zhlin/gencode/os2026');p=Path('/tmp/os2026-p40-local');r=json.loads((p/'collected.json').read_text());a=json.loads((p/'archive-verified.json').read_text())
+root=Path('~/gencode/os2026');p=Path('/tmp/os2026-p40-local');r=json.loads((p/'collected.json').read_text());a=json.loads((p/'archive-verified.json').read_text())
 out=root/'results/p40_prototype';out.mkdir(exist_ok=True)
 for base,dest in [(p,out),(p/'v2',out/'v2'),(p/'v3',out/'v3')]:
  dest.mkdir(exist_ok=True)

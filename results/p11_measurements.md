@@ -49,17 +49,17 @@ SLEPc 使用仓库的 case profile：腔体 16×1、`eps_ncv=2k`、`eps_purify=0
 
 组合候选全量 C++ 测试为 1,060 项通过、13 项因环境跳过、3 项禁用。新增单向量契约测试通过；撤回后重新构建全部目标，受影响测试重新运行：236 项通过、1 项跳过、3 项禁用。撤回的五个源码 / 测试文件与本轮开始时备份逐字一致。最终保留补丁通过反向可应用检查，撤回补丁通过正向可应用检查；`git diff --check` 通过。
 
-基于 `6d408b0786d3c7cbf63995edeb66840ea958f703` 加会话开始时已有 P10 工作区改动，没有提交或推送。保留代码的单独差异在 [p11_candidate.patch](p11_candidate.patch)。集群隔离源码 `/tmp/os2026-p10-repair.9doyhO`，数据与归档二进制 `/tmp/os2026-p11`；脚本 [p11_compare.py](p11_compare.py) 复现各版本和单向量 / MPI 配置。复现已撤回候选前需在隔离副本应用对应补丁并重新构建。
+基于 `982ad83c31798c43d896ff33f639b93678979aa2` 加会话开始时已有 P10 工作区改动，没有提交或推送。保留代码的单独差异在 [p11_candidate.patch](p11_candidate.patch)。集群隔离源码 `/tmp/os2026-p10-repair.9doyhO`，数据与归档二进制 `/tmp/os2026-p11`；脚本 [p11_compare.py](p11_compare.py) 复现各版本和单向量 / MPI 配置。复现已撤回候选前需在隔离副本应用对应补丁并重新构建。
 
 ```bash
 # 在集群隔离源码目录运行；先按 JSON 的 SHA-256 核对归档二进制。
 env/run.sh python tools/run/guard.py --exclusive --cores 16-31 --mem-gb 32 --timeout 600 -- \
-  env HS_DATA_ROOT=/share/home/linzihan/os2026/data python tools/bench/ab_cases.py run \
+  env HS_DATA_ROOT=~/os2026/data python tools/bench/ab_cases.py run \
   --bin before=/tmp/os2026-p11/hsolve-before --bin after=/tmp/os2026-p11/hsolve-retained \
   --reps 0,1,2,3,4 --cores 16-31 --threads 16 --run-dir /tmp/p11-reproduction \
   cav2d-rect-pert-1e5 ss-qa8fk-qa8fm syn-mem27-46 wg-square-1e5 \
   yee-pec-box-1e5 yee-photonic-rods-1e4
 env/run.sh python tools/run/guard.py --cores 8-15 --mem-gb 12 --timeout 600 --skip-busy-check -- \
-  python -m tools.eval.sweep /tmp/p11-reproduction --root /share/home/linzihan/os2026/data \
+  python -m tools.eval.sweep /tmp/p11-reproduction --root ~/os2026/data \
   --out /tmp/p11-reproduction/evaluation.md
 ```

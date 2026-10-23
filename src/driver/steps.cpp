@@ -711,7 +711,7 @@ int nd_ordering(const SolverConfig& cfg) { return cfg.deterministic ? 5 : 3; }
 // ------------------------------------------------------------------------------ ordering choice
 
 // What a solve does with its factors (PlannedWork), from the end-to-end runs of the data cases
-// (hsolve CLI at 6a3d7c1, 4 threads, report op_applies / factor_stats; all nearest targets):
+// (hsolve CLI at 90deeff, 4 threads, report op_applies / factor_stats; all nearest targets):
 //   * HEP / GHEP nearest, block width p = block_size_for(cfg, k), the P4 width (the run itself
 //     takes the blocktune rule's width, which needs the factorization this plan prices; the
 //     constants were measured with the P4 widths): column applications ~ 40 + 4k for
@@ -1023,7 +1023,7 @@ OrderingOptions nd_ordering_options(bool effort, bool flow) {
 //     +34 ms) - about even, a regression risk; from 5.6 on (the Yee 1e4 cells, the 1e5 3-D cases)
 //     the run model changed by -14% to +3% (median -7%), at 1e6 (ratios 21, 33) flops -1% / -27%. The
 //     threshold lies in the gap between them (3.6 to 5.6, geometric mean 4.5). Without the flow the
-//     dissection orders those graphs as P5c's did: the same orders (flops) as main a831d79.
+//     dissection orders those graphs as P5c's did: the same orders (flops) as main c822126.
 void OrderingPricer::predict(std::vector<OrderingCandidate>& cand, std::size_t anchor) const {
   FactorEstimate a;
   a.flops = cand[anchor].flops;

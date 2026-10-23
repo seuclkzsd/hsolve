@@ -70,7 +70,7 @@ QA 原 8×2 调优配置在五次中有一次 MUMPS `INFOG(1)=-9` 数值工作�
 
 全量 C++：1,066 项通过、13 项按环境跳过、3 项禁用。另用环境自带的未打补丁 MUMPS 5.8.2 预加载运行 12 项因子丢弃 / 恢复测试，全部通过。最后同步源码注释后重新构建，二进制 SHA-256 与完整测量使用的版本相同。`git diff --check` 和本轮补丁的反向可应用检查均通过。
 
-基于 `6d408b0786d3c7cbf63995edeb66840ea958f703` 加会话已有 P10/P11 修改；没有提交或推送。集群源码 `/tmp/os2026-p10-repair.9doyhO`，原始实验 `/tmp/os2026-p12`；SLEPc 逐次输出另在源码的 `results/raw/p12-*`。复现脚本 [p12_compare.py](p12_compare.py)。
+基于 `982ad83c31798c43d896ff33f639b93678979aa2` 加会话已有 P10/P11 修改；没有提交或推送。集群源码 `/tmp/os2026-p10-repair.9doyhO`，原始实验 `/tmp/os2026-p12`；SLEPc 逐次输出另在源码的 `results/raw/p12-*`。复现脚本 [p12_compare.py](p12_compare.py)。
 
 | 归档二进制 | SHA-256 |
 |---|---|
@@ -82,19 +82,19 @@ QA 原 8×2 调优配置在五次中有一次 MUMPS `INFOG(1)=-9` 数值工作�
 
 ```bash
 env/run.sh python tools/run/guard.py --exclusive --cores 16-31 --mem-gb 32 --timeout 600 -- \
-  env HS_DATA_ROOT=/share/home/linzihan/os2026/data python tools/bench/ab_cases.py run \
+  env HS_DATA_ROOT=~/os2026/data python tools/bench/ab_cases.py run \
   --bin before=/tmp/os2026-p12/hsolve-before --bin after=/tmp/os2026-p12/hsolve-final \
   --reps 0,1,2,3,4,5,6 --cores 16-31 --threads 16 --run-dir /tmp/p12-reproduction \
   cav2d-rect-pert-1e5 ss-qa8fk-qa8fm syn-mem27-46 wg-square-1e5 \
   yee-pec-box-1e5 yee-photonic-rods-1e4
 env/run.sh python tools/run/guard.py --cores 8-15 --mem-gb 12 --timeout 600 --skip-busy-check -- \
-  python -m tools.eval.sweep /tmp/p12-reproduction --root /share/home/linzihan/os2026/data \
+  python -m tools.eval.sweep /tmp/p12-reproduction --root ~/os2026/data \
   --out /tmp/p12-reproduction/evaluation.md
 
 # QA 工作区修正后的 SLEPc 对照；腔体去掉 --slepc-profile-file 并换算例名。
 env/run.sh python tools/run/guard.py --exclusive --cores 16-31 --mem-gb 32 --timeout 600 -- \
   python results/p12_compare.py --binary hsolve-final=/tmp/os2026-p12/hsolve-final \
-  --root /share/home/linzihan/os2026/data --tag p12-reproduction-slepc \
+  --root ~/os2026/data --tag p12-reproduction-slepc \
   --out-dir /tmp/p12-reproduction-slepc --cores 16-31 --mem-gb 32 \
   --solvers hsolve-final,slepc --slepc-profile best \
   --slepc-profile-file results/p12_slepc_profiles.json --reps 5 ss-qa8fk-qa8fm

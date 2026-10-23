@@ -1,5 +1,5 @@
 {
- "note": "P9 integration: 10-repetition ABBA re-check of the 1e5 cases not faster in the 3-repetition regression (results/p9_measurements.md section 3): main_vs_new = main a831d79 against the integrated build, blk_vs_new = the integrated build with HS_MUMPS_BLOCKING=mumps against its default",
+ "note": "P9 integration: 10-repetition ABBA re-check of the 1e5 cases not faster in the 3-repetition regression (results/p9_measurements.md section 3): main_vs_new = main c822126 against the integrated build, blk_vs_new = the integrated build with HS_MUMPS_BLOCKING=mumps against its default",
  "main_vs_new": {
   "base": "main",
   "new": "new",

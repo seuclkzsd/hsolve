@@ -124,7 +124,7 @@ gpu02: 2x Xeon Silver 4314 (CentOS 7.9), timed runs on cores 16-31 (NUMA node 1)
 GPU 7 = Tesla V100-PCIE-16GB (16384 MiB) on the same socket, driver 535.54.03, CUDA 12.2. Conda env
 `os2026`: gcc/gfortran 13.4, MUMPS 5.8.2 (sequential, OpenMP), OpenBLAS 0.3.34 (OpenMP), METIS 5.1,
 SCOTCH 7; the OpenMP runtime is LLVM's libomp (the env's libgomp.so.1 points to it). hsolve: branch
-`exp-gpu-ssids` (main 2938cb4 + this experiment), preset `spral` (Release, -march=native). SPRAL
+`exp-gpu-ssids` (main fad746c + this experiment), preset `spral` (Release, -march=native). SPRAL
 2025.09.18 + upstream 836dc3e as in G0. Every command below ran through `tools/dev/cluster_run.sh
 gpu02 --` (each timed process one `guard.py --exclusive` run in the slot):
 

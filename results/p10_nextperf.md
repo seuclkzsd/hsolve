@@ -71,7 +71,7 @@
 
 复用候选的完整测试：C++ 1,058 项通过、13 项按环境跳过、3 项禁用；Python 399 项通过。撤回后五个相关源码 / 测试文件与本轮开始时备份逐字一致；集群重新构建成功，并用保留的基准工具完成 QA 冒烟运行，后向误差约 2.73e-11。`git diff --check` 与候选补丁可应用性检查通过。
 
-基于 HEAD `6d408b0786d3c7cbf63995edeb66840ea958f703` 加已有 P10 未提交改动；本轮没有提交或推送。集群隔离目录 `/tmp/os2026-p10-repair.9doyhO`；原始数据 `/tmp/os2026-nextperf`，完整比较的逐次结果在隔离仓库 `results/raw/cmp-p10-nextperf-{cavity,rods}`。所有编译、测试、实验都在集群执行。
+基于 HEAD `982ad83c31798c43d896ff33f639b93678979aa2` 加已有 P10 未提交改动；本轮没有提交或推送。集群隔离目录 `/tmp/os2026-p10-repair.9doyhO`；原始数据 `/tmp/os2026-nextperf`，完整比较的逐次结果在隔离仓库 `results/raw/cmp-p10-nextperf-{cavity,rods}`。所有编译、测试、实验都在集群执行。
 
 | 集群保存的二进制 | SHA-256 |
 |---|---|
@@ -84,24 +84,24 @@
 # 基空间筛选；所有测量独占。大算例改为双插槽 cores、large 数据目录，
 # --p 4,8 --block-ncv 0,32,48，算例 yee-pec-box-1e6。
 env/run.sh python3 tools/run/guard.py --exclusive --cores 16-31 --mem-gb 32 --timeout 900 -- \
-  build/release/bench_blocktune_sweep --data /share/home/linzihan/os2026/data \
+  build/release/bench_blocktune_sweep --data ~/os2026/data \
   --p 2,4,8 --block-ncv 0,24,40 --keep 0.3,0.5,0.7 --original-tol 1e-10 \
   --reps 1 --apply-reps 1 --ordering 10 ss-qa8fk-qa8fm yee-pec-box-1e5
 # 腔体：--p 1,2,4 --block-ncv 0,16,24 --ordering 0 cav2d-rect-pert-1e5。
 # 频率筛选：--p 2,4,8 --block-ncv 0 --keep 0.5 --probe-decay 0.1,0.5,1 --reps 2；
-# 百万维频率筛选仅 --p 8，数据 /share/home/linzihan/p7_p7-membudget/data。
+# 百万维频率筛选仅 --p 8，数据 ~/p7_p7-membudget/data。
 
 # 完整求解五次交错复测，独立验收自动执行。
 env/run.sh python3 tools/run/guard.py --exclusive --cores 16-31 --mem-gb 32 --timeout 900 -- \
   python3 results/p10_nextperf_compare.py --before-bin /tmp/os2026-nextperf/hsolve-before \
-  --root /share/home/linzihan/os2026/data --tag cmp-p10-nextperf-cavity \
+  --root ~/os2026/data --tag cmp-p10-nextperf-cavity \
   --out-dir /tmp/os2026-nextperf --cores 16-31 --mem-gb 32 \
   --solvers hsolve-before,hsolve,hsolve-ncv24,slepc --slepc-profile best --reps 5 \
   cav2d-rect-pert-1e5
 # rods 复测：--solvers hsolve-before,hsolve --reps 7 yee-photonic-rods-1e4，另用新 tag。
 
 # 复用首批 A/B：需先保存两版 release 二进制。
-env/run.sh env HS_DATA_ROOT=/share/home/linzihan/os2026/data \
+env/run.sh env HS_DATA_ROOT=~/os2026/data \
   python3 tools/run/guard.py --exclusive --cores 16-31 --mem-gb 32 --timeout 900 -- \
   python3 tools/bench/ab_cases.py run --bin before=/tmp/os2026-nextperf/hsolve-before \
   --bin cache=/tmp/os2026-nextperf/hsolve-cache --reps 0,1,2,3,4 --cores 16-31 \
@@ -109,17 +109,17 @@ env/run.sh env HS_DATA_ROOT=/share/home/linzihan/os2026/data \
   cav2d-rect-pert-1e5 ss-qa8fk-qa8fm syn-mem27-46 yee-pec-box-1e5 yee-photonic-rods-1e4
 env/run.sh python3 tools/run/guard.py --skip-busy-check --mem-gb 10 --timeout 600 -- \
   python3 -m tools.eval.sweep /tmp/os2026-nextperf/cache-small \
-  --root /share/home/linzihan/os2026/data --out /tmp/os2026-nextperf/cache-small/eval.md
+  --root ~/os2026/data --out /tmp/os2026-nextperf/cache-small/eval.md
 
 # 主分解采样并导出排序；双插槽占用期间暂停构建 / 测试道。
 env/run.sh python3 tools/run/guard.py --exclusive --cores 8-15,16-23 --mem-gb 32 --timeout 300 -- \
   build/release/bench_factspeed_factor \
-  --case /share/home/linzihan/p7_p7-membudget/data/cases/yee-pec-box-1e6 \
+  --case ~/p7_p7-membudget/data/cases/yee-pec-box-1e6 \
   --jobs main --ordering 10 --perm-out /tmp/os2026-nextperf/yee.perm \
   --threads 16 --mumps-stats 1 --sample-us 100 --sample-out /tmp/os2026-nextperf/main.samples
 env/run.sh python3 tools/run/guard.py --exclusive --cores 8-15 --mem-gb 32 --timeout 300 -- \
   build/release/bench_factspeed_factor \
-  --case /share/home/linzihan/p7_p7-membudget/data/cases/yee-pec-box-1e6 \
+  --case ~/p7_p7-membudget/data/cases/yee-pec-box-1e6 \
   --lower 8.08700190421624 --upper 96.18970892020559 --jobs a,b \
   --perm-in /tmp/os2026-nextperf/yee.perm --threads 8 --mumps-stats 1 \
   --sample-us 100 --sample-out /tmp/os2026-nextperf/count.samples

@@ -1,7 +1,7 @@
 # hsolve 方案说明文档
 
 > 面向电磁谐振与微波器件仿真的大规模非正定厄密稀疏矩阵特征值求解方案
-> （交付物 a；版本：方法、求解边界与 §6、§9.1 的实测按 P9 集成（分支 p9int：main a831d79 + P9 的自研嵌套剖分、
+> （交付物 a；版本：方法、求解边界与 §6、§9.1 的实测按 P9 集成（分支 p9int：main c822126 + P9 的自研嵌套剖分、
 > MUMPS 块参数与自编 MUMPS 作默认构建）的代码；§9.2 起为更早阶段的记录。实现细节契约见 `docs/DESIGN.md`，
 > 最终实测见 `results/p9_measurements.md`，各阶段实测见 `results/p*_*.md`，SLEPc 调优与公平对比见
 > `results/baseline_tuning.md`、`results/baseline_tuning_p16.md`、`results/cmp-p9-1e6-profiles.json`）
@@ -411,14 +411,14 @@ B 正定用 Cholesky、收敛判据与 hsolve 同为后向误差）。所有时�
 `time_total_s` 对 SLEPc 的 EPSSetUp + EPSSolve + 推迟的特征向量计算（不含 Python/MPI 启动与读测例）；每次
 运行都由 `tools/eval` 独立判定，只有双方每次重复都有效时才给加速比。
 
-### 9.1 P9 集成现状：16 核对调优后的 SLEPc 与对 main a831d79（如实陈述）
+### 9.1 P9 集成现状：16 核对调优后的 SLEPc 与对 main c822126（如实陈述）
 
 P9 集成构建（自研嵌套剖分带流精修 + MUMPS 块参数 + 默认构建的打补丁 MUMPS，§2.2、§4）在 gpu01 的 16 核独占测量槽
 （cores 16–31，16 线程，32 GiB，`guard --exclusive`）中测量，2026-10-14；SLEPc 每个测例用其 16 核调优配置
 （1e5：`results/baseline_tuning_p16.md`；1e6：`results/cmp-p9-1e6-profiles.json`，即 1e5 的最佳配置在 1e6 上再筛选
 布局 / 排序 / BLR 与 Krylov 组，`eps_ncv = 3k`），5 次交错取中位数，每次运行都经 `tools/eval` 判定有效（4 个求解器
 × 8 个配置 × 5 次 = 160 次运行全部有效）。hsolve = 默认配置（certificate = exact），hsolve-auto = certificate = auto，
-关证书 = certificate = off。括号内为同一方法下 P5c（1e5，`results/cmp-p5c-best*.md`）或 main a831d79（1e6，
+关证书 = certificate = off。括号内为同一方法下 P5c（1e5，`results/cmp-p5c-best*.md`）或 main c822126（1e6，
 `results/cmp-p9-1e6.md`，c005）的结果；SLEPc 自身时间与当时相差 ≤ 1%。详见 `results/p9_measurements.md` §4、
 `results/cmp-p9int-best.md`、`results/cmp-p9int-best-interval.md`、`results/cmp-p9int-1e6.md`。
 
@@ -438,11 +438,11 @@ P9 集成构建（自研嵌套剖分带流精修 + MUMPS 块参数 + 默认构�
   关证书 1 次，SLEPc 1 次；P8 实测更便宜的精确计数都无收益）；yee-pec-box-1e6 上 SLEPc 的最佳配置用 BLR
   （`cntl_7 = 1e-10`，4 × 4 rank，ParMETIS）把 59 次单右端回代做得很便宜，而 hsolve 的两次计数占 33.9 / 69.1 s——
   关证书时 hsolve 快 1.70 倍，auto（随机排除检验）快 1.08 倍。
-- **1e6 对 SLEPc 的更正**：P9 mpi 的初稿（SLEPc 用默认 ncv）报告 main a831d79 为 1.15× / 0.74×；评审在 1e6 上筛选
+- **1e6 对 SLEPc 的更正**：P9 mpi 的初稿（SLEPc 用默认 ncv）报告 main c822126 为 1.15× / 0.74×；评审在 1e6 上筛选
   SLEPc 的 Krylov 组后（`eps_ncv = 3k` 使 SLEPc 快 1.08 / 1.16 倍、yee 的双峰消失）更正为 **1.04× / 0.67×**
   （`results/cmp-p9-1e6.md`）。P9 集成构建在同一 SLEPc 配置下为 1.41× / 0.86×（SLEPc 自身 116.0 / 59.3 s，当时
   115.7 / 59.6 s）。
-- **对 main a831d79 的回归**（`results/p9_measurements.md` §2–3，ABBA 交错，每次都有效、证书 exact）：1e6 内存内
+- **对 main c822126 的回归**（`results/p9_measurements.md` §2–3，ABBA 交错，每次都有效、证书 exact）：1e6 内存内
   8 次 syn-mem27-100 111.2 → 83.2 s（**1.34×**）、yee-pec-box-1e6 88.2 → 69.1 s（**1.28×**）、wg-square-1e6（二维
   GHIEP，AMD）5.94 → 5.94 s；收益在三次分解（排序的 flops 少 25% / 21%；块参数与补丁在同一主元顺序上每次分解再快
   1.065–1.083 倍、端到端 1.056 / 1.053 倍——排除了 SCOTCH 波动的 factspeed 门槛，两例都过 1.05 倍）、分析与回代，
@@ -472,7 +472,7 @@ hsolve = 默认配置（certificate = exact），hsolve-auto = certificate = aut
 - 带完备性证书的默认配置在 6 个配置中的 4 个快于调优 SLEPc；ss-qa8fk-qa8fm 与 cav2d-rect-pert-1e5 仍落后，
   差距来自证书的两次计数分解（这两个测例 hsolve 做 3 次数值分解，关证书时 1 次，SLEPc 1 次）。
 - certificate = auto 只在 syn-mem27-46 上改变结果（选 randomized，1.96×），其余测例按实测时间仍选精确计数。
-- 对 P4（main 2938cb4）的回归测量：42 个数据测例 ABBA 交错 3 次，41 个可比测例几何平均 0.786（HEP 0.772、
+- 对 P4（main fad746c）的回归测量：42 个数据测例 ABBA 交错 3 次，41 个可比测例几何平均 0.786（HEP 0.772、
   GHEP 0.808、GHIEP 0.808），总时间 514.8 → 453.6 s；只有 ss-tem152078 慢 6.7%（排序模型选了自研 ND，
   分析比 SCOTCH 多 0.6 s）。
 - ss-3dspectralwave2 在 14 GiB 内存预算下曾随机失败（out-of-core，MUMPS 内存估计逐次波动约 30%，

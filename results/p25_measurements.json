@@ -4699,9 +4699,9 @@
       "hsolve-mpi-structured": "0a34434c82dcb18992fa354f1f936ea3f8f36749ec54daecc09b9981f0b9a185"
     },
     "inputs": {
-      "/share/home/linzihan/p7_p7-membudget/data/cases/yee-pec-box-1e6/A.npz": "0aadd327309df7b0f44827ba10b66f0373dd9826ea1df9765444453d7069fc68",
-      "/share/home/linzihan/p7_p7-membudget/data/cases/yee-pec-box-1e6/B.npz": "a87a1f5621af7f1c203eba6b50a992ffcf73f2fdd14fef208d8f9b99afc2b539",
-      "/share/home/linzihan/p7_p7-membudget/data/cases/yee-pec-box-1e6/config.json": "33a9d36e4fa70b251b12c00129ad0ccabb20dbe61ef79282a02241dcc2dc6e64",
+      "~/p7_p7-membudget/data/cases/yee-pec-box-1e6/A.npz": "0aadd327309df7b0f44827ba10b66f0373dd9826ea1df9765444453d7069fc68",
+      "~/p7_p7-membudget/data/cases/yee-pec-box-1e6/B.npz": "a87a1f5621af7f1c203eba6b50a992ffcf73f2fdd14fef208d8f9b99afc2b539",
+      "~/p7_p7-membudget/data/cases/yee-pec-box-1e6/config.json": "33a9d36e4fa70b251b12c00129ad0ccabb20dbe61ef79282a02241dcc2dc6e64",
       "/tmp/os2026-p10-repair.9doyhO/results/p19_slepc_profiles.json": "0720fc315a75120fbc9a2835456c2e313ef456863dd6056978c6694b258ffe16"
     }
   },

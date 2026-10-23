@@ -7,12 +7,12 @@ own branches before the merge (not re-measured here); section 5 lists open issue
 
 ## 1. Setup: what ran where
 
-**Code.** "new" = `9201c2c` (head of `p5c-int-code`: `p5c-integration` 1bd75f9, i.e. main 2938cb4
+**Code.** "new" = `afb88c7` (head of `p5c-int-code`: `p5c-integration` d58193e, i.e. main fad746c
 plus the merges of asmkern, certint, anaint and blocktune, plus the code side of the P5c interface
 requests: the blocktune block-size rule wired into the driver, InertiaCounter's deferred double
 analysis, compare.py `hsolve-auto`, the rerun fixes and the 10 % margin for the rule's step to 8).
-"main" = `2938cb4`. The branch `p5c-meas` adds only `tools/bench/ab_cases.py`,
-`tools/bench/compare_merge.py` and these results on top of 9201c2c.
+"main" = `fad746c`. The branch `p5c-meas` adds only `tools/bench/ab_cases.py`,
+`tools/bench/compare_merge.py` and these results on top of afb88c7.
 
 **Builds.** `tools/dev/build.sh release` (gcc 13.4, `-O3 -march=native`, OpenMP; cmake defaults of
 each commit, so new has the BLAS hook with route `all` linked into hsolve and main has none), build
@@ -153,7 +153,7 @@ Not comparable (an invalid or missing run): ss-3dspectralwave2 (main: ok; new: r
 ### 2.2 ss-3dspectralwave2: random failures at the default memory budget
 
 new-r1 (gpu01) exited with status 2 after 205 s and wrote no result (its stderr was not kept;
-ab_cases.py keeps it since 7abe7ac); the other three new runs and all four main runs passed. To
+ab_cases.py keeps it since 80290b0); the other three new runs and all four main runs passed. To
 find the cause, repeated default runs with the event log followed (`--log`, otherwise the
 campaign's command; in the slot, 16 threads; `~/p5c_int_p5c-meas/repro/`): hsolve_new 6x on c005,
 hsolve_main 5x on gpu01 and 6x on c005. Under the CLI's default budget of 14 GiB (cap 13.49 GB
@@ -204,7 +204,7 @@ new 290-320 s, main 339-366 s.
 
 Full tables: `results/cmp-p5c-best.md` / `.json` (five nearest configurations) and
 `results/cmp-p5c-best-interval.md` / `.json` (yee-pec-box-1e5, interval [40, 200]); same method,
-profiles and repetitions as `results/cmp-p16-best*` (P4, gpu01, code 19a6e1a). Every run of every
+profiles and repetitions as `results/cmp-p16-best*` (P4, gpu01, code 4d6bc87). Every run of every
 solver was valid (5/5). Speedup = SLEPc median solver time / hsolve median solver time (> 1: hsolve
 faster).
 
@@ -237,7 +237,7 @@ Not re-measured for this page; the numbers come from the module reports
 (`p5c_interface_requests.md` of the P5c run) and were taken on each module's own branch, in the
 16-thread measurement slot unless stated, before the four modules were merged.
 
-### 4.1 asmkern (fix-asmkern-p5c @ e67a141; gpu01 slot, 16 threads, ~10 min slot time)
+### 4.1 asmkern (fix-asmkern-p5c @ ea402c6; gpu01 slot, 16 threads, ~10 min slot time)
 
 - Machine reference: dgemm 78 GF/s on 1 core, 747 GF/s on 16 (two AVX-512 FMA units per core);
   read bandwidth 36 GB/s at 4 cores, no growth beyond.
@@ -251,7 +251,7 @@ Not re-measured for this page; the numbers come from the module reports
 - Drop-in BLAS libraries (implementer's screening, 3 reps): rebuilt OpenBLAS 0.97-1.07x, LIBXSMM
   0.97-1.02x, BLIS 0.46-0.57x on the 2-D cases; none adopted.
 
-### 4.2 certint (fix-certint-p5c @ 57f98ca; gpu02 slot, 16 threads)
+### 4.2 certint (fix-certint-p5c @ 223a269; gpu02 slot, 16 threads)
 
 - certificate=auto against exact on all 32 HEP/GHEP cases, 5 reps: 0.99-1.00x where both use exact
   counts; faster where auto picks the randomized check (syn-mem27-46 1.29x, syn-mem125-46 1.19x,
@@ -262,7 +262,7 @@ Not re-measured for this page; the numbers come from the module reports
 - ss-ge87h76: auto predicted 27.28 s randomized vs 27.23 s exact and chose exact; measured 25.1 s vs
   29.8 s (one case; count_ratio and preference left unchanged).
 
-### 4.3 anaint (fix-anaint-p5c @ 0c424c6; gpu02 slot, 16 threads)
+### 4.3 anaint (fix-anaint-p5c @ 0bd7282; gpu02 slot, 16 threads)
 
 - Final binary against main on all 42 data cases, 3 interleaved reps: geometric mean 0.891, faster
   on 32 cases, slower only on ss-tem152078 (5.070 -> 5.851 s, 1.154x; ND analysis 1.32 s vs
@@ -274,7 +274,7 @@ Not re-measured for this page; the numbers come from the module reports
 - hsolve ND vs SCOTCH factorization flops: yee-pec-box-1e5 8.1e10 vs 6.9e10, ss-ge87h76 6.1e12 vs
   5.1e12, ss-tem152078 7.6e10 vs 7.1e10.
 
-### 4.4 blocktune (fix-blocktune-p5c @ 8f29115; gpu01 slot, 16 threads)
+### 4.4 blocktune (fix-blocktune-p5c @ c1bd0ef; gpu01 slot, 16 threads)
 
 - Rule fix (p >= 4 for nev >= 8): the old p = 2 pick on low-fill multiplicity cases was slower,
   0.182 vs 0.162 s and 0.288 vs 0.236 s. Over 61 case/nev points the chosen-to-best width time ratio
@@ -287,13 +287,13 @@ Not re-measured for this page; the numbers come from the module reports
 
 ### 4.5 Integration (p5c-int-code; gpu01 slot, 16 threads; from its commit messages)
 
-- Wired rule against the P4 width, one binary with the hook (b1cfbef): 1.02-1.08x where the rule
+- Wired rule against the P4 width, one binary with the hook (4b516c7): 1.02-1.08x where the rule
   moves 4 -> 8 on multiple eigenvalues or 1 -> 2 at k = 6, 7; 0.96-0.98x where it moves 4 -> 8 on
   distinct eigenvalues (ss-2cubes_sphere, yee-pec-box-1e5, yee-bloch-1e4); geometric mean 1.01x.
-- 10 % margin for the step to 8 (9201c2c; --block-size 0 vs 4, 5 interleaved runs, 20 definite
+- 10 % margin for the step to 8 (afb88c7; --block-size 0 vs 4, 5 interleaved runs, 20 definite
   nearest cases): ss-2cubes_sphere, yee-pec-box-1e5, syn-lap3d-aniso-1e5 back at width 4 (1.020x,
   1.058x, 1.008x faster than at 8); geometric mean against the P4 width 1.001 -> 1.017.
-- Deflated reruns (cf9f077, certificate_fault_drop = 1): rerun phase at width 4 instead of 8
+- Deflated reruns (5c105e8, certificate_fault_drop = 1): rerun phase at width 4 instead of 8
   1.05-1.33x faster; yee-pec-box-1e5 with one pair removed reruns in 4.65-4.81 s (before: 1000
   restarts, ~200 s).
 

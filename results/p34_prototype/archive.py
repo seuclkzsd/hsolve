@@ -17,7 +17,7 @@ for root in [p/'holdout-data',p/'fresh-data',p/'validation-data',Path('/tmp/os20
 main_cases=sorted({r['case'] for r in meta['summaries'].get('p34-carried-main',{}).get('rows',[])})
 for name in main_cases:
  for directory in ['cases','refs']:
-  for f in (Path('/share/home/linzihan/os2026/data')/directory/name).rglob('*'):
+  for f in (Path('~/os2026/data')/directory/name).rglob('*'):
    if f.is_file():inputs[str(f)]=dict(size=f.stat().st_size,sha256=digest(f))
 (p/'input-hashes.json').write_text(json.dumps(inputs,indent=2)+'\n')
 meta['input_hashes']=inputs

@@ -1,6 +1,6 @@
 # Evaluation of cmp4b (hsolve vs SLEPc)
 
-Run `/home/zhlin/gencode/os2026/results/raw/cmp4b`, data root `/home/zhlin/gencode/os2026/data`; 30 evaluation(s) by `python -m tools.eval.sweep` (tools/eval/sweep.py), evaluation JSONs in `results/raw/eval/cmp4b/<case>/<solver>/evaluation.json`.
+Run `~/gencode/os2026/results/raw/cmp4b`, data root `~/gencode/os2026/data`; 30 evaluation(s) by `python -m tools.eval.sweep` (tools/eval/sweep.py), evaluation JSONs in `results/raw/eval/cmp4b/<case>/<solver>/evaluation.json`.
 
 Verdicts - **hsolve**: 15 pass / 0 fail; **slepc**: 10 pass / 5 fail, 1 overclaim(s)
 

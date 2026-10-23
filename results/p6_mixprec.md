@@ -83,9 +83,9 @@ default 14 GB budget, where the double path goes out of core and takes 2.2x long
 * **Where.** gpu02, measurement slot: cores 16-31, 16 threads, 32 GiB, `guard.py --exclusive`, one
   run at a time. Build and test lane: cores 8-15, used only for the convergence diagnostics of
   section 7, which quote no times (section 7.1 is measured in the slot). All runs were on 2026-10-13.
-* **Base.** p5c-integration 1bd75f9: the BLAS hook linked with route `all`, `certificate = exact`,
-  adaptive ordering. The bench is `bench_mixprec_phases`. The stage-A tables come from adf9cc9; the
-  1e6 run comes from aa6edb7, which adds only the memory guard. Both are linked with the BLAS hook
+* **Base.** p5c-integration d58193e: the BLAS hook linked with route `all`, `certificate = exact`,
+  adaptive ordering. The bench is `bench_mixprec_phases`. The stage-A tables come from af0a753; the
+  1e6 run comes from 72f3112, which adds only the memory guard. Both are linked with the BLAS hook
   exactly like `hsolve` (CMake `hsolve_link_blas_hook`).
 * **Baseline breakdown.** `tools/bench/compare.py` was run on the base binary, with 3 repetitions in
   one call. All 30 runs were valid by tools/eval at the case tolerance.
@@ -130,7 +130,7 @@ default 14 GB budget, where the double path goes out of core and takes 2.2x long
 * **Gate (from the task).** A variant must be projected >= 1.10x on at least three of the five
   head-to-head cases, with no loss above 3% on any.
 
-## 2. Baseline (p6-base: compare.py, base 1bd75f9, 16 threads, medians of 3, all valid)
+## 2. Baseline (p6-base: compare.py, base d58193e, 16 threads, medians of 3, all valid)
 
 | case | total | setup | analysis | numeric (#) | solves (#/s) | iterate | verify | certificate | factor MB | peak GiB |
 |---|---|---|---|---|---|---|---|---|---|---|
@@ -420,7 +420,7 @@ rii, and at most 12 steps; ss-qa8fk-qa8fm was run a second time with at most 30 
 
 ## Commands
 
-Base binary: `build/release/hsolve` of 1bd75f9, copied to `$S/base/hsolve`
+Base binary: `build/release/hsolve` of d58193e, copied to `$S/base/hsolve`
 (`S=$HOME/p6_p6-mixprec` on gpu02). It runs from scratch repository copies: `tools/` copied,
 `data` linked, `build/release/hsolve` linked to the binary, and for V1 a wrapper that appends
 `--precision single`. `G = python3 tools/run/guard.py --exclusive --timeout 2700 --lock-wait 1200 --`.
@@ -432,7 +432,7 @@ $G python3 $R/tools/bench/compare.py --tag p6-base --cores 16-31 --solvers hsolv
    cav2d-rect-pert-1e5 syn-mem125-46 ss-tem152078 yee-bloch-1e4 syn-near-singular-complex-1e5 \
    syn-ghep-near-singular-real-1e5                       # R = repo copy with the base binary
 # same with --tag p6-v1 and R = repo copy whose build/release/hsolve appends --precision single
-# stage A (sections 3-5), one slot call for all cases; bench built at adf9cc9
+# stage A (sections 3-5), one slot call for all cases; bench built at af0a753
 $G bash -c 'for c in CASES; do bench_mixprec_phases --case data/cases/$c \
    --report $R/results/raw/p6-base/$c/hsolve-r0/report.json --exp phases,v2 --reps 5 --inner 3 \
    --v2-mode rii --v2-tols 1e-11,1e-8 --v2-max-steps 12 > $S/stageA/$c.jsonl; done
@@ -444,14 +444,14 @@ $G bash -c '$S/base/hsolve --A $C/A.npz --config $C/config.json --out $S/big/bas
    --exp phases,v2 --no-v1 --reps 3 --inner 2 --v2-mode rii --v2-tols 1e-8 --v2-max-steps 12 --max-factor-mb 26000'
 python3 tools/run/guard.py --exclusive --timeout 1200 -- $S/base/hsolve --A $C/A.npz --config $C/config.json \
    --out $S/big/base14 -q --threads 16                  # default budget: out-of-core
-# diagnostics (section 7), build/test lane, bench at 0550e3b
+# diagnostics (section 7), build/test lane, bench at a38f57f
 bench_mixprec_phases --case data/cases/yee-pec-box-1e5 --report ... --exp v2 --reps 1 --no-v1 --v2-tols 1e-8 \
    --v2-max-steps 12 --v2-refine-factor double --v2-mode rii
 bench_mixprec_phases ... --v2-guards 0,4,8 --v2-max-steps 12 --v2-mode rii
 bench_mixprec_phases --case data/cases/{syn-mem27-46,yee-pec-box-1e5,ss-qa8fk-qa8fm} ... --v2-max-steps 8 \
    --v2-mode davidson [--v2-refine-factor double]
-# guard vectors on every V2 case (section 7.1): one slot call, bench built at 8aae708 (bench source as
-# 0550e3b), CASES = the eight V2 cases of the section 7.1 table
+# guard vectors on every V2 case (section 7.1): one slot call, bench built at e17e4c0 (bench source as
+# a38f57f), CASES = the eight V2 cases of the section 7.1 table
 python3 tools/run/guard.py --exclusive --timeout 2700 --lock-wait 1500 -- bash -c 'for c in CASES; do
    bench_mixprec_phases --case data/cases/$c --report $R/results/raw/p6-base/$c/hsolve-r0/report.json \
    --exp v2 --reps 9 --no-v1 --v2-tols 1e-8 --v2-guards 0,4,8 --v2-max-steps 12 --v2-mode rii \

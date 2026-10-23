@@ -6,7 +6,7 @@ groups=[(p/'data','p38-v2-cases',[r['case'] for r in json.loads((p/'case-manifes
 for group in ['holdout','fresh','validation']:
  groups.append((old/(group+'-data'),'p38-v2-'+group,json.loads((old/(group+'-inputs.json')).read_text()),30,None))
 groups.append((Path('/tmp/os2026-p33/contract-data-v2'),'p38-v2-contracts',['exact-zero-hep','exact-quarter-ghep','new-cluster-hep','new-near-hep','new-cluster-ghep','counter-fallback-memory','counter-fallback-factor','counter-fallback-allocation','backend-result-recovery'],60,None))
-groups.append((Path('/share/home/linzihan/os2026/data'),'p38-v2-main',['syn-zero-cluster-complex-1e4','syn-multiplicity-complex-1e4','syn-near-singular-complex-1e4','syn-wide-range-complex-1e4','syn-near-singular-complex-1e5','syn-ghep-zero-cluster-complex-1e4','yee-photonic-rods-1e4','yee-photonic-spheres-1e4','yee-bloch-1e4'],120,None))
+groups.append((Path('~/os2026/data'),'p38-v2-main',['syn-zero-cluster-complex-1e4','syn-multiplicity-complex-1e4','syn-near-singular-complex-1e4','syn-wide-range-complex-1e4','syn-near-singular-complex-1e5','syn-ghep-zero-cluster-complex-1e4','yee-photonic-rods-1e4','yee-photonic-spheres-1e4','yee-bloch-1e4'],120,None))
 groups.append((Path('/tmp/os2026-p35/large-data'),'p38-v2-large',['large-complex-hep','large-complex-ghep'],60,.8))
 for root,tag,cases,timeout,budget in groups:
  env=dict(os.environ)

@@ -1,7 +1,7 @@
 {
  "date": "2026-10-16",
  "objective_status": "active; not all workloads are as fast as the tuned open-source baseline",
- "base_commit": "6d408b0786d3c7cbf63995edeb66840ea958f703 plus pre-existing P10 worktree changes",
+ "base_commit": "982ad83c31798c43d896ff33f639b93678979aa2 plus pre-existing P10 worktree changes",
  "conditions": {
   "host": "gpu02",
   "cpu": "2 x Xeon Silver 4314",
@@ -11,7 +11,7 @@
   "exclusive_guard": true,
   "build_and_test_cores": "8-15",
   "build_and_test_memory_limit_gib": 12,
-  "data_root": "/share/home/linzihan/os2026/data",
+  "data_root": "~/os2026/data",
   "source_root": "/tmp/os2026-p10-repair.9doyhO",
   "raw_experiment_root": "/tmp/os2026-p11",
   "accuracy": "case tolerance unchanged; default exact certificate; independent tools/eval for every full comparison"
@@ -9174,7 +9174,7 @@
      "--out-dir",
      "/tmp/os2026-p11",
      "--root",
-     "/share/home/linzihan/os2026/data",
+     "~/os2026/data",
      "--cores",
      "16-31",
      "--mem-gb",
@@ -9207,7 +9207,7 @@
      "tools.eval.sweep",
      "/tmp/os2026-p11/recheck-ab",
      "--root",
-     "/share/home/linzihan/os2026/data",
+     "~/os2026/data",
      "--out",
      "/tmp/os2026-p11/recheck-eval.md"
     ],
@@ -9379,7 +9379,7 @@
      "tools.eval.sweep",
      "/tmp/os2026-p11/final-broad",
      "--root",
-     "/share/home/linzihan/os2026/data",
+     "~/os2026/data",
      "--out",
      "/tmp/os2026-p11/broad-eval.md"
     ],
@@ -9486,7 +9486,7 @@
    {
     "cmd": [
      "env",
-     "HS_DATA_ROOT=/share/home/linzihan/os2026/data",
+     "HS_DATA_ROOT=~/os2026/data",
      "python",
      "tools/bench/ab_cases.py",
      "run",
@@ -9529,7 +9529,7 @@
      "tools.eval.sweep",
      "/tmp/os2026-p11/final-ab",
      "--root",
-     "/share/home/linzihan/os2026/data",
+     "~/os2026/data",
      "--out",
      "/tmp/os2026-p11/final-eval.md"
     ],
@@ -9553,7 +9553,7 @@
      "tools.eval.sweep",
      "/tmp/os2026-p11/gpu02-ab",
      "--root",
-     "/share/home/linzihan/os2026/data",
+     "~/os2026/data",
      "--out",
      "/tmp/os2026-p11/gpu02-eval.md"
     ],
@@ -9602,7 +9602,7 @@
      "--out-dir",
      "/tmp/os2026-p11",
      "--root",
-     "/share/home/linzihan/os2026/data",
+     "~/os2026/data",
      "--cores",
      "16-31",
      "--mem-gb",
@@ -9629,7 +9629,7 @@
    {
     "cmd": [
      "env",
-     "HS_DATA_ROOT=/share/home/linzihan/os2026/data",
+     "HS_DATA_ROOT=~/os2026/data",
      "python",
      "tools/bench/ab_cases.py",
      "run",
@@ -9664,7 +9664,7 @@
    {
     "cmd": [
      "env",
-     "HS_DATA_ROOT=/share/home/linzihan/os2026/data",
+     "HS_DATA_ROOT=~/os2026/data",
      "python",
      "tools/bench/ab_cases.py",
      "run",
@@ -9711,7 +9711,7 @@
      "--out-dir",
      "/tmp/os2026-p11",
      "--root",
-     "/share/home/linzihan/os2026/data",
+     "~/os2026/data",
      "--cores",
      "16-31",
      "--mem-gb",
@@ -9823,7 +9823,7 @@
      "--out-dir",
      "/tmp/os2026-p11",
      "--root",
-     "/share/home/linzihan/os2026/data",
+     "~/os2026/data",
      "--cores",
      "16-31",
      "--mem-gb",
@@ -9851,7 +9851,7 @@
    {
     "cmd": [
      "env",
-     "HS_DATA_ROOT=/share/home/linzihan/os2026/data",
+     "HS_DATA_ROOT=~/os2026/data",
      "python",
      "tools/bench/ab_cases.py",
      "run",
@@ -9915,7 +9915,7 @@
    {
     "cmd": [
      "env",
-     "HS_DATA_ROOT=/share/home/linzihan/os2026/data",
+     "HS_DATA_ROOT=~/os2026/data",
      "python",
      "tools/bench/ab_cases.py",
      "run",
@@ -10002,7 +10002,7 @@
      "--out-dir",
      "/tmp/os2026-p11",
      "--root",
-     "/share/home/linzihan/os2026/data",
+     "~/os2026/data",
      "--cores",
      "16-31",
      "--mem-gb",
@@ -10053,7 +10053,7 @@
      "tools.eval.sweep",
      "/tmp/os2026-p11/retained-ab",
      "--root",
-     "/share/home/linzihan/os2026/data",
+     "~/os2026/data",
      "--out",
      "/tmp/os2026-p11/retained-eval.md"
     ],

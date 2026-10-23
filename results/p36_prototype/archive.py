@@ -35,7 +35,7 @@ for item in json.loads((p/'reuse-manifest.json').read_text()):
 runs = [json.loads(line) for line in (p/'runs.jsonl').read_text().splitlines()]
 for name in sorted({r['case'] for r in runs}):
     for directory in ['cases','refs']:
-        for f in (Path('/share/home/linzihan/os2026/data')/directory/name).rglob('*'):
+        for f in (Path('~/os2026/data')/directory/name).rglob('*'):
             if f.is_file():
                 inputs[str(f)] = dict(size=f.stat().st_size, sha256=digest(f))
 (p/'input-hashes.json').write_text(json.dumps(inputs, indent=2)+'\n')

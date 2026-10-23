@@ -4,7 +4,7 @@ import numpy as np
 sys.path.insert(0,'/tmp/os2026-p10-repair.9doyhO')
 from tools import case as cio
 from tools.eval import common,evaluate
-p=Path('/tmp/os2026-p37');repo=Path('/tmp/os2026-p10-repair.9doyhO');b=repo/'build/release';data=Path('/share/home/linzihan/os2026/data')
+p=Path('/tmp/os2026-p37');repo=Path('/tmp/os2026-p10-repair.9doyhO');b=repo/'build/release';data=Path('~/os2026/data')
 common.require_guard('P37 reference-window check')
 manifest=[];details=[]
 for name in ['yee-photonic-rods-1e4','yee-photonic-spheres-1e4']:

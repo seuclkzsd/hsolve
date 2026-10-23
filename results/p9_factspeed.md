@@ -371,7 +371,7 @@ Together with the block sizes of §3.2 a count is **1.073-1.079x** faster than w
 
 The candidate for a default: the block sizes of §3.2 (KEEP(420) = 256, KEEP(58) = 2000, KEEP(57) =
 4000) with the environment's MUMPS - `hsolve_k256c`, i.e. today's code with `HS_MUMPS_BLOCKING=p9` -
-against main a831d79 (`hsolve_main`), `tools/bench/ab_cases.py` (ABBA, each run the case's default
+against main c822126 (`hsolve_main`), `tools/bench/ab_cases.py` (ABBA, each run the case's default
 configuration under its own nested guard, 16 threads, 32 GiB: in core), solver time
 `time_total_s`, every run evaluated by tools/eval. The ab_cases tables of every gate run are in
 `results/p9_factspeed_gates.json` (since the review also the review's rerun of §4.4, the runs of
@@ -442,7 +442,7 @@ wg-square-1e3 0.978, wg-square-n289 0.918, wg-square-pert-1e4 0.898 (noise).
 
 ### 4.5 The patched build again, after the review
 
-The review reran §4.4 with its own builds (main a831d79; f4d404d linked to its own build_mumps.sh
+The review reran §4.4 with its own builds (main c822126; b942c9e linked to its own build_mumps.sh
 install, nocona -O2 + patch): yee-pec-box-1e6 **1.045x** (89.18 -> 85.35 s), syn-mem27-100 1.089x,
 all 20 runs valid - one 5-run sample passes the bar on yee-pec-box-1e6, another fails. To settle it,
 a third build (this branch, linked to `tools/dev/build_mumps.sh fix-l0p --patch ...` with the
@@ -559,11 +559,11 @@ All on gpu01 through `tools/dev/cluster_run.sh gpu01 [--wip] -- ...` (HS_CLUSTER
 from the work tree of branch p9-factspeed. `S=$HOME/p9_p9-factspeed`, `D=$HOME/p7_p7-membudget/data/cases`,
 `G="python3 tools/run/guard.py --exclusive --timeout 2700 --mem-gb 32 --"` (measurement slot; each
 campaign one $G call), `L="python3 tools/run/guard.py --skip-busy-check --mem-gb 8 --timeout 3600 --"`
-(build lane). Timed binaries are copies in `$S/bin`: `bench_factspeed_factor` (built at 6b8cea2: no
+(build lane). Timed binaries are copies in `$S/bin`: `bench_factspeed_factor` (built at 1f545f0: no
 block-size setting, i.e. MUMPS' defaults unless `--keep`), `libhsolve_blashook.so`,
-`bench_asmkern_kernels`, `hsolve_main` (main a831d79, own clone `~/os2026-wt/p9-factspeed-main`,
+`bench_asmkern_kernels`, `hsolve_main` (main c822126, own clone `~/os2026-wt/p9-factspeed-main`,
 `tools/dev/build.sh release`), `hsolve_k256c` / `hsolve_k256c2` (the P9 block sizes compiled in
-unconditionally: the code of 602b24f with `HS_MUMPS_BLOCKING=p9`), `hsolve_l0p` (the same linked with
+unconditionally: the code of 156c5b1 with `HS_MUMPS_BLOCKING=p9`), `hsolve_l0p` (the same linked with
 `-DHSOLVE_MUMPS_ROOT=$HOME/deps/mumps-5.8.2-nocona-O2-l0p`).
 
 ```bash

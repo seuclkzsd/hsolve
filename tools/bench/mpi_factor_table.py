@@ -8,7 +8,7 @@ factorization with ICNTL(31) = 1), the numeric factorization keeping the factors
 (--nrhs right-hand sides; the median over every solve call), the factorization rate, MUMPS'
 memory (INFOG(22) total over the ranks, INFOG(21) the largest rank) and the guard's process-tree
 peak RSS, with the ratios against the baseline layout (default seq1x16: hsolve's sequential MUMPS,
-16 threads). "flop balance" (bench builds from 872d39a on) is the elimination flops of the busiest
+16 threads). "flop balance" (bench builds from 7f4c61f on) is the elimination flops of the busiest
 rank over the mean of the ranks (RINFO(3); 1 = perfectly balanced). "inertia" is the INFOG(12)
 of every factorization of the layout (one value when they all agree) and its verdict: "ok" when
 every run of the layout (one per guard line) ended with the bench's "run" event, the bench's own

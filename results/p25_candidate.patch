@@ -602,7 +602,7 @@
 +    assert candidate(a,b,0.,k,1e-10)[0] is None
 +print(json.dumps({'random_cases':len(rows),'positive_and_negative_checks':len(rows)*4,'rows':rows}),flush=True)
 +Path('/tmp/os2026-p25/random-check.json').write_text(json.dumps(rows,indent=2)+'\n')
-+for folder in [Path('/share/home/linzihan/os2026/data/cases/yee-pec-box-1e4'),Path('/share/home/linzihan/p7_p7-membudget/data/cases/yee-pec-box-1e6')]:
++for folder in [Path('~/os2026/data/cases/yee-pec-box-1e4'),Path('~/p7_p7-membudget/data/cases/yee-pec-box-1e6')]:
 +    a=sp.load_npz(folder/'A.npz');b=sp.load_npz(folder/'B.npz') if (folder/'B.npz').exists() else None
 +    cfg=json.loads((folder/'config.json').read_text());target=cfg['target']
 +    result,reason=candidate(a,b,target['sigma'],target['k'],cfg.get('tol',1e-10))
@@ -709,7 +709,7 @@
 +#!/usr/bin/env bash
 +set -euo pipefail
 +cd /tmp/os2026-p10-repair.9doyhO
-+python /tmp/os2026-p25/compare.py --solvers hsolve-full,hsolve-structure --reps 1 --timeout 180 --cores 8-15 --mem-gb 12 --root /share/home/linzihan/os2026/data --tag p25-smoke --out-dir /tmp/os2026-p25 cav2d-rect-pert-1e5 yee-pec-box-1e4 yee-pec-box-1e5 yee-bloch-1e4 syn-near-singular-real-1e4
++python /tmp/os2026-p25/compare.py --solvers hsolve-full,hsolve-structure --reps 1 --timeout 180 --cores 8-15 --mem-gb 12 --root ~/os2026/data --tag p25-smoke --out-dir /tmp/os2026-p25 cav2d-rect-pert-1e5 yee-pec-box-1e4 yee-pec-box-1e5 yee-bloch-1e4 syn-near-singular-real-1e4
 --- /dev/null
 +++ b/experiments/p25/random.sh
 @@ -0,0 +1,4 @@
@@ -723,21 +723,21 @@
 +#!/usr/bin/env bash
 +set -euo pipefail
 +cd /tmp/os2026-p10-repair.9doyhO
-+python /tmp/os2026-p25/compare.py --solvers hsolve-structure,hsolve-fault --reps 1 --timeout 180 --cores 8-15 --mem-gb 12 --root /share/home/linzihan/os2026/data --tag p25-fault --out-dir /tmp/os2026-p25 yee-pec-box-1e4 yee-pec-box-1e5
++python /tmp/os2026-p25/compare.py --solvers hsolve-structure,hsolve-fault --reps 1 --timeout 180 --cores 8-15 --mem-gb 12 --root ~/os2026/data --tag p25-fault --out-dir /tmp/os2026-p25 yee-pec-box-1e4 yee-pec-box-1e5
 --- /dev/null
 +++ b/experiments/p25/million.sh
 @@ -0,0 +1,4 @@
 +#!/usr/bin/env bash
 +set -euo pipefail
 +cd /tmp/os2026-p10-repair.9doyhO
-+python /tmp/os2026-p25/compare.py --mpi --solvers hsolve-full,hsolve-structure,hsolve-p21,slepc --reps 1 --timeout 180 --cores 8-15,16-23 --mem-gb 32 --root /share/home/linzihan/p7_p7-membudget/data --slepc-profile best --slepc-profile-file results/p19_slepc_profiles.json --tag p25-million-screen --out-dir /tmp/os2026-p25 yee-pec-box-1e6
++python /tmp/os2026-p25/compare.py --mpi --solvers hsolve-full,hsolve-structure,hsolve-p21,slepc --reps 1 --timeout 180 --cores 8-15,16-23 --mem-gb 32 --root ~/p7_p7-membudget/data --slepc-profile best --slepc-profile-file results/p19_slepc_profiles.json --tag p25-million-screen --out-dir /tmp/os2026-p25 yee-pec-box-1e6
 --- /dev/null
 +++ b/experiments/p25/confirm.sh
 @@ -0,0 +1,4 @@
 +#!/usr/bin/env bash
 +set -euo pipefail
 +cd /tmp/os2026-p10-repair.9doyhO
-+python /tmp/os2026-p25/compare.py --mpi --solvers hsolve-full,hsolve-structure,slepc --reps 3 --timeout 180 --cores 8-15,16-23 --mem-gb 32 --root /share/home/linzihan/p7_p7-membudget/data --slepc-profile best --slepc-profile-file results/p19_slepc_profiles.json --tag p25-million-confirm --out-dir /tmp/os2026-p25 yee-pec-box-1e6
++python /tmp/os2026-p25/compare.py --mpi --solvers hsolve-full,hsolve-structure,slepc --reps 3 --timeout 180 --cores 8-15,16-23 --mem-gb 32 --root ~/p7_p7-membudget/data --slepc-profile best --slepc-profile-file results/p19_slepc_profiles.json --tag p25-million-confirm --out-dir /tmp/os2026-p25 yee-pec-box-1e6
 --- /dev/null
 +++ b/experiments/p25/regression.py
 @@ -0,0 +1,34 @@

@@ -11,19 +11,19 @@ MUMPS 奇异与惯性约定实测化；铅笔（pencil）只存上三角索引�
 后向误差改用 2-范数估计；GHIEP 实/复分类按尺度 + 残差；零模用移位放置而非剔除重算；
 存储 B·V 改为可选；文件格式与参考解隔离；测试命名、实例化、所有权规则。
 
-v3（P3 合并后，a8ed8f4）——低内存输入装配、无散射映射的铅笔；确定性正交化核（DGKS、融合扫描、
+v3（P3 合并后，0acb863）——低内存输入装配、无散射映射的铅笔；确定性正交化核（DGKS、融合扫描、
 块 CGS2）；MUMPS 实测约定补充（实例间非线程安全、ICNTL(31)、PERM_IN、JOB=−4）与 InertiaCounter；
 块 Krylov-Schur、LOBPCG、Jacobi-Davidson；driver 的谱切片、惯性搜索的单边目标、零带切除、GHIEP 零簇
 移位放置、互斥分阶段计时；Python 接口。实测数据汇总在 `results/p3_measurements.md`。
 
-v4（P4 合并后，6a3d7c1）——稀疏核运行时分派（Reference / Portable / AVX-512）与融合的修正残差
+v4（P4 合并后，90deeff）——稀疏核运行时分派（Reference / Portable / AVX-512）与融合的修正残差
 `shifted_residual`；修正只解活跃列、到舍入水平即停；`FactorSolveOperator`；自研并行嵌套剖分排序
 （factor 层，driver 尚未使用）；一般 Krylov-Schur 的块模式与 `krylov_schur_general_peak_columns`；
 新模块 src/verify（随机排除检验、单精度计数规则、代价模型；尚未接入 driver）；driver 的块 Krylov
 （`block_size`）、InertiaCounter 证书计数与第五个互斥阶段 certificate、确定性的排序代价模型、B 的
 O(nnz) 正定性筛查、GHIEP 块运行与后处理内存；集群节点部署。实测汇总在 `results/p4_measurements.md`。
 
-v5（P5c 集成：p5c-integration 1bd75f9 加集成修正，至 9201c2c）——src/verify 接入 driver：nearest 的完备性检验
+v5（P5c 集成：p5c-integration d58193e 加集成修正，至 afb88c7）——src/verify 接入 driver：nearest 的完备性检验
 `certificate = exact | randomized | auto | off`（单精度计数先经双精度复核、auto 选单精度计数要求 10 倍余量、
 随机检验只在 κ(B) 有证明时出结论、选中对少于 k 时也重跑，§3.6-8）；输入检查（缩放的厄密缺陷、拒绝零矩阵与
 非有限值、恢复线程数）与 B 的正定性检验链（分析之前的廉价检验、IC + Gershgorin 严格证明及其预算，§3.6-1）；
@@ -58,7 +58,7 @@ KEEP(498/499)）与 `patches/mumps-5.8.2-l0-blocking.patch`；**默认构建由�
 （`third_party/mumps/`，`tools/dev/mumps_cache.sh` 按构建输入缓存，`HS_MUMPS=env` 回退到环境的 MUMPS），默认块参数
 随之为 p9，`HS_MUMPS_BLOCKING=mumps` 运行时恢复（§3.4）；构建信息写出所用 MUMPS；没有主机文件的机器上 guard 绑本机的
 CPU（§6）。MPI MUMPS 在一个 16 核 socket 上慢于顺序版 + OpenMP（0.59–0.85 倍，负结果，`results/p9_mpi.md`）。最终测量
-（对 main a831d79、对调优 SLEPc、1–16 线程）见 `results/p9_measurements.md`。
+（对 main c822126、对调优 SLEPc、1–16 线程）见 `results/p9_measurements.md`。
 
 v9（P10「gpu」，分支 p10gpu）——新模块 src/gpu（不属于 libhsolve，由 BLAS hook 使用）：运行时 dlopen 的 CUDA runtime 与
 cuBLAS，把 MUMPS 分解（含证书计数）中被主机流量模型判为划算的大 dgemm 以 FP64 卸载到一张 GPU（暂存打包、cuBLAS、主机
@@ -224,7 +224,7 @@ src/mpi      （P10，不属于 libhsolve，HSOLVE_WITH_MPI）hs::Transport 的 
     自己算；存储模式两遍——范数要取自调用者的 bw，而 bw 可能只是草稿）。
   - **DGKS 的前提**：V 在工作精度上 M-正交归一。若 ‖VᴴMV − I‖ = δ，一遍后 VᴴMw 仍为 O(δ)，两遍为
     O(δ²)。因此带 deflation 块的调用方用 `Always`：`lanczos_krylov_schur` 在 d > 0 时（deflation 块
-    只在 1e-8 内正交归一）、块正交化器的逐列回退路径（6ff42f2）。
+    只在 1e-8 内正交归一）、块正交化器的逐列回退路径（34e9fd0）。
   - `OrthoOptions{reorth, eta, mw_on_exit}`：`mw_on_exit = false`（仅重算模式）声明调用者出口不需要
     bw == M·w，范数改用勾股关系，M 作用一遍 2 → 1 次、两遍 3 → 2 次；默认 true，尚无调用者使用
     （数据算例的 B 都便宜，测不出收益）。`OrthoInfo{passes, norm_before, norm_pass1, norm_after}`。
@@ -257,7 +257,7 @@ src/mpi      （P10，不属于 libhsolve，HSOLVE_WITH_MPI）hs::Transport 的 
     复数时 INFOG(12) 为奇数视为奇异。
   - `FactorOptions::deterministic`（ICNTL(48)=0，factor 层默认 true）使同一线程数下的分解与回代
     逐位可复现；**driver 默认 `SolverConfig::deterministic = false`**（ICNTL(48)=1，L0-OpenMP 子树
-    并行：三角回代约快 1.75×，结果只在容差内可复现，574d114）。L0-OpenMP 下分解必须用其分析时的
+    并行：三角回代约快 1.75×，结果只在容差内可复现，5ccb144）。L0-OpenMP 下分解必须用其分析时的
     线程数，否则 INFO(1) = −58：`analyze()` 固定 ICNTL(16)（threads = 0 取分析时的
     `omp_get_max_threads()`）。逐位复现还需可复现的排序（driver 的 `deterministic = true` 自动满足：
     沿用 P4 的排序规则，AMD 或固定种子的 METIS，§3.6-3b；显式 `ordering = 10`（自研嵌套剖分，排列与线程数
@@ -282,7 +282,7 @@ src/mpi      （P10，不属于 libhsolve，HSOLVE_WITH_MPI）hs::Transport 的 
     1e5 测例因子条目 +0.4..3.4%，随机稀疏矩阵 +1..7%（AMD、SCOTCH）、最多 +15%（METIS）。
   - **SCOTCH 排序不可复现**：同一进程内两次分析得到不同排序（flops 差 10%），不同进程间也不同
     （wg-square-1e6 固定 ordering=3，4 次运行因子条目 7.202e7–7.275e7）；42 个数据测例上同一进程的
-    3 次 SCOTCH 分析估计在每个测例上都有变化，METIS（固定种子）在任何测例上都没有（1888a72，
+    3 次 SCOTCH 分析估计在每个测例上都有变化，METIS（固定种子）在任何测例上都没有（1f67375，
     `bench_drvint_fix_ordering`）。`FactorOptions::deterministic` 只覆盖分解与回代；driver 的
     `deterministic = true` 因此在自适应排序中改用 METIS（§3.6-3b）。
 - 错误约定：工作区不足（−8,−9,−14,−15,−17,−20），以及工作区预留低于 cap 时的 −19，由 `factorize`
@@ -336,7 +336,7 @@ src/mpi      （P10，不属于 libhsolve，HSOLVE_WITH_MPI）hs::Transport 的 
   （`counter_pays`）、以及主分解为单精度/BLR 时在 InertiaCounter 上计数，每次计数前释放主因子；
   窗口/切片默认在主对象上计数（计数点兼作单边位移），只在主因子 INFOG(21) + 计数器估计超过上限时
   释放。4 线程端到端实测：证书时间比主对象计数少 0.05–0.14 s（5–13%），峰值 RSS 低 2–7%
-  （667d8e9）。P5 起 `certificate = auto` 在 §3.5b 的规则带 10 倍余量成立时用单精度计数（证书方法
+  （5094713）。P5 起 `certificate = auto` 在 §3.5b 的规则带 10 倍余量成立时用单精度计数（证书方法
   exact_single）：它们在 certifier 自建的 InertiaCounter 上做，可疑时在同一计数器上以双精度复核，同一
   计数器随后也服务该轮的精确计数（不再建第二个计数器、也不为它再分析一次；§3.6-8）。这个计数器推迟其双精度
   实例（`defer_double_analysis`，P5c 集成）：单精度计数一次通过的证书只付单精度实例的一次分析（之前还有一次
@@ -402,7 +402,7 @@ src/mpi      （P10，不属于 libhsolve，HSOLVE_WITH_MPI）hs::Transport 的 
     20 次 1.059 [bootstrap 1.042–1.073]、按相同 flops 折算 1.055 [1.050–1.064]，固定 METIS 主元顺序（无 SCOTCH
     波动）只有 1.040（syn-mem27-100 1.061）。评审前写的“1.125 / 1.066，门槛通过”只是一组运气好的样本，factspeed
     评审据此撤回了作默认构建的建议；用户 2026-10-14 仍决定把打补丁的自编 MUMPS 作为默认构建（P9 集成；集成构建对
-    main a831d79 的端到端实测见 `results/p9_measurements.md`）。
+    main c822126 的端到端实测见 `results/p9_measurements.md`）。
     以后这类门槛应消除 SCOTCH 的波动：两个二进制用同一主元顺序，或每个 20 次并按 flops 折算
     （`tools/bench/factspeed_gate_flops.py`，`results/p9_factspeed.md` §4.5）。
   - **主元极值更新（P13）**：`patches/mumps-5.8.2-pivot-extrema.patch` 在 L0 并行路径中先原子读取
@@ -533,7 +533,7 @@ src/mpi      （P10，不属于 libhsolve，HSOLVE_WITH_MPI）hs::Transport 的 
   正交化用 `Reorth::Auto`（重算模式下为 DGKS：每步 2 或 3 次 M 作用）；有 deflation 块时一律两遍
   （`Always`，每步 3 次；§3.3 的 DGKS 前提）。单向量 Krylov 对精确重特征值只能靠舍入得到其余
   副本：driver 的惯性证书 + 收缩重跑负责补齐。block_size = 1 与 P2 的求解器逐位一致
-  （`test_lanczos_bitwise.cpp` 对 base 17a2a79 钉住每种标量 12 种配置的输出哈希）。
+  （`test_lanczos_bitwise.cpp` 对 base e95db77 钉住每种标量 12 种配置的输出哈希）。
 - **`KrylovSchurOptions::lead_nev`**（P5c 集成，单向量与块模式都有；`krylov_schur_general` 对非零值抛
   InvalidInput）：0 < lead_nev < nev 时，按 which 排名最前的 lead_nev 个 Ritz 对全部收敛即结束运行（单向量在
   轮末、块模式也在提前停止探测处检查），不论其余 nev − lead_nev 个想要的对如何；它们照样决定基数与保留集，
@@ -630,7 +630,7 @@ src/mpi      （P10，不属于 libhsolve，HSOLVE_WITH_MPI）hs::Transport 的 
   - `krylov_schur_general_peak_columns(n, options)`：给定选项时的峰值 n-向量数（Krylov 基 + Schur
     基，与 Schur 基 + 结果向量取大；基为 p = 1 的 ncv + 1、块布局的 ncv + p 或整空间循环的 n + 1），
     按求解器同样规则校验选项；driver 的 GHIEP 用它做内存适配（§3.6-3）。
-  - p = 1 与 a8ed8f4 逐位一致（Ritz 向量除外，见上；`test_krylov_schur_general_bitwise.cpp`：每种标量
+  - p = 1 与 0acb863 逐位一致（Ritz 向量除外，见上；`test_krylov_schur_general_bitwise.cpp`：每种标量
     10 种配置，哈希表以平台指纹 + `/proc/cpuinfo` 型号为键——Xeon Silver 4314 与 Gold 6336Y 在配置
     10 的 OpenBLAS 乘积末位不同；未知平台只检查计数）。
 - 以上两者都通过 `history` 返回每次重启的收敛数与最大残差估计。
@@ -896,7 +896,7 @@ factor（InertiaCounter）、sparse、linalg；不打印；固定种子与线程
      有回归风险；比值 ≥ 5.6（Yee 1e4 晶胞、1e5 三维测例）−14% 到 +3%（中位 −7%），1e6（比值 21、33）flops −1% / −27%。
      不做流精修时这些图上的排列与 P5c 的剖分相同（flops 一致）。数据测例中关掉它的是 yee-pec-cube-16、
      yee-pec-box-1e4、ss-tem27623、ss-helm3d01、wg-square-n289。候选串里以 `10n` 标出，ND 项末尾的 `/r…` 是比值。
-   - 计划的工作（`plan_work`，由配置与分析前已知的问题类型推导，不计时；按 6a3d7c1 时数据测例的端到端
+   - 计划的工作（`plan_work`，由配置与分析前已知的问题类型推导，不计时；按 90deeff 时数据测例的端到端
      运行标定）：HEP/GHEP nearest 分解 1 次（类型未定再加 B 的惯性 1 次）、证书计数 2 次（`inertia_check
      = off` 时 0）、列作用 40 + 4k（p > 1）或 2k + 12（p = 1），块宽按 P4 规则估计（分析之前还没有因子
      统计）；窗口目标（interval / smallest / largest）再加 1 次分解、计数 4 次（粗估，数据测例都是
@@ -1443,7 +1443,7 @@ factor（InertiaCounter）、sparse、linalg；不打印；固定种子与线程
   Open MPI 5.0.11：`test_mpi_session` 的 `--oversubscribe --bind-to none` 只在 configure 时 `mpiexec --version` 表明是
   Open MPI 才加（Hydra 默认不绑核、不限 rank 数；其它启动器的选项经 `MPIEXEC_PREFLAGS`），启动脚本见上。
 - **实测**（两 socket 各 8 核对一个进程 16 线程跨两 socket，5 次交错、每次有效，`results/p10_mpi.md` §4，审查修复后的
-  二进制 54e5219）：两 socket 上 hsolve-mpi 对 hsolve（16 线程跨两个 socket）：1e6 nearest 1.11 / 1.09 倍
+  二进制 29550cd）：两 socket 上 hsolve-mpi 对 hsolve（16 线程跨两个 socket）：1e6 nearest 1.11 / 1.09 倍
   （syn-mem27-100 75.8 → 68.5 s，yee-pec-box-1e6 64.1 → 59.0 s；证书 36.0 → 29.2 s、29.9 → 24.2 s；对单 socket 的
   hsolve 1.26 / 1.23 倍），1e5 三维 nearest 1.10–1.20 倍（证书 0.97–1.01 → 0.73–0.77 s），多片窗口 1.15–1.74 倍
   （syn-mem27-46 [0.1, 0.3] 655 个特征值 4 片：33.0 → 19.0 s；yee-pec-cube-32 [40, 400] 2 片 1.50 倍）；主分解与 Krylov
@@ -1678,10 +1678,10 @@ gpu 节点同型，无 GPU，与其他用户共用）只在空闲时使用：
 | P1 | io / factor+ops / eigen（两种）实现与单测；测例生成器；评测工具 |
 | P2 | driver + CLI；端到端测试；测例集与首轮实验（对比 scipy 基线） |
 | P3 | **已完成**：低内存输入装配与无映射铅笔；确定性正交化（融合 CGS2、DGKS、块 CGS2）；MUMPS 约定补充与 InertiaCounter；块 Krylov-Schur（eigen 层）；LOBPCG / JD；谱切片与惯性搜索的单边目标、零带切除、GHIEP 零簇移位放置；互斥分阶段计时；Python 接口；评测工具（汇总、合并参考、scipy 基线）。**未做**：SpMV SIMD；GHIEP 重特征值的块 Krylov（一般 Krylov-Schur 仍只支持 p = 1）——二者 P4 完成 |
-| P4 | **已完成**（6a3d7c1）：稀疏核运行时分派（AVX-512）与融合修正残差、修正的舍入水平停止与活跃列回代、`FactorSolveOperator`；自研并行嵌套剖分（factor 层）与 ICNTL(15) 块分析；一般 Krylov-Schur 块模式与峰值列函数；src/verify（随机排除检验、单精度计数规则、代价模型）；driver：块 Krylov 默认（HEP/GHEP p = 4、GHIEP p = 2 的规则）、InertiaCounter 证书与 certificate 阶段、确定性排序模型（deterministic 用 METIS）、B 的 O(nnz) 筛查、GHIEP 后处理内存（wg-square-1e6 峰值 2.89 → 1.77 GB）；SLEPc 调优器与公平对比工具；集群节点部署。**未做**：JD + 单精度因子的内存受限回退；verify 接入 driver；自研嵌套剖分接入自适应排序；driver 检查单精度/BLR 修正是否收敛；16 核独占重测（SLEPc 调优与对比、排序、回代、GHIEP 块宽）；故障场景验证矩阵 |
-| P5 | **已完成**（P5c，main 34cbfd4）：verify 接入 driver（certificate = exact / randomized / auto / off，单精度计数的双精度复核）；输入检查与 B 正定性检验链（分析前的廉价检验、IC + Gershgorin 严格证明）；自适应排序的 16 线程代价模型，自研嵌套剖分作为候选与 `ordering = 10`；σ₀ 处的零主元簇规则；块宽规则 `recommended_block_size` 与块步快路径 `try_fast`，nearest 运行按规则取块宽（内存只预留 P4 块宽的基）；收缩重跑以 `lead_nev` 在缺的对收敛后结束、自动块宽之后至多用 P4 块宽；certifier 的 InertiaCounter 推迟双精度实例的分析；GHIEP 内存预留按峰值列计、报告实际块宽；BLAS hook（src/blas，默认链入、route all）；以上都在 16 核测量槽下测量。**未做**：JD + 单精度因子的内存受限回退；SCOTCH 固定种子（之后可按其估计比较）；更好的嵌套剖分分隔子与 ND 功的预测（ss-tem152078）；一般 B 的 κ 证明（如分解 B − μ·diag(B)），使随机检验与单精度计数也适用于一般 HPD B；块宽规则在 BLAS hook 下的重新标定（现以 `kRuleWideMargin` 补偿，yee-bloch-1e4、yee-photonic-* 选 8 仍比 4 慢 2.5–3%）与用于切片；故障场景验证矩阵 |
+| P4 | **已完成**（90deeff）：稀疏核运行时分派（AVX-512）与融合修正残差、修正的舍入水平停止与活跃列回代、`FactorSolveOperator`；自研并行嵌套剖分（factor 层）与 ICNTL(15) 块分析；一般 Krylov-Schur 块模式与峰值列函数；src/verify（随机排除检验、单精度计数规则、代价模型）；driver：块 Krylov 默认（HEP/GHEP p = 4、GHIEP p = 2 的规则）、InertiaCounter 证书与 certificate 阶段、确定性排序模型（deterministic 用 METIS）、B 的 O(nnz) 筛查、GHIEP 后处理内存（wg-square-1e6 峰值 2.89 → 1.77 GB）；SLEPc 调优器与公平对比工具；集群节点部署。**未做**：JD + 单精度因子的内存受限回退；verify 接入 driver；自研嵌套剖分接入自适应排序；driver 检查单精度/BLR 修正是否收敛；16 核独占重测（SLEPc 调优与对比、排序、回代、GHIEP 块宽）；故障场景验证矩阵 |
+| P5 | **已完成**（P5c，main d28e74c）：verify 接入 driver（certificate = exact / randomized / auto / off，单精度计数的双精度复核）；输入检查与 B 正定性检验链（分析前的廉价检验、IC + Gershgorin 严格证明）；自适应排序的 16 线程代价模型，自研嵌套剖分作为候选与 `ordering = 10`；σ₀ 处的零主元簇规则；块宽规则 `recommended_block_size` 与块步快路径 `try_fast`，nearest 运行按规则取块宽（内存只预留 P4 块宽的基）；收缩重跑以 `lead_nev` 在缺的对收敛后结束、自动块宽之后至多用 P4 块宽；certifier 的 InertiaCounter 推迟双精度实例的分析；GHIEP 内存预留按峰值列计、报告实际块宽；BLAS hook（src/blas，默认链入、route all）；以上都在 16 核测量槽下测量。**未做**：JD + 单精度因子的内存受限回退；SCOTCH 固定种子（之后可按其估计比较）；更好的嵌套剖分分隔子与 ND 功的预测（ss-tem152078）；一般 B 的 κ 证明（如分解 B − μ·diag(B)），使随机检验与单精度计数也适用于一般 HPD B；块宽规则在 BLAS hook 下的重新标定（现以 `kRuleWideMargin` 补偿，yee-bloch-1e4、yee-photonic-* 选 8 仍比 4 慢 2.5–3%）与用于切片；故障场景验证矩阵 |
 | P7 | **已完成**（p7-membudget-fix）：内存预算默认 auto（cgroup、`HSOLVE_MEMORY_LIMIT_GB`、RLIMIT_AS/DATA、MemTotal 中最小的上限 L，0.85·L；地址空间上限按 VmSize 计并扣除已预留部分）；分析后按其常驻增量重新规划；内存失败改外存重试；ICNTL(23) 按 MUMPS 估计给出；单精度 / BLR 因子每次 apply 受检查、未达标以双精度同一主元顺序重解，`factor_precision = auto`（只在双精度放不进内存而单精度放得进时，可选）。32 GiB 下 1e6 三维测例改为内存内，快 1.71–1.83×（`results/p7_membudget.md`）。P6（混合精度求解，负结果）见分支 p6-mixprec-fix。 |
 | P8 | **已完成**（p8-certcost-fix）：证书的计数失败不再结束求解——计数源（InertiaCounter / 主对象）失败时换另一个，计数前按计数余量检查估计（主对象代替计数器时按其上次分解的 INFOG(21)），SCOTCH 分析超上限时至多再分析两次；都不行时 nearest 交回已收敛的对、证书标为未完成（success = false），窗口目标只丢失败的切片；一般 HPD B 的 κ 与 λ_min 严格界（只用于 auto / randomized）；更便宜的精确计数全部实测为负（两进程并行、单次合并分解、省缩放/检测、换计数源），默认证书仍为 exact（`results/p8_certcost.md`）。 |
-| P9 | **已完成**（p9-merge 90e7483 = ordering + factspeed + mpi 的评审修正分支，集成分支 p9int）。**ordering**：自研嵌套剖分——taskwait → taskgroup（关键路径上连带等待兄弟子树的缺陷）、图压缩与按权叶子、大图并发收缩与切分、分隔子的流精修（带内最小顶点割；driver 只在计划的数值时间 ≥ 4.5 倍预测排序时间时采用）、顶层投入（代价模型决定）；代价模型按新剖分重拟合（重放超额 1.1%），候选顺序中它先于 SCOTCH（门槛：1e6 1.25× / 1.22×，26 个 1e5 测例几何平均 0.919，`results/p9_ordering.md`）。**factspeed**：1e6 分解的剖析（DGEMM 峰值的 40–43%，受内存带宽限制）、MUMPS 块参数 `Blocking`（KEEP(420) = 256、KEEP(57/58)）与补丁 `patches/mumps-5.8.2-l0-blocking.patch`（L0 层下的 KEEP(498/499)）、可复现的 MUMPS 源码构建 `tools/dev/build_mumps.sh`；运行设置、重编（-O3 / AVX2 / AVX-512）、GEMMT 等为负结果（`results/p9_factspeed.md`）。**mpi**：1e6 对调优 SLEPc（`eps_ncv = 3k` 更正后 main 1.04× / 0.67×）与 MPI MUMPS 的上界——一个 16 核 socket 上 2 × 8 … 16 × 1 为顺序版 1 × 16 的 0.85–0.59 倍，负结果、不改设计（`results/p9_mpi.md`）。**集成**：打补丁的自编 MUMPS 成为默认构建（用户决定；官方 tarball 入库 `third_party/mumps/`，`tools/dev/mumps_cache.sh` 按构建输入缓存，`HS_MUMPS=env` 回退到 conda 的 MUMPS，`HS_MUMPS_BLOCKING=mumps` 运行时恢复 MUMPS 的块参数，构建信息写出所用 MUMPS，`tests/py/test_mumps_build.py`），无主机文件的机器上 guard 绑本机的 CPU；`tools/bench/thread_scaling.py`。最终测量（gpu01 测量槽，849 次计时运行全部有效、证书 exact，`results/p9_measurements.md`）：对 main a831d79 1e6（8 次）syn-mem27-100 1.34×、yee-pec-box-1e6 1.28×（同一主元顺序上块参数与补丁 1.056× / 1.053×），41 个数据测例几何平均 0.910、无回归；对调优 SLEPc 8 个配置中 5 个更快（syn-mem27-46 1.77×、yee-pec-box-1e5 1.37×、wg-square-1e5 1.89×、区间 3.14×、syn-mem27-100 1.41×；ss-qa8fk-qa8fm 0.96×、cav2d-rect-pert-1e5 0.74×、yee-pec-box-1e6 0.86×）；16 线程对最快的 1 线程配置（默认及固定的五种排序）三维 1e5 测例 3.57–4.51×、同一主元顺序 4.26–5.09×（评审更正：初稿以默认配置自己的 1 线程运行为基线，其排序在 1 线程时与 16 线程不同，报 4.2–5.4×；`tools/bench/thread_scaling.py` 的 `--variant`）。**未做**：排序代价模型在低线程数的定价（只在 16 线程标定；1 线程时 syn-mem27-46、ss-qa8fk-qa8fm 选 SCOTCH，METIS / PORD 快 1.21 / 1.27 倍，`results/p9_measurements.md` §5）、三维问题省去 AMD 探测、高度图上的流精修代价、deterministic 路径改用自研嵌套剖分；L0 层面板的秩 1 更新（PIVOT_OPTION）；证书的两次计数在 1e6 时仍占运行的一半 |
+| P9 | **已完成**（p9-merge cdb0054 = ordering + factspeed + mpi 的评审修正分支，集成分支 p9int）。**ordering**：自研嵌套剖分——taskwait → taskgroup（关键路径上连带等待兄弟子树的缺陷）、图压缩与按权叶子、大图并发收缩与切分、分隔子的流精修（带内最小顶点割；driver 只在计划的数值时间 ≥ 4.5 倍预测排序时间时采用）、顶层投入（代价模型决定）；代价模型按新剖分重拟合（重放超额 1.1%），候选顺序中它先于 SCOTCH（门槛：1e6 1.25× / 1.22×，26 个 1e5 测例几何平均 0.919，`results/p9_ordering.md`）。**factspeed**：1e6 分解的剖析（DGEMM 峰值的 40–43%，受内存带宽限制）、MUMPS 块参数 `Blocking`（KEEP(420) = 256、KEEP(57/58)）与补丁 `patches/mumps-5.8.2-l0-blocking.patch`（L0 层下的 KEEP(498/499)）、可复现的 MUMPS 源码构建 `tools/dev/build_mumps.sh`；运行设置、重编（-O3 / AVX2 / AVX-512）、GEMMT 等为负结果（`results/p9_factspeed.md`）。**mpi**：1e6 对调优 SLEPc（`eps_ncv = 3k` 更正后 main 1.04× / 0.67×）与 MPI MUMPS 的上界——一个 16 核 socket 上 2 × 8 … 16 × 1 为顺序版 1 × 16 的 0.85–0.59 倍，负结果、不改设计（`results/p9_mpi.md`）。**集成**：打补丁的自编 MUMPS 成为默认构建（用户决定；官方 tarball 入库 `third_party/mumps/`，`tools/dev/mumps_cache.sh` 按构建输入缓存，`HS_MUMPS=env` 回退到 conda 的 MUMPS，`HS_MUMPS_BLOCKING=mumps` 运行时恢复 MUMPS 的块参数，构建信息写出所用 MUMPS，`tests/py/test_mumps_build.py`），无主机文件的机器上 guard 绑本机的 CPU；`tools/bench/thread_scaling.py`。最终测量（gpu01 测量槽，849 次计时运行全部有效、证书 exact，`results/p9_measurements.md`）：对 main c822126 1e6（8 次）syn-mem27-100 1.34×、yee-pec-box-1e6 1.28×（同一主元顺序上块参数与补丁 1.056× / 1.053×），41 个数据测例几何平均 0.910、无回归；对调优 SLEPc 8 个配置中 5 个更快（syn-mem27-46 1.77×、yee-pec-box-1e5 1.37×、wg-square-1e5 1.89×、区间 3.14×、syn-mem27-100 1.41×；ss-qa8fk-qa8fm 0.96×、cav2d-rect-pert-1e5 0.74×、yee-pec-box-1e6 0.86×）；16 线程对最快的 1 线程配置（默认及固定的五种排序）三维 1e5 测例 3.57–4.51×、同一主元顺序 4.26–5.09×（评审更正：初稿以默认配置自己的 1 线程运行为基线，其排序在 1 线程时与 16 线程不同，报 4.2–5.4×；`tools/bench/thread_scaling.py` 的 `--variant`）。**未做**：排序代价模型在低线程数的定价（只在 16 线程标定；1 线程时 syn-mem27-46、ss-qa8fk-qa8fm 选 SCOTCH，METIS / PORD 快 1.21 / 1.27 倍，`results/p9_measurements.md` §5）、三维问题省去 AMD 探测、高度图上的流精修代价、deterministic 路径改用自研嵌套剖分；L0 层面板的秩 1 更新（PIVOT_OPTION）；证书的两次计数在 1e6 时仍占运行的一半 |
 | P10 | **gpu 已完成**（分支 p10gpu；本行为 GPU 部分的文本建议，MPI 部分见 p10mpi）：src/gpu——运行时 dlopen 的 CUDA runtime / cuBLAS（构建不需要 CUDA），BLAS hook 在 MUMPS 分解（含证书计数）中把主机流量模型判为划算的大 dgemm 以 FP64 卸载到一张 GPU（暂存打包、cuBLAS、主机加回，默认只用 GPU）；`HS_GPU` / `hsolve --gpu off\|auto\|on`，默认 off（CPU 路径不变），auto 只在分解估计 ≥ 3e12 flops 时用 GPU，无 GPU / 无库时为 CPU 路径并在报告中说明（降级模式）；报告的 `gpu` 对象。实测（gpu02 槽 + GPU 7，16 线程，5 次交错，`results/p10_gpu.md`）：单次调用 1.7–5.0×（受主机内存带宽限制）；1e6 三维测例同一主元顺序下每次分解 1.06–1.10×（三次合计 syn-mem27-100 1.092×、yee-pec-box-1e6 1.068×），配 P9 块参数 1.07–1.12×（合计 1.110× / 1.082×），8 线程 1.15×；GPU 承担分解 43–47% 的 flops；整次运行（证书 exact，`--gpu auto`，每次有效）syn-mem27-100 88.9 → 83.1 s（1.069×）、yee-pec-box-1e6 73.8 → 69.7 s（1.058×），峰值内存 +0.47 GiB；1e5–2.6e5 上 `on` 为负（0.72–0.97×）故 auto 只在估计 ≥ 3e12 flops 时用 GPU；每次计数仍是双精度 LDLᵀ 的精确 Sylvester 惯性，证书的条件与保证同 CPU 路径（实测计数与 CPU 路径相同，但不保证逐一相等）；评审修正（p10gpu-fix）：OpenMP 绑定下引擎线程可用全部位置、`chunk_kb` 以槽大小封顶、无 GPU 模块的构建也写出降级报告。**未做**：混合 CPU + GPU、L0 层内调用、回代上 GPU（受主机内存带宽 / 因子在主机内存所限，见 §3.10） |
 |  | **mpi 已完成**（分支 p10mpi）：多进程模式 hsolve-mpi（leader 占全部核 + 每 socket 一个 helper；`src/parallel` 会话与协议、`src/mpi` 传输，`HSOLVE_WITH_MPI=AUTO`，启动脚本 `hsolve-mpirun`）：nearest 证书的两次计数由两个 helper 同时做、窗口目标的切片交给 helper，代价规则与内存（预算覆盖整棵进程树）决定是否交出；结果与单进程相同，helper 的失败由 leader 接手（§3.9）。实测（5 次交错、全部有效，`results/p10_mpi.md`，审查修复后重测）：两 socket（各 8 核）上对单进程 hsolve，1e6 nearest 1.09–1.11 倍、1e5 三维 nearest 1.10–1.20 倍、多片窗口 1.15–1.74 倍；单 socket 上无益（0.86–0.93 倍，启动脚本因此直接运行普通 hsolve，不起 MPI 作业）；审查修复（`results/p10_mpi.md` §7）：helper 的内存规则在发送问题前按预测判断、被拒或做完即放下问题（紧预算下与 hsolve 同样认证、同样切片），单 NUMA 节点上不起 MPI 作业，Open MPI 专有选项只给 Open MPI，许可证声明覆盖 hsolve-mpi 的 MPI 库；MPI 版 MUMPS 跨 socket 一次分解 0.95–1.09 倍（1e6），未采用。**未做**：主分解与 Krylov 的进程级并行（顺序计算，实测无可分的独立分解）；单 socket 机器上的进程级收益 |

@@ -1,6 +1,6 @@
 import json
 from pathlib import Path
-root=Path('/home/zhlin/gencode/os2026');p=Path('/tmp/os2026-p38-local')
+root=Path('~/gencode/os2026');p=Path('/tmp/os2026-p38-local')
 m=json.loads((p/'collected.json').read_text());archive=json.loads((p/'archive-result.json').read_text());lines=[]
 def add(s=''):lines.append(s)
 add('# P38：稀疏部分 Bloch 分解与自适应候选')

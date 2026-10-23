@@ -3,7 +3,7 @@
 P8 asked for (1) certificate counts whose failure never ends a solve, (2) cheaper EXACT counts
 (concurrent edge counts, count settings, overlap), (3) a proven kappa for a general SPD B (optional
 after the user's decision that the default stays `certificate = exact`), and (4) the measurements
-below. Branch `p8-certcost` from main 34cbfd4. Every timing is from a 16-core measurement slot
+below. Branch `p8-certcost` from main d28e74c. Every timing is from a 16-core measurement slot
 (`guard.py --exclusive`, cores 16-31, 32 GiB), 16 threads, 2026-10-14. The fixes of the P8 review
 (branch `p8-certcost-fix`) and their measurements are in §8; §2 and §7 are updated for them.
 
@@ -14,17 +14,17 @@ BLAS hook linked, route all; build lane, cores 8-15, `HS_JOBS=4`; copies in `~/p
 
 | label | commit | md5 | used for |
 |---|---|---|---|
-| main | main 34cbfd4 (own clone on c005) | 8efe5c5a18b8a7f7b721fbbbe2aa1f2a | regression baseline (§5) |
-| P8 (p8b) | d0035c5 | 0414844016fbd4df384675349b59f7a5 | counter A/B, regression, head-to-head nearest, first ss-3dspectralwave2 campaign |
-| P8 (92d4962) | 92d4962 | - (work tree build) | head-to-head interval |
-| P8 (p8e) | be2efde | 707cdb2efeebae52ffd15fb8a52fdb12 | ss-3dspectralwave2 campaigns 2 and 3 |
-| P8 head (p8head) | 91a9c01 | 66bc28e68057d0f6b86dc4ddd4ddd80d | review fixes: the analogue before the fix (§2.1, §8) |
-| fix (fix2) | aa5fe66 (p8-certcost-fix; built from the work tree before the commit, the commit's build has the same md5) | f700ae5b32d343d3d6464e95eec87d27 | §2.1, §2.3 (fix runs), §8 |
+| main | main d28e74c (own clone on c005) | 8efe5c5a18b8a7f7b721fbbbe2aa1f2a | regression baseline (§5) |
+| P8 (p8b) | cc779a8 | 0414844016fbd4df384675349b59f7a5 | counter A/B, regression, head-to-head nearest, first ss-3dspectralwave2 campaign |
+| P8 (78ffb4f) | 78ffb4f | - (work tree build) | head-to-head interval |
+| P8 (p8e) | 290d68f | 707cdb2efeebae52ffd15fb8a52fdb12 | ss-3dspectralwave2 campaigns 2 and 3 |
+| P8 head (p8head) | 60e376a | 66bc28e68057d0f6b86dc4ddd4ddd80d | review fixes: the analogue before the fix (§2.1, §8) |
+| fix (fix2) | 537a7a3 (p8-certcost-fix; built from the work tree before the commit, the commit's build has the same md5) | f700ae5b32d343d3d6464e95eec87d27 | §2.1, §2.3 (fix runs), §8 |
 
-The commits after d0035c5 change only (a) the re-analysis of a SCOTCH analysis that does not fit the
-budget (92d4962, be2efde: inert unless an estimate exceeds the cap, which happens in none of the
+The commits after cc779a8 change only (a) the re-analysis of a SCOTCH analysis that does not fit the
+budget (78ffb4f, 290d68f: inert unless an estimate exceeds the cap, which happens in none of the
 regression / head-to-head runs - every one of them fits) and (b) a fix in the auto / randomized modes
-on general B (d645b5e), plus docs and results; the measurements of the default configuration therefore
+on general B (f9e3144), plus docs and results; the measurements of the default configuration therefore
 describe the final code. compare.py ran the work tree's `build/release/hsolve` (same code).
 
 **Nodes.** gpu01 (all slot measurements except one) and c005 (ss-3dspectralwave2 robustness runs),
@@ -39,8 +39,8 @@ Evaluations (tools/eval) ran in the build lane.
 | block pair | gpu01 | 02:13-02:14 | §3.2 |
 | head-to-head | gpu01 | 02:16-02:20, 02:35-02:37 | §4 (nearest; interval) |
 | regression | gpu01 | 02:20-02:35 | §5 (34 cases x 2 binaries x 3) |
-| ss-3dspectralwave2 | c005 | 02:03-02:36, 02:38-03:19 | §2.3 (binaries d0035c5, be2efde) |
-| ss-3dspectralwave2 | gpu01 | 02:39-03:18 | §2.3 (be2efde) |
+| ss-3dspectralwave2 | c005 | 02:03-02:36, 02:38-03:19 | §2.3 (binaries cc779a8, 290d68f) |
+| ss-3dspectralwave2 | gpu01 | 02:39-03:18 | §2.3 (290d68f) |
 | ss-3dspectralwave2 | gpu01 | 04:32-04:44 | §2.3 (fix2: fault bit 4, default) |
 | proof time | gpu01 | 04:45 | §8 (fix2, certificate = randomized) |
 | regression check | gpu01 | 04:48-04:49 (3 reps), 04:50-04:51 (5 reps) | §8 (P8 head vs fix, 8 cases) |
@@ -58,7 +58,7 @@ converged pairs were lost; at 13.6 GB it ran with a peak RSS of 15.1 GiB, above 
 Small analogue (build lane, 8 threads; not timed): yee-pec-cube-32 with METIS (`ordering = 5`) at
 `--memory-budget-gb 0.394`: main factors out of core (in-core estimate 636 MB, cap 287 MB), counter
 estimate 300 MB. main / P5c code: exit 2, "MUMPS factorization ran out of memory: INFO(1)=-19,
-INFO(2)=464894" after the Krylov run, no result. P8 as first merged (91a9c01): the counter is not
+INFO(2)=464894" after the Krylov run, no result. P8 as first merged (60e376a): the counter is not
 tried (300 MB above the 156-174 MB the budget leaves for a count; event `count_source`, warning), the
 counts run on the main object (out of core), 12/12 pairs, certificate exact passed - but at a peak RSS
 of 0.53-0.54 GiB, 35-38% above the budget (review finding; with `--certificate off` the run peaks at
@@ -68,7 +68,7 @@ certificate is not completed (exit 1, the 12 pairs written uncertified), peak 0.
 
 | budget (GiB) | binary | counts on | certificate | peak RSS (GiB, report / sampled) |
 |---|---|---|---|---|
-| 0.394 | P8 head 91a9c01 | main object, unchecked | exact passed | 0.531 / 0.531 |
+| 0.394 | P8 head 60e376a | main object, unchecked | exact passed | 0.531 / 0.531 |
 | 0.394 | fix | none (counter 300 MB, main object 231 MB > 158 MB) | not completed | 0.310 / 0.304 |
 | 0.47 | fix | main object once (231 <= 234 MB), then none (RSS +174 MB after it) | not completed | 0.530 / 0.530 |
 
@@ -114,7 +114,7 @@ INFOG(18) 12.3-12.6 GB would refuse them).
 
 Repeated default runs (case config.json, `--threads 16`, CLI default budget 14 GiB = cap 13.49 GB, the
 event log; `spw_runs.sh`: one slot guard call per campaign, each run under its own nested guard),
-three campaigns: d0035c5 on c005 (8 runs), be2efde on c005 (8) and on gpu01 (7):
+three campaigns: cc779a8 on c005 (8 runs), 290d68f on c005 (8) and on gpu01 (7):
 
 ```bash
 S=$HOME/p8_p8-certcost; D=$HOME/os2026/data/cases/ss-3dspectralwave2   # one command per run:
@@ -160,9 +160,9 @@ python3 tools/run/guard.py --skip-busy-check --timeout 1500 --summary $o/guard.j
   P5c code the 15.1 GB estimate would have failed with INFO -19 and lost the pairs.
 - The main analysis' out-of-core estimate exceeded the cap in 4 of 25 analyses (13.8, 14.1, 14.1,
   14.4 GB; P5c: 2 outliers in 17 analyses, 14.2 GB above the cap and 13.4 GB just below it - together
-  6 outliers of 13.4-14.4 GB in 42 analyses, 5 of them above the cap). d0035c5 ended there (runs 4 and 8
+  6 outliers of 13.4-14.4 GB in 42 analyses, 5 of them above the cap). cc779a8 ended there (runs 4 and 8
   of the first campaign, exit 2 after 20 s, before any factorization - P5c's failure mode 2, not a
-  count); be2efde re-analysed (gpu01 runs 1 and 6: 14.1 -> 11.0 GB and 14.4 -> 10.7 GB, +16 s) and both
+  count); 290d68f re-analysed (gpu01 runs 1 and 6: 14.1 -> 11.0 GB and 14.4 -> 10.7 GB, +16 s) and both
   runs certified. 15/15 runs of the final code returned certified pairs.
 - Review fix (§8): the 9 runs that counted on the main object had INFOG(21) = 9.4-10.1 GB for its
   factorization at sigma, below the count allowance (>= 11.2 GB) - the new check lets them count. The
@@ -307,7 +307,7 @@ cav2d-rect-pert-1e5 to tuned SLEPc (§4) is the price of the deterministic proof
 | cav2d-rect-pert-1e5 | k=6 @ 0.1418 | 0.21 / 0.22 | 0.30 -> 0.30 | 0.71x -> **0.73x** | 0.72x (exact) | 0.94x -> 0.88x |
 | yee-pec-box-1e5 | [40, 200] | 10.30 / 10.88 | 3.81 -> 3.84 | 2.70x -> **2.83x** | 2.82x (slicing counts) | 2.71x -> 2.81x |
 
-- The interval row ran the binary of 92d4962 (the first re-analysis commit, identical on this case); the five nearest rows that of d0035c5.
+- The interval row ran the binary of 78ffb4f (the first re-analysis commit, identical on this case); the five nearest rows that of cc779a8.
 - Every hsolve run of every variant was valid (5/5); SLEPc failed 1 of 5 runs on wg-square-1e5 (one of
   18 pairs above tol, success not claimed), so compare.py prints no speedup there; the ratio of the
   medians is given.
@@ -318,7 +318,7 @@ cav2d-rect-pert-1e5 to tuned SLEPc (§4) is the price of the deterministic proof
   (0.40 s / 0.06 s certificate time) and no cheaper exact count was found (§3). auto keeps the exact
   counts there (§6).
 
-## 5. Regression against main 34cbfd4 (task 4b)
+## 5. Regression against main d28e74c (task 4b)
 
 All 34 data cases with a certificate (HEP / GHEP nearest; ss-3dspectralwave2 is §2.3), ABBA order
 (rep r: main, new for even r, new, main for odd r), 3 repetitions, each binary's default configuration
@@ -378,7 +378,7 @@ Geometric mean of new/main over the 34 cases valid in every run: **1.004**; fast
 P8 is a robustness change for the default path: geometric mean new/main **1.004**, no case faster by
 more than 3%, two 1e4 cases "slower" by 3.3% (syn-multiplicity-real-1e4 0.097 -> 0.100 s,
 syn-near-singular-real-1e4 0.104 -> 0.108 s: 3-4 ms, inside the other binary's [min-max]; a 5-repetition
-ABBA recheck with the final binary be2efde, 20/20 runs valid: 1.015 and 0.983); the largest
+ABBA recheck with the final binary 290d68f, 20/20 runs valid: 1.015 and 0.983); the largest
 absolute differences (ss-ge87h76 +2.2%, ss-si34h36 +1.9%) are within their run-to-run spread
 (53.3-56.4 s, 38.5-41.4 s). Same factorization counts and block widths everywhere.
 
@@ -493,7 +493,7 @@ named), fixed with a regression test in `tests/cpp/test_certcost_faults.cpp` or 
    renamed `NonReproducibleOrderingIsAnalysedAgainUpToTwice`.
 
 **Default path unchanged.** The fixes touch the default configuration only where a count fails, so
-P8 head (91a9c01) against the fix (same md5 as fix2) on 8 nearest cases (case configs, CLI defaults,
+P8 head (60e376a) against the fix (same md5 as fix2) on 8 nearest cases (case configs, CLI defaults,
 16 threads), ABBA, 5 repetitions, gpu01 slot, every run valid by tools/eval (80/80). A 3-repetition
 screen of 6 of them first gave 1.017 with yee-pec-cube-16 at 1.038 (ranges 0.211-0.215 vs
 0.207-0.227 s); the 5-repetition check below: 0.987 there. Machine-readable: `results/p8_fix_screen.json`.

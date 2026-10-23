@@ -1,8 +1,8 @@
 # P9 integration: final measurements of the integrated build
 
-P9 integration (branch `p9int` from p9-merge 90e7483 = main a831d79 + P9 "ordering", "factspeed" and
+P9 integration (branch `p9int` from p9-merge cdb0054 = main c822126 + P9 "ordering", "factspeed" and
 "mpi") makes the patched MUMPS source build the default build (user decision 2026-10-14) and measures
-the integrated build end to end: against main a831d79 at 1e6 and on the 1e5 data cases, head to head
+the integrated build end to end: against main c822126 at 1e6 and on the 1e5 data cases, head to head
 against tuned SLEPc, and its thread scaling for the "并行方案" section of the solution document. The
 certificate is the default `exact` in every hsolve run unless a column says otherwise
 (`hsolve-auto` = `certificate = auto`, `hsolve-nocert` = off).
@@ -13,7 +13,7 @@ certificate is the default `exact` in every hsolve run unless a column says othe
   `third_party/mumps/` with the L0-blocking patch (portable flags), cached by its build inputs, and
   links the CLI, the Python module and the tests to it; `HS_MUMPS=env` falls back to the environment's
   conda-forge MUMPS, `HS_MUMPS_BLOCKING=mumps` to MUMPS' block sizes at run time (section 6).
-* **n = 1e6 against main a831d79** (8 interleaved repetitions, every run valid, certificate exact):
+* **n = 1e6 against main c822126** (8 interleaved repetitions, every run valid, certificate exact):
   syn-mem27-100 111.2 -> 83.2 s (**1.34x**), yee-pec-box-1e6 88.2 -> 69.1 s (**1.28x**),
   wg-square-1e6 (2-D GHIEP) 5.94 -> 5.94 s (section 2.1). On the same (deterministic) pivot order the
   P9 block sizes with the patch contribute **1.056x / 1.053x** end to end and 1.065-1.083x per
@@ -51,8 +51,8 @@ certificate is the default `exact` in every hsolve run unless a column says othe
 
   | label | what | md5 |
   |---|---|---|
-  | `main` | main a831d79, `tools/dev/build.sh release` in `~/os2026-wt/p9-factspeed-main` on gpu01 (P9 factspeed's baseline copy `hsolve_main`): conda-forge MUMPS 5.8.2, MUMPS' block sizes, P5c ordering model | b1c973c5b627cbe08aff558ad74be3d7 |
-  | `new` (`hsolve_int`) | this branch at b50a718 (the code of every later commit: those change tests, tools, scripts and documents only), `tools/dev/build.sh release` in `~/os2026-wt/p9int` - the default build: MUMPS 5.8.2 from `third_party/mumps/` + `patches/mumps-5.8.2-l0-blocking.patch`, nocona -O2 (install `$HOME/deps/mumps-cache/mumps-5.8.2-df9061400e43252d`), P9 block sizes by default, P9 ordering | e0d2ef6343cf642a8ee35efb89342d13 |
+  | `main` | main c822126, `tools/dev/build.sh release` in `~/os2026-wt/p9-factspeed-main` on gpu01 (P9 factspeed's baseline copy `hsolve_main`): conda-forge MUMPS 5.8.2, MUMPS' block sizes, P5c ordering model | b1c973c5b627cbe08aff558ad74be3d7 |
+  | `new` (`hsolve_int`) | this branch at 1b9ee85 (the code of every later commit: those change tests, tools, scripts and documents only), `tools/dev/build.sh release` in `~/os2026-wt/p9int` - the default build: MUMPS 5.8.2 from `third_party/mumps/` + `patches/mumps-5.8.2-l0-blocking.patch`, nocona -O2 (install `$HOME/deps/mumps-cache/mumps-5.8.2-df9061400e43252d`), P9 block sizes by default, P9 ordering | e0d2ef6343cf642a8ee35efb89342d13 |
   | `blk` | `new` run with `HS_MUMPS_BLOCKING=mumps` (wrapper `hsolve_int_mumpsblk`: MUMPS' own block sizes; the patch's KEEP(498/499) unset, so the libraries behave as unpatched ones) - sections 2.2 and 3 | (= `new`) |
 
   Both are the CLI with the BLAS hook linked (route all), gcc 13.4 `-O3 -march=native`.
@@ -77,7 +77,7 @@ certificate is the default `exact` in every hsolve run unless a column says othe
   | 3 (re-check) | 20:37-20:39 | seven 1e5 cases, main vs new and blk vs new, 10 reps ABBA | 280 |
 | 5b (review fix) | 21:56-22:29 | thread scaling again, `new`: six 1e5 cases, default at 1/2/4/8/16 threads, the 16-thread ordering fixed at 1/2/4/8/16 (three cases), every ordering at 1 thread, 5 reps; supersedes part 5's 1e5 tables | 360 |
 
-## 2. n = 1e6 against main a831d79 (task 3a)
+## 2. n = 1e6 against main c822126 (task 3a)
 
 ### 2.1 Eight interleaved repetitions (ABBA)
 
@@ -139,7 +139,7 @@ section 2.1: the ordering (P9 "ordering", blk against main) accounts for 1.27x /
 sizes for 1.056x / 1.053x of the 1.34x / 1.28x (the products, 1.34x / 1.28x, agree with the measured
 totals; different sessions of the same day and slot).
 
-## 3. n <= 3e5: the 41 other data cases against main a831d79 (task 3b)
+## 3. n <= 3e5: the 41 other data cases against main c822126 (task 3b)
 
 `tools/bench/ab_cases.py`, every data case except wg-square-1e6 (section 2), 3 interleaved
 repetitions (ABBA), 246 runs, all valid (`results/p9_measurements_1e5.json`); each case's default
@@ -248,10 +248,10 @@ Files: `results/cmp-p9int-best.md` / `.json`, `results/cmp-p9int-best-interval.m
 | ss-qa8fk-qa8fm | 1.49 | 1.43 | 0.96x | 0.96x | 1.31x | P5c 0.89x / 0.89x / 1.18x |
 | cav2d-rect-pert-1e5 | 0.29 | 0.22 | 0.74x | 0.74x | 0.94x | P5c 0.71x / 0.71x / 0.94x |
 | yee-pec-box-1e5 interval [40, 200] | 3.30 | 10.36 | **3.14x** | 3.13x | 3.13x | P5c 2.70x / 2.72x / 2.71x |
-| syn-mem27-100 (1e6) | 82.46 | 116.00 | **1.41x** | 2.01x | 2.74x | main a831d79 1.04x / 1.60x / 2.13x |
-| yee-pec-box-1e6 (1e6) | 69.13 | 59.30 | 0.86x | 1.08x | 1.70x | main a831d79 0.67x / 0.91x / 1.38x |
+| syn-mem27-100 (1e6) | 82.46 | 116.00 | **1.41x** | 2.01x | 2.74x | main c822126 1.04x / 1.60x / 2.13x |
+| yee-pec-box-1e6 (1e6) | 69.13 | 59.30 | 0.86x | 1.08x | 1.70x | main c822126 0.67x / 0.91x / 1.38x |
 
-"Before": P5c = `results/cmp-p5c-best*.md` (main 34cbfd4, c003 / c005), main a831d79 =
+"Before": P5c = `results/cmp-p5c-best*.md` (main d28e74c, c003 / c005), main c822126 =
 `results/cmp-p9-1e6.md` (c005), both with the same SLEPc profiles; SLEPc's own times then and now
 agree within 1% (116.00 vs 115.68 s, 59.30 vs 59.58 s, 3.51 vs 3.48 s, 3.34 vs 3.36 s).
 
@@ -539,7 +539,7 @@ Reading:
 * **Checks** (gpu01, build lane):
   * the first build of a fresh clone (`~/os2026-wt/p9int`, empty cache): MUMPS 83 s (4 jobs), then
     hsolve; 0 compiler warnings; ctest 1009/1009, pytest 376 passed (one new test failed on a test
-    bug - `hsolve --version` needs `--A` to parse - fixed in ff50470);
+    bug - `hsolve --version` needs `--A` to parse - fixed in 279ebcd);
   * the switch both ways in one build directory (`build/portable`: `HS_MUMPS=env`, then
     `HS_MUMPS=source`): CMake found the configured MUMPS each time, 0 warnings, `test_factor_mumps_build`
     and `test_factor_panel` (the counts with both block sizes against the analytic ones, the known-tree
@@ -550,12 +550,12 @@ Reading:
     loader's own resolution), the Python module has exactly those mapped after a solve in a fresh
     interpreter (`/proc/self/maps`), both print the configured MUMPS; the shipped tarball has the
     pinned checksum; the cache key changes with its inputs and `prefix` / `describe` never build;
-  * the final state (f882138) from scratch in the work tree: no build directory and an empty MUMPS
+  * the final state (0cb5a2c) from scratch in the work tree: no build directory and an empty MUMPS
     cache (`HS_MUMPS_CACHE=$HOME/p9int/fresh-mumps-cache`), `tools/dev/test.sh release`: MUMPS from the
     shipped tarball 84 s - the same key `df9061400e43252d` as the measured build (same inputs) -, hsolve
     211 s, 0 compiler warnings, ctest 1009/1009, pytest 380 passed; `hsolve --A x --version`:
     `mumps=mumps-5.8.2-df9061400e43252d mumps_blocking=p9`.
-  * the review fix (aba8516, branch p9int-fix: `tools/bench/thread_scaling.py`, `tools/dev/mumps_cache.sh`,
+  * the review fix (7b6ae73, branch p9int-fix: `tools/bench/thread_scaling.py`, `tools/dev/mumps_cache.sh`,
     tests and documents; no compiled code changed) from a fresh `build/release` in `~/os2026-wt/p9int`
     (cached MUMPS `df9061400e43252d`: `mumps_cache.sh` is not a key input), `tools/dev/test.sh release`:
     0 compiler warnings, ctest 1009/1009 (3 disabled performance tests, 2 skipped paths as before),
@@ -568,7 +568,7 @@ Reading:
 ## 7. Conclusion
 
 * The integrated build is the P9 deliverable: on the judging configuration (16 cores, 32 GiB) it
-  solves the 1e6 3-D cases 1.28-1.34x faster than main a831d79 with the same exact certificate, is
+  solves the 1e6 3-D cases 1.28-1.34x faster than main c822126 with the same exact certificate, is
   9% faster on the 1e5 data set without a regression, and beats tuned SLEPc on 5 of 8 head-to-head
   configurations (P5c: 4 of 6) - every run checked by tools/eval.
 * The patched MUMPS as the default build is supported by the measurement the factspeed gate could not
@@ -589,7 +589,7 @@ Reading:
 
 On gpu01. Builds and tests from the work tree (`HS_CLUSTER_NAME=p9int tools/dev/cluster_run.sh gpu01
 -- ...`, `~/os2026-wt/p9int`); the measurements from a fixed copy of that tree, `$S/meas` (`S=$HOME/p9int`,
-the files of b50a718 / d9f8b56 plus the two binaries in `$S/bin`: `hsolve_main` = main a831d79's
+the files of 1b9ee85 / aac246d plus the two binaries in `$S/bin`: `hsolve_main` = main c822126's
 `build/release/hsolve`, `hsolve_int` = this branch's; `$S/meas/build/release/hsolve` -> `hsolve_int`
 for compare.py), driven by `$S/campaign.sh`, `campaign2.sh`, `campaign3.sh` (consecutive slot calls,
 each <= 2700 s; raw runs, evaluations and tables in `$S/{a1e6,b1e5,b1e5r,b1e5blk,e1e6,d1e5,d1e6,cmp}`).
@@ -640,7 +640,7 @@ $G python3 tools/bench/thread_scaling.py run --bin $S/bin/hsolve_int --threads 4
 $L python3 -m tools.eval.sweep $S/d1e5 --out $S/d1e5/eval.md            # d1e6: --root $D6
 python3 tools/bench/thread_scaling.py table --order syn-mem27-46 yee-pec-box-1e5 ss-qa8fk-qa8fm \
   syn-near-singular-complex-1e5 wg-square-1e5 cav2d-rect-pert-1e5 --json d1e5.json $S/d1e5   # d1e6 likewise
-# 5b review fix (F=$HOME/p9int-fix; tools from the fixed copy $F/meas = git archive of bfc1e95 (branch
+# 5b review fix (F=$HOME/p9int-fix; tools from the fixed copy $F/meas = git archive of 327a912 (branch
 #   p9int-fix), same binary; $F/campaign_fix.sh: two slot calls, resumable, evaluation in the lane)
 SCREEN="--variant amd@1={\"ordering\":0} --variant scotch@1={\"ordering\":3} --variant metis@1={\"ordering\":5} \
   --variant pord@1={\"ordering\":4}"

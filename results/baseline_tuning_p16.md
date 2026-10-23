@@ -1,6 +1,6 @@
 # SLEPc tuning at 16 cores (gpu01)
 
-Host gpu01 (2x Xeon Silver 4314), cores 16-31 (NUMA node 1, exclusive), code 19a6e1a (P4 main), 2026-10-11/12.
+Host gpu01 (2x Xeon Silver 4314), cores 16-31 (NUMA node 1, exclusive), code 4d6bc87 (P4 main), 2026-10-11/12.
 Commands: results/baseline_tuning.md "16-core run for the lead" with P16=16-31 (script: guard --exclusive, tune_slepc.py --tag tune-p16 --write-profiles, then compare.py --slepc-profile best --reps 5). Head-to-head: results/cmp-p16-best.md, results/cmp-p16-best-interval.md. Raw trials stay on the node (~/os2026-wt/bench-p16/results/raw/tune-p16).
 
 | case | type | target | P | default (s) | best (s) | speedup | best configuration | analysis | numeric (#) | solves (#/s) | ortho | valid |

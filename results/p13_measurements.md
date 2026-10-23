@@ -74,7 +74,7 @@ hsolve 仍慢 14.3%，本轮缩小了差距但没有超过该对照。这里只�
 
 ## 复现
 
-基于 `6d408b0786d3c7cbf63995edeb66840ea958f703` 加会话已有 P10/P11/P12 修改，没有提交或推送。集群源码 `/tmp/os2026-p10-repair.9doyhO`，原始实验 `/tmp/os2026-p13`，日志归档 `/tmp/os2026-p13-results.tar`；本机同名归档已保存。
+基于 `982ad83c31798c43d896ff33f639b93678979aa2` 加会话已有 P10/P11/P12 修改，没有提交或推送。集群源码 `/tmp/os2026-p10-repair.9doyhO`，原始实验 `/tmp/os2026-p13`，日志归档 `/tmp/os2026-p13-results.tar`；本机同名归档已保存。
 
 | 文件 | SHA-256 |
 |---|---|
@@ -89,18 +89,18 @@ hsolve 仍慢 14.3%，本轮缩小了差距但没有超过该对照。这里只�
 env/run.sh env HS_CORES=8-15 HS_JOBS=8 HS_BUILD_MEM_GB=12 tools/dev/build.sh release
 
 env/run.sh python tools/run/guard.py --exclusive --cores 16-31 --mem-gb 32 --timeout 600 -- \
-  env HS_DATA_ROOT=/share/home/linzihan/os2026/data python tools/bench/ab_cases.py run \
+  env HS_DATA_ROOT=~/os2026/data python tools/bench/ab_cases.py run \
   --bin before=/tmp/os2026-p13/hsolve-before --bin after=/tmp/os2026-p13/hsolve-final \
   --reps 0,1,2,3,4,5,6 --cores 16-31 --threads 16 --run-dir /tmp/p13-reproduction \
   cav2d-rect-pert-1e5 ss-qa8fk-qa8fm syn-mem27-46 wg-square-1e5 \
   yee-pec-box-1e5 yee-photonic-rods-1e4
 env/run.sh python tools/run/guard.py --cores 8-15 --mem-gb 12 --timeout 600 --skip-busy-check -- \
-  python -m tools.eval.sweep /tmp/p13-reproduction --root /share/home/linzihan/os2026/data \
+  python -m tools.eval.sweep /tmp/p13-reproduction --root ~/os2026/data \
   --out /tmp/p13-reproduction/evaluation.md
 
 env/run.sh python tools/run/guard.py --exclusive --cores 16-31 --mem-gb 32 --timeout 600 -- \
   python results/p12_compare.py --binary hsolve-p13=/tmp/os2026-p13/hsolve-final \
-  --root /share/home/linzihan/os2026/data --tag p13-reproduction-slepc \
+  --root ~/os2026/data --tag p13-reproduction-slepc \
   --out-dir /tmp/p13-reproduction-slepc --cores 16-31 --mem-gb 32 \
   --solvers hsolve-p13,slepc --slepc-profile best --reps 7 cav2d-rect-pert-1e5
 ```

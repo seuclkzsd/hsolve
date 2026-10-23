@@ -36,7 +36,7 @@ for item in json.loads((p/'requested-manifest.json').read_text()):
    if not f.is_relative_to(p):external['inputs/'+str(f.relative_to('/tmp'))]=f
 for name in [row['case'] for row in summaries['p33-diagnostic']['rows']]:
  for directory in ['cases','refs']:
-  for f in (Path('/share/home/linzihan/os2026/data')/directory/name).rglob('*'):
+  for f in (Path('~/os2026/data')/directory/name).rglob('*'):
    if f.is_file():inputs[str(f)]=dict(size=f.stat().st_size,sha256=digest(f))
 (p/'input-hashes.json').write_text(json.dumps(inputs,indent=2)+'\n')
 meta=dict(round='P33',host='gpu02',goal_achieved=False,production_adopted=False,production_hashes=prod,

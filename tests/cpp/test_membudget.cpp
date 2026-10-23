@@ -566,7 +566,7 @@ TEST(DriverMemoryBudget, ABudgetBelowTheInCoreFactorsGivesAValidOutOfCoreRun) {
 // down) in a process that holds 4 GiB of address space it never uses - as OpenBLAS' buffers, malloc
 // arenas and stacks hold 3.4 GB at 16 threads; held here explicitly, because the CPU affinity caps
 // OpenBLAS' threads on a small test lane - under RLIMIT_AS = that address space + 2 GiB. The
-// reviewed P7 code (d693e46) planned the budget derived from the limit against RSS and gave MUMPS
+// reviewed P7 code (c31b9ef) planned the budget derived from the limit against RSS and gave MUMPS
 // the whole cap, which reserved half of it: OpenBLAS then failed to allocate and the child died
 // ("Memory allocation still failed after 10 retries", 3 of 3 runs on gpu02), as syn-mem27-46 /
 // -80 did under `ulimit -v 8`. Exits 0 on a valid result planned in the address space, 1 on a wrong

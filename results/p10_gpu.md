@@ -1,6 +1,6 @@
 # P10 "gpu": offloading the factorizations' dense updates to one GPU
 
-P10 task "gpu" (branch `p10gpu` from p9-merge 90e7483). The statement (item f, "并行方案") asks for
+P10 task "gpu" (branch `p10gpu` from p9-merge cdb0054). The statement (item f, "并行方案") asks for
 multithreading, MPI **and GPU** acceleration with the division of labour and measured speedups, and a
 reproducible degrade mode without a GPU - the judging machine is CPU-only. This report covers the GPU
 part: what can go to one V100, how it is done, what it gains, what it costs, and what it does not do.
@@ -83,7 +83,7 @@ report, keys `factorizations`, `whole_runs_1e6`, `whole_runs_small`, `size_scree
   (`CUDA_VISIBLE_DEVICES=7`), and the slot was held with `guard.py --exclusive`. Builds and tests in
   the lane (cores 8-15). 2026-10-14.
 * **Software.** The project environment (conda-forge MUMPS 5.8.2 sequential + OpenMP, OpenBLAS 0.3.34,
-  gcc 13.4); hsolve at ce76a37 (built once in its own work directory, `HS_CLUSTER_NAME=p10gpu-meas`,
+  gcc 13.4); hsolve at 8feb386 (built once in its own work directory, `HS_CLUSTER_NAME=p10gpu-meas`,
   for every timed run; the later commits of the branch change no timed code path), default build: BLAS hook linked into hsolve with route `all`, GPU module built
   in, GPU mode off unless a run sets `HS_GPU` / `--gpu`. MUMPS' default block sizes unless a table says
   `p9` (`HS_MUMPS_BLOCKING=p9`: KEEP(420) = 256, KEEP(57/58) = 4000/2000, results/p9_factspeed.md;
@@ -465,7 +465,7 @@ Measured negative or bounded (numbers in sections 2-5):
 
 Everything through `tools/dev/cluster_run.sh gpu02 [--allow-dirty] -- ...` (env/run.sh activates the
 environment); timed runs from the measurement work directory (`HS_CLUSTER_NAME=p10gpu-meas`, built once
-at ce76a37), `D=$HOME/p7_p7-membudget/data`, `S="tools/bench/gpu_slot.sh 7"` (checks that GPU 7 is idle,
+at 8feb386), `D=$HOME/p7_p7-membudget/data`, `S="tools/bench/gpu_slot.sh 7"` (checks that GPU 7 is idle,
 `CUDA_VISIBLE_DEVICES=7`, `guard.py --exclusive --timeout T`):
 
 ```bash
@@ -506,10 +506,10 @@ $S 900 -- env HSOLVE_TEST_GPU_DEVICE=7 ctest --preset release --no-tests=error -
 
 ## 10. Review fixes (branch `p10gpu-fix`)
 
-The review of P10 reported four problems. All four were checked on gpu02 and fixed: 038bc68
-(chunk cap), 73567c3 (thread affinity), 74d2240 (degrade-mode report), and the documentation
-commit (exactness wording). The runs below are from the work directory `p10gpu` at 74d2240 (the
-"before" runs are its earlier build of 052031f's code), in the slot with GPU 7 through
+The review of P10 reported four problems. All four were checked on gpu02 and fixed: ed8217f
+(chunk cap), 9df2845 (thread affinity), 6968af4 (degrade-mode report), and the documentation
+commit (exactness wording). The runs below are from the work directory `p10gpu` at 6968af4 (the
+"before" runs are its earlier build of a737669's code), in the slot with GPU 7 through
 `gpu_slot.sh` (GPU idle before each slot call). Raw lines: `results/p10_gpu.json`, key
 `review_fix`.
 
@@ -566,7 +566,7 @@ GPU part per run (medians): 423 calls and 7435 GFlop in both cases. Unbound: 6.4
 
 **10.2 `chunk_kb` larger than two slots.** `upload_shared` sized the shared operand's chunks from
 `chunk_kb` alone. A chunk larger than the 2-slot pinned staging ring left a ring of one chunk, and
-`pack` wrote the whole chunk past the buffer's end. On 052031f, `bench_gpu_dgemm --modes gpu-k65536`
+`pack` wrote the whole chunk past the buffer's end. On a737669, `bench_gpu_dgemm --modes gpu-k65536`
 on 2000 x 8000 x 4000 packed a 64 MB shared operand into 32 MiB: a host buffer overflow. The upload
 then failed with cuda error 1, the engine broke and the run exited 2.
 

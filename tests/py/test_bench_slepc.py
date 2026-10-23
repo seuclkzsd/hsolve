@@ -19,7 +19,7 @@ from tools.bench.slepc_profile import SlepcConfig
 STAGED_LOG = """\
 ------------------------------------------------------------------ PETSc Performance Summary: ------------------------------------------------------------------
 
-tools/bench/baseline_slepc.py on a  named CISL-NF5468M6 with 2 processes, by zhlin on Sun Oct 11 19:36:24 2026
+tools/bench/baseline_slepc.py on a  named CISL-NF5468M6 with 2 processes, by user on Sun Oct 11 19:36:24 2026
 Using 1 OpenMP threads
 Using PETSc Release Version 3.26.0, Sep 28, 2026
 
@@ -81,7 +81,7 @@ MatSolve              99 1.0 9.9000e+01 1.0 2.62e+07 1.5 2.4e+01 2.4e+04 0.0e+00
 
 # The same report of the original single-stage baseline (yee-pec-box-1e4, 2 ranks), trimmed.
 UNSTAGED_LOG = """\
-tools/bench/baseline_slepc.py on a  named CISL-NF5468M6 with 1 process, by zhlin on Sun Oct 11 19:31:20 2026
+tools/bench/baseline_slepc.py on a  named CISL-NF5468M6 with 1 process, by user on Sun Oct 11 19:31:20 2026
 Using 2 OpenMP threads
 Time (sec):           1.949e+00     1.000   1.949e+00
 

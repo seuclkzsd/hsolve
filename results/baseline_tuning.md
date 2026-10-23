@@ -280,7 +280,7 @@ tables a speedup is printed only when both solvers were valid in every repetitio
 ## Reproduce the 2-core numbers
 
 ```bash
-export HS_CORES=40,41 HS_MAX_SHARED_MEM_GB=4 HS_DATA_ROOT=/home/zhlin/gencode/os2026/data NUMPY_MADVISE_HUGEPAGE=0
+export HS_CORES=40,41 HS_MAX_SHARED_MEM_GB=4 HS_DATA_ROOT=~/gencode/os2026/data NUMPY_MADVISE_HUGEPAGE=0
 G="env/run.sh python3 tools/run/guard.py --skip-busy-check --cores 40,41 --mem-gb 4 --timeout 14400 --"
 $G python3 tools/bench/tune_slepc.py --cores 40,41 --mem-gb 3.5 --tag tune-p2 --write-profiles \
    syn-mem27-46 yee-pec-box-1e5 wg-square-1e5 ss-qa8fk-qa8fm cav2d-rect-pert-1e5

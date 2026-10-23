@@ -12,9 +12,9 @@ Where: gpu01 (2x Xeon Silver 4314, CentOS 7), the measurement slot - cores 16-31
 configuration; runs with fewer threads are pinned to the first cores of the slot while holding all
 of it. Release build, conda-forge OpenBLAS 0.3.34 (DYNAMIC_ARCH, OpenMP, SkylakeX kernels),
 MUMPS 5.8.2 (sequential), 2026-10-12/13. Binaries: the screening of sections 3 / 4.4 and the
-route-off profiles of section 2.1 (except wg-square-1e6) were built from commit 6da4c7a, before
+route-off profiles of section 2.1 (except wg-square-1e6) were built from commit 1dacb20, before
 the review fixes of the hook (short OpenMP teams, `-ffp-contract=off`, the in-executable link),
-which change no timed code path's work; everything else from e985acb. Section 2 also keeps an
+which change no timed code path's work; everything else from eb76056. Section 2 also keeps an
 earlier 1/4/8-thread profile from gpu02 cores 16-23 (taken before the slot existed).
 
 **Summary**
@@ -442,7 +442,7 @@ The six head-to-head configurations of results/cmp-p16-best.md and cmp-p16-best-
 (`compare.py --solvers hsolve --cores 16-31`, 16 threads, each case's default configuration incl.
 the adaptive ordering, tools/eval evaluation), plain hsolve (`build/release/hsolve`, the hook not
 linked) against hsolve built with `-DHSOLVE_BLAS_HOOK=ON -DHSOLVE_BLAS_ROUTE_DEFAULT=all`, both at
-commit e985acb; 5 interleaved repetitions (variant order alternating), solver time = report
+commit eb76056; 5 interleaved repetitions (variant order alternating), solver time = report
 `time_total_s`, medians [min-max]. 2026-10-13, gpu01 slot.
 
 | case | target | plain s | hook (`all`) s | speedup | valid | MUMPS numeric s (#) plain / hook | MUMPS solve s (rhs) plain / hook | max eta plain / hook | evaluation (both) |
@@ -555,7 +555,7 @@ runs with T < 16 threads go through a nested `python3 tools/run/guard.py --exclu
 of the work tree first.
 
 ```bash
-# builds. The measurements here were made at e985acb, where the release build's hsolve was plain
+# builds. The measurements here were made at eb76056, where the release build's hsolve was plain
 # and the hooked one came from build/hook; since then the default build carries the hook, and a
 # plain hsolve (build-plain below) needs -DHSOLVE_BLAS_HOOK=OFF.
 tools/dev/build.sh release      # libhsolve_blashook.so, bench_asmkern_*, hsolve (hooked by default)
@@ -608,8 +608,8 @@ $G build/release/bench_asmkern_e2e --cli build-plain/hsolve --threads 16 --reps 
 
 Section 5: compare.py runs `build/release/hsolve` of the repository it lives in, so each variant
 gets a scratch copy of the repository - `tools/` copied, `data` linked to the work tree's,
-`build/release/hsolve` linked to the plain (`build-plain/hsolve`; at e985acb the release build's)
-or the hooked (`build/release/hsolve` now; at e985acb `build/hook/hsolve`) executable. Per
+`build/release/hsolve` linked to the plain (`build-plain/hsolve`; at eb76056 the release build's)
+or the hooked (`build/release/hsolve` now; at eb76056 `build/hook/hsolve`) executable. Per
 repetition R (1-3 in one slot call, 4-5 in a second; variant order plain, hook for odd R and hook,
 plain for even R), for each variant V with scratch copy `$REPO_V`:
 

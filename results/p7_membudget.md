@@ -74,10 +74,10 @@ and are valid; GHIEP; precision auto on the estimates and end to end), `tests/py
   MemTotal, so the automatic budget of every P7 run below came from the guard's declaration
   (`report.memory.source = "env"`). Correctness-only runs (single precision on the P6 cases, memory
   timelines) used the build/test lane (cores 8-15, 8 threads, no timing).
-* **Binaries.** base = 9201c2c (fixed 14 GB budget; it ignores the variable). P7: the 1e6 and 1e5
-  measurements ran 54d0ed8 (budget, guard, checks, fallback, auto, timeline); the calibration of
-  section 3 d73f8d1 (the same without the timeline); the confirmation runs of sections 3, 4 and 6 the
-  final code bf4dea8, which adds the cap re-plan after the analysis and the two refinements of the
+* **Binaries.** base = afb88c7 (fixed 14 GB budget; it ignores the variable). P7: the 1e6 and 1e5
+  measurements ran 0b814ee (budget, guard, checks, fallback, auto, timeline); the calibration of
+  section 3 5db2c98 (the same without the timeline); the confirmation runs of sections 3, 4 and 6 the
+  final code d79b95a, which adds the cap re-plan after the analysis and the two refinements of the
   inexact-factor check (section 6). Each binary is a copy of `build/release/hsolve` of that commit
   (`tools/dev/build.sh release`, the BLAS hook linked).
 * **Cases.** syn-mem27-100 (HEP, n = 1e6, 27-point 3-D stencil, sigma = 0, k = 12), yee-pec-box-1e6
@@ -108,7 +108,7 @@ meas.sh big 3 syn-mem27-100 yee-pec-box-1e6 wg-square-1e6 -- base:bin-base/hsolv
 # calibration: syn-mem27-80 under 6 / 8 / 10.5 GiB, syn-mem27-100 under 8 / 12 / 24.5 GiB
 meas.sh cal 1 syn-mem27-80 -- c6:bin-p7/hsolve:6 c8:bin-p7/hsolve:8 c105:bin-p7/hsolve:10.5
 meas.sh cal 1 syn-mem27-100 -- c8:bin-p7/hsolve:8 c12:bin-p7/hsolve:12 c245:bin-p7/hsolve:24.5
-# final code (bf4dea8): calibration again, the P6 cases, one confirmation run of the 1e6 cases
+# final code (d79b95a): calibration again, the P6 cases, one confirmation run of the 1e6 cases
 meas.sh cal2 1 syn-mem27-80 -- c6:bin-final/hsolve:6 c8:bin-final/hsolve:8 c105:bin-final/hsolve:10.5
 meas.sh cal2 1 syn-mem27-100 -- c8:bin-final/hsolve:8 c12:bin-final/hsolve:12 c245:bin-final/hsolve:24.5
 meas.sh p6slot 1 syn-mem27-46 syn-ghep-near-singular-real-1e5 syn-near-singular-complex-1e5 \
@@ -132,19 +132,19 @@ what is left). The rest of the limit L must hold what the plan does not predict.
 that is, the largest cases ran under caps that put the plan at its edge: syn-mem27-80 (in core 7.2-7.4
 GB, out of core 2.6-3.3 GB) under 6, 8 and 10.5 GiB, and syn-mem27-100 (in core 18.2-19.4 GB, out of
 core 7.0-8.7 GB) under 8, 12 and 24.5 GiB - 10.5 and 24.5 were the smallest caps whose budget let the
-factors in core before the re-plan below. Each ran twice: with d73f8d1 (cap planned before the
-analysis) and with the final bf4dea8.
+factors in core before the re-plan below. Each ran twice: with 5db2c98 (cap planned before the
+analysis) and with the final d79b95a.
 
 | case | cap L (GiB) | auto budget (GiB) | factorization cap MB: planned -> after the analysis | MUMPS estimate in core / out of core, MB | factors | MUMPS used MB | peak RSS GiB | peak / budget | peak / L | total s | valid |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| syn-mem27-80 | 6 | 5.00 | 4306 (d73f8d1) / 4296 -> 3517 (bf4dea8) | 7340 / 3274; 6899 / 2645 | out of core / out of core | 2528 / 2264 | 4.96 / 4.47 | 0.99 / 0.89 | 0.83 / 0.75 | 88.4 / 83.6 | yes / yes |
+| syn-mem27-80 | 6 | 5.00 | 4306 (5db2c98) / 4296 -> 3517 (d79b95a) | 7340 / 3274; 6899 / 2645 | out of core / out of core | 2528 / 2264 | 4.96 / 4.47 | 0.99 / 0.89 | 0.83 / 0.75 | 88.4 / 83.6 | yes / yes |
 | syn-mem27-80 | 8 | 6.80 | 6140 / 6140 -> 5359 | 6903 / 2607; 7357 / 2830 | out of core / out of core | 2242 / 2413 | 4.53 / 4.48 | 0.67 / 0.66 | 0.57 / 0.56 | 84.8 / 89.6 | yes / yes |
 | syn-mem27-80 | 10.5 | 8.93 | 8309 / 8307 -> 7547 | 7213 / 2878; 7402 / 2952 | in core / in core | 6132 / 6269 | 7.14 / 7.25 | 0.80 / 0.81 | 0.68 / 0.69 | 38.2 / 39.1 | yes / yes |
 | syn-mem27-100 | 8 | 6.80 | 5573 / 5573 -> 4487 | 18775 / 8694; 18954 / 7173 | refused / refused (exit 2) | - | 2.63 / 2.57 | - | 0.33 / 0.32 | - | - |
 | syn-mem27-100 | 12 | 10.20 | 9041 / 9041 -> 7907 | 18228 / 7045; 18846 / 7296 | out of core / out of core | 5965 / 6195 | 8.46 / 8.44 | 0.83 / 0.83 | 0.70 / 0.70 | 202.8 / 201.9 | yes / yes |
 | syn-mem27-100 | 24.5 | 20.83 | 19880 / 19881 -> 18747 | 19447 / 7724; 19018 / 7403 | in core / **out of core** | 16379 / 6266 | 16.21 / 8.71 | 0.78 / 0.42 | 0.66 / 0.36 | 119.3 / 206.6 | yes / yes |
 
-Pairs of values: d73f8d1 (before the re-plan) / bf4dea8 (final). Estimates differ between the two
+Pairs of values: 5db2c98 (before the re-plan) / d79b95a (final). Estimates differ between the two
 runs because SCOTCH's orderings vary from run to run (factor.hpp).
 
 * **Where the unpredicted memory is** (event timeline, syn-mem27-80 under 6 GiB, lane): resident
@@ -195,7 +195,7 @@ runs because SCOTCH's orderings vary from run to run (factor.hpp).
 
 Phases are medians in seconds (factor = analyses + numeric factorizations: analysis 4.4-6.0 s,
 numeric factorization 24-29 s in core and 27-33 s out of core); peak RSS is the guard's process-tree
-peak. P7 binary 54d0ed8; the final code's confirmation runs are in the bullets.
+peak. P7 binary 0b814ee; the final code's confirmation runs are in the bullets.
 
 * **32 GiB (auto32).** The budget is 27.2 GiB; both 3-D cases now factorize in core (cap 26.4 GB
   against estimates of 18.1 / 15.5 GB): **syn-mem27-100 1.83x (199.1 -> 109.0 s), yee-pec-box-1e6
@@ -243,10 +243,10 @@ to MUMPS changes, and these factors need under 1 GB.
 Any failure abandons the attempt (its time stays in the phases, `report.precision.attempt_s`) and
 the solve restarts after the diagnosis with double factors on the same pivot order.
 
-**The P6 cases with `--precision single`** (final code bf4dea8; slot, 16 threads, 1 run each, all 16
+**The P6 cases with `--precision single`** (final code d79b95a; slot, 16 threads, 1 run each, all 16
 runs valid by tools/eval; and the 11 P6 cases in the lane, all valid):
 
-| case | P6 (V1, base 1bd75f9) | P7 single: outcome | attempt s | total s single / double | RHS single / double |
+| case | P6 (V1, base d58193e) | P7 single: outcome | attempt s | total s single / double | RHS single / double |
 |---|---|---|---|---|---|
 | syn-mem27-46 | invalid: eta up to 2.8e-5, certificate failed (0/3) | fallback: refinement ends at 0.51 (lane runs: 2.4e-5, 8.2e-6) | 1.37 | 3.13 / 2.40 | 48 / 48 |
 | syn-ghep-near-singular-real-1e5 | invalid: 1 pair (0/3) | fallback: flagged, refactorized without detection, refinement ends at 6.2e-3 | 1.28 | 2.08 / 1.29 | 108 / 108 |
@@ -276,7 +276,7 @@ and a fallback costs its attempt (0.6-1.4 s here). **Its only purpose is memory.
   (sigma = 52.9) the refinement contracts slowly and stagnates around 1e-11: the final code accepts
   stagnation within 1e-11, which would have kept the 9.0e-12 run single, but its confirmation run
   ended at 1.14e-11 and fell back as well.
-* Final code (bf4dea8), one confirmation run each, valid: syn-mem27-100 single in core, 186.4 s
+* Final code (d79b95a), one confirmation run each, valid: syn-mem27-100 single in core, 186.4 s
   against 204.3 s out of core (1.10x); yee-pec-box-1e6 fallback after 23.9 s, 183.1 s against
   154.7 s (0.84x).
 * wg-square-1e6: double fits in core, auto keeps double.
@@ -318,8 +318,8 @@ when double does not fit even out of core while single fits in core).
 ## 8. Review fixes (branch p7-membudget-fix)
 
 The P7 review found one major and three minor problems; all four were real and are fixed. Code:
-2055189 (address space), 50a0464 (auto decision), 0687edb (fault injection and tests), cf843de
-(compare.py), 221979d (test); docs fcda214.
+e79e5b2 (address space), 6c53421 (auto decision), 16192e0 (fault injection and tests), 03ac99a
+(compare.py), 27dbd48 (test); docs 4fa220b.
 
 ### 8.1 RLIMIT_AS (`ulimit -v`): planned in address space, MUMPS reserves its estimate (major)
 
@@ -332,7 +332,7 @@ matrices are loaded and the OpenMP pool runs (RSS 0.2-0.4 GB: malloc arenas, sta
 runs (16 threads, gpu02) failed: syn-mem27-46 under 8 GiB (INFO -13), syn-mem27-80 under 6 / 8 /
 10.5 GiB (OpenBLAS "Memory allocation still failed", SIGSEGV), syn-mem27-100 under 14.9 GiB
 (16e9 bytes, the "16 GB" machine: INFO -13 in the certificate's InertiaCounter after 174 s). The
-new test (below) reproduces the failure on d693e46 in 3 of 3 runs.
+new test (below) reproduces the failure on c31b9ef in 3 of 3 runs.
 
 **The fix.**
 * MUMPS gets ICNTL(23) = min(cap, (1 + ICNTL(14)/100) * estimate + 32 MB), 1.35 x the estimate by
@@ -354,10 +354,10 @@ new test (below) reproduces the failure on d693e46 in 3 of 3 runs.
   in use the plan starts from; reserving them again would only refuse runs that fit.
 
 **Measured** (gpu02 slot, 16 threads, `ulimit -v L` inside a 32 GiB guard so that RLIMIT_AS is the
-smallest limit; a build of the fix's sources - 2055189..0687edb, later commits change tests and
+smallest limit; a build of the fix's sources - e79e5b2..16192e0, later commits change tests and
 comments only -; every completed run evaluated with tools/eval: all pass):
 
-| case | L (GiB) | base 9201c2c (review) | P7 d693e46 (review) | fix: outcome | fix: total s | peak address space GiB (P7 / fix) | fix budget GiB (reserved) | fix cap MB / MUMPS ICNTL(23) MB |
+| case | L (GiB) | base afb88c7 (review) | P7 c31b9ef (review) | fix: outcome | fix: total s | peak address space GiB (P7 / fix) | fix budget GiB (reserved) | fix cap MB / MUMPS ICNTL(23) MB |
 |---|---|---|---|---|---|---|---|---|
 | syn-mem27-46 | 8 | rc 1, OpenBLAS allocation failure | INFO -13, exit 2 | **valid**, in core | 2.5 | - / 5.76 | 7.00 (3.12) | 3735 / 1014 |
 | syn-mem27-80 | 6 | - | SIGSEGV | refused after the analysis (exit 2, 4.4 s) | - | - / 5.44 | 5.00 (3.12) | 1 / - |
@@ -380,14 +380,14 @@ comments only -; every completed run evaluated with tools/eval: all pass):
 solves a 3-D Laplacian (n = 27000) in a child process that holds 4 GiB of address space it never
 uses (as the threads do at 16 threads; held explicitly because the CPU affinity caps OpenBLAS'
 threads on the 8-core test lane) under RLIMIT_AS = that address space + 2 GiB, and requires a valid
-result planned in the address space. d693e46: the child dies ("OpenBLAS error: Memory allocation
+result planned in the address space. c31b9ef: the child dies ("OpenBLAS error: Memory allocation
 still failed after 10 retries") in 3 of 3 runs; the fix passes 5 of 5. Without the held 4 GiB the
 reviewed code passed it - the test lane's own reservations (8 OpenBLAS threads) leave enough room.
 
 **What the smaller reservation costs** (slot, 16 threads, 32 GiB guard - an RSS budget, 27.2 GiB -,
-3 interleaved repetitions, final P7 code bf4dea8 against the fix 221979d; all valid):
+3 interleaved repetitions, final P7 code d79b95a against the fix 27dbd48; all valid):
 
-| case | P7 bf4dea8: total s, median [min-max] | fix 221979d | P7 / fix | fix: MUMPS ICNTL(23) MB | peak RSS GiB, P7 / fix |
+| case | P7 d79b95a: total s, median [min-max] | fix 27dbd48 | P7 / fix | fix: MUMPS ICNTL(23) MB | peak RSS GiB, P7 / fix |
 |---|---|---|---|---|---|
 | syn-mem27-46 | 2.43 [2.40-2.47] | 2.39 [2.39-2.41] | 1.02 | 1014 | 0.81-0.84 / 0.82-0.86 |
 | yee-pec-box-1e5 | 2.93 [2.92-3.04] | 2.98 [2.96-3.03] | 0.98 | 986-1050 | 0.88-0.92 / 0.89-0.91 |
@@ -446,5 +446,5 @@ the P6 zero-cluster failure had no small analogue. Added (tests/cpp/test_membudg
   eigenvalues in blocks of their own - the test fixture's default order - it stayed single and
   valid, at either spacing: single precision's rounding is then relative to those tiny blocks.)
 
-Whole suite at 221979d on gpu02: 940 ctest (937 passed, 3 disabled) + 351 pytest, release build
+Whole suite at 27dbd48 on gpu02: 940 ctest (937 passed, 3 disabled) + 351 pytest, release build
 warning-free.

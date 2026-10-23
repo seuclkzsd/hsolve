@@ -65161,274 +65161,274 @@
    "/tmp/os2026-p29/holdout-data/refs/bloch-holdout-hep/ref.json": "381c239c2da07bebba0793c681cd806faf11cf66dfff4f06dffbabedc7257944"
   },
   "cav2d-rect-pert-1e5": {
-   "/share/home/linzihan/os2026/data/cases/cav2d-rect-pert-1e5/config.json": "49e555053ad6207c7150061fd49143ac838e70a8bcca08a96d22cf277ac42138",
-   "/share/home/linzihan/os2026/data/cases/cav2d-rect-pert-1e5/B.npz": "685c787ca05de535b3932b46efc90fe4d16707ed10693ec51183d1ac795d283c",
-   "/share/home/linzihan/os2026/data/cases/cav2d-rect-pert-1e5/meta.json": "e1f6e80f8eeb6bd51cf1333929349d6adbfee4734487e34dddd478a362092f5c",
-   "/share/home/linzihan/os2026/data/cases/cav2d-rect-pert-1e5/A.npz": "ca5d96bbe8724d2aec92847dcfd644387a0d325dc7824a30b182f056d0e4c7ef",
-   "/share/home/linzihan/os2026/data/refs/cav2d-rect-pert-1e5/ref.json": "2950d3d6a919e5d4df2ea79bac1ba93dd07743a9c0d3e5120093125f86bec7a0",
-   "/share/home/linzihan/os2026/data/refs/cav2d-rect-pert-1e5/eigenvectors.npy": "1f29736fd00f38cef4bebd8e388b122f30dd382710c05f9247702e54756242b5",
-   "/share/home/linzihan/os2026/data/refs/cav2d-rect-pert-1e5/eigenvalues.npy": "fec0a0b8de8f6a97f083845903f02620af2356838acdb6d2fc6dd4289b539032"
+   "~/os2026/data/cases/cav2d-rect-pert-1e5/config.json": "49e555053ad6207c7150061fd49143ac838e70a8bcca08a96d22cf277ac42138",
+   "~/os2026/data/cases/cav2d-rect-pert-1e5/B.npz": "685c787ca05de535b3932b46efc90fe4d16707ed10693ec51183d1ac795d283c",
+   "~/os2026/data/cases/cav2d-rect-pert-1e5/meta.json": "e1f6e80f8eeb6bd51cf1333929349d6adbfee4734487e34dddd478a362092f5c",
+   "~/os2026/data/cases/cav2d-rect-pert-1e5/A.npz": "ca5d96bbe8724d2aec92847dcfd644387a0d325dc7824a30b182f056d0e4c7ef",
+   "~/os2026/data/refs/cav2d-rect-pert-1e5/ref.json": "2950d3d6a919e5d4df2ea79bac1ba93dd07743a9c0d3e5120093125f86bec7a0",
+   "~/os2026/data/refs/cav2d-rect-pert-1e5/eigenvectors.npy": "1f29736fd00f38cef4bebd8e388b122f30dd382710c05f9247702e54756242b5",
+   "~/os2026/data/refs/cav2d-rect-pert-1e5/eigenvalues.npy": "fec0a0b8de8f6a97f083845903f02620af2356838acdb6d2fc6dd4289b539032"
   },
   "cav2d-square-1e4": {
-   "/share/home/linzihan/os2026/data/cases/cav2d-square-1e4/config.json": "bd74cb710db948093a329630e479505709cc02d4f2609174000f2888fe8ad33c",
-   "/share/home/linzihan/os2026/data/cases/cav2d-square-1e4/B.npz": "bf0b463578088e75b74fbd634dafb823d217ef5011369ecf327cbfb9f89efd73",
-   "/share/home/linzihan/os2026/data/cases/cav2d-square-1e4/meta.json": "efc7d1be1a0783018d9808c9637590648b3dc8b9bb146803a22924824b909d14",
-   "/share/home/linzihan/os2026/data/cases/cav2d-square-1e4/A.npz": "1b97238ca708ed99da4966f9d8fe742e91582492924d471a26613543d4c8911a",
-   "/share/home/linzihan/os2026/data/refs/cav2d-square-1e4/ref.json": "89abfe5ce0577648f228cdea2227193f66e31508ff6148d066d0e87880c04955",
-   "/share/home/linzihan/os2026/data/refs/cav2d-square-1e4/eigenvectors.npy": "6dec66be92e6793851d92ff7a6400a46ab1a081e57ce3f7070647747292fe314",
-   "/share/home/linzihan/os2026/data/refs/cav2d-square-1e4/eigenvalues.npy": "c4b70462734c757d1754917e2248d0b42f8472397f73ec241d4413a375b2ed50"
+   "~/os2026/data/cases/cav2d-square-1e4/config.json": "bd74cb710db948093a329630e479505709cc02d4f2609174000f2888fe8ad33c",
+   "~/os2026/data/cases/cav2d-square-1e4/B.npz": "bf0b463578088e75b74fbd634dafb823d217ef5011369ecf327cbfb9f89efd73",
+   "~/os2026/data/cases/cav2d-square-1e4/meta.json": "efc7d1be1a0783018d9808c9637590648b3dc8b9bb146803a22924824b909d14",
+   "~/os2026/data/cases/cav2d-square-1e4/A.npz": "1b97238ca708ed99da4966f9d8fe742e91582492924d471a26613543d4c8911a",
+   "~/os2026/data/refs/cav2d-square-1e4/ref.json": "89abfe5ce0577648f228cdea2227193f66e31508ff6148d066d0e87880c04955",
+   "~/os2026/data/refs/cav2d-square-1e4/eigenvectors.npy": "6dec66be92e6793851d92ff7a6400a46ab1a081e57ce3f7070647747292fe314",
+   "~/os2026/data/refs/cav2d-square-1e4/eigenvalues.npy": "c4b70462734c757d1754917e2248d0b42f8472397f73ec241d4413a375b2ed50"
   },
   "ss-2cubes_sphere": {
-   "/share/home/linzihan/os2026/data/cases/ss-2cubes_sphere/config.json": "16a62ccd964a8401fb261008837bcf06ba26814688ae54a7fb000fd7af7ae410",
-   "/share/home/linzihan/os2026/data/cases/ss-2cubes_sphere/meta.json": "53495ac92168cfcb9e6b86f5831c2b778c1516bbd0571e9096e29d01db6bb38f",
-   "/share/home/linzihan/os2026/data/cases/ss-2cubes_sphere/A.npz": "58c340656362ec3f73ea972af698cbd000c8ef02cf207bfbe25041dadacb76f0"
+   "~/os2026/data/cases/ss-2cubes_sphere/config.json": "16a62ccd964a8401fb261008837bcf06ba26814688ae54a7fb000fd7af7ae410",
+   "~/os2026/data/cases/ss-2cubes_sphere/meta.json": "53495ac92168cfcb9e6b86f5831c2b778c1516bbd0571e9096e29d01db6bb38f",
+   "~/os2026/data/cases/ss-2cubes_sphere/A.npz": "58c340656362ec3f73ea972af698cbd000c8ef02cf207bfbe25041dadacb76f0"
   },
   "ss-ge87h76": {
-   "/share/home/linzihan/os2026/data/cases/ss-ge87h76/config.json": "774bbfd1881223710a0b911c62c20e8c23c25d18334f683ab242c778d34cc346",
-   "/share/home/linzihan/os2026/data/cases/ss-ge87h76/meta.json": "d65db76c34482fcf0df791d9ef15efedd6a40ed020e349a58725fb1285699aa1",
-   "/share/home/linzihan/os2026/data/cases/ss-ge87h76/A.npz": "ab6df8ca61f6f682dd163a1d7f432b72cb2da634d15ccd635d7aa03535136172"
+   "~/os2026/data/cases/ss-ge87h76/config.json": "774bbfd1881223710a0b911c62c20e8c23c25d18334f683ab242c778d34cc346",
+   "~/os2026/data/cases/ss-ge87h76/meta.json": "d65db76c34482fcf0df791d9ef15efedd6a40ed020e349a58725fb1285699aa1",
+   "~/os2026/data/cases/ss-ge87h76/A.npz": "ab6df8ca61f6f682dd163a1d7f432b72cb2da634d15ccd635d7aa03535136172"
   },
   "ss-helm3d01": {
-   "/share/home/linzihan/os2026/data/cases/ss-helm3d01/config.json": "774bbfd1881223710a0b911c62c20e8c23c25d18334f683ab242c778d34cc346",
-   "/share/home/linzihan/os2026/data/cases/ss-helm3d01/meta.json": "000e6b2b03fa11b0927e23409e9630679130f3769bcc35bdc2861085f1860e46",
-   "/share/home/linzihan/os2026/data/cases/ss-helm3d01/A.npz": "09b2466c49290e2bd518b58c4f3cf3f932e29cee398a5906fe4e2c6ee2e00a17",
-   "/share/home/linzihan/os2026/data/refs/ss-helm3d01/ref.json": "d4a923d9ad1174714c13152a671740ecb4a08d7139f8062ca2b959ebf76a40e6",
-   "/share/home/linzihan/os2026/data/refs/ss-helm3d01/eigenvectors.npy": "fa199fd9c7d8c2ec8fd015ec05c7b01293dd3dfb81615b6fe8681daf2694e748",
-   "/share/home/linzihan/os2026/data/refs/ss-helm3d01/eigenvalues.npy": "5705f4a2927b71895bd406081c22203479165fc55a2246e33eb731d69e7cc7c8"
+   "~/os2026/data/cases/ss-helm3d01/config.json": "774bbfd1881223710a0b911c62c20e8c23c25d18334f683ab242c778d34cc346",
+   "~/os2026/data/cases/ss-helm3d01/meta.json": "000e6b2b03fa11b0927e23409e9630679130f3769bcc35bdc2861085f1860e46",
+   "~/os2026/data/cases/ss-helm3d01/A.npz": "09b2466c49290e2bd518b58c4f3cf3f932e29cee398a5906fe4e2c6ee2e00a17",
+   "~/os2026/data/refs/ss-helm3d01/ref.json": "d4a923d9ad1174714c13152a671740ecb4a08d7139f8062ca2b959ebf76a40e6",
+   "~/os2026/data/refs/ss-helm3d01/eigenvectors.npy": "fa199fd9c7d8c2ec8fd015ec05c7b01293dd3dfb81615b6fe8681daf2694e748",
+   "~/os2026/data/refs/ss-helm3d01/eigenvalues.npy": "5705f4a2927b71895bd406081c22203479165fc55a2246e33eb731d69e7cc7c8"
   },
   "ss-qa8fk-qa8fm": {
-   "/share/home/linzihan/os2026/data/cases/ss-qa8fk-qa8fm/config.json": "b2b559bc72a66216a12e9560b188ad787d5427501c4ef92d85e10855dde53361",
-   "/share/home/linzihan/os2026/data/cases/ss-qa8fk-qa8fm/B.npz": "f223df6e8206f5b797d53244b03f93d963843043e5d42939aa30a1c6ab7d3e33",
-   "/share/home/linzihan/os2026/data/cases/ss-qa8fk-qa8fm/meta.json": "46f96f2b8b1e9d06eeaaa65ac32e1fb18bd4c92c571e1bbf8f1a5019eb2bd8d5",
-   "/share/home/linzihan/os2026/data/cases/ss-qa8fk-qa8fm/A.npz": "181d3c64a46434b544f4a3127ea304bb4ffde275d4430b71f92cbe148d9b6640",
-   "/share/home/linzihan/os2026/data/refs/ss-qa8fk-qa8fm/ref.json": "6487f1c06bd77302ea052de6f1da0e7f8d09101a625572657ecb3484d2b28dad",
-   "/share/home/linzihan/os2026/data/refs/ss-qa8fk-qa8fm/eigenvectors.npy": "67b6f218cf22e3e9438d1a82aecc3503ac69431eefe32ed83d6ce1fefccb4349",
-   "/share/home/linzihan/os2026/data/refs/ss-qa8fk-qa8fm/eigenvalues.npy": "e61691ef3ab2210f559e74e8fb82a9143d0822eb2afea932409a7021a3da198a"
+   "~/os2026/data/cases/ss-qa8fk-qa8fm/config.json": "b2b559bc72a66216a12e9560b188ad787d5427501c4ef92d85e10855dde53361",
+   "~/os2026/data/cases/ss-qa8fk-qa8fm/B.npz": "f223df6e8206f5b797d53244b03f93d963843043e5d42939aa30a1c6ab7d3e33",
+   "~/os2026/data/cases/ss-qa8fk-qa8fm/meta.json": "46f96f2b8b1e9d06eeaaa65ac32e1fb18bd4c92c571e1bbf8f1a5019eb2bd8d5",
+   "~/os2026/data/cases/ss-qa8fk-qa8fm/A.npz": "181d3c64a46434b544f4a3127ea304bb4ffde275d4430b71f92cbe148d9b6640",
+   "~/os2026/data/refs/ss-qa8fk-qa8fm/ref.json": "6487f1c06bd77302ea052de6f1da0e7f8d09101a625572657ecb3484d2b28dad",
+   "~/os2026/data/refs/ss-qa8fk-qa8fm/eigenvectors.npy": "67b6f218cf22e3e9438d1a82aecc3503ac69431eefe32ed83d6ce1fefccb4349",
+   "~/os2026/data/refs/ss-qa8fk-qa8fm/eigenvalues.npy": "e61691ef3ab2210f559e74e8fb82a9143d0822eb2afea932409a7021a3da198a"
   },
   "ss-si34h36": {
-   "/share/home/linzihan/os2026/data/cases/ss-si34h36/config.json": "774bbfd1881223710a0b911c62c20e8c23c25d18334f683ab242c778d34cc346",
-   "/share/home/linzihan/os2026/data/cases/ss-si34h36/meta.json": "a77ed5fa78381b9e7bf2249fe0c154c76d99004387d4d480edd62c61a46b329e",
-   "/share/home/linzihan/os2026/data/cases/ss-si34h36/A.npz": "803531b0a26fad347ecc1a2b0155b1d3fbd583119d8e437bdf7d24ab3918359e"
+   "~/os2026/data/cases/ss-si34h36/config.json": "774bbfd1881223710a0b911c62c20e8c23c25d18334f683ab242c778d34cc346",
+   "~/os2026/data/cases/ss-si34h36/meta.json": "a77ed5fa78381b9e7bf2249fe0c154c76d99004387d4d480edd62c61a46b329e",
+   "~/os2026/data/cases/ss-si34h36/A.npz": "803531b0a26fad347ecc1a2b0155b1d3fbd583119d8e437bdf7d24ab3918359e"
   },
   "ss-tem152078": {
-   "/share/home/linzihan/os2026/data/cases/ss-tem152078/config.json": "e907bd3aa6b83af4731333495443cee169778c8421c597e50179c9c0a965ea95",
-   "/share/home/linzihan/os2026/data/cases/ss-tem152078/B.npz": "f8b3e03ca59b665839d6c959a12526834affd86bd56ef071186ba71c884027a1",
-   "/share/home/linzihan/os2026/data/cases/ss-tem152078/meta.json": "3e32925bb7c89b994867c161b6730f380f653bb923035cfa038bae16af148ac5",
-   "/share/home/linzihan/os2026/data/cases/ss-tem152078/A.npz": "2175fafd6c8c1f2ab2a43ccf941eadbb363b774a93594bdba96c68b0426ed6d2"
+   "~/os2026/data/cases/ss-tem152078/config.json": "e907bd3aa6b83af4731333495443cee169778c8421c597e50179c9c0a965ea95",
+   "~/os2026/data/cases/ss-tem152078/B.npz": "f8b3e03ca59b665839d6c959a12526834affd86bd56ef071186ba71c884027a1",
+   "~/os2026/data/cases/ss-tem152078/meta.json": "3e32925bb7c89b994867c161b6730f380f653bb923035cfa038bae16af148ac5",
+   "~/os2026/data/cases/ss-tem152078/A.npz": "2175fafd6c8c1f2ab2a43ccf941eadbb363b774a93594bdba96c68b0426ed6d2"
   },
   "ss-tem27623": {
-   "/share/home/linzihan/os2026/data/cases/ss-tem27623/config.json": "046b2a77abc2da0c6bbd6f5ac394cf72f24a7beeba1c4a905ab824cd70d6ea7f",
-   "/share/home/linzihan/os2026/data/cases/ss-tem27623/B.npz": "cb184ad52dda47a20ec6a2a3fc387180eab298cc45f6a61a6126b6abf1acdd6d",
-   "/share/home/linzihan/os2026/data/cases/ss-tem27623/meta.json": "4aae307ede52403a60c8ab26b12d562c591b923b244c31164baaaa7c8617ddcb",
-   "/share/home/linzihan/os2026/data/cases/ss-tem27623/A.npz": "2740b6d682f7c709cd4dbf387b12e6272cbf8e181b4c69aff22724300c5f9b1a",
-   "/share/home/linzihan/os2026/data/refs/ss-tem27623/ref.json": "6c32f662ca3ef49a8e354e71553f4824d6b0ab65592b996dc0d416e4632dc9ae",
-   "/share/home/linzihan/os2026/data/refs/ss-tem27623/eigenvectors.npy": "0fda9063655f5134390dabc2dd3c144712b8056001a31192b7b345ed4d64dcba",
-   "/share/home/linzihan/os2026/data/refs/ss-tem27623/eigenvalues.npy": "551841a310d47c478038b78e6fabdba2b6471500307c91fd2232024dea001cff"
+   "~/os2026/data/cases/ss-tem27623/config.json": "046b2a77abc2da0c6bbd6f5ac394cf72f24a7beeba1c4a905ab824cd70d6ea7f",
+   "~/os2026/data/cases/ss-tem27623/B.npz": "cb184ad52dda47a20ec6a2a3fc387180eab298cc45f6a61a6126b6abf1acdd6d",
+   "~/os2026/data/cases/ss-tem27623/meta.json": "4aae307ede52403a60c8ab26b12d562c591b923b244c31164baaaa7c8617ddcb",
+   "~/os2026/data/cases/ss-tem27623/A.npz": "2740b6d682f7c709cd4dbf387b12e6272cbf8e181b4c69aff22724300c5f9b1a",
+   "~/os2026/data/refs/ss-tem27623/ref.json": "6c32f662ca3ef49a8e354e71553f4824d6b0ab65592b996dc0d416e4632dc9ae",
+   "~/os2026/data/refs/ss-tem27623/eigenvectors.npy": "0fda9063655f5134390dabc2dd3c144712b8056001a31192b7b345ed4d64dcba",
+   "~/os2026/data/refs/ss-tem27623/eigenvalues.npy": "551841a310d47c478038b78e6fabdba2b6471500307c91fd2232024dea001cff"
   },
   "syn-ghep-multiplicity-real-1e4": {
-   "/share/home/linzihan/os2026/data/cases/syn-ghep-multiplicity-real-1e4/config.json": "ae8eadb7e0978af02b03e8555a9b4bb1b08b1801f42df04c40d6b6f41a418e2c",
-   "/share/home/linzihan/os2026/data/cases/syn-ghep-multiplicity-real-1e4/B.npz": "491adaf1515d02f7d6943d2b107981f84baa3544d4a3cb74b3ba5e17eb8b3cd3",
-   "/share/home/linzihan/os2026/data/cases/syn-ghep-multiplicity-real-1e4/meta.json": "51cde879cf18e201e29c3c127c6a42ef570a5ac2b32968b2d189469582a2deab",
-   "/share/home/linzihan/os2026/data/cases/syn-ghep-multiplicity-real-1e4/A.npz": "3b9ec9566e808c224244b0c948189ce7e72c16d04916fb97628fe439369fa160",
-   "/share/home/linzihan/os2026/data/refs/syn-ghep-multiplicity-real-1e4/ref.json": "6bc045ca5f0ff487e7b6f2418624338fea0ecfae8e66cef139185f6b0f0201f2",
-   "/share/home/linzihan/os2026/data/refs/syn-ghep-multiplicity-real-1e4/eigenvalues.npy": "483d9b36981415b5e3ed5d7390562533c82d593f601738b66b271ce53ec0c41f"
+   "~/os2026/data/cases/syn-ghep-multiplicity-real-1e4/config.json": "ae8eadb7e0978af02b03e8555a9b4bb1b08b1801f42df04c40d6b6f41a418e2c",
+   "~/os2026/data/cases/syn-ghep-multiplicity-real-1e4/B.npz": "491adaf1515d02f7d6943d2b107981f84baa3544d4a3cb74b3ba5e17eb8b3cd3",
+   "~/os2026/data/cases/syn-ghep-multiplicity-real-1e4/meta.json": "51cde879cf18e201e29c3c127c6a42ef570a5ac2b32968b2d189469582a2deab",
+   "~/os2026/data/cases/syn-ghep-multiplicity-real-1e4/A.npz": "3b9ec9566e808c224244b0c948189ce7e72c16d04916fb97628fe439369fa160",
+   "~/os2026/data/refs/syn-ghep-multiplicity-real-1e4/ref.json": "6bc045ca5f0ff487e7b6f2418624338fea0ecfae8e66cef139185f6b0f0201f2",
+   "~/os2026/data/refs/syn-ghep-multiplicity-real-1e4/eigenvalues.npy": "483d9b36981415b5e3ed5d7390562533c82d593f601738b66b271ce53ec0c41f"
   },
   "syn-ghep-near-singular-real-1e5": {
-   "/share/home/linzihan/os2026/data/cases/syn-ghep-near-singular-real-1e5/config.json": "d14eb53b535829bc94ffd1898fbfb0cd5b5002f2f3024741de8060b9769c64cf",
-   "/share/home/linzihan/os2026/data/cases/syn-ghep-near-singular-real-1e5/B.npz": "bce1bf6adb0c3b748ea0ac932aaf538f6f2a2a43e52baa2f0503014bccf1f420",
-   "/share/home/linzihan/os2026/data/cases/syn-ghep-near-singular-real-1e5/meta.json": "1001ed301a439f2270800fdad39b696da7c0eda9378abba210f2dcf6c2fbaae8",
-   "/share/home/linzihan/os2026/data/cases/syn-ghep-near-singular-real-1e5/A.npz": "8f38b9e9173cd219ee4425bd77e70e2f9a5ed07e26e7bc8580f9e51286d11447",
-   "/share/home/linzihan/os2026/data/refs/syn-ghep-near-singular-real-1e5/ref.json": "1f18c96eee3a88fab2aa273424cf65122c10cfa2e462194fdcded6fa364cc55c",
-   "/share/home/linzihan/os2026/data/refs/syn-ghep-near-singular-real-1e5/eigenvalues.npy": "f6854a4a0e0d9d834120fe6ba3bffd42af8d8a24fbc07f91e4431b8c7ae30e01"
+   "~/os2026/data/cases/syn-ghep-near-singular-real-1e5/config.json": "d14eb53b535829bc94ffd1898fbfb0cd5b5002f2f3024741de8060b9769c64cf",
+   "~/os2026/data/cases/syn-ghep-near-singular-real-1e5/B.npz": "bce1bf6adb0c3b748ea0ac932aaf538f6f2a2a43e52baa2f0503014bccf1f420",
+   "~/os2026/data/cases/syn-ghep-near-singular-real-1e5/meta.json": "1001ed301a439f2270800fdad39b696da7c0eda9378abba210f2dcf6c2fbaae8",
+   "~/os2026/data/cases/syn-ghep-near-singular-real-1e5/A.npz": "8f38b9e9173cd219ee4425bd77e70e2f9a5ed07e26e7bc8580f9e51286d11447",
+   "~/os2026/data/refs/syn-ghep-near-singular-real-1e5/ref.json": "1f18c96eee3a88fab2aa273424cf65122c10cfa2e462194fdcded6fa364cc55c",
+   "~/os2026/data/refs/syn-ghep-near-singular-real-1e5/eigenvalues.npy": "f6854a4a0e0d9d834120fe6ba3bffd42af8d8a24fbc07f91e4431b8c7ae30e01"
   },
   "syn-ghep-zero-cluster-complex-1e4": {
-   "/share/home/linzihan/os2026/data/cases/syn-ghep-zero-cluster-complex-1e4/config.json": "577e4136bcd5e8de93cfcc3165f0d30a7f25b5fdf6406a51db99ad1b96c733d1",
-   "/share/home/linzihan/os2026/data/cases/syn-ghep-zero-cluster-complex-1e4/B.npz": "dc5338ebed25909a37bd0653384e30ff1b56dcc5a479f34793d4712345b471fb",
-   "/share/home/linzihan/os2026/data/cases/syn-ghep-zero-cluster-complex-1e4/meta.json": "1a86b1088c39003a0534f1f32e1582504df399003460b14f5a9d7fa6eaae2a0e",
-   "/share/home/linzihan/os2026/data/cases/syn-ghep-zero-cluster-complex-1e4/A.npz": "bbeaafde120984ed9dbd38dee2204a252a2ad33938d6afdadf5c5a6c807e6a1e",
-   "/share/home/linzihan/os2026/data/refs/syn-ghep-zero-cluster-complex-1e4/ref.json": "7ff162e9a8a7840918a603643efc2049e63beaacc3f2dac0b210e61596c9d3b1",
-   "/share/home/linzihan/os2026/data/refs/syn-ghep-zero-cluster-complex-1e4/eigenvalues.npy": "5413449a64c0073b73b047342d0b3192f61ba18106237f064a313f3bde15f4fb"
+   "~/os2026/data/cases/syn-ghep-zero-cluster-complex-1e4/config.json": "577e4136bcd5e8de93cfcc3165f0d30a7f25b5fdf6406a51db99ad1b96c733d1",
+   "~/os2026/data/cases/syn-ghep-zero-cluster-complex-1e4/B.npz": "dc5338ebed25909a37bd0653384e30ff1b56dcc5a479f34793d4712345b471fb",
+   "~/os2026/data/cases/syn-ghep-zero-cluster-complex-1e4/meta.json": "1a86b1088c39003a0534f1f32e1582504df399003460b14f5a9d7fa6eaae2a0e",
+   "~/os2026/data/cases/syn-ghep-zero-cluster-complex-1e4/A.npz": "bbeaafde120984ed9dbd38dee2204a252a2ad33938d6afdadf5c5a6c807e6a1e",
+   "~/os2026/data/refs/syn-ghep-zero-cluster-complex-1e4/ref.json": "7ff162e9a8a7840918a603643efc2049e63beaacc3f2dac0b210e61596c9d3b1",
+   "~/os2026/data/refs/syn-ghep-zero-cluster-complex-1e4/eigenvalues.npy": "5413449a64c0073b73b047342d0b3192f61ba18106237f064a313f3bde15f4fb"
   },
   "syn-lap2d-100": {
-   "/share/home/linzihan/os2026/data/cases/syn-lap2d-100/config.json": "971e1dab0742c9cdd1632d15f3e923b59ba6f9ab5aa5264ada1c852edf9e14a3",
-   "/share/home/linzihan/os2026/data/cases/syn-lap2d-100/meta.json": "aaf551c34c993cbfc212b2e06e14618ea649bd77c8de057e7f4bbd76c0db83d8",
-   "/share/home/linzihan/os2026/data/cases/syn-lap2d-100/A.npz": "87223c183505079bb8bd33f8c3b9fe5ca8027fd8c4c32eda7231d53f133a2a52",
-   "/share/home/linzihan/os2026/data/refs/syn-lap2d-100/ref.json": "2ca76dad5f14cbfbc30486576521ed9312e937f3f880812333b44b5b1b83ac42",
-   "/share/home/linzihan/os2026/data/refs/syn-lap2d-100/eigenvalues.npy": "1906a460391f90d36d6fece54c33797d37d9f60d0e057a55cebaacf36e664042"
+   "~/os2026/data/cases/syn-lap2d-100/config.json": "971e1dab0742c9cdd1632d15f3e923b59ba6f9ab5aa5264ada1c852edf9e14a3",
+   "~/os2026/data/cases/syn-lap2d-100/meta.json": "aaf551c34c993cbfc212b2e06e14618ea649bd77c8de057e7f4bbd76c0db83d8",
+   "~/os2026/data/cases/syn-lap2d-100/A.npz": "87223c183505079bb8bd33f8c3b9fe5ca8027fd8c4c32eda7231d53f133a2a52",
+   "~/os2026/data/refs/syn-lap2d-100/ref.json": "2ca76dad5f14cbfbc30486576521ed9312e937f3f880812333b44b5b1b83ac42",
+   "~/os2026/data/refs/syn-lap2d-100/eigenvalues.npy": "1906a460391f90d36d6fece54c33797d37d9f60d0e057a55cebaacf36e664042"
   },
   "syn-lap3d-22": {
-   "/share/home/linzihan/os2026/data/cases/syn-lap3d-22/config.json": "971e1dab0742c9cdd1632d15f3e923b59ba6f9ab5aa5264ada1c852edf9e14a3",
-   "/share/home/linzihan/os2026/data/cases/syn-lap3d-22/meta.json": "2304e04ca89a4b2f2d5660ff1768f37b9bf85fb5d2df6a0b1996a74bba79865c",
-   "/share/home/linzihan/os2026/data/cases/syn-lap3d-22/A.npz": "d97fac6ceae8e45134bdbabe8b8c3123e79909e99bd71c29a4440617657e7e48",
-   "/share/home/linzihan/os2026/data/refs/syn-lap3d-22/ref.json": "89a41837d00feb4046692aac14953a626958926dc545ef3e7845308942e34eea",
-   "/share/home/linzihan/os2026/data/refs/syn-lap3d-22/eigenvalues.npy": "a65386b7187a277950b15c299dc5959b0786a51384c5c59d80158d19c1435cfb"
+   "~/os2026/data/cases/syn-lap3d-22/config.json": "971e1dab0742c9cdd1632d15f3e923b59ba6f9ab5aa5264ada1c852edf9e14a3",
+   "~/os2026/data/cases/syn-lap3d-22/meta.json": "2304e04ca89a4b2f2d5660ff1768f37b9bf85fb5d2df6a0b1996a74bba79865c",
+   "~/os2026/data/cases/syn-lap3d-22/A.npz": "d97fac6ceae8e45134bdbabe8b8c3123e79909e99bd71c29a4440617657e7e48",
+   "~/os2026/data/refs/syn-lap3d-22/ref.json": "89a41837d00feb4046692aac14953a626958926dc545ef3e7845308942e34eea",
+   "~/os2026/data/refs/syn-lap3d-22/eigenvalues.npy": "a65386b7187a277950b15c299dc5959b0786a51384c5c59d80158d19c1435cfb"
   },
   "syn-lap3d-aniso-1e5": {
-   "/share/home/linzihan/os2026/data/cases/syn-lap3d-aniso-1e5/config.json": "971e1dab0742c9cdd1632d15f3e923b59ba6f9ab5aa5264ada1c852edf9e14a3",
-   "/share/home/linzihan/os2026/data/cases/syn-lap3d-aniso-1e5/meta.json": "5274536ef9c524b7f748175ec7590a787f563c19b85fb49ae6bb5a8a5976c8bf",
-   "/share/home/linzihan/os2026/data/cases/syn-lap3d-aniso-1e5/A.npz": "9c114cddb52b403b85314ea4c86a94d08418e1443d62f7844984b6388c282662",
-   "/share/home/linzihan/os2026/data/refs/syn-lap3d-aniso-1e5/ref.json": "e13c3716c9bb0c64ad75f87ea071fc14eae85067eb9c1a00f6dff4eedb9001c4",
-   "/share/home/linzihan/os2026/data/refs/syn-lap3d-aniso-1e5/eigenvalues.npy": "9b950f7cee2e97813d4019455fa22a64c302b669559e58d8803e5020e1d4fc16"
+   "~/os2026/data/cases/syn-lap3d-aniso-1e5/config.json": "971e1dab0742c9cdd1632d15f3e923b59ba6f9ab5aa5264ada1c852edf9e14a3",
+   "~/os2026/data/cases/syn-lap3d-aniso-1e5/meta.json": "5274536ef9c524b7f748175ec7590a787f563c19b85fb49ae6bb5a8a5976c8bf",
+   "~/os2026/data/cases/syn-lap3d-aniso-1e5/A.npz": "9c114cddb52b403b85314ea4c86a94d08418e1443d62f7844984b6388c282662",
+   "~/os2026/data/refs/syn-lap3d-aniso-1e5/ref.json": "e13c3716c9bb0c64ad75f87ea071fc14eae85067eb9c1a00f6dff4eedb9001c4",
+   "~/os2026/data/refs/syn-lap3d-aniso-1e5/eigenvalues.npy": "9b950f7cee2e97813d4019455fa22a64c302b669559e58d8803e5020e1d4fc16"
   },
   "syn-mem27-46": {
-   "/share/home/linzihan/os2026/data/cases/syn-mem27-46/config.json": "971e1dab0742c9cdd1632d15f3e923b59ba6f9ab5aa5264ada1c852edf9e14a3",
-   "/share/home/linzihan/os2026/data/cases/syn-mem27-46/meta.json": "f2ed856839602b3a9bc2c044103e3df46855717960b8b2ebd6ed2e95feac4d80",
-   "/share/home/linzihan/os2026/data/cases/syn-mem27-46/A.npz": "767eb42995cc43708a5f3ed0ed3fb3780bd55b903c79bd13a3377f06a332c9f6",
-   "/share/home/linzihan/os2026/data/refs/syn-mem27-46/ref.json": "c551b69b0a47f5037b0216f1c41a3834daf712320ad22eac9b1b8c8ae1c8fb0c",
-   "/share/home/linzihan/os2026/data/refs/syn-mem27-46/eigenvalues.npy": "b61e8186075abd503a3974874df82e96b58254134cb921e0f07a328a364b213d"
+   "~/os2026/data/cases/syn-mem27-46/config.json": "971e1dab0742c9cdd1632d15f3e923b59ba6f9ab5aa5264ada1c852edf9e14a3",
+   "~/os2026/data/cases/syn-mem27-46/meta.json": "f2ed856839602b3a9bc2c044103e3df46855717960b8b2ebd6ed2e95feac4d80",
+   "~/os2026/data/cases/syn-mem27-46/A.npz": "767eb42995cc43708a5f3ed0ed3fb3780bd55b903c79bd13a3377f06a332c9f6",
+   "~/os2026/data/refs/syn-mem27-46/ref.json": "c551b69b0a47f5037b0216f1c41a3834daf712320ad22eac9b1b8c8ae1c8fb0c",
+   "~/os2026/data/refs/syn-mem27-46/eigenvalues.npy": "b61e8186075abd503a3974874df82e96b58254134cb921e0f07a328a364b213d"
   },
   "syn-multiplicity-complex-1e4": {
-   "/share/home/linzihan/os2026/data/cases/syn-multiplicity-complex-1e4/config.json": "ebcf0fe08f61dd952874b55b9cb0680b5b3e1e442016d9b2792235d20de56cd1",
-   "/share/home/linzihan/os2026/data/cases/syn-multiplicity-complex-1e4/meta.json": "6a3d6812ea8db536d33ce2500bebffb920ea1af5b7b8d1c04c5869294c36fbba",
-   "/share/home/linzihan/os2026/data/cases/syn-multiplicity-complex-1e4/A.npz": "1530a8d1ec4d3ccc05cd1041ede5e5d70c71479273426e76734fa27aed45c367",
-   "/share/home/linzihan/os2026/data/refs/syn-multiplicity-complex-1e4/ref.json": "a63564436c09a41408a5c4e240ee7a9293d659ec44d4da8e5553eb689077bf74",
-   "/share/home/linzihan/os2026/data/refs/syn-multiplicity-complex-1e4/eigenvalues.npy": "780a025c72f67bb6a18b041a3359bac9c484dfc472ab0def3f316651177595a1"
+   "~/os2026/data/cases/syn-multiplicity-complex-1e4/config.json": "ebcf0fe08f61dd952874b55b9cb0680b5b3e1e442016d9b2792235d20de56cd1",
+   "~/os2026/data/cases/syn-multiplicity-complex-1e4/meta.json": "6a3d6812ea8db536d33ce2500bebffb920ea1af5b7b8d1c04c5869294c36fbba",
+   "~/os2026/data/cases/syn-multiplicity-complex-1e4/A.npz": "1530a8d1ec4d3ccc05cd1041ede5e5d70c71479273426e76734fa27aed45c367",
+   "~/os2026/data/refs/syn-multiplicity-complex-1e4/ref.json": "a63564436c09a41408a5c4e240ee7a9293d659ec44d4da8e5553eb689077bf74",
+   "~/os2026/data/refs/syn-multiplicity-complex-1e4/eigenvalues.npy": "780a025c72f67bb6a18b041a3359bac9c484dfc472ab0def3f316651177595a1"
   },
   "syn-multiplicity-real-1e4": {
-   "/share/home/linzihan/os2026/data/cases/syn-multiplicity-real-1e4/config.json": "ebcf0fe08f61dd952874b55b9cb0680b5b3e1e442016d9b2792235d20de56cd1",
-   "/share/home/linzihan/os2026/data/cases/syn-multiplicity-real-1e4/meta.json": "31b2b65d728c5588645e4b96079795104ca603cde1cf6e96b764f46d27b828ee",
-   "/share/home/linzihan/os2026/data/cases/syn-multiplicity-real-1e4/A.npz": "b07588dcf4c6cc532d8ca0a613528bd85e43a271fe2f4980706fe7b5635a2982",
-   "/share/home/linzihan/os2026/data/refs/syn-multiplicity-real-1e4/ref.json": "a63564436c09a41408a5c4e240ee7a9293d659ec44d4da8e5553eb689077bf74",
-   "/share/home/linzihan/os2026/data/refs/syn-multiplicity-real-1e4/eigenvalues.npy": "780a025c72f67bb6a18b041a3359bac9c484dfc472ab0def3f316651177595a1"
+   "~/os2026/data/cases/syn-multiplicity-real-1e4/config.json": "ebcf0fe08f61dd952874b55b9cb0680b5b3e1e442016d9b2792235d20de56cd1",
+   "~/os2026/data/cases/syn-multiplicity-real-1e4/meta.json": "31b2b65d728c5588645e4b96079795104ca603cde1cf6e96b764f46d27b828ee",
+   "~/os2026/data/cases/syn-multiplicity-real-1e4/A.npz": "b07588dcf4c6cc532d8ca0a613528bd85e43a271fe2f4980706fe7b5635a2982",
+   "~/os2026/data/refs/syn-multiplicity-real-1e4/ref.json": "a63564436c09a41408a5c4e240ee7a9293d659ec44d4da8e5553eb689077bf74",
+   "~/os2026/data/refs/syn-multiplicity-real-1e4/eigenvalues.npy": "780a025c72f67bb6a18b041a3359bac9c484dfc472ab0def3f316651177595a1"
   },
   "syn-near-singular-complex-1e4": {
-   "/share/home/linzihan/os2026/data/cases/syn-near-singular-complex-1e4/config.json": "56f18938c9155b9ccf38049aecce036466048e62454d6990ad335ed7e96c0c6c",
-   "/share/home/linzihan/os2026/data/cases/syn-near-singular-complex-1e4/meta.json": "2997607c0b3cc390990c382291dfb835093814672b69733f2bc774ab251a5d3e",
-   "/share/home/linzihan/os2026/data/cases/syn-near-singular-complex-1e4/A.npz": "885858ff2a236bd6a45da25449e1e1a5d46d819470a32677e04fb1e843af1730",
-   "/share/home/linzihan/os2026/data/refs/syn-near-singular-complex-1e4/ref.json": "a63564436c09a41408a5c4e240ee7a9293d659ec44d4da8e5553eb689077bf74",
-   "/share/home/linzihan/os2026/data/refs/syn-near-singular-complex-1e4/eigenvalues.npy": "ff27585bd024aca1f43597c07ae0587f41443be6597f6f7172ba37e93f7ea1e8"
+   "~/os2026/data/cases/syn-near-singular-complex-1e4/config.json": "56f18938c9155b9ccf38049aecce036466048e62454d6990ad335ed7e96c0c6c",
+   "~/os2026/data/cases/syn-near-singular-complex-1e4/meta.json": "2997607c0b3cc390990c382291dfb835093814672b69733f2bc774ab251a5d3e",
+   "~/os2026/data/cases/syn-near-singular-complex-1e4/A.npz": "885858ff2a236bd6a45da25449e1e1a5d46d819470a32677e04fb1e843af1730",
+   "~/os2026/data/refs/syn-near-singular-complex-1e4/ref.json": "a63564436c09a41408a5c4e240ee7a9293d659ec44d4da8e5553eb689077bf74",
+   "~/os2026/data/refs/syn-near-singular-complex-1e4/eigenvalues.npy": "ff27585bd024aca1f43597c07ae0587f41443be6597f6f7172ba37e93f7ea1e8"
   },
   "syn-near-singular-complex-1e5": {
-   "/share/home/linzihan/os2026/data/cases/syn-near-singular-complex-1e5/config.json": "baaa6f9f5403f94baf6332ea6a99924f5fdb7721989d73faa1aba6ba3ebcfaeb",
-   "/share/home/linzihan/os2026/data/cases/syn-near-singular-complex-1e5/meta.json": "2dd97186af7321ddc984578d3d3bbff4edaf99b95dd1c6174daa761e9ca30fcb",
-   "/share/home/linzihan/os2026/data/cases/syn-near-singular-complex-1e5/A.npz": "504f7f8c89ec1c43b86e2bfacbcc4132ebb72c4b73c697f4a36f2b8f9c6dee6f",
-   "/share/home/linzihan/os2026/data/refs/syn-near-singular-complex-1e5/ref.json": "3680e53d0749c94de887f8db471412ed2af91cb9063f536b8fa9e12edf223e46",
-   "/share/home/linzihan/os2026/data/refs/syn-near-singular-complex-1e5/eigenvalues.npy": "2ed51e3be8cd6588f63f3cb44e97639ef3e428b822793da16d4b806bb6d77643"
+   "~/os2026/data/cases/syn-near-singular-complex-1e5/config.json": "baaa6f9f5403f94baf6332ea6a99924f5fdb7721989d73faa1aba6ba3ebcfaeb",
+   "~/os2026/data/cases/syn-near-singular-complex-1e5/meta.json": "2dd97186af7321ddc984578d3d3bbff4edaf99b95dd1c6174daa761e9ca30fcb",
+   "~/os2026/data/cases/syn-near-singular-complex-1e5/A.npz": "504f7f8c89ec1c43b86e2bfacbcc4132ebb72c4b73c697f4a36f2b8f9c6dee6f",
+   "~/os2026/data/refs/syn-near-singular-complex-1e5/ref.json": "3680e53d0749c94de887f8db471412ed2af91cb9063f536b8fa9e12edf223e46",
+   "~/os2026/data/refs/syn-near-singular-complex-1e5/eigenvalues.npy": "2ed51e3be8cd6588f63f3cb44e97639ef3e428b822793da16d4b806bb6d77643"
   },
   "syn-near-singular-real-1e4": {
-   "/share/home/linzihan/os2026/data/cases/syn-near-singular-real-1e4/config.json": "56f18938c9155b9ccf38049aecce036466048e62454d6990ad335ed7e96c0c6c",
-   "/share/home/linzihan/os2026/data/cases/syn-near-singular-real-1e4/meta.json": "a71915b6f907e6321a84e31da2e5023c8ec145f97cdbf4443251d470743062dd",
-   "/share/home/linzihan/os2026/data/cases/syn-near-singular-real-1e4/A.npz": "a75e457b29d980e5b24a687b2e1a192d08235108ed54c4530e78c51d7ba6a6af",
-   "/share/home/linzihan/os2026/data/refs/syn-near-singular-real-1e4/ref.json": "a63564436c09a41408a5c4e240ee7a9293d659ec44d4da8e5553eb689077bf74",
-   "/share/home/linzihan/os2026/data/refs/syn-near-singular-real-1e4/eigenvalues.npy": "ff27585bd024aca1f43597c07ae0587f41443be6597f6f7172ba37e93f7ea1e8"
+   "~/os2026/data/cases/syn-near-singular-real-1e4/config.json": "56f18938c9155b9ccf38049aecce036466048e62454d6990ad335ed7e96c0c6c",
+   "~/os2026/data/cases/syn-near-singular-real-1e4/meta.json": "a71915b6f907e6321a84e31da2e5023c8ec145f97cdbf4443251d470743062dd",
+   "~/os2026/data/cases/syn-near-singular-real-1e4/A.npz": "a75e457b29d980e5b24a687b2e1a192d08235108ed54c4530e78c51d7ba6a6af",
+   "~/os2026/data/refs/syn-near-singular-real-1e4/ref.json": "a63564436c09a41408a5c4e240ee7a9293d659ec44d4da8e5553eb689077bf74",
+   "~/os2026/data/refs/syn-near-singular-real-1e4/eigenvalues.npy": "ff27585bd024aca1f43597c07ae0587f41443be6597f6f7172ba37e93f7ea1e8"
   },
   "syn-wide-range-complex-1e4": {
-   "/share/home/linzihan/os2026/data/cases/syn-wide-range-complex-1e4/config.json": "251c63d14c8b71697961a604538c6ddf9468593d01f0c905c6822ec068720395",
-   "/share/home/linzihan/os2026/data/cases/syn-wide-range-complex-1e4/meta.json": "18034980dc536388606e65189448b8c8c7966165fb5034db38d9f7866bb3c773",
-   "/share/home/linzihan/os2026/data/cases/syn-wide-range-complex-1e4/A.npz": "7e29ec8f846b785bb4f46a642a2b131f289e6380e6e25a7b7073b5e2cbc7c3af",
-   "/share/home/linzihan/os2026/data/refs/syn-wide-range-complex-1e4/ref.json": "a63564436c09a41408a5c4e240ee7a9293d659ec44d4da8e5553eb689077bf74",
-   "/share/home/linzihan/os2026/data/refs/syn-wide-range-complex-1e4/eigenvalues.npy": "af2aad1ad22fcb983571365a3d855caffd2f6611908def2f0cbdda3f4a45ae15"
+   "~/os2026/data/cases/syn-wide-range-complex-1e4/config.json": "251c63d14c8b71697961a604538c6ddf9468593d01f0c905c6822ec068720395",
+   "~/os2026/data/cases/syn-wide-range-complex-1e4/meta.json": "18034980dc536388606e65189448b8c8c7966165fb5034db38d9f7866bb3c773",
+   "~/os2026/data/cases/syn-wide-range-complex-1e4/A.npz": "7e29ec8f846b785bb4f46a642a2b131f289e6380e6e25a7b7073b5e2cbc7c3af",
+   "~/os2026/data/refs/syn-wide-range-complex-1e4/ref.json": "a63564436c09a41408a5c4e240ee7a9293d659ec44d4da8e5553eb689077bf74",
+   "~/os2026/data/refs/syn-wide-range-complex-1e4/eigenvalues.npy": "af2aad1ad22fcb983571365a3d855caffd2f6611908def2f0cbdda3f4a45ae15"
   },
   "syn-wide-range-real-1e4": {
-   "/share/home/linzihan/os2026/data/cases/syn-wide-range-real-1e4/config.json": "251c63d14c8b71697961a604538c6ddf9468593d01f0c905c6822ec068720395",
-   "/share/home/linzihan/os2026/data/cases/syn-wide-range-real-1e4/meta.json": "5a1e078f6a3d36a899b5204d05f3aad800e2adcf90a752ba8b3beca5a2bb6c45",
-   "/share/home/linzihan/os2026/data/cases/syn-wide-range-real-1e4/A.npz": "7e572b619677e2d30a346a44dbcad96ddafcb642ae5e2a819cf4af5f072d4529",
-   "/share/home/linzihan/os2026/data/refs/syn-wide-range-real-1e4/ref.json": "a63564436c09a41408a5c4e240ee7a9293d659ec44d4da8e5553eb689077bf74",
-   "/share/home/linzihan/os2026/data/refs/syn-wide-range-real-1e4/eigenvalues.npy": "af2aad1ad22fcb983571365a3d855caffd2f6611908def2f0cbdda3f4a45ae15"
+   "~/os2026/data/cases/syn-wide-range-real-1e4/config.json": "251c63d14c8b71697961a604538c6ddf9468593d01f0c905c6822ec068720395",
+   "~/os2026/data/cases/syn-wide-range-real-1e4/meta.json": "5a1e078f6a3d36a899b5204d05f3aad800e2adcf90a752ba8b3beca5a2bb6c45",
+   "~/os2026/data/cases/syn-wide-range-real-1e4/A.npz": "7e572b619677e2d30a346a44dbcad96ddafcb642ae5e2a819cf4af5f072d4529",
+   "~/os2026/data/refs/syn-wide-range-real-1e4/ref.json": "a63564436c09a41408a5c4e240ee7a9293d659ec44d4da8e5553eb689077bf74",
+   "~/os2026/data/refs/syn-wide-range-real-1e4/eigenvalues.npy": "af2aad1ad22fcb983571365a3d855caffd2f6611908def2f0cbdda3f4a45ae15"
   },
   "syn-zero-cluster-complex-1e4": {
-   "/share/home/linzihan/os2026/data/cases/syn-zero-cluster-complex-1e4/config.json": "b98b325ec1a4e5ca3b1696c91a88da5ce0ca7f621c8d942da47141123083989d",
-   "/share/home/linzihan/os2026/data/cases/syn-zero-cluster-complex-1e4/meta.json": "fad8cb2684180ccc291337cb1816ebc6fadabe72b46674a99b0531c4f9f7aab3",
-   "/share/home/linzihan/os2026/data/cases/syn-zero-cluster-complex-1e4/A.npz": "6a46338767684fb6ee5731a766dce61d5e474c82772a6da42af587a051662143",
-   "/share/home/linzihan/os2026/data/refs/syn-zero-cluster-complex-1e4/ref.json": "a63564436c09a41408a5c4e240ee7a9293d659ec44d4da8e5553eb689077bf74",
-   "/share/home/linzihan/os2026/data/refs/syn-zero-cluster-complex-1e4/eigenvalues.npy": "7a33d4bad7648b7799913e95cc3cd37d69eff61a3a01cf268558df87e2ccf815"
+   "~/os2026/data/cases/syn-zero-cluster-complex-1e4/config.json": "b98b325ec1a4e5ca3b1696c91a88da5ce0ca7f621c8d942da47141123083989d",
+   "~/os2026/data/cases/syn-zero-cluster-complex-1e4/meta.json": "fad8cb2684180ccc291337cb1816ebc6fadabe72b46674a99b0531c4f9f7aab3",
+   "~/os2026/data/cases/syn-zero-cluster-complex-1e4/A.npz": "6a46338767684fb6ee5731a766dce61d5e474c82772a6da42af587a051662143",
+   "~/os2026/data/refs/syn-zero-cluster-complex-1e4/ref.json": "a63564436c09a41408a5c4e240ee7a9293d659ec44d4da8e5553eb689077bf74",
+   "~/os2026/data/refs/syn-zero-cluster-complex-1e4/eigenvalues.npy": "7a33d4bad7648b7799913e95cc3cd37d69eff61a3a01cf268558df87e2ccf815"
   },
   "syn-zero-cluster-real-1e4": {
-   "/share/home/linzihan/os2026/data/cases/syn-zero-cluster-real-1e4/config.json": "b98b325ec1a4e5ca3b1696c91a88da5ce0ca7f621c8d942da47141123083989d",
-   "/share/home/linzihan/os2026/data/cases/syn-zero-cluster-real-1e4/meta.json": "f68c50b1d4250483dea6bbd43074d35fa15840e5162f1872e5a2eeb5d876a311",
-   "/share/home/linzihan/os2026/data/cases/syn-zero-cluster-real-1e4/A.npz": "2fcbcccce148e2994581a64081e247c786e690d84f775582c024bfdad7e1dfac",
-   "/share/home/linzihan/os2026/data/refs/syn-zero-cluster-real-1e4/ref.json": "a63564436c09a41408a5c4e240ee7a9293d659ec44d4da8e5553eb689077bf74",
-   "/share/home/linzihan/os2026/data/refs/syn-zero-cluster-real-1e4/eigenvalues.npy": "7a33d4bad7648b7799913e95cc3cd37d69eff61a3a01cf268558df87e2ccf815"
+   "~/os2026/data/cases/syn-zero-cluster-real-1e4/config.json": "b98b325ec1a4e5ca3b1696c91a88da5ce0ca7f621c8d942da47141123083989d",
+   "~/os2026/data/cases/syn-zero-cluster-real-1e4/meta.json": "f68c50b1d4250483dea6bbd43074d35fa15840e5162f1872e5a2eeb5d876a311",
+   "~/os2026/data/cases/syn-zero-cluster-real-1e4/A.npz": "2fcbcccce148e2994581a64081e247c786e690d84f775582c024bfdad7e1dfac",
+   "~/os2026/data/refs/syn-zero-cluster-real-1e4/ref.json": "a63564436c09a41408a5c4e240ee7a9293d659ec44d4da8e5553eb689077bf74",
+   "~/os2026/data/refs/syn-zero-cluster-real-1e4/eigenvalues.npy": "7a33d4bad7648b7799913e95cc3cd37d69eff61a3a01cf268558df87e2ccf815"
   },
   "syn-zero-cluster-real-1e5": {
-   "/share/home/linzihan/os2026/data/cases/syn-zero-cluster-real-1e5/config.json": "5b59232b804e6ae0ab6d89f4feb4573e585c3f8c40c1ae8ae9bc980b0f5adb5e",
-   "/share/home/linzihan/os2026/data/cases/syn-zero-cluster-real-1e5/meta.json": "c58a29d5c82ae17458442e337ee53e172127baea728337b7ec3ca426ecf439eb",
-   "/share/home/linzihan/os2026/data/cases/syn-zero-cluster-real-1e5/A.npz": "eb949053dba5ac18303b54ddff63abc76b87a80239b069be84d21c99a16fa0ad",
-   "/share/home/linzihan/os2026/data/refs/syn-zero-cluster-real-1e5/ref.json": "3680e53d0749c94de887f8db471412ed2af91cb9063f536b8fa9e12edf223e46",
-   "/share/home/linzihan/os2026/data/refs/syn-zero-cluster-real-1e5/eigenvalues.npy": "b9adf33b7dfd9f158540ebb327ea3eca4e16a0fb63e5896b07bea89f0168635e"
+   "~/os2026/data/cases/syn-zero-cluster-real-1e5/config.json": "5b59232b804e6ae0ab6d89f4feb4573e585c3f8c40c1ae8ae9bc980b0f5adb5e",
+   "~/os2026/data/cases/syn-zero-cluster-real-1e5/meta.json": "c58a29d5c82ae17458442e337ee53e172127baea728337b7ec3ca426ecf439eb",
+   "~/os2026/data/cases/syn-zero-cluster-real-1e5/A.npz": "eb949053dba5ac18303b54ddff63abc76b87a80239b069be84d21c99a16fa0ad",
+   "~/os2026/data/refs/syn-zero-cluster-real-1e5/ref.json": "3680e53d0749c94de887f8db471412ed2af91cb9063f536b8fa9e12edf223e46",
+   "~/os2026/data/refs/syn-zero-cluster-real-1e5/eigenvalues.npy": "b9adf33b7dfd9f158540ebb327ea3eca4e16a0fb63e5896b07bea89f0168635e"
   },
   "wg-halfslab-1e4": {
-   "/share/home/linzihan/os2026/data/cases/wg-halfslab-1e4/config.json": "201438cb623ad298480cf0b2d592847f1d0e181b6a6c337130f24e1e3ab67dc9",
-   "/share/home/linzihan/os2026/data/cases/wg-halfslab-1e4/B.npz": "e3fd84d89b2ca431475307d1e8c541ecffcb29dbb9a6f2f957dbf71667eac1e6",
-   "/share/home/linzihan/os2026/data/cases/wg-halfslab-1e4/meta.json": "c16196cce3515ed4b551a9884390532fd5527fe3997c63fd7753834e5ff9cdd7",
-   "/share/home/linzihan/os2026/data/cases/wg-halfslab-1e4/A.npz": "6937411b047279a91811f07191af0c63ef987461ac4f83e6e1c4c8eb8ec54a58",
-   "/share/home/linzihan/os2026/data/refs/wg-halfslab-1e4/ref.json": "7fbf3f93f5160b619ce4eb4fc942f01a965a320def52f083712717db231180da",
-   "/share/home/linzihan/os2026/data/refs/wg-halfslab-1e4/eigenvectors.npy": "b41c11aa29e389fde6172940659da9bf79b86e7c50bb9708322e41fbee5c418d",
-   "/share/home/linzihan/os2026/data/refs/wg-halfslab-1e4/eigenvalues.npy": "d88d553df0e923af9c905fbc2648d31653d1d7929ee55b7bb15472aee155fc3e"
+   "~/os2026/data/cases/wg-halfslab-1e4/config.json": "201438cb623ad298480cf0b2d592847f1d0e181b6a6c337130f24e1e3ab67dc9",
+   "~/os2026/data/cases/wg-halfslab-1e4/B.npz": "e3fd84d89b2ca431475307d1e8c541ecffcb29dbb9a6f2f957dbf71667eac1e6",
+   "~/os2026/data/cases/wg-halfslab-1e4/meta.json": "c16196cce3515ed4b551a9884390532fd5527fe3997c63fd7753834e5ff9cdd7",
+   "~/os2026/data/cases/wg-halfslab-1e4/A.npz": "6937411b047279a91811f07191af0c63ef987461ac4f83e6e1c4c8eb8ec54a58",
+   "~/os2026/data/refs/wg-halfslab-1e4/ref.json": "7fbf3f93f5160b619ce4eb4fc942f01a965a320def52f083712717db231180da",
+   "~/os2026/data/refs/wg-halfslab-1e4/eigenvectors.npy": "b41c11aa29e389fde6172940659da9bf79b86e7c50bb9708322e41fbee5c418d",
+   "~/os2026/data/refs/wg-halfslab-1e4/eigenvalues.npy": "d88d553df0e923af9c905fbc2648d31653d1d7929ee55b7bb15472aee155fc3e"
   },
   "wg-square-1e3": {
-   "/share/home/linzihan/os2026/data/cases/wg-square-1e3/config.json": "41617453bd5cf5032dbcd21fe15fffc4770e37ec00556e273af74f5c136c84b4",
-   "/share/home/linzihan/os2026/data/cases/wg-square-1e3/B.npz": "7da5f68b51a1f32c4c2d6cc1ead7384cb6cc279efaabe10ad4b761d9057483cf",
-   "/share/home/linzihan/os2026/data/cases/wg-square-1e3/meta.json": "83db7b2a84c782dd2299fd42b80bc74486ba5c78f40904814023e570c020c996",
-   "/share/home/linzihan/os2026/data/cases/wg-square-1e3/A.npz": "d7a33c497579bdfa5e8a866ba1f2b5480929138c94745e2eb4b8fb9625729979",
-   "/share/home/linzihan/os2026/data/refs/wg-square-1e3/ref.json": "a6ef79abf55a89595edb261522c9d6ffc3bc43a3be5bc471425a1371aa6ce5b7",
-   "/share/home/linzihan/os2026/data/refs/wg-square-1e3/eigenvectors.npy": "da1c904d50410855501fdff904dce80bc4932ef523efb30974f0383f008661e3",
-   "/share/home/linzihan/os2026/data/refs/wg-square-1e3/eigenvalues.npy": "95bcbaca2e834090fd6a2a8042e67e9564f708f3d01664bd4dfcb11d70252fd8"
+   "~/os2026/data/cases/wg-square-1e3/config.json": "41617453bd5cf5032dbcd21fe15fffc4770e37ec00556e273af74f5c136c84b4",
+   "~/os2026/data/cases/wg-square-1e3/B.npz": "7da5f68b51a1f32c4c2d6cc1ead7384cb6cc279efaabe10ad4b761d9057483cf",
+   "~/os2026/data/cases/wg-square-1e3/meta.json": "83db7b2a84c782dd2299fd42b80bc74486ba5c78f40904814023e570c020c996",
+   "~/os2026/data/cases/wg-square-1e3/A.npz": "d7a33c497579bdfa5e8a866ba1f2b5480929138c94745e2eb4b8fb9625729979",
+   "~/os2026/data/refs/wg-square-1e3/ref.json": "a6ef79abf55a89595edb261522c9d6ffc3bc43a3be5bc471425a1371aa6ce5b7",
+   "~/os2026/data/refs/wg-square-1e3/eigenvectors.npy": "da1c904d50410855501fdff904dce80bc4932ef523efb30974f0383f008661e3",
+   "~/os2026/data/refs/wg-square-1e3/eigenvalues.npy": "95bcbaca2e834090fd6a2a8042e67e9564f708f3d01664bd4dfcb11d70252fd8"
   },
   "wg-square-1e5": {
-   "/share/home/linzihan/os2026/data/cases/wg-square-1e5/config.json": "c040c1d68be0037fc4b17f7d9ddd9c4c7bfc4c40de561362641421def0e9c591",
-   "/share/home/linzihan/os2026/data/cases/wg-square-1e5/B.npz": "7c5c3fdb7728e2ad11b6c35f6cea30d4f0e0649761795d9136eca37c1c0d0a64",
-   "/share/home/linzihan/os2026/data/cases/wg-square-1e5/meta.json": "fcc60c659a8e3b41d79488d31c27eda3ec97119fe9c60565260f303e4dda5805",
-   "/share/home/linzihan/os2026/data/cases/wg-square-1e5/A.npz": "d19fcc2f9a8611ce4ef9d87f7014710243ca2a047117605d690864f141eca053",
-   "/share/home/linzihan/os2026/data/refs/wg-square-1e5/ref.json": "953de83331d0ed2aca76068ea9181f87c0c887bfb8fad9fc231d18749582de0b",
-   "/share/home/linzihan/os2026/data/refs/wg-square-1e5/eigenvectors.npy": "4940a37a678b1ac1a9777856a51ecb27bf10a97b0114ddd1d17826c8a512adf8",
-   "/share/home/linzihan/os2026/data/refs/wg-square-1e5/eigenvalues.npy": "3bcaab0217cca21405129915fc2c0939cb183afb6b4bc0f7051145957e39d1ba"
+   "~/os2026/data/cases/wg-square-1e5/config.json": "c040c1d68be0037fc4b17f7d9ddd9c4c7bfc4c40de561362641421def0e9c591",
+   "~/os2026/data/cases/wg-square-1e5/B.npz": "7c5c3fdb7728e2ad11b6c35f6cea30d4f0e0649761795d9136eca37c1c0d0a64",
+   "~/os2026/data/cases/wg-square-1e5/meta.json": "fcc60c659a8e3b41d79488d31c27eda3ec97119fe9c60565260f303e4dda5805",
+   "~/os2026/data/cases/wg-square-1e5/A.npz": "d19fcc2f9a8611ce4ef9d87f7014710243ca2a047117605d690864f141eca053",
+   "~/os2026/data/refs/wg-square-1e5/ref.json": "953de83331d0ed2aca76068ea9181f87c0c887bfb8fad9fc231d18749582de0b",
+   "~/os2026/data/refs/wg-square-1e5/eigenvectors.npy": "4940a37a678b1ac1a9777856a51ecb27bf10a97b0114ddd1d17826c8a512adf8",
+   "~/os2026/data/refs/wg-square-1e5/eigenvalues.npy": "3bcaab0217cca21405129915fc2c0939cb183afb6b4bc0f7051145957e39d1ba"
   },
   "wg-square-pert-1e4": {
-   "/share/home/linzihan/os2026/data/cases/wg-square-pert-1e4/config.json": "f2d9f8875252a52189ab303ef05dc5bb02a3fa97d2abbfaff8e43c196da1ecd9",
-   "/share/home/linzihan/os2026/data/cases/wg-square-pert-1e4/B.npz": "7d4290294400b41a992c7fd7be6a98477603e8ee1de0160189f337c4a064879a",
-   "/share/home/linzihan/os2026/data/cases/wg-square-pert-1e4/meta.json": "8b0c88b6717ffdea0bae3ea112ccf3fd26364ca5f7b9983287af0354805b9461",
-   "/share/home/linzihan/os2026/data/cases/wg-square-pert-1e4/A.npz": "24a56b00bae640ceb8c86f8ee556cf5115e24001d8b5172cd12c8bec4a0c53ad",
-   "/share/home/linzihan/os2026/data/refs/wg-square-pert-1e4/ref.json": "db2af98340fcc87dbf7d041749d81e44155528a315b43c054cae54299f6c68ad",
-   "/share/home/linzihan/os2026/data/refs/wg-square-pert-1e4/eigenvectors.npy": "a74c118195bf944cf1d0835089fc41f6a92dbf89ce01688bb8269ea9c163ea74",
-   "/share/home/linzihan/os2026/data/refs/wg-square-pert-1e4/eigenvalues.npy": "d22d9f29f7fcf67ec46f4a10276760fb149ba48a0e311dfa2317b90187da969d"
+   "~/os2026/data/cases/wg-square-pert-1e4/config.json": "f2d9f8875252a52189ab303ef05dc5bb02a3fa97d2abbfaff8e43c196da1ecd9",
+   "~/os2026/data/cases/wg-square-pert-1e4/B.npz": "7d4290294400b41a992c7fd7be6a98477603e8ee1de0160189f337c4a064879a",
+   "~/os2026/data/cases/wg-square-pert-1e4/meta.json": "8b0c88b6717ffdea0bae3ea112ccf3fd26364ca5f7b9983287af0354805b9461",
+   "~/os2026/data/cases/wg-square-pert-1e4/A.npz": "24a56b00bae640ceb8c86f8ee556cf5115e24001d8b5172cd12c8bec4a0c53ad",
+   "~/os2026/data/refs/wg-square-pert-1e4/ref.json": "db2af98340fcc87dbf7d041749d81e44155528a315b43c054cae54299f6c68ad",
+   "~/os2026/data/refs/wg-square-pert-1e4/eigenvectors.npy": "a74c118195bf944cf1d0835089fc41f6a92dbf89ce01688bb8269ea9c163ea74",
+   "~/os2026/data/refs/wg-square-pert-1e4/eigenvalues.npy": "d22d9f29f7fcf67ec46f4a10276760fb149ba48a0e311dfa2317b90187da969d"
   },
   "yee-bloch-1e4": {
-   "/share/home/linzihan/os2026/data/cases/yee-bloch-1e4/config.json": "de982201d3d6a1041ccd13e5869203d87845f556a33fde925b9e5ba27eb0f094",
-   "/share/home/linzihan/os2026/data/cases/yee-bloch-1e4/meta.json": "3da199c5ca22c9d8d2d6e8d055388d00ed1fc2c3397be83a115c73c05d0b206d",
-   "/share/home/linzihan/os2026/data/cases/yee-bloch-1e4/A.npz": "7917fe08362c1e8d430a9dc6c0859905ecbbf0e17ad8421ede984287a0019d83",
-   "/share/home/linzihan/os2026/data/refs/yee-bloch-1e4/ref.json": "3b7b1abc4ed2e6bd659e8e411ecf14ac520dcc1938d5aa343cd02fb14cef1b50",
-   "/share/home/linzihan/os2026/data/refs/yee-bloch-1e4/eigenvalues.npy": "711bc15d08ae786e2df82482580ba32be9e8535f7e955c6f21de8dd96007a556"
+   "~/os2026/data/cases/yee-bloch-1e4/config.json": "de982201d3d6a1041ccd13e5869203d87845f556a33fde925b9e5ba27eb0f094",
+   "~/os2026/data/cases/yee-bloch-1e4/meta.json": "3da199c5ca22c9d8d2d6e8d055388d00ed1fc2c3397be83a115c73c05d0b206d",
+   "~/os2026/data/cases/yee-bloch-1e4/A.npz": "7917fe08362c1e8d430a9dc6c0859905ecbbf0e17ad8421ede984287a0019d83",
+   "~/os2026/data/refs/yee-bloch-1e4/ref.json": "3b7b1abc4ed2e6bd659e8e411ecf14ac520dcc1938d5aa343cd02fb14cef1b50",
+   "~/os2026/data/refs/yee-bloch-1e4/eigenvalues.npy": "711bc15d08ae786e2df82482580ba32be9e8535f7e955c6f21de8dd96007a556"
   },
   "yee-pec-box-1e4": {
-   "/share/home/linzihan/os2026/data/cases/yee-pec-box-1e4/config.json": "aa97c1e8fb2c0c63b4b7190a67cd474d8f9588b39b31b0a6d83c8d1b0a93f4b3",
-   "/share/home/linzihan/os2026/data/cases/yee-pec-box-1e4/B.npz": "3c8a21c2c537cd4259b61c57aa5f9506fd406731291a7f1f8e3e28c0ba76aa3e",
-   "/share/home/linzihan/os2026/data/cases/yee-pec-box-1e4/meta.json": "5c4070a20eed3c481c2fb5111fe8e1d2237589d542a2eb0c747764cb37eac64f",
-   "/share/home/linzihan/os2026/data/cases/yee-pec-box-1e4/A.npz": "09c42f7e1bd175e5d34872cb5206fd194ee7445df9914c74ee58bfcce45863bc",
-   "/share/home/linzihan/os2026/data/refs/yee-pec-box-1e4/ref.json": "1d7876f6cad08d7f7071d54382f76c719f142af53622d876708d6ee466e2b922",
-   "/share/home/linzihan/os2026/data/refs/yee-pec-box-1e4/eigenvalues.npy": "7bbb9e81db5d18da2773953f8896d84107ddb239674f6c969db7d200b4fad3e8"
+   "~/os2026/data/cases/yee-pec-box-1e4/config.json": "aa97c1e8fb2c0c63b4b7190a67cd474d8f9588b39b31b0a6d83c8d1b0a93f4b3",
+   "~/os2026/data/cases/yee-pec-box-1e4/B.npz": "3c8a21c2c537cd4259b61c57aa5f9506fd406731291a7f1f8e3e28c0ba76aa3e",
+   "~/os2026/data/cases/yee-pec-box-1e4/meta.json": "5c4070a20eed3c481c2fb5111fe8e1d2237589d542a2eb0c747764cb37eac64f",
+   "~/os2026/data/cases/yee-pec-box-1e4/A.npz": "09c42f7e1bd175e5d34872cb5206fd194ee7445df9914c74ee58bfcce45863bc",
+   "~/os2026/data/refs/yee-pec-box-1e4/ref.json": "1d7876f6cad08d7f7071d54382f76c719f142af53622d876708d6ee466e2b922",
+   "~/os2026/data/refs/yee-pec-box-1e4/eigenvalues.npy": "7bbb9e81db5d18da2773953f8896d84107ddb239674f6c969db7d200b4fad3e8"
   },
   "yee-pec-box-1e5": {
-   "/share/home/linzihan/os2026/data/cases/yee-pec-box-1e5/config.json": "6c5f394c28a2c4d421c128254a1298b3e000e22aa19a0f60a43a92444b1154d8",
-   "/share/home/linzihan/os2026/data/cases/yee-pec-box-1e5/B.npz": "1ed2b0b18675ac867519d6e335d0254bf5b02f942e8a726e38875be4c37453d9",
-   "/share/home/linzihan/os2026/data/cases/yee-pec-box-1e5/meta.json": "6bff83c8fd9e7a1f2ff1418b747df2cd54d7db70fde3b3d74bed81905f70ad38",
-   "/share/home/linzihan/os2026/data/cases/yee-pec-box-1e5/A.npz": "596c57f14ed22ff526e0631d61f9dfdc9de3dc8eac1945ad7b0ba6fb098958fc",
-   "/share/home/linzihan/os2026/data/refs/yee-pec-box-1e5/ref.json": "441602cbd2dff6c8cd71f7dffa2d63231edb06a987fc6433efb0d25ff4b1a61d",
-   "/share/home/linzihan/os2026/data/refs/yee-pec-box-1e5/eigenvalues.npy": "20ac2e1eff52b310ebe6653e709bef6e7f8abb79e060ec37f674a705bca8884f"
+   "~/os2026/data/cases/yee-pec-box-1e5/config.json": "6c5f394c28a2c4d421c128254a1298b3e000e22aa19a0f60a43a92444b1154d8",
+   "~/os2026/data/cases/yee-pec-box-1e5/B.npz": "1ed2b0b18675ac867519d6e335d0254bf5b02f942e8a726e38875be4c37453d9",
+   "~/os2026/data/cases/yee-pec-box-1e5/meta.json": "6bff83c8fd9e7a1f2ff1418b747df2cd54d7db70fde3b3d74bed81905f70ad38",
+   "~/os2026/data/cases/yee-pec-box-1e5/A.npz": "596c57f14ed22ff526e0631d61f9dfdc9de3dc8eac1945ad7b0ba6fb098958fc",
+   "~/os2026/data/refs/yee-pec-box-1e5/ref.json": "441602cbd2dff6c8cd71f7dffa2d63231edb06a987fc6433efb0d25ff4b1a61d",
+   "~/os2026/data/refs/yee-pec-box-1e5/eigenvalues.npy": "20ac2e1eff52b310ebe6653e709bef6e7f8abb79e060ec37f674a705bca8884f"
   },
   "yee-pec-cube-16": {
-   "/share/home/linzihan/os2026/data/cases/yee-pec-cube-16/config.json": "8877c6ce661f487ed623727acb401c9dc2fae8dc3be7a2c6f2e5f77f81491071",
-   "/share/home/linzihan/os2026/data/cases/yee-pec-cube-16/meta.json": "46d425b7cd0ed478d75026312398b96d63b0460fdb15b6e351a9843a73d8ecbc",
-   "/share/home/linzihan/os2026/data/cases/yee-pec-cube-16/A.npz": "674c3095d79cdd0ff148253c66f561293c591d5cee82931de3e71db46f41fcd7",
-   "/share/home/linzihan/os2026/data/refs/yee-pec-cube-16/ref.json": "2f02277333a5015c43cec6e65ca225056aa4edd1792c6d2088327d6fc90b9d96",
-   "/share/home/linzihan/os2026/data/refs/yee-pec-cube-16/eigenvalues.npy": "1aa32bcbebb46a1c561a85d40f7a1d86de23b1b9556097fcc4261751fa96e8b6"
+   "~/os2026/data/cases/yee-pec-cube-16/config.json": "8877c6ce661f487ed623727acb401c9dc2fae8dc3be7a2c6f2e5f77f81491071",
+   "~/os2026/data/cases/yee-pec-cube-16/meta.json": "46d425b7cd0ed478d75026312398b96d63b0460fdb15b6e351a9843a73d8ecbc",
+   "~/os2026/data/cases/yee-pec-cube-16/A.npz": "674c3095d79cdd0ff148253c66f561293c591d5cee82931de3e71db46f41fcd7",
+   "~/os2026/data/refs/yee-pec-cube-16/ref.json": "2f02277333a5015c43cec6e65ca225056aa4edd1792c6d2088327d6fc90b9d96",
+   "~/os2026/data/refs/yee-pec-cube-16/eigenvalues.npy": "1aa32bcbebb46a1c561a85d40f7a1d86de23b1b9556097fcc4261751fa96e8b6"
   },
   "yee-photonic-rods-1e4": {
-   "/share/home/linzihan/os2026/data/cases/yee-photonic-rods-1e4/config.json": "e88a717aa645caff9d4f62428c9ed61e5e4a0803ca3bfcf656a1a4b662bdf20b",
-   "/share/home/linzihan/os2026/data/cases/yee-photonic-rods-1e4/meta.json": "e2d69ddd259b6ed6b33ecd333334f43b6eb0514b96ad02b20583832777512c9c",
-   "/share/home/linzihan/os2026/data/cases/yee-photonic-rods-1e4/A.npz": "00bedc939a9a04576d5bb4ce3ddebe01c287ab63af4a22ebb9fe3f27fd3bc591",
-   "/share/home/linzihan/os2026/data/refs/yee-photonic-rods-1e4/ref.json": "cca90915953c055c03e14dc1e68a8bc70c341c657580d327b7392d2a75482054",
-   "/share/home/linzihan/os2026/data/refs/yee-photonic-rods-1e4/eigenvectors.npy": "01b28dc994b1ee1d7a9ca37fc997666842bffaae03a9d85ded78b32b75c787f9",
-   "/share/home/linzihan/os2026/data/refs/yee-photonic-rods-1e4/eigenvalues.npy": "f15d46066eafb2b5587d7112f67a3e9ce9e72884cd0594d48f71931d1eb2bcff"
+   "~/os2026/data/cases/yee-photonic-rods-1e4/config.json": "e88a717aa645caff9d4f62428c9ed61e5e4a0803ca3bfcf656a1a4b662bdf20b",
+   "~/os2026/data/cases/yee-photonic-rods-1e4/meta.json": "e2d69ddd259b6ed6b33ecd333334f43b6eb0514b96ad02b20583832777512c9c",
+   "~/os2026/data/cases/yee-photonic-rods-1e4/A.npz": "00bedc939a9a04576d5bb4ce3ddebe01c287ab63af4a22ebb9fe3f27fd3bc591",
+   "~/os2026/data/refs/yee-photonic-rods-1e4/ref.json": "cca90915953c055c03e14dc1e68a8bc70c341c657580d327b7392d2a75482054",
+   "~/os2026/data/refs/yee-photonic-rods-1e4/eigenvectors.npy": "01b28dc994b1ee1d7a9ca37fc997666842bffaae03a9d85ded78b32b75c787f9",
+   "~/os2026/data/refs/yee-photonic-rods-1e4/eigenvalues.npy": "f15d46066eafb2b5587d7112f67a3e9ce9e72884cd0594d48f71931d1eb2bcff"
   },
   "yee-photonic-spheres-1e4": {
-   "/share/home/linzihan/os2026/data/cases/yee-photonic-spheres-1e4/config.json": "ad436f39fd71719445e2222e58805cfc3eac01c851eb07723d41c3ff7e09c364",
-   "/share/home/linzihan/os2026/data/cases/yee-photonic-spheres-1e4/B.npz": "0c2e36eea9a86f64cea3bfde74d0b0252497ca3a525eccae2abd1d89c0bffc6e",
-   "/share/home/linzihan/os2026/data/cases/yee-photonic-spheres-1e4/meta.json": "0fe2ae169863790215cfa9cebd855e6d34125c0560cc4ed3fc8843205c989e48",
-   "/share/home/linzihan/os2026/data/cases/yee-photonic-spheres-1e4/A.npz": "ad91014da0461bbdce622abb76cc9dc2e23c141986ed613314416f2961e51374",
-   "/share/home/linzihan/os2026/data/refs/yee-photonic-spheres-1e4/ref.json": "be0213f379828faac56263a338feafa22ad32242017173f821bdb77fbdf379df",
-   "/share/home/linzihan/os2026/data/refs/yee-photonic-spheres-1e4/eigenvectors.npy": "fd2f24e92e561224d78057d1674a77669671c081e4cb21d51e1c1669e3a4a601",
-   "/share/home/linzihan/os2026/data/refs/yee-photonic-spheres-1e4/eigenvalues.npy": "24dc49f80c603aa21ad999ac6317344873985a45b66e4371d1df99cf2493545d"
+   "~/os2026/data/cases/yee-photonic-spheres-1e4/config.json": "ad436f39fd71719445e2222e58805cfc3eac01c851eb07723d41c3ff7e09c364",
+   "~/os2026/data/cases/yee-photonic-spheres-1e4/B.npz": "0c2e36eea9a86f64cea3bfde74d0b0252497ca3a525eccae2abd1d89c0bffc6e",
+   "~/os2026/data/cases/yee-photonic-spheres-1e4/meta.json": "0fe2ae169863790215cfa9cebd855e6d34125c0560cc4ed3fc8843205c989e48",
+   "~/os2026/data/cases/yee-photonic-spheres-1e4/A.npz": "ad91014da0461bbdce622abb76cc9dc2e23c141986ed613314416f2961e51374",
+   "~/os2026/data/refs/yee-photonic-spheres-1e4/ref.json": "be0213f379828faac56263a338feafa22ad32242017173f821bdb77fbdf379df",
+   "~/os2026/data/refs/yee-photonic-spheres-1e4/eigenvectors.npy": "fd2f24e92e561224d78057d1674a77669671c081e4cb21d51e1c1669e3a4a601",
+   "~/os2026/data/refs/yee-photonic-spheres-1e4/eigenvalues.npy": "24dc49f80c603aa21ad999ac6317344873985a45b66e4371d1df99cf2493545d"
   }
  },
  "full_ctest": {

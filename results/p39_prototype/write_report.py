@@ -1,6 +1,6 @@
 import json
 from pathlib import Path
-root=Path('/home/zhlin/gencode/os2026');p=Path('/tmp/os2026-p39-local')
+root=Path('~/gencode/os2026');p=Path('/tmp/os2026-p39-local')
 m=json.loads((p/'collected.json').read_text());archive=json.loads((p/'archive-verified.json').read_text());lines=[]
 def add(s=''):lines.append(s)
 add('# P39：直接调用子问题 Lanczos，并复用分析和分解')

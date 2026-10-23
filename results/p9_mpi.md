@@ -1,6 +1,6 @@
 # P9 "mpi": hsolve against tuned SLEPc at 1e6, and the upper bound of hybrid MPI + OpenMP MUMPS
 
-P9 measurement task "mpi" (branch `p9-mpi` from main a831d79, review fixes on `p9-mpi-fix`; no change
+P9 measurement task "mpi" (branch `p9-mpi` from main c822126, review fixes on `p9-mpi-fix`; no change
 to hsolve's code, defaults or build). Two questions:
 
 1. **Where we stand at 1e6.** On the two 3-D 1e6 cases in core (16 cores, 32 GiB), how does hsolve
@@ -61,7 +61,7 @@ to hsolve's code, defaults or build). Two questions:
   the other; the review fixes (SLEPc's Krylov group, the 5-repetition head-to-head) 14:12-15:53 on
   the same node and slot. Builds, conversions, evaluations and the test suite in the build/test lane
   (cores 8-15).
-* **hsolve.** main a831d79 (this branch adds only measurement tools), `tools/dev/build.sh release`
+* **hsolve.** main c822126 (this branch adds only measurement tools), `tools/dev/build.sh release`
   (conda gcc 13.4, `-O3`, BLAS hook linked, route all), md5 5f93952b3005dfaa8ec96fc97d27d23b; sequential
   MUMPS 5.8.2 (conda-forge `mumps-seq`, OpenMP), SCOTCH 7.0.11 (int64), METIS 5.1.0, OpenBLAS 0.3.34
   (OpenMP).
@@ -384,7 +384,7 @@ baseline: 28.76 / 23.95 s and 28.77 / 23.99 s, as in section 3.2):
 
 ### 3.6 Why MPI does not pay on one 16-core socket
 
-**Load balance** (bench 872d39a: the elimination flops RINFO(3) of the busiest rank over the mean of the
+**Load balance** (bench 7f4c61f: the elimination flops RINFO(3) of the busiest rank over the mean of the
 ranks; hsolve's order, factors kept, 1 run per layout):
 
 | case | layout | factor s | ratio | GF/s | flop balance (max / mean) | ideal time at seq1x16's per-core rate, balanced / with this balance |
@@ -464,7 +464,7 @@ tools/dev/build.sh release && bash tools/bench/mpi_build.sh            # lane
 # K(sigma) and its exact inertia (lane), per case:
 python3 tools/run/guard.py --skip-busy-check --mem-gb 12 --timeout 900 -- \
   python3 tools/bench/mpi_dump_kernel.py --root $D --case syn-mem27-100 --out $S/k/syn-mem27-100.K.bin
-# SLEPc screening (slot), variant v = 1..5; v1 = the first profiles file (fd27a13), the others as in 2.1:
+# SLEPc screening (slot), variant v = 1..5; v1 = the first profiles file (fe7b20e), the others as in 2.1:
 python3 tools/run/guard.py --exclusive --timeout 2700 --mem-gb 32 -- python3 tools/bench/compare.py \
   syn-mem27-100 yee-pec-box-1e6 --tag p9-screen-v$v --cores 16-31 --solvers slepc --slepc-profile best \
   --slepc-profile-file prof_v$v.json --reps 1 --root $D --mem-gb 32 --timeout 1500 --out-dir $S/cmp

@@ -23,7 +23,7 @@ PYTHONPATH=build/release/python python -c "import hsolve; print(hsolve.version()
   默认从 `build/release/python` 导入，`HSOLVE_PYTHON_DIR=<dir>` 指定其它构建；未构建时整个文件跳过。
 - **BLAS hook**（P5，`docs/BLAS.md`、`docs/DESIGN.md` §3.8）：命令行 `hsolve` 默认链入了 hook（route all，
   16 线程端到端 1.05–1.16×，收益在回代），Python 扩展模块没有。要在 Python 中得到同样的路由，在解释器前
-  预加载同一构建的 `libhsolve_blashook.so`（da4be7d 起可用）：
+  预加载同一构建的 `libhsolve_blashook.so`（f56e9c6 起可用）：
 
   ```bash
   LD_PRELOAD=$PWD/build/release/libhsolve_blashook.so HS_BLAS_ROUTE=all \

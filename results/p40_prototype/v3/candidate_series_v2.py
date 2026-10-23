@@ -17,7 +17,7 @@ remaining=list(cases);qualified={};batches=[]
 for number in range(4):
  if not remaining:break
  tag='p40-candidate-r'+str(number);directory=p/('candidate-r'+str(number));assert not directory.exists();directory.mkdir()
- command=['python','-u',str(p/'candidate_compare.py'),'--solvers',','.join(solvers),'--reps','5','--timeout','120','--cores','16-31','--mem-gb','32','--root','/share/home/linzihan/os2026/data','--slepc-profile','best','--slepc-profile-file','/tmp/os2026-p34/slepc-profiles.json','--tag',tag,'--out-dir',str(directory)]+remaining
+ command=['python','-u',str(p/'candidate_compare.py'),'--solvers',','.join(solvers),'--reps','5','--timeout','120','--cores','16-31','--mem-gb','32','--root','~/os2026/data','--slepc-profile','best','--slepc-profile-file','/tmp/os2026-p34/slepc-profiles.json','--tag',tag,'--out-dir',str(directory)]+remaining
  plan=dict(tag=tag,directory=str(directory),cases=list(remaining),solvers=solvers,expected=len(remaining)*30,command=command,selection='First qualified full case group; retries only for incomplete/contaminated groups.',source_hashes={n:hashlib.sha256((p/n).read_bytes()).hexdigest() for n in ['candidate_compare.py','candidate_monitor.py','hsolve-control','hsolve-enclosed','hsolve-base','hsolve-native','hsolve-dd']})
  planfile=directory/'plan.json';planfile.write_text(json.dumps(plan,indent=2)+'\n')
  with (directory/'monitor-driver.log').open('w') as log:

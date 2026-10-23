@@ -8,7 +8,7 @@
 // Sections:
 //   reduce <n> [rounds]          dot / norm2 against the OpenMP-reduction versions they replaced
 //   kernels <n> <k> [rounds]     one thread: the CGS row-block kernels in the array form of
-//                                4373b71 against the vector-extension form (renamed copies), and
+//                                225385d against the vector-extension form (renamed copies), and
 //                                BLAS gemv over the same rows; all OpenMP-free
 //   cgs <n> <k> [rounds]         orthogonalize_cgs2 (Always / IfNeeded) against the legacy CGS2
 //                                (four multithreaded BLAS gemv sweeps), all modes, real/complex,
@@ -70,7 +70,7 @@ const char* scalar_name(bool complex) { return complex ? "complex" : "real"; }
 
 // ---- reduce: dot / norm2 -----------------------------------------------------------------------
 
-/// The reductions before 78795e6 (renamed copies).
+/// The reductions before 8696107 (renamed copies).
 template <class T>
 T legacy_dot(index_t n, const T* x, const T* y) {
   if constexpr (hs::is_complex_v<T>) {
@@ -119,14 +119,14 @@ void bench_reduce(index_t n, int rounds) {
   std::fflush(stdout);
 }
 
-// ---- kernels: array form (4373b71) vs vector-extension form ------------------------------------
+// ---- kernels: array form (225385d) vs vector-extension form ------------------------------------
 
 constexpr int kLanes = 8;
 
 inline double lane_sum(const double* a) { return ((a[0] + a[4]) + (a[2] + a[6])) + ((a[1] + a[5]) + (a[3] + a[7])); }
 inline double cross_sum(const double* b) { return ((b[0] - b[1]) + (b[4] - b[5])) + ((b[2] - b[3]) + (b[6] - b[7])); }
 
-namespace array_form {  // the kernels of 4373b71
+namespace array_form {  // the kernels of 225385d
 
 template <int C>
 inline void proj_real_cols(index_t len, const double* __restrict p, index_t ldp, const double* __restrict x,
@@ -480,7 +480,7 @@ void bench_kernels(index_t n, index_t k, int rounds) {
 
 // ---- cgs: orthogonalize_cgs2 vs the legacy gemv CGS2 ---------------------------------------------
 
-/// CGS2 as before 28fcce0: two passes of multithreaded BLAS gemv ('C' then 'N', plus 'N' on BV in
+/// CGS2 as before b553906: two passes of multithreaded BLAS gemv ('C' then 'N', plus 'N' on BV in
 /// stored mode), M*w recomputed before each pass and at the end in recompute mode.
 template <class T>
 double legacy_cgs2(index_t n, index_t k, const T* v, const T* bv, T* w, T* bw, T* h, const la::ApplyFn<T>* apply_m) {

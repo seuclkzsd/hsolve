@@ -112,7 +112,7 @@
 cd /tmp/os2026-p10-repair.9doyhO
 env/run.sh python tools/run/guard.py --exclusive --cores 8-15,16-23 --mem-gb 32 --timeout 300 -- \
   env LD_PRELOAD=$PWD/build/release/libhsolve_blashook.so /tmp/os2026-p16/bench-purified \
-  --data /share/home/linzihan/p7_p7-membudget/data --p 4,8 --block-ncv 0 \
+  --data ~/p7_p7-membudget/data --p 4,8 --block-ncv 0 \
   --start-filter none,purified --original-tol 1e-10 --reps 3 --apply-reps 1 \
   --ordering 10 yee-pec-box-1e6
 ```

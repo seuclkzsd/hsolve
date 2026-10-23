@@ -60,7 +60,7 @@ hsolve 耗时仍高 11.5%，独立最大后向误差 4.25e-11，SLEPc 为 8.37e-
 
 ## 复现与来源
 
-基于工作树 HEAD `6d408b0786d3c7cbf63995edeb66840ea958f703` 及已有 P10 未提交改动，在隔离目录 `/tmp/os2026-p10-repair.9doyhO` 构建。所有编译、测试与测量在集群进行。小算例数据 `/share/home/linzihan/os2026/data`，百万维 `/share/home/linzihan/p7_p7-membudget/data`。单插槽计时使用测量槽，双插槽计时期间不在 `8-15` 运行构建 / 测试；均由 `guard.py --exclusive` 串行持槽。
+基于工作树 HEAD `982ad83c31798c43d896ff33f639b93678979aa2` 及已有 P10 未提交改动，在隔离目录 `/tmp/os2026-p10-repair.9doyhO` 构建。所有编译、测试与测量在集群进行。小算例数据 `~/os2026/data`，百万维 `~/p7_p7-membudget/data`。单插槽计时使用测量槽，双插槽计时期间不在 `8-15` 运行构建 / 测试；均由 `guard.py --exclusive` 串行持槽。
 
 保存的二进制 SHA-256：
 
@@ -74,7 +74,7 @@ hsolve 耗时仍高 11.5%，独立最大后向误差 4.25e-11，SLEPc 为 8.37e-
 
 ```bash
 # 新旧版本交替计时（提前保存两版 release 二进制）
-env/run.sh env HS_DATA_ROOT=/share/home/linzihan/os2026/data \
+env/run.sh env HS_DATA_ROOT=~/os2026/data \
   python3 tools/run/guard.py --exclusive --cores 16-31 --mem-gb 32 --timeout 900 -- \
   python3 tools/bench/ab_cases.py run \
   --bin before=/tmp/hsolve-openbase --bin after=/tmp/hsolve-opennew \
@@ -82,21 +82,21 @@ env/run.sh env HS_DATA_ROOT=/share/home/linzihan/os2026/data \
   syn-mem27-46 yee-pec-box-1e5 ss-qa8fk-qa8fm cav2d-rect-pert-1e5
 # 在构建 / 测试道独立评测后汇总
 env/run.sh python3 tools/run/guard.py --skip-busy-check --mem-gb 10 --timeout 600 -- \
-  python3 -m tools.eval.sweep /tmp/nearest-ab --root /share/home/linzihan/os2026/data \
+  python3 -m tools.eval.sweep /tmp/nearest-ab --root ~/os2026/data \
   --out /tmp/nearest-ab/eval.md
 env/run.sh python3 tools/bench/ab_cases.py table --base before --new after \
   --md /tmp/nearest-ab.md --json /tmp/nearest-ab.json /tmp/nearest-ab
 
 # 声学与调优 SLEPc 对照；新增变体显式记录配置
 env/run.sh python3 tools/run/guard.py --exclusive --cores 16-31 --mem-gb 32 --timeout 900 -- \
-  python3 results/p10_perf_compare.py --root /share/home/linzihan/os2026/data \
+  python3 results/p10_perf_compare.py --root ~/os2026/data \
   --tag cmp-p10-nearest-qa --cores 16-31 --mem-gb 32 \
   --solvers hsolve,hsolve-nd,slepc --slepc-profile best --reps 5 ss-qa8fk-qa8fm
 # 腔体使用 --solvers hsolve,slepc，配置文件为 tools/bench/slepc_profiles.json 中的 case profile。
 
 # 百万维：同一双插槽 16 核布局；独立验收仍按原始容差
 env/run.sh python3 tools/run/guard.py --exclusive --cores 8-15,16-23 --mem-gb 32 --timeout 900 -- \
-  python3 results/p10_perf_compare.py --root /share/home/linzihan/p7_p7-membudget/data \
+  python3 results/p10_perf_compare.py --root ~/p7_p7-membudget/data \
   --tag cmp-p10-nearest-yee-tight --cores 8-15,16-23 --mem-gb 32 \
   --solvers hsolve-mpi,slepc --slepc-profile best \
   --slepc-profile-file results/cmp-p10-nearest-profiles.json --reps 3 yee-pec-box-1e6

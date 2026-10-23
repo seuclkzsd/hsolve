@@ -369,7 +369,7 @@
 + for i,x in enumerate(a):
 +  if x.startswith('-Wl,--dependency-file='):a[i]='-Wl,--dependency-file='+str(r/(name+'-link.d'))
 + run(a)
-+run(shlex.split(os.environ['CC'])+['-O2','-std=c11','-Wall','-Wextra','-Werror','-fPIC','-shared','-fopenmp','-I/share/home/linzihan/deps/mumps-cache/mumps-5.8.2-4aa1f2dcd75ea2ff/include',str(r/'probe_shim.c'),'-ldl','-o',str(r/'probe_shim.so')])
++run(shlex.split(os.environ['CC'])+['-O2','-std=c11','-Wall','-Wextra','-Werror','-fPIC','-shared','-fopenmp','-I~/deps/mumps-cache/mumps-5.8.2-4aa1f2dcd75ea2ff/include',str(r/'probe_shim.c'),'-ldl','-o',str(r/'probe_shim.so')])
 +after={str(p):digest(p) for p in tracked};assert before==after
 +paths=['definite-probe.cpp','block_lanczos.cpp','include/eigen/block_lanczos.hpp','probe_shim.c','probe_shim.so','libhsolve-probe.a','hsolve-probe','hsolve-mpi-probe']
 +(r/'build-hashes.json').write_text(json.dumps({'production_before':before,'production_after':after,'experimental':{p:digest(r/p) for p in paths}},indent=2)+'\n')
@@ -380,7 +380,7 @@
 +#!/usr/bin/env bash
 +set -euo pipefail
 +cd /tmp/os2026-p24
-+"$CC" -O2 -std=c11 -Wall -Wextra -Werror -fPIC -shared -fopenmp -I/share/home/linzihan/deps/mumps-cache/mumps-5.8.2-4aa1f2dcd75ea2ff/include affinity_shim.c -ldl -o affinity_shim.so
++"$CC" -O2 -std=c11 -Wall -Wextra -Werror -fPIC -shared -fopenmp -I~/deps/mumps-cache/mumps-5.8.2-4aa1f2dcd75ea2ff/include affinity_shim.c -ldl -o affinity_shim.so
 +sha256sum affinity_shim.c affinity_shim.so > affinity-hashes.txt
 --- /dev/null
 +++ b/experiments/p24/build-l0.sh
@@ -388,7 +388,7 @@
 +#!/usr/bin/env bash
 +set -euo pipefail
 +cd /tmp/os2026-p24
-+"$CC" -O2 -std=c11 -Wall -Wextra -Werror -fPIC -shared -fopenmp -I/share/home/linzihan/deps/mumps-cache/mumps-5.8.2-4aa1f2dcd75ea2ff/include l0_shim.c -ldl -o l0_shim.so
++"$CC" -O2 -std=c11 -Wall -Wextra -Werror -fPIC -shared -fopenmp -I~/deps/mumps-cache/mumps-5.8.2-4aa1f2dcd75ea2ff/include l0_shim.c -ldl -o l0_shim.so
 +sha256sum l0_shim.c l0_shim.so > l0-hashes.txt
 --- /dev/null
 +++ b/experiments/p24/compare.py
@@ -546,7 +546,7 @@
 +  2-7) export HSOLVE_MPIRUN_PLAN='8-15,16-23;9-15;17-23' ;;
 +  *) echo 'unknown P24 layout' >&2; exit 2 ;;
 +esac
-+exec /share/home/linzihan/envs/os2026-ref/bin/mpiexec -n 3 --bind-to none \
++exec ~/envs/os2026-ref/bin/mpiexec -n 3 --bind-to none \
 +  -x HSOLVE_MPIRUN_PLAN -x HSOLVE_MPIRUN_EXE -x HSOLVE_MPIRUN_INTERLEAVE \
 +  /tmp/os2026-p10-repair.9doyhO/build/release/hsolve-mpirun "$@"
 --- /dev/null
@@ -555,35 +555,35 @@
 +#!/usr/bin/env bash
 +set -euo pipefail
 +cd /tmp/os2026-p10-repair.9doyhO
-+python /tmp/os2026-p24/compare.py --solvers hsolve-before,hsolve-probe,hsolve-four,hsolve-two --reps 1 --timeout 45 --cores 8-15 --mem-gb 12 --root /share/home/linzihan/os2026/data --tag p24-smoke --out-dir /tmp/os2026-p24 cav2d-rect-pert-1e5 yee-pec-box-1e4 yee-pec-box-1e5 yee-bloch-1e4 syn-near-singular-real-1e4
++python /tmp/os2026-p24/compare.py --solvers hsolve-before,hsolve-probe,hsolve-four,hsolve-two --reps 1 --timeout 45 --cores 8-15 --mem-gb 12 --root ~/os2026/data --tag p24-smoke --out-dir /tmp/os2026-p24 cav2d-rect-pert-1e5 yee-pec-box-1e4 yee-pec-box-1e5 yee-bloch-1e4 syn-near-singular-real-1e4
 --- /dev/null
 +++ b/experiments/p24/smoke-affinity.sh
 @@ -0,0 +1,4 @@
 +#!/usr/bin/env bash
 +set -euo pipefail
 +cd /tmp/os2026-p10-repair.9doyhO
-+python /tmp/os2026-p24/compare-affinity.py --solvers hsolve-before,hsolve-probe,hsolve-four,hsolve-two --reps 1 --timeout 45 --cores 8-15 --mem-gb 12 --root /share/home/linzihan/os2026/data --tag p24-affinity-smoke --out-dir /tmp/os2026-p24 cav2d-rect-pert-1e5 yee-pec-box-1e4 yee-pec-box-1e5 yee-bloch-1e4 syn-near-singular-real-1e4
++python /tmp/os2026-p24/compare-affinity.py --solvers hsolve-before,hsolve-probe,hsolve-four,hsolve-two --reps 1 --timeout 45 --cores 8-15 --mem-gb 12 --root ~/os2026/data --tag p24-affinity-smoke --out-dir /tmp/os2026-p24 cav2d-rect-pert-1e5 yee-pec-box-1e4 yee-pec-box-1e5 yee-bloch-1e4 syn-near-singular-real-1e4
 --- /dev/null
 +++ b/experiments/p24/smoke-l0.sh
 @@ -0,0 +1,4 @@
 +#!/usr/bin/env bash
 +set -euo pipefail
 +cd /tmp/os2026-p10-repair.9doyhO
-+python /tmp/os2026-p24/compare-l0.py --solvers hsolve-native,hsolve-observe,hsolve-l0-16,hsolve-l0-4,hsolve-l0-2 --reps 1 --timeout 45 --cores 8-15 --mem-gb 12 --root /share/home/linzihan/os2026/data --tag p24-l0-smoke --out-dir /tmp/os2026-p24 cav2d-rect-pert-1e5 yee-pec-box-1e4 yee-pec-box-1e5 yee-bloch-1e4 syn-near-singular-real-1e4
++python /tmp/os2026-p24/compare-l0.py --solvers hsolve-native,hsolve-observe,hsolve-l0-16,hsolve-l0-4,hsolve-l0-2 --reps 1 --timeout 45 --cores 8-15 --mem-gb 12 --root ~/os2026/data --tag p24-l0-smoke --out-dir /tmp/os2026-p24 cav2d-rect-pert-1e5 yee-pec-box-1e4 yee-pec-box-1e5 yee-bloch-1e4 syn-near-singular-real-1e4
 --- /dev/null
 +++ b/experiments/p24/million-affinity.sh
 @@ -0,0 +1,4 @@
 +#!/usr/bin/env bash
 +set -euo pipefail
 +cd /tmp/os2026-p10-repair.9doyhO
-+python /tmp/os2026-p24/compare-million.py --mpi --solvers hsolve-active,hsolve-before,hsolve-probe,hsolve-four,hsolve-two --reps 2 --timeout 180 --cores 8-15,16-23 --mem-gb 32 --root /share/home/linzihan/p7_p7-membudget/data --tag p24-million-affinity --out-dir /tmp/os2026-p24 yee-pec-box-1e6
++python /tmp/os2026-p24/compare-million.py --mpi --solvers hsolve-active,hsolve-before,hsolve-probe,hsolve-four,hsolve-two --reps 2 --timeout 180 --cores 8-15,16-23 --mem-gb 32 --root ~/p7_p7-membudget/data --tag p24-million-affinity --out-dir /tmp/os2026-p24 yee-pec-box-1e6
 --- /dev/null
 +++ b/experiments/p24/million-l0.sh
 @@ -0,0 +1,4 @@
 +#!/usr/bin/env bash
 +set -euo pipefail
 +cd /tmp/os2026-p10-repair.9doyhO
-+python /tmp/os2026-p24/compare-l0.py --mpi --solvers hsolve-native,hsolve-observe,hsolve-l0-16,hsolve-l0-4,hsolve-l0-2 --reps 1 --timeout 180 --cores 8-15,16-23 --mem-gb 32 --root /share/home/linzihan/p7_p7-membudget/data --tag p24-million-l0 --out-dir /tmp/os2026-p24 yee-pec-box-1e6
++python /tmp/os2026-p24/compare-l0.py --mpi --solvers hsolve-native,hsolve-observe,hsolve-l0-16,hsolve-l0-4,hsolve-l0-2 --reps 1 --timeout 180 --cores 8-15,16-23 --mem-gb 32 --root ~/p7_p7-membudget/data --tag p24-million-l0 --out-dir /tmp/os2026-p24 yee-pec-box-1e6
 --- /dev/null
 +++ b/experiments/p24/stop-affinity.py
 @@ -0,0 +1,13 @@

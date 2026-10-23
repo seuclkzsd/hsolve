@@ -6,7 +6,7 @@ sys.path.insert(0,'/tmp/os2026-p10-repair.9doyhO')
 from tools import case as cio
 from tools.eval import common
 common.require_guard('P38 sparse translation inspection')
-p=Path('/tmp/os2026-p38');data=Path('/share/home/linzihan/os2026/data');rows=[]
+p=Path('/tmp/os2026-p38');data=Path('~/os2026/data');rows=[]
 for name in ['yee-photonic-rods-1e4','yee-photonic-spheres-1e4','yee-bloch-1e4','syn-zero-cluster-complex-1e4']:
  c=cio.load_case(name,root=data);a=c.A.tocsr();n=a.shape[0];attempts=[]
  for period in range(3,65):

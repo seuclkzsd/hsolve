@@ -82,18 +82,18 @@ SLEPc 配置为 16×1、`eps_ncv=2k`、`eps_purify=0`、MUMPS ordering=0 / scali
 env/run.sh env HS_CORES=8-15 HS_JOBS=8 HS_BUILD_MEM_GB=12 tools/dev/build.sh release
 
 env/run.sh python tools/run/guard.py --exclusive --cores 16-31 --mem-gb 32 --timeout 900 -- \
-  env HS_DATA_ROOT=/share/home/linzihan/os2026/data python tools/bench/ab_cases.py run \
+  env HS_DATA_ROOT=~/os2026/data python tools/bench/ab_cases.py run \
   --bin before=/tmp/os2026-p14/hsolve-before --bin after=/tmp/os2026-p14/hsolve-final \
   --reps 0,1,2,3,4,5,6 --cores 16-31 --threads 16 --run-dir /tmp/p14-reproduction \
   cav2d-rect-pert-1e5 ss-qa8fk-qa8fm syn-mem27-46 wg-square-1e5 \
   yee-pec-box-1e5 yee-photonic-rods-1e4
 env/run.sh python tools/run/guard.py --cores 8-15 --mem-gb 12 --timeout 600 --skip-busy-check -- \
-  python -m tools.eval.sweep /tmp/p14-reproduction --root /share/home/linzihan/os2026/data \
+  python -m tools.eval.sweep /tmp/p14-reproduction --root ~/os2026/data \
   --out /tmp/p14-reproduction/evaluation.md
 
 env/run.sh python tools/run/guard.py --exclusive --cores 16-31 --mem-gb 32 --timeout 600 -- \
   python results/p12_compare.py --binary hsolve-p14=/tmp/os2026-p14/hsolve-final \
-  --root /share/home/linzihan/os2026/data --tag p14-reproduction-slepc \
+  --root ~/os2026/data --tag p14-reproduction-slepc \
   --out-dir /tmp/p14-reproduction-slepc --cores 16-31 --mem-gb 32 \
   --solvers hsolve-p14,slepc --slepc-profile best --reps 7 cav2d-rect-pert-1e5
 ```

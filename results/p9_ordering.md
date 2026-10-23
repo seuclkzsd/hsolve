@@ -3,7 +3,7 @@
 P9 asked whether the fill-reducing ordering can cut the three numeric LDL^T factorizations that
 dominate an in-core n = 1e6 run (the main factorization and the exact certificate's two inertia
 counts on the same pivot order), and to make the adaptive ordering pick the fastest ordering for the
-whole run at 1e6 and at 1e5. Branch `p9-ordering` from main a831d79. Every timing is from the gpu02
+whole run at 1e6 and at 1e5. Branch `p9-ordering` from main c822126. Every timing is from the gpu02
 measurement slot (`guard.py --exclusive`, cores 16-31, 16 threads, 32 GiB), 2026-10-14, unless it
 says "build lane" (cores 8-15, 8 threads, analysis estimates only - no timing conclusions).
 
@@ -37,27 +37,27 @@ one regression, yee-pec-cube-16 (+9%, systematic), is gone (1.015 over 20 runs, 
 
 ## 1. Setup
 
-Code: branch `p9-ordering` (commits in order): 48e23b5 bench_ordering_cost; 0daf807 taskgroup;
-7c3d269 / 2c4594b compression, finalists, effort, `FactorOptions::nested_dissection`; 537ff8e
-concurrent contraction; 6d96a08 flow refinement; edb3909 leaves by weight; 10be12a cost model and
-candidate order (section 6); 4aa74bf / 2c9aa2a formatting, bench header. Review fixes (branch
-`p9-ordering-fix`): be69e74 `bench_ordering_cost --mumps-verbosity`; 0b2da5a the flow rule (section
-6, 8.3); 50d8351 the concurrent-split test; then documents. Binaries: `tools/dev/build.sh release`
+Code: branch `p9-ordering` (commits in order): 86de942 bench_ordering_cost; 5a6e6b7 taskgroup;
+a0cce31 / d605f1e compression, finalists, effort, `FactorOptions::nested_dissection`; 0ec4e24
+concurrent contraction; 0b62389 flow refinement; c2d3bed leaves by weight; b200b12 cost model and
+candidate order (section 6); 290b14b / 33fd3c2 formatting, bench header. Review fixes (branch
+`p9-ordering-fix`): 708435f `bench_ordering_cost --mumps-verbosity`; f12d425 the flow rule (section
+6, 8.3); 01360d3 the concurrent-split test; then documents. Binaries: `tools/dev/build.sh release`
 on gpu02 (build lane), copies in `~/p9_p9-ordering/bin/`, the review fix's scripts and raw data in
 `~/p9_p9-ordering/fix/`:
 
 | label | commit | md5 | used for |
 |---|---|---|---|
-| main | a831d79 | b9d1e1657ad05d10c5e1aa1565c7f649 (`hsolve`) | gate baseline |
-| v0 | 48e23b5 (main + bench) | 655a5963c96ecb3fc91e10efed776f6c | m1 (1e6, MUMPS orderings, P5c ND) |
-| v1 | 0daf807 | de6296303e1149726ef4a77e3ed2140b | m2 (1e5, MUMPS orderings, ND with the taskgroup fix) |
-| v5 | 2c4594b + internal options | ed9040ce621608fe3af1e6efb719045f | m3a / m3b (effort, compression) |
-| v12 | 6d96a08 (flow default) | 0c1a5be730041a465407f2bec31871e1 | m6 (1e6), m7 (1e5), m5 fit data |
-| v14 | edb3909 | dd6b2c729352c4ced41b6ea009d24c4c (`bench_anaint_orderings`) | m8 fit data |
-| v15 | 10be12a's model code before the refit constants | 139cff34c4887338c2becdea920514b2 (`bench_anaint_fix_fit`) | the refit (section 6) |
-| v16 = new | 10be12a | a6fd066291418828da0483a9930468a4 (`hsolve`) | the P9 draft's gate (section 8: G5, G6) |
-| fix0 | ac022a6 + `--mumps-verbosity` (be69e74) | abc0a6499cdbf6709ce4a243b1c7bff4 (`bench_ordering_cost`) | F1 (flow on / off, section 8.3) |
-| fix1 | 0b2da5a (review fix: the flow rule) | 3f2cd9bab4960df8e622c9a8e0d580e7 (`hsolve`), 26c252064631adccbb47565e65a15dd5 (`bench_anaint_decide`), d9fdfb1ad3b701e27b3f3622bed4f100 (`bench_anaint_fix_fit`) | the gate of the final code (section 8: G7, G8), choices, replay |
+| main | c822126 | b9d1e1657ad05d10c5e1aa1565c7f649 (`hsolve`) | gate baseline |
+| v0 | 86de942 (main + bench) | 655a5963c96ecb3fc91e10efed776f6c | m1 (1e6, MUMPS orderings, P5c ND) |
+| v1 | 5a6e6b7 | de6296303e1149726ef4a77e3ed2140b | m2 (1e5, MUMPS orderings, ND with the taskgroup fix) |
+| v5 | d605f1e + internal options | ed9040ce621608fe3af1e6efb719045f | m3a / m3b (effort, compression) |
+| v12 | 0b62389 (flow default) | 0c1a5be730041a465407f2bec31871e1 | m6 (1e6), m7 (1e5), m5 fit data |
+| v14 | c2d3bed | dd6b2c729352c4ced41b6ea009d24c4c (`bench_anaint_orderings`) | m8 fit data |
+| v15 | b200b12's model code before the refit constants | 139cff34c4887338c2becdea920514b2 (`bench_anaint_fix_fit`) | the refit (section 6) |
+| v16 = new | b200b12 | a6fd066291418828da0483a9930468a4 (`hsolve`) | the P9 draft's gate (section 8: G5, G6) |
+| fix0 | 869f883 + `--mumps-verbosity` (708435f) | abc0a6499cdbf6709ce4a243b1c7bff4 (`bench_ordering_cost`) | F1 (flow on / off, section 8.3) |
+| fix1 | f12d425 (review fix: the flow rule) | 3f2cd9bab4960df8e622c9a8e0d580e7 (`hsolve`), 26c252064631adccbb47565e65a15dd5 (`bench_anaint_decide`), d9fdfb1ad3b701e27b3f3622bed4f100 (`bench_anaint_fix_fit`) | the gate of the final code (section 8: G7, G8), choices, replay |
 
 Benches: `bench/ordering_cost.cpp` (new: analysis with the ordering timed apart, MUMPS estimates,
 main factorization, InertiaCounter counts after releasing the main factors - the certificate's
@@ -269,14 +269,14 @@ path also waited for a whole sibling subtree. syn-mem27-100 (build lane, `bench_
 (waits only for the runs): 3.6 s on 8 threads, the same order. 16-thread slot: 7.38 -> 2.89 s
 (m1 -> m3b). The same bug made P5c's 16-thread ND look serial (nd_serial 0.383).
 
-### 5.2 Concurrent contraction and splitting (537ff8e)
+### 5.2 Concurrent contraction and splitting (0ec4e24)
 
 Graphs of >= 20000 vertices are contracted and split into the halves of a separator by `taskloop`s
 (two passes: row lengths, then rows at their offsets), giving exactly the serial loops' graphs:
 orders unchanged (syn-mem27-100 6.8089e12 flops before and after); ordering 3.72 -> 3.43 s
 (syn-mem27-100), 0.32 -> 0.24 s (yee-pec-box-1e5), build lane. Matching and FM stay serial.
 
-### 5.3 Compression and leaves by weight (2c4594b, edb3909)
+### 5.3 Compression and leaves by weight (d605f1e, c2d3bed)
 
 `compress_graph` merges vertices with identical closed neighbourhoods when at most 85% remain
 (METIS' rule): each vertex is compared with its neighbours only (indistinguishable vertices are
@@ -287,7 +287,7 @@ complex block cases): MUMPS' tree-parallel L0 layer then idled - syn-near-singul
 factorized in 1.09 s against 0.40 s with the uncompressed order (build lane). Leaves now hold at
 most 120 of vertex *weight*: 0.43 s, ordering 0.04 s instead of 0.20 s.
 
-### 5.4 Trial separators carried down, effort on the top (2c4594b)
+### 5.4 Trial separators carried down, effort on the top (d605f1e)
 
 METIS' two-stage scheme keeps the best of 5 trial bisections *of the mid graph* (four contractions
 down) and refines it back up. `SeparatorParams::finalists` refines the best F of them down to the
@@ -300,7 +300,7 @@ ss-si34h36 (-2%), nothing on the 1e6 cases (m6). The driver therefore takes it o
 planned numeric time is at least 30x the predicted ordering time (`kNdEffortWorkRatio`; top 2
 levels, 16 runs, 16 finalists: ordering x1.1-1.2), see section 6.
 
-### 5.5 Flow refinement (6d96a08)
+### 5.5 Flow refinement (0b62389)
 
 `FlowRefiner` (ordering_separator.cpp, after Sanders & Schulz, "Advanced multilevel node separator
 algorithms", SEA 2016): after FM, the separator S plus up to 2 BFS layers on each side - as many as
@@ -343,7 +343,7 @@ top separators' flows are the expensive ones.
 
 ## 6. The cost model (task 2) and the candidates
 
-Three changes (10be12a), all in `src/driver/steps.cpp`:
+Three changes (b200b12), all in `src/driver/steps.cpp`:
 
 1. **Candidates**: AMD, hsolve's ND, SCOTCH, METIS, PORD (P5c: SCOTCH before ND). With the flow
    refinement ND needs 0.73-1.0x SCOTCH's flops on the 3-D cases, its analysis is parallel and its
@@ -392,11 +392,11 @@ carry the choice, the refit makes the predictions right (the 1e6 ND predicted wi
 of 2.6x).
 
 Choices at 16 threads (`bench_anaint_decide`, build lane - the choice does not depend on timing;
-all 42 data cases and the two 1e6 3-D cases, `~/p9_p9-ordering/fix/decide_final.jsonl` (0b2da5a)
-for the final code, main a831d79's from the review's run of its
+all 42 data cases and the two 1e6 3-D cases, `~/p9_p9-ordering/fix/decide_final.jsonl` (f12d425)
+for the final code, main c822126's from the review's run of its
 `bench_anaint_decide` and the main runs of the gate, which agree):
 
-| | main a831d79 (P5c model) | P9 (after the review fix) |
+| | main c822126 (P5c model) | P9 (after the review fix) |
 |---|---|---|
 | syn-mem27-100, yee-pec-box-1e5, ss-2cubes_sphere, syn-mem125-46, yee-pec-cube-32 | SCOTCH | ND |
 | yee-pec-box-1e6, ss-ge87h76, ss-si34h36 | SCOTCH | ND + effort |
@@ -416,7 +416,7 @@ ss-ge87h76 flops 5.11e12 -> 4.49e12, run model 56.7 -> 51.1 s (its ordering even
 other separators, less flow work below); ss-si34h36 37.9 -> 37.3 s; m6: no change at 1e6. It is
 taken on yee-pec-box-1e6, where it does not pay (+0.15 s, 0.2%).
 
-**Flow rule** (review fix, 0b2da5a; `kNdFlowWorkRatio` = 4.5): on the same ratio, the predicted
+**Flow rule** (review fix, f12d425; `kNdFlowWorkRatio` = 4.5): on the same ratio, the predicted
 planned numeric time over the predicted ordering time (`OrderingCandidate::nd_work_ratio`, both
 priced as fitted, with the flow), the dissection runs without the flow refinement below 4.5, priced
 as ordering / 1.15, flops / 0.90, entries / 0.95; an analysed dissection without it anchors the other
@@ -427,7 +427,7 @@ yee-pec-cube-16: no flow), then 5.61 (syn-lap3d-aniso-1e5), 5.78 (ss-qa8fk-qa8fm
 cells), 5.93 (syn-mem27-46), 6.96 ... 23 (flow; syn-mem27-100 21.2), 30 and more effort
 (yee-pec-box-1e6 33.2, ss-ge87h76 44.8, the complex block syn-* 34-55, ss-3dspectralwave2 71.8). The
 chosen orderings are the P9 draft's everywhere. The replay of the refit (`bench_anaint_fix_fit`, same
-data) gives the same output with 0b2da5a as before, 1.1% in-sample and leave-one-case-out: no
+data) gives the same output with f12d425 as before, 1.1% in-sample and leave-one-case-out: no
 fitted case changes its choice.
 
 
@@ -451,16 +451,16 @@ fitted case changes its choice.
 
 ## 8. Gate: end-to-end
 
-Two rounds, both main (a831d79) against the branch, each case's default configuration (config.json,
+Two rounds, both main (c822126) against the branch, each case's default configuration (config.json,
 `--threads 16`, CLI defaults: automatic memory budget from the slot's 32 GiB, certificate exact),
 `tools/bench/ab_cases.py run` in ABBA order inside one outer slot guard per part, every run
 evaluated by `tools/eval` (`python3 -m tools.eval.sweep RUN --root DATA`), tables by `ab_cases.py
 table`:
 
-* the P9 draft, new = v16 (10be12a): G6 (1e6), G5 (1e5), G5s (10-rep re-check);
-* **the final code, new = fix1 (0b2da5a: the flow rule of section 8.3)**: G8 (1e6), G7 (1e5), G7s
+* the P9 draft, new = v16 (b200b12): G6 (1e6), G5 (1e5), G5s (10-rep re-check);
+* **the final code, new = fix1 (f12d425: the flow rule of section 8.3)**: G8 (1e6), G7 (1e5), G7s
   and G7r (10-rep re-checks), G7n (fix1 against v16 on the four cases the rule changes). Later
-  commits change comments, tests and documents only: the clean release build of fa445a4 (0
+  commits change comments, tests and documents only: the clean release build of 31052a9 (0
   warnings; ctest 992/992, pytest 357 passed) gives `hsolve` with fix1's md5.
 
 Machine-readable: `results/p9_gate_1e6.json`, `results/p9_gate_1e5.json`,
@@ -664,7 +664,7 @@ isolated). The elimination trees of both orders (fundamental supernodes, `fix/tr
 height (109 against 74 supernodes for yee-pec-cube-16) but so do yee-pec-box-1e4's (99 against
 81), where the flow order is the faster one: no static tree statistic tried separates the two cases.
 
-**Fix** (0b2da5a, section 6 "Flow rule"): the driver runs the dissection without the flow where the
+**Fix** (f12d425, section 6 "Flow rule"): the driver runs the dissection without the flow where the
 planned numeric time is under 4.5x the predicted ordering time. At the small end the flow's net
 effect is even (+19, -7, -24, +18 ms on the four cases between 3.3 and 3.6) and its risk one-sided
 against main (no flow = main's order there), from 5.6 on it gains (section 6). The draft's

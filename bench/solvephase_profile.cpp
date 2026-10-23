@@ -12,7 +12,7 @@
 //   solve           SparseFactorization::solve(Y, p): one MUMPS JOB=3 call, incl. the wrapper's
 //                   pack/unpack of the real embedding (complex T) / float rounding (single)
 //   pack_{old,new}  the wrapper's pack + unpack alone, replicated here (complex T only): old =
-//                   zero-initialised buffer (base a8ed8f4), new = default-initialised (P4)
+//                   zero-initialised buffer (base 0acb863), new = default-initialised (P4)
 //   resid_{ref,new} r = B X - (A Y - sigma B Y): three spmm passes (ref) / one fused sweep (new)
 //   op_{ref,new}    ShiftInvertOperator::apply without refinement (the driver's double factor)
 //   opr_{ref,new}   ShiftInvertOperator::apply with refinement (max_steps 10, rel_tol --ref-tol,
@@ -155,7 +155,7 @@ double stream_triad_gbs() {
 }
 
 /// The wrapper's pack + unpack for complex T (mumps_factorization.cpp solve()): [Re; Im] per
-/// column into a buffer allocated per call, zero-initialised (zeroed, base a8ed8f4) or not (P4).
+/// column into a buffer allocated per call, zero-initialised (zeroed, base 0acb863) or not (P4).
 template <class T>
 void replicate_pack(T* b, index_t n, index_t nrhs, index_t ldb, bool zeroed) {
   if constexpr (hs::is_complex_v<T>) {

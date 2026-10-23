@@ -132,7 +132,7 @@ env/run.sh python tools/run/guard.py --exclusive --cores 8-15,16-23 --mem-gb 32 
   --binary hsolve-off=/tmp/os2026-p17/mpi-off \
   --binary hsolve-on=/tmp/os2026-p17/mpi-after \
   --solvers hsolve-off,hsolve-on --reps 3 --cores 8-15,16-23 --mem-gb 32 \
-  --root /share/home/linzihan/p7_p7-membudget/data \
+  --root ~/p7_p7-membudget/data \
   --tag p17-pack-control-repeat --out-dir /tmp/os2026-p17 yee-pec-box-1e6
 ```
 

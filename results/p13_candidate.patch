@@ -51,7 +51,7 @@
 --- a/docs/DESIGN.md
 +++ b/docs/DESIGN.md
 @@ -398,8 +398,12 @@
-     main a831d79 的端到端实测见 `results/p9_measurements.md`）。
+     main c822126 的端到端实测见 `results/p9_measurements.md`）。
      以后这类门槛应消除 SCOTCH 的波动：两个二进制用同一主元顺序，或每个 20 次并按 flops 折算
      （`tools/bench/factspeed_gate_flops.py`，`results/p9_factspeed.md` §4.5）。
 +  - **主元极值更新（P13）**：`patches/mumps-5.8.2-pivot-extrema.patch` 在 L0 并行路径中先原子读取
