@@ -281,6 +281,20 @@ def test_release_version_must_match_cmake_and_a_dated_changelog_section(tmp_path
     assert "releases/download/v1.2.3/hsolve-1.2.3-linux-x86_64.tar.gz" in notes
 
 
+def test_release_notes_link_into_the_tagged_tree(tmp_path):
+    """Relative CHANGELOG links would resolve against .../releases/tag/ on the release page."""
+    info = load("hsolve_release_info", ROOT / "tools" / "release" / "release_info.py")
+    (tmp_path / "CHANGELOG.md").write_text(
+        "## [1.2.3] - 2026-11-01\n\n- see [FORMATS](docs/FORMATS.md) §2, [here](./NOTICE), [ci](.github/workflows/ci.yml), "
+        "[site](https://example.org/x), [anchor](#top), [mail](mailto:a@b.c)\n")
+    notes = info.notes("1.2.3", "ghcr.io/x/hsolve", "https://example.org/hsolve", tmp_path)
+    assert "[FORMATS](https://example.org/hsolve/blob/v1.2.3/docs/FORMATS.md)" in notes
+    assert "[here](https://example.org/hsolve/blob/v1.2.3/NOTICE)" in notes
+    assert "[ci](https://example.org/hsolve/blob/v1.2.3/.github/workflows/ci.yml)" in notes
+    assert "[site](https://example.org/x)" in notes and "[anchor](#top)" in notes
+    assert "[mail](mailto:a@b.c)" in notes
+
+
 @pytest.mark.skipif(shutil.which("sha256sum") is None, reason="needs sha256sum")
 def test_download_check_runs_as_written_with_old_coreutils(tmp_path):
     """The checksum command of the release notes and docs/INSTALL.md §2, in a directory with the

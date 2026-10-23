@@ -65,10 +65,17 @@ def version_for(ref_type: str, ref_name: str, sha: str, root: Path = ROOT) -> st
     return version
 
 
+def absolute_links(text: str, repo: str, version: str) -> str:
+    """Relative Markdown links of the CHANGELOG ([FORMATS](docs/FORMATS.md)) as links into the tagged
+    tree: on the release page a relative link would resolve against .../releases/tag/."""
+    return re.sub(r"\]\((?!https?:|mailto:|#)([^)\s]+)\)",
+                  lambda m: f"]({repo}/blob/v{version}/{m.group(1).removeprefix('./')})", text)
+
+
 def notes(version: str, image: str, repo: str, root: Path = ROOT) -> str:
     tarball = f"hsolve-{version}-linux-x86_64.tar.gz"
     section = changelog_section(version, root)
-    lines = [section[1], ""] if section else []
+    lines = [absolute_links(section[1], repo, version), ""] if section else []
     lines += [
         "## 获取 / Get it",
         "",
