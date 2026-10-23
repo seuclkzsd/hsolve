@@ -9,10 +9,15 @@ encoding line, if any):
     // SPDX-License-Identifier: Apache-2.0
     // SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 
-Files with code adapted from third-party sources name both licences (MIXED below; the original
-notices stay in the file and in THIRD_PARTY_NOTICES). Not covered: third_party/ (upstream sources and
-our MUMPS patches, CeCILL-C), results/ (dated engineering records and research prototypes),
+Source files are recognised by their extension, by name (CMakeLists.txt, Dockerfile) or, without an
+extension, by a "#!" first line (scripts such as apps/hsolve-mpirun). Files with code adapted from
+third-party sources name both licences (MIXED below; the original notices stay in the file and in
+THIRD_PARTY_NOTICES). Not covered: third_party/ (the upstream MUMPS source tarball and its licence) and
+patches/ (our MUMPS patches; both CeCILL-C), results/ (dated engineering records and research prototypes),
 tools/release/licenses/ (licence texts), data files and documentation (licensed as a whole by LICENSE).
+
+The files checked are those git tracks; outside a git work tree (e.g. an unpacked source archive) the
+covered directories are walked instead, skipping hidden and __pycache__ directories.
 
     python3 tools/dev/spdx.py --check     exit 1 and list every file whose header is missing or wrong
     python3 tools/dev/spdx.py --fix       add the missing headers (idempotent)
@@ -20,6 +25,7 @@ tools/release/licenses/ (licence texts), data files and documentation (licensed 
 from __future__ import annotations
 
 import argparse
+import os
 import re
 import subprocess
 import sys
@@ -42,23 +48,36 @@ ENCODING = re.compile(r"^#.*coding[:=]")
 DOCKER_DIRECTIVE = re.compile(r"^#\s*(syntax|escape|check)\s*=", re.IGNORECASE)  # must stay first in a Dockerfile
 
 
-def comment_prefix(path: str) -> str | None:
+def is_script(file: Path) -> bool:
+    """A file starting with '#!' (an executable script whatever its name)."""
+    try:
+        with open(file, "rb") as f:
+            return f.read(2) == b"#!"
+    except OSError:
+        return False
+
+
+def comment_prefix(path: str, root: Path | None = None) -> str | None:
+    """The comment marker of a covered file type, None for other files. Files without an extension
+    are scripts when their first line is a shebang (root: where to read them; None: not read)."""
     name = path.rsplit("/", 1)[-1]
     if path.endswith(SLASH):
         return "//"
     if path.endswith(HASH) or name in HASH_NAMES:
         return "#"
+    if root is not None and "." not in name and is_script(root / path):
+        return "#"
     return None
 
 
-def covered(path: str) -> bool:
-    if path.startswith(EXCLUDE) or comment_prefix(path) is None:
+def covered(path: str, root: Path | None = None) -> bool:
+    if path.startswith(EXCLUDE) or comment_prefix(path, root) is None:
         return False
     return path.startswith(ROOTS) or "/" not in path
 
 
-def expected(path: str) -> list[str]:
-    c = comment_prefix(path)
+def expected(path: str, root: Path | None = None) -> list[str]:
+    c = comment_prefix(path, root)
     return [f"{c} SPDX-License-Identifier: {MIXED.get(path, LICENSE)}",
             f"{c} SPDX-FileCopyrightText: {COPYRIGHT}"]
 
@@ -76,17 +95,45 @@ def header_start(lines: list[str]) -> int:
     return i
 
 
+def git_top(root: Path) -> Path | None:
+    """The top of the git work tree holding root, None outside one (or without git). cwd rather
+    than git -C: the cluster nodes' git 1.8.3 predates -C."""
+    try:
+        top = subprocess.run(["git", "rev-parse", "--show-toplevel"], cwd=root, check=True, capture_output=True,
+                             text=True).stdout.strip()
+    except (OSError, subprocess.CalledProcessError):
+        return None
+    return Path(top).resolve() if top else None
+
+
+def walked_files(root: Path) -> list[str]:
+    """Every file of the covered roots and the top directory, for a tree without git."""
+    out = [p.name for p in root.iterdir() if p.is_file()]
+    for top in ROOTS:
+        for dirpath, dirnames, filenames in os.walk(root / top):
+            dirnames[:] = [d for d in dirnames if not d.startswith(".") and d != "__pycache__"]
+            rel = Path(dirpath).relative_to(root).as_posix()
+            out += [f"{rel}/{f}" for f in filenames]
+    return out
+
+
 def tracked_files(root: Path) -> list[str]:
-    out = subprocess.run(["git", "-C", str(root), "ls-files", "-z"], check=True, capture_output=True).stdout
-    return sorted(p for p in out.decode().split("\0") if p and covered(p) and (root / p).is_file()
-                  and not (root / p).is_symlink())
+    """The covered files of root: those git tracks when root is the top of a git work tree, else
+    (an unpacked source archive) the files found by walking the covered roots."""
+    if git_top(root) == root.resolve():
+        out = subprocess.run(["git", "ls-files", "-z"], cwd=root, check=True, capture_output=True).stdout
+        paths = out.decode().split("\0")
+    else:
+        paths = walked_files(root)
+    return sorted(p for p in paths if p and (root / p).is_file() and not (root / p).is_symlink()
+                  and covered(p, root))
 
 
 def check_file(root: Path, path: str) -> str | None:
     """None when the header is right, else what is wrong."""
     lines = (root / path).read_text(encoding="utf-8").splitlines()
     i = header_start(lines)
-    want = expected(path)
+    want = expected(path, root)
     have = lines[i:i + 2]
     if have == want:
         return None
@@ -105,7 +152,7 @@ def fix_file(root: Path, path: str) -> bool:
     i = header_start([line.rstrip("\n") for line in lines])
     if i and not lines[i - 1].endswith("\n"):
         lines[i - 1] += "\n"
-    head = "".join(line + "\n" for line in expected(path))
+    head = "".join(line + "\n" for line in expected(path, root))
     p.write_text("".join(lines[:i]) + head + "".join(lines[i:]), encoding="utf-8")
     return True
 
