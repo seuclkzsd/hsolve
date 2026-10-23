@@ -424,7 +424,7 @@ src/mpi      （P10，不属于 libhsolve，HSOLVE_WITH_MPI）hs::Transport 的 
     都链接它（RPATH 最前），默认块参数为 p9。`HS_MUMPS=env` 传空的 `HSOLVE_MUMPS_ROOT`，链接环境的 conda-forge
     mumps-seq（P9 之前的构建，块参数 mumps）；`HS_MUMPS=/abs/prefix` 链接 `build_mumps.sh` 的其它安装（块参数 p9）。
     每次调用都显式传 `HSOLVE_MUMPS_ROOT`，同一构建目录可来回切换：`cmake/FindMUMPS.cmake` 在它改变时清掉缓存的
-    头文件与库路径重新查找。构建信息（`hsolve --A x --version`、`hsolve.build_info()`）写出 `mumps=<安装目录名>|env`
+    头文件与库路径重新查找。构建信息（`hsolve --version`、`hsolve.build_info()`）写出 `mumps=<安装目录名>|env`
     与 `mumps_blocking=p9|mumps`；`tests/py/test_mumps_build.py` 检查命令行（`LD_TRACE_LOADED_OBJECTS`）与 Python
     模块（全新解释器求解后的 `/proc/self/maps`）实际加载所配置的库、仓库内的 tarball 即固定的那个、缓存 key 随输入
     变化。许可：`third_party/mumps/README.md`、`THIRD_PARTY_NOTICES` §3.1（默认构建的 MUMPS 是经补丁修改的版本）。

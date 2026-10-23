@@ -560,7 +560,7 @@ SLEPc 在多个测例上给出错误或不完整的结果；关掉证书时 hsol
 conda env create -f env/environment.yml && source env/activate.sh
 tools/dev/build.sh release && tools/dev/test.sh release      # 先由 third_party/mumps 编译打补丁的 MUMPS（缓存），再编译 hsolve
 HS_MUMPS=env tools/dev/build.sh release                       # 回退：链接环境的 conda-forge MUMPS（P9 之前的构建）
-./build/release/hsolve --A x --version                        # 构建信息：mumps=<所用 MUMPS> mumps_blocking=p9|mumps
+./build/release/hsolve --version                               # 构建信息：mumps=<所用 MUMPS> mumps_blocking=p9|mumps
 ./build/release/hsolve --A A.npz [--B B.npz] --config config.json --out out/
 ./build/release/hsolve --A A.npz --B B.npz --interval 1000 2000 --slice-size 0 --out out/   # 谱切片
 PYTHONPATH=build/release/python python -c "import hsolve; print(hsolve.version())"        # Python 接口

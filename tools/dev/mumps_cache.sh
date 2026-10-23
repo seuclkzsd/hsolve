@@ -99,5 +99,5 @@ case "${1:-}" in
     fi
     echo "$prefix"
     ;;
-  *) sed -n '2,24p' "$0" >&2; exit 2 ;;
+  *) sed -n '4,26p' "$0" >&2; exit 2 ;;
 esac

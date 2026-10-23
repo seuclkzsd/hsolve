@@ -13,7 +13,7 @@
 # Poll with `cat LOG.status` (absent while running). A later cluster_run.sh with the same work tree
 # name checks out another commit in that tree: give concurrent work its own HS_CLUSTER_NAME.
 set -euo pipefail
-[ $# -ge 2 ] || { sed -n '2,13p' "$0" >&2; exit 2; }
+[ $# -ge 2 ] || { sed -n '4,14p' "$0" >&2; exit 2; }
 log="$1"
 shift
 mkdir -p "$(dirname "$log")"

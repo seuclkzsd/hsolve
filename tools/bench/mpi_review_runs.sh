@@ -20,7 +20,7 @@
 # logs), .stdout. Data: $HS_DATA_ROOT or data/. Tabulate with the reports and guard summaries.
 set -u
 mode="${1:-}" out="${2:-}"
-[ -n "$mode" ] && [ -n "$out" ] || { sed -n '2,20p' "$0" >&2; exit 2; }
+[ -n "$mode" ] && [ -n "$out" ] || { sed -n '4,20p' "$0" >&2; exit 2; }
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$root"
 # shellcheck disable=SC1091

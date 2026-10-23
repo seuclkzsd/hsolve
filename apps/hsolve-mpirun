@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 # hsolve-mpirun: run hsolve as one MPI job laid out over the sockets of this machine (DESIGN §3.9,
 # docs/PARALLEL.md). CMake copies it next to hsolve-mpi (build/<preset>/hsolve-mpirun).
 #

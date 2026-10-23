@@ -138,8 +138,7 @@ def run(a: argparse.Namespace) -> int:
     out = Path(a.out)
     out.mkdir(parents=True, exist_ok=True)
     host = socket.gethostname().split(".")[0]
-    version = subprocess.run([str(hsolve), "--A", "unused.npz", "--version"], capture_output=True,
-                             text=True).stdout.splitlines()[:1]
+    version = subprocess.run([str(hsolve), "--version"], capture_output=True, text=True).stdout.splitlines()[:1]
     cases = a.cases.split(",")
     with open(out / "runs.jsonl", "a") as log:
         for rep in range(a.reps):

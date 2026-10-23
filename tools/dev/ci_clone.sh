@@ -18,7 +18,7 @@ if [ "${1:-}" = "--detach" ]; then
   detach=1
   shift
 fi
-[ $# -ge 1 ] && [[ "$1" == /* ]] || { sed -n '2,13p' "$0" >&2; exit 2; }
+[ $# -ge 1 ] && [[ "$1" == /* ]] || { sed -n '4,14p' "$0" >&2; exit 2; }
 dir="${1%/}"
 shift
 repo="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
