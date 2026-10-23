@@ -1,0 +1,495 @@
+{
+ "schema_version": 1,
+ "scenario": {
+  "id": "ss-tem152078",
+  "group": "suitesparse",
+  "title": "TEM152078（Nédélec 旋度-旋度/质量，n = 152078）",
+  "case": "ss-tem152078",
+  "source": "ss-tem152078",
+  "why": "同上，规模 1.5e5",
+  "target": {
+   "mode": "nearest",
+   "sigma": 170394601795980.1,
+   "k": 10
+  },
+  "hsolve": {},
+  "reference": "arpack",
+  "derived": false,
+  "reps": 3,
+  "timeout_s": 900,
+  "group_label": "SuiteSparse 实际矩阵",
+  "target_info": {},
+  "override": false,
+  "hsolve_config": {
+   "method": "shift_invert_lanczos"
+  },
+  "n": 152078,
+  "problem": "GHEP",
+  "dtype": "float64",
+  "nnz_a": 6459326,
+  "nnz_b": 6459330,
+  "source_path": "~/os2026/data/cases/ss-tem152078",
+  "reference_info": {
+   "schema_version": 1,
+   "kind": "solver",
+   "note": "ARPACK shift-invert (scipy_eigsh_shift_invert) sigma=1.70395e+14, 20 pairs, tol=1e-14, max backward error 4.80e-20 (norms: eigsh/eigsh)",
+   "count": 20,
+   "complete": false,
+   "window": [
+    169645287881591.78,
+    171143915710368.4
+   ]
+  }
+ },
+ "started": "2026-10-23T09:25:10",
+ "finished": "2026-10-23T09:25:25",
+ "conditions": {
+  "host": "c005",
+  "cpu": "Intel(R) Xeon(R) Silver 4314 CPU @ 2.40GHz",
+  "os": "Linux-3.10.0-1160.el7.x86_64-x86_64-with-glibc2.17",
+  "python": "3.11.17",
+  "git_commit": "a3393e61966d49a82c1570526fc2242a1227350c",
+  "source_commit": "47d03dc5f2282ee838b6133d692d7ebabd0d655e",
+  "hsolve_binary": "build/release/hsolve",
+  "hsolve_md5": "c37364bfe7fee478e7ba6e523fdbc48d",
+  "hsolve_build": "hsolve 1.0.0, gcc 13.4, flags: Release -pipe -O3 -DNDEBUG native=OFF mumps=mumps-5.8.2-7eba2d99c3b1127c mumps_blocking=p9, openmp 201511",
+  "cores": "16-31",
+  "ncores": 16,
+  "mem_gb": 32.0,
+  "reps": 3,
+  "solvers": [
+   "hsolve"
+  ],
+  "slepc_version": null,
+  "slepc_env": "~/envs/os2026-ref",
+  "tuned_profiles": "results/showcase/slepc_tuned_profiles.json"
+ },
+ "norms": {
+  "norm2_a": 32912180.553050887,
+  "norm2_b": 3.312650708022082,
+  "scale": 9935300.59578847,
+  "method": [
+   "eigsh",
+   "eigsh"
+  ],
+  "seconds": 0.7978353574872017
+ },
+ "reference": {
+  "kind": "solver",
+  "complete": false,
+  "window": [
+   169645287881591.78,
+   171143915710368.4
+  ],
+  "eigenvalues": [
+   169897972109329.2,
+   169917383226223.75,
+   169983405893509.75,
+   170080057385033.44,
+   170090933876820.38,
+   170188088579199.25,
+   170256310345972.78,
+   170277667560197.22,
+   170294305619432.0,
+   170487362538856.97,
+   170582285558478.12,
+   170654422788372.8,
+   170688953319144.34,
+   170743031282419.75,
+   170860485964323.56,
+   170950499742794.12,
+   170954933578121.94
+  ],
+  "truncated": false,
+  "levels": [
+   [
+    169897972109329.2,
+    1
+   ],
+   [
+    169917383226223.75,
+    1
+   ],
+   [
+    169983405893509.75,
+    1
+   ],
+   [
+    170080057385033.44,
+    1
+   ],
+   [
+    170090933876820.38,
+    1
+   ],
+   [
+    170188088579199.25,
+    1
+   ],
+   [
+    170256310345972.78,
+    1
+   ],
+   [
+    170277667560197.22,
+    1
+   ],
+   [
+    170294305619432.0,
+    1
+   ],
+   [
+    170487362538856.97,
+    1
+   ],
+   [
+    170582285558478.12,
+    1
+   ],
+   [
+    170654422788372.8,
+    1
+   ],
+   [
+    170688953319144.34,
+    1
+   ],
+   [
+    170743031282419.75,
+    1
+   ],
+   [
+    170860485964323.56,
+    1
+   ],
+   [
+    170950499742794.12,
+    1
+   ],
+   [
+    170954933578121.94,
+    1
+   ]
+  ]
+ },
+ "runs": [
+  {
+   "solver": "hsolve",
+   "wall_s": 4.624,
+   "peak_rss_gib": 1.194,
+   "rc": 0,
+   "killed": null,
+   "claimed_success": true,
+   "success": true,
+   "solver_max_eta": 1.4479221806994826e-15,
+   "max_eta": 1.4479221656621429e-15,
+   "pairs": 10,
+   "eigenvalues": [
+    170487362538856.97,
+    170294305619431.9,
+    170277667560197.2,
+    170256310345972.56,
+    170582285558478.06,
+    170188088579199.16,
+    170654422788372.84,
+    170688953319144.44,
+    170090933876822.03,
+    170080057385051.62
+   ],
+   "solver_peak_bytes": 1282551808,
+   "verdict": "pass",
+   "eval_reasons": [],
+   "completeness": "consistent",
+   "certified": false,
+   "valid": true,
+   "why": [],
+   "solver_s": 3.9125816970000002,
+   "solver_s_scope": "report time_total_s",
+   "phases": {
+    "analysis_s": 0.405952929,
+    "numeric_s": 2.056135634,
+    "factorizations": 4,
+    "solves": 60,
+    "solve_s": 0.5859916599999999,
+    "ortho_s": null,
+    "iterate_s": 0.8395460970000002,
+    "verify_s": 0.18733822699999947
+   },
+   "evaluation": {
+    "verdict": "pass",
+    "reasons": [],
+    "status": "consistent",
+    "certified": false,
+    "expected": 10,
+    "found": 10,
+    "missing": [],
+    "boundary_deficit": 0,
+    "spurious": 0,
+    "unmatched": 0,
+    "distinct_returned": 10,
+    "duplicates": 0,
+    "rejected_pairs": 0,
+    "max_backward_error": 1.4479221656621429e-15,
+    "max_eig_scaled_error": 1.0693492945146302e-13,
+    "max_subspace_angle": 1.1789678268637602e-06
+   },
+   "outcome": [],
+   "report": {
+    "version": "1.0.0",
+    "method": "shift_invert_lanczos",
+    "candidate_source": "iterative",
+    "problem": "generalized_definite",
+    "sigma_used": 170394601795980.1,
+    "block_size": 4,
+    "zero_cluster_dim": -1,
+    "zero_modes_filtered": 0,
+    "time_total_s": 3.9125816970000002,
+    "time_setup_s": 0.20610380999999992,
+    "time_factor_s": 1.728483838,
+    "time_iterate_s": 0.8395460970000002,
+    "time_verify_s": 0.18733822699999947,
+    "time_certificate_s": 0.9511097250000002,
+    "warnings": [],
+    "certificate": {
+     "count_found": 10,
+     "count_inertia": 10,
+     "endpoint_moves": 0,
+     "failure_probability": 0.0,
+     "lower": 170031731639268.3,
+     "method": "exact",
+     "note": "",
+     "passed": true,
+     "performed": true,
+     "rigorous": true,
+     "seconds": 0.9511097250000002,
+     "solves": 0,
+     "statement": "double-precision Sylvester counts (main factorization): nu(b) - nu(a) = 10 eigenvalue(s) in [1.70032e+14, 1.70726e+14], 10 distinct found pair(s) there: every eigenvalue in the window is found",
+     "upper": 170726088744664.62
+    },
+    "subspace": {
+     "performed": true,
+     "rigorous": false,
+     "max_sin_bound": 0.02444863478579564,
+     "b_min_source": "estimate",
+     "seconds": 0.169897341
+    },
+    "slices": 0,
+    "factorizations": 4
+   },
+   "rep": 0,
+   "position": 0
+  },
+  {
+   "solver": "hsolve",
+   "wall_s": 4.622,
+   "peak_rss_gib": 1.22,
+   "rc": 0,
+   "killed": null,
+   "claimed_success": true,
+   "success": true,
+   "solver_max_eta": 1.4479220543866497e-15,
+   "max_eta": 1.4479220393522828e-15,
+   "pairs": 10,
+   "eigenvalues": [
+    170487362538857.1,
+    170294305619431.88,
+    170277667560197.22,
+    170256310345972.62,
+    170582285558478.1,
+    170188088579199.38,
+    170654422788372.94,
+    170688953319144.25,
+    170090933876822.12,
+    170080057385051.7
+   ],
+   "solver_peak_bytes": 1310130176,
+   "verdict": "pass",
+   "eval_reasons": [],
+   "completeness": "consistent",
+   "certified": false,
+   "valid": true,
+   "why": [],
+   "solver_s": 3.904047839,
+   "solver_s_scope": "report time_total_s",
+   "phases": {
+    "analysis_s": 0.39249829,
+    "numeric_s": 2.052265811,
+    "factorizations": 4,
+    "solves": 60,
+    "solve_s": 0.586689165,
+    "ortho_s": null,
+    "iterate_s": 0.8436129130000001,
+    "verify_s": 0.19173003000000022
+   },
+   "evaluation": {
+    "verdict": "pass",
+    "reasons": [],
+    "status": "consistent",
+    "certified": false,
+    "expected": 10,
+    "found": 10,
+    "missing": [],
+    "boundary_deficit": 0,
+    "spurious": 0,
+    "unmatched": 0,
+    "distinct_returned": 10,
+    "duplicates": 0,
+    "rejected_pairs": 0,
+    "max_backward_error": 1.4479220393522828e-15,
+    "max_eig_scaled_error": 1.0730240343583231e-13,
+    "max_subspace_angle": 1.1789680166310329e-06
+   },
+   "outcome": [],
+   "report": {
+    "version": "1.0.0",
+    "method": "shift_invert_lanczos",
+    "candidate_source": "iterative",
+    "problem": "generalized_definite",
+    "sigma_used": 170394601795980.1,
+    "block_size": 4,
+    "zero_cluster_dim": -1,
+    "zero_modes_filtered": 0,
+    "time_total_s": 3.904047839,
+    "time_setup_s": 0.20608700199999969,
+    "time_factor_s": 1.709399606,
+    "time_iterate_s": 0.8436129130000001,
+    "time_verify_s": 0.19173003000000022,
+    "time_certificate_s": 0.953218288,
+    "warnings": [],
+    "certificate": {
+     "count_found": 10,
+     "count_inertia": 10,
+     "endpoint_moves": 0,
+     "failure_probability": 0.0,
+     "lower": 170031731639268.5,
+     "method": "exact",
+     "note": "",
+     "passed": true,
+     "performed": true,
+     "rigorous": true,
+     "seconds": 0.953218288,
+     "solves": 0,
+     "statement": "double-precision Sylvester counts (main factorization): nu(b) - nu(a) = 10 eigenvalue(s) in [1.70032e+14, 1.70726e+14], 10 distinct found pair(s) there: every eigenvalue in the window is found",
+     "upper": 170726088744664.6
+    },
+    "subspace": {
+     "performed": true,
+     "rigorous": false,
+     "max_sin_bound": 0.024448634795915056,
+     "b_min_source": "estimate",
+     "seconds": 0.17428293
+    },
+    "slices": 0,
+    "factorizations": 4
+   },
+   "rep": 1,
+   "position": 0
+  },
+  {
+   "solver": "hsolve",
+   "wall_s": 4.686,
+   "peak_rss_gib": 1.192,
+   "rc": 0,
+   "killed": null,
+   "claimed_success": true,
+   "success": true,
+   "solver_max_eta": 1.4479224136689515e-15,
+   "max_eta": 1.4479223986305927e-15,
+   "pairs": 10,
+   "eigenvalues": [
+    170487362538856.88,
+    170294305619432.0,
+    170277667560197.3,
+    170256310345972.78,
+    170582285558478.28,
+    170188088579199.28,
+    170654422788372.75,
+    170688953319144.44,
+    170090933876822.06,
+    170080057385051.75
+   ],
+   "solver_peak_bytes": 1280311296,
+   "verdict": "pass",
+   "eval_reasons": [],
+   "completeness": "consistent",
+   "certified": false,
+   "valid": true,
+   "why": [],
+   "solver_s": 3.9286485979999997,
+   "solver_s_scope": "report time_total_s",
+   "phases": {
+    "analysis_s": 0.410413426,
+    "numeric_s": 2.057169635,
+    "factorizations": 4,
+    "solves": 60,
+    "solve_s": 0.5880366419999999,
+    "ortho_s": null,
+    "iterate_s": 0.843385633,
+    "verify_s": 0.19113158999999968
+   },
+   "evaluation": {
+    "verdict": "pass",
+    "reasons": [],
+    "status": "consistent",
+    "certified": false,
+    "expected": 10,
+    "found": 10,
+    "missing": [],
+    "boundary_deficit": 0,
+    "spurious": 0,
+    "unmatched": 0,
+    "distinct_returned": 10,
+    "duplicates": 0,
+    "rejected_pairs": 0,
+    "max_backward_error": 1.4479223986305927e-15,
+    "max_eig_scaled_error": 1.0766987742020159e-13,
+    "max_subspace_angle": 1.1789680717138315e-06
+   },
+   "outcome": [],
+   "report": {
+    "version": "1.0.0",
+    "method": "shift_invert_lanczos",
+    "candidate_source": "iterative",
+    "problem": "generalized_definite",
+    "sigma_used": 170394601795980.1,
+    "block_size": 4,
+    "zero_cluster_dim": -1,
+    "zero_modes_filtered": 0,
+    "time_total_s": 3.9286485979999997,
+    "time_setup_s": 0.20664630299999986,
+    "time_factor_s": 1.7388244280000003,
+    "time_iterate_s": 0.843385633,
+    "time_verify_s": 0.19113158999999968,
+    "time_certificate_s": 0.9486606440000003,
+    "warnings": [],
+    "certificate": {
+     "count_found": 10,
+     "count_inertia": 10,
+     "endpoint_moves": 0,
+     "failure_probability": 0.0,
+     "lower": 170031731639268.38,
+     "method": "exact",
+     "note": "",
+     "passed": true,
+     "performed": true,
+     "rigorous": true,
+     "seconds": 0.9486606440000003,
+     "solves": 0,
+     "statement": "double-precision Sylvester counts (main factorization): nu(b) - nu(a) = 10 eigenvalue(s) in [1.70032e+14, 1.70726e+14], 10 distinct found pair(s) there: every eigenvalue in the window is found",
+     "upper": 170726088744664.56
+    },
+    "subspace": {
+     "performed": true,
+     "rigorous": false,
+     "max_sin_bound": 0.02444863462989826,
+     "b_min_source": "estimate",
+     "seconds": 0.173712878
+    },
+    "slices": 0,
+    "factorizations": 4
+   },
+   "rep": 2,
+   "position": 0
+  }
+ ]
+}

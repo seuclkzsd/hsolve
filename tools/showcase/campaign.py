@@ -24,6 +24,9 @@ Writes results/showcase/raw/<scenario>.json after every scenario. Run inside the
 
     python -m tools.showcase.campaign profiles     # (re)write the merged tuned-profile file
 
+`run --solvers hsolve --raw-dir DIR` measures one solver alone (a new hsolve build against the
+committed records; tools/showcase/recheck.py compares the two); the solvers kept run in their rotation.
+
 Scenarios whose case has no tuned profile get one with `tune` (tools/bench/tune_slepc.py with the
 scenario's target, 16 cores, inside the measurement slot). Each tuning's full record (every trial:
 configuration, time, verdict and the evaluator's reasons) is committed as
@@ -159,9 +162,13 @@ def _report_excerpt(solver: str, out: Path) -> dict[str, Any]:
         return {}
     if solver == "hsolve":
         keys = ("version", "method", "candidate_source", "problem", "sigma_used", "block_size",
-                "zero_cluster_dim", "zero_modes_filtered", "time_total_s", "time_certificate_s", "warnings")
+                "zero_cluster_dim", "zero_modes_filtered", "time_total_s", "time_setup_s", "time_factor_s",
+                "time_iterate_s", "time_verify_s", "time_certificate_s", "warnings")
         ex = {k: rep.get(k) for k in keys}
         ex["certificate"] = rep.get("certificate")
+        if rep.get("subspace") is not None:   # the a-posteriori subspace-angle bound (its cost is in time_total_s)
+            ex["subspace"] = {k: rep["subspace"].get(k) for k in ("performed", "rigorous", "max_sin_bound",
+                                                                   "b_min_source", "seconds")}
         ex["slices"] = len(rep.get("slices") or [])
         ex["factorizations"] = (rep.get("factor_stats") or {}).get("factorizations")
         return ex
@@ -339,6 +346,23 @@ def reference_excerpt(ref: cio.Reference | None, tgt: dict[str, Any], limit: int
             "levels": reference_levels(sel)}
 
 
+def solver_order(rep: int, solvers: tuple[str, ...] = SOLVERS) -> tuple[str, ...]:
+    """The solvers of repetition `rep` in run order: SOLVERS rotated by the repetition (the first
+    solver of one repetition runs last in the next), restricted to `solvers`."""
+    k = rep % len(SOLVERS)
+    return tuple(s for s in SOLVERS[k:] + SOLVERS[:k] if s in solvers)
+
+
+def hsolve_build(binary: Path) -> str | None:
+    """The binary's own build line (`hsolve --version`: version, compiler, flags), None if it does not answer."""
+    try:
+        out = subprocess.run([str(binary), "--version"], capture_output=True, text=True, timeout=60)
+    except (OSError, subprocess.SubprocessError):
+        return None
+    line = out.stdout.strip().splitlines()
+    return line[0] if out.returncode == 0 and line else None
+
+
 def environment() -> dict[str, Any]:
     cpu = ""
     try:
@@ -350,7 +374,8 @@ def environment() -> dict[str, Any]:
     md5 = hashlib.md5(binary.read_bytes()).hexdigest() if binary.exists() else None
     return {"host": socket.gethostname(), "cpu": cpu, "os": platform.platform(), "python": platform.python_version(),
             "git_commit": git_commit(), "source_commit": git_commit(SOURCE_PATHS),
-            "hsolve_binary": str(binary.relative_to(REPO)), "hsolve_md5": md5}
+            "hsolve_binary": str(binary.relative_to(REPO)), "hsolve_md5": md5,
+            "hsolve_build": hsolve_build(binary) if binary.exists() else None}
 
 
 # What the hsolve binary is built from: its version is the last commit touching these paths.
@@ -385,10 +410,10 @@ def run_scenario(rec: dict[str, Any], args, profile_file: Path) -> dict[str, Any
     ns = SimpleNamespace(cores=args.cores, mem_gb=args.mem_gb, timeout=int(rec["timeout_s"]), exclusive=False,
                          root=str(root), keep_vectors=False, slepc_ranks=1, slepc_profile_file=str(profile_file))
     started = time.strftime("%Y-%m-%dT%H:%M:%S")
+    solvers = tuple(getattr(args, "solvers", None) or SOLVERS)
     runs = []
     for rep in range(reps):
-        order = SOLVERS[rep % len(SOLVERS):] + SOLVERS[:rep % len(SOLVERS)]
-        for pos, s in enumerate(order):
+        for pos, s in enumerate(solver_order(rep, solvers)):
             out = Path(args.runs_dir) / rec["id"] / f"{s}-r{rep}"
             e = run_solver(s, c, rec, out, judge, ns, null_tol)
             e.update(rep=rep, position=pos)
@@ -402,7 +427,8 @@ def run_scenario(rec: dict[str, Any], args, profile_file: Path) -> dict[str, Any
     return {"schema_version": 1, "scenario": rec, "started": started,
             "finished": time.strftime("%Y-%m-%dT%H:%M:%S"),
             "conditions": {**environment(), "cores": args.cores, "ncores": len(parse_cpulist(args.cores)),
-                           "mem_gb": args.mem_gb, "reps": reps, "slepc_version": slepc_version,
+                           "mem_gb": args.mem_gb, "reps": reps, "solvers": list(solvers),
+                           "slepc_version": slepc_version,
                            "slepc_env": str(args.slepc_env or slepc_profile.REF_ENV),
                            "tuned_profiles": str(Path(profile_file).relative_to(REPO))
                            if Path(profile_file).is_relative_to(REPO) else str(profile_file)},
@@ -526,6 +552,8 @@ def main(argv: list[str] | None = None) -> int:
     rp.add_argument("--root", type=Path, default=scn.DEFAULT_ROOT)
     rp.add_argument("--scenario", nargs="+", required=True)
     rp.add_argument("--reps", type=int, default=0, help="override the scenarios' repetitions")
+    rp.add_argument("--solvers", nargs="+", choices=SOLVERS, default=list(SOLVERS),
+                    help="the solvers to run (default: all three, interleaved)")
     rp.add_argument("--cores", default=os.environ.get("HS_MEASURE_CORES", "16-31"))
     rp.add_argument("--mem-gb", type=float, default=32.0)
     rp.add_argument("--runs-dir", type=Path, default=Path.home() / "rb-evidence/runs")

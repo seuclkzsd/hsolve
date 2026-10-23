@@ -1,0 +1,2147 @@
+{
+ "schema_version": 1,
+ "note": "written by tools/showcase/recheck.py from the raw records; do not edit",
+ "new_dir": "results/showcase/recheck-1.0.0",
+ "base_dir": "results/showcase/raw",
+ "slower_threshold": 0.05,
+ "conditions": {
+  "host": "c005",
+  "cpu": "Intel(R) Xeon(R) Silver 4314 CPU @ 2.40GHz",
+  "cores": "16-31",
+  "ncores": 16,
+  "mem_gb": 32.0,
+  "reps": 3,
+  "solvers": [
+   "hsolve"
+  ],
+  "source_commit": "47d03dc5f2282ee838b6133d692d7ebabd0d655e",
+  "git_commit": "a3393e61966d49a82c1570526fc2242a1227350c",
+  "hsolve_binary": "build/release/hsolve",
+  "hsolve_md5": "c37364bfe7fee478e7ba6e523fdbc48d",
+  "hsolve_build": "hsolve 1.0.0, gcc 13.4, flags: Release -pipe -O3 -DNDEBUG native=OFF mumps=mumps-5.8.2-7eba2d99c3b1127c mumps_blocking=p9, openmp 201511",
+  "started": "2026-10-23T09:22:37",
+  "finished": "2026-10-23T09:35:04"
+ },
+ "base_conditions": {
+  "host": [
+   "c005",
+   "gpu02"
+  ],
+  "cpu": "Intel(R) Xeon(R) Silver 4314 CPU @ 2.40GHz",
+  "cores": "16-31",
+  "ncores": 16,
+  "mem_gb": 32.0,
+  "reps": 3,
+  "solvers": null,
+  "source_commit": "b9aadc47b09db34f9b72870ee912d7d1e8715c50",
+  "git_commit": [
+   "d9baedc010fb947c5de47756d3c7f877102b83cb",
+   "e3cb5e37feaaa66ff44fa4f473cd623096133760",
+   "e5ffad8a6ac5ea4a38b879b49856c5f46264a543",
+   "fac61d895e7f47b02e2d3316e90bd7ee7899df56"
+  ],
+  "hsolve_binary": "build/release/hsolve",
+  "hsolve_md5": "8d69a98bc60e327e479a591ef93742c0",
+  "hsolve_build": null,
+  "started": "2026-10-23T01:28:02",
+  "finished": "2026-10-23T05:05:42"
+ },
+ "not_remeasured": [],
+ "summary": {
+  "scenarios": 18,
+  "valid_every_rep": 18,
+  "runs": 54,
+  "valid_runs": 54,
+  "slower": [
+   "zero-cluster"
+  ],
+  "faster": [
+   "bloch-1e5",
+   "bloch-interval"
+  ],
+  "certificate_changed": [],
+  "scenario_changed": [],
+  "other_host": [
+   "bloch-1e4",
+   "bloch-1e5",
+   "bloch-interval"
+  ],
+  "fast_path_used": [],
+  "max_backward_error": 6.066373893256938e-11,
+  "ratio_min": 0.9130947150993671,
+  "ratio_max": 1.056584085998656,
+  "ratio_median": 1.0044182216782815
+ },
+ "rows": [
+  {
+   "scenario": "bloch-1e4",
+   "title": "Bloch 周期单元（复厄密）σ 附近 10 个",
+   "case": "yee-bloch-1e4",
+   "n": 10080,
+   "problem": "HEP",
+   "dtype": "complex128",
+   "same_scenario": true,
+   "runs": 3,
+   "valid": 3,
+   "invalid": [],
+   "base_runs": 3,
+   "base_valid": 3,
+   "times": [
+    0.867239448,
+    0.768583075,
+    0.7746136190000001
+   ],
+   "base_times": [
+    0.8565472480000001,
+    0.799384028,
+    0.801937217
+   ],
+   "time_s": 0.7746136190000001,
+   "base_time_s": 0.801937217,
+   "ratio": 0.965928008551323,
+   "speed": "same",
+   "grown_phase": null,
+   "phases": {
+    "setup_factor_s": {
+     "base": 0.28726485599999996,
+     "new": 0.2816231630000002,
+     "delta": -0.005641692999999781
+    },
+    "iterate_s": {
+     "base": 0.20347354499999998,
+     "new": 0.198216063,
+     "delta": -0.00525748199999998
+    },
+    "verify_s": {
+     "base": 0.00462966099999991,
+     "new": 0.005281437999999958,
+     "delta": 0.0006517770000000478
+    },
+    "certificate_s": {
+     "base": 0.306958576,
+     "new": 0.2906540320000001,
+     "delta": -0.016304543999999865
+    },
+    "analysis_s": {
+     "base": 0.092108254,
+     "new": 0.09391251,
+     "delta": 0.001804256000000004
+    },
+    "numeric_s": {
+     "base": 0.448670851,
+     "new": 0.448621233,
+     "delta": -4.961799999997352e-05
+    },
+    "factorizations": {
+     "base": 3.0,
+     "new": 3.0,
+     "delta": 0.0
+    },
+    "solves": {
+     "base": 104.0,
+     "new": 104.0,
+     "delta": 0.0
+    },
+    "subspace_s": {
+     "base": 0.0,
+     "new": 0.00224387,
+     "delta": 0.00224387
+    }
+   },
+   "certificate": {
+    "runs": 3,
+    "performed": 3,
+    "passed": 3,
+    "outcomes": [
+     {
+      "method": "exact",
+      "count_inertia": 10,
+      "count_found": 10,
+      "passed": true,
+      "rigorous": true
+     }
+    ],
+    "notes": [],
+    "text": "3/3 passed (exact: inertia 10 = found 10)"
+   },
+   "base_certificate": {
+    "runs": 3,
+    "performed": 3,
+    "passed": 3,
+    "outcomes": [
+     {
+      "method": "exact",
+      "count_inertia": 10,
+      "count_found": 10,
+      "passed": true,
+      "rigorous": true
+     }
+    ],
+    "notes": [],
+    "text": "3/3 passed (exact: inertia 10 = found 10)"
+   },
+   "certificate_same": true,
+   "fast_path_off": true,
+   "max_backward_error": 3.532170153435218e-11,
+   "peak_gib": 0.29309844970703125,
+   "base_peak_gib": 0.2254791259765625,
+   "version": "1.0.0",
+   "base_version": "0.1.0",
+   "host": "c005",
+   "base_host": "gpu02"
+  },
+  {
+   "scenario": "bloch-1e5",
+   "title": "Bloch 周期单元（复厄密，n ≈ 1e5）",
+   "case": "sc-bloch-1e5",
+   "n": 98304,
+   "problem": "HEP",
+   "dtype": "complex128",
+   "same_scenario": true,
+   "runs": 3,
+   "valid": 3,
+   "invalid": [],
+   "base_runs": 3,
+   "base_valid": 3,
+   "times": [
+    22.036321962,
+    22.001084207000005,
+    22.102952230999996
+   ],
+   "base_times": [
+    24.133664994,
+    23.864428531,
+    24.374127582
+   ],
+   "time_s": 22.036321962,
+   "base_time_s": 24.133664994,
+   "ratio": 0.9130947150993671,
+   "speed": "faster",
+   "grown_phase": null,
+   "phases": {
+    "setup_factor_s": {
+     "base": 7.738087589000001,
+     "new": 7.199928013999999,
+     "delta": -0.5381595750000017
+    },
+    "iterate_s": {
+     "base": 2.7251540060000004,
+     "new": 2.68611618,
+     "delta": -0.039037826000000386
+    },
+    "verify_s": {
+     "base": 0.04410448400000011,
+     "new": 0.06584742299999602,
+     "delta": 0.02174293899999591
+    },
+    "certificate_s": {
+     "base": 13.595334691000003,
+     "new": 12.0894895,
+     "delta": -1.5058451910000024
+    },
+    "analysis_s": {
+     "base": 0.594374989,
+     "new": 0.605378024,
+     "delta": 0.011003034999999994
+    },
+    "numeric_s": {
+     "base": 20.132706639,
+     "new": 18.420646685,
+     "delta": -1.7120599539999972
+    },
+    "factorizations": {
+     "base": 3.0,
+     "new": 3.0,
+     "delta": 0.0
+    },
+    "solves": {
+     "base": 104.0,
+     "new": 104.0,
+     "delta": 0.0
+    },
+    "subspace_s": {
+     "base": 0.0,
+     "new": 0.027421861,
+     "delta": 0.027421861
+    }
+   },
+   "certificate": {
+    "runs": 3,
+    "performed": 3,
+    "passed": 3,
+    "outcomes": [
+     {
+      "method": "exact",
+      "count_inertia": 10,
+      "count_found": 10,
+      "passed": true,
+      "rigorous": true
+     }
+    ],
+    "notes": [],
+    "text": "3/3 passed (exact: inertia 10 = found 10)"
+   },
+   "base_certificate": {
+    "runs": 3,
+    "performed": 3,
+    "passed": 3,
+    "outcomes": [
+     {
+      "method": "exact",
+      "count_inertia": 10,
+      "count_found": 10,
+      "passed": true,
+      "rigorous": true
+     }
+    ],
+    "notes": [],
+    "text": "3/3 passed (exact: inertia 10 = found 10)"
+   },
+   "certificate_same": true,
+   "fast_path_off": true,
+   "max_backward_error": 3.0471457184253486e-11,
+   "peak_gib": 4.2461395263671875,
+   "base_peak_gib": 4.1533966064453125,
+   "version": "1.0.0",
+   "base_version": "0.1.0",
+   "host": "c005",
+   "base_host": "gpu02"
+  },
+  {
+   "scenario": "bloch-interval",
+   "title": "Bloch 周期单元：区间内全部特征值（复厄密）",
+   "case": "yee-bloch-1e4",
+   "n": 10080,
+   "problem": "HEP",
+   "dtype": "complex128",
+   "same_scenario": true,
+   "runs": 3,
+   "valid": 3,
+   "invalid": [],
+   "base_runs": 3,
+   "base_valid": 3,
+   "times": [
+    1.119660295,
+    1.135399797,
+    1.1481847579999997
+   ],
+   "base_times": [
+    1.269980348,
+    1.197051626,
+    1.186808678
+   ],
+   "time_s": 1.135399797,
+   "base_time_s": 1.197051626,
+   "ratio": 0.9484969339158644,
+   "speed": "faster",
+   "grown_phase": null,
+   "phases": {
+    "setup_factor_s": {
+     "base": 0.36750415300000006,
+     "new": 0.356106447,
+     "delta": -0.011397706000000063
+    },
+    "iterate_s": {
+     "base": 0.46407088800000007,
+     "new": 0.4356979369999999,
+     "delta": -0.028372951000000146
+    },
+    "verify_s": {
+     "base": 0.03618442099999991,
+     "new": 0.03447338700000008,
+     "delta": -0.0017110339999998336
+    },
+    "certificate_s": {
+     "base": 0.317077748,
+     "new": 0.31021237300000004,
+     "delta": -0.006865374999999951
+    },
+    "analysis_s": {
+     "base": 0.146177905,
+     "new": 0.116171244,
+     "delta": -0.03000666099999999
+    },
+    "numeric_s": {
+     "base": 0.47627622000000003,
+     "new": 0.459540515,
+     "delta": -0.016735705000000045
+    },
+    "factorizations": {
+     "base": 3.0,
+     "new": 3.0,
+     "delta": 0.0
+    },
+    "solves": {
+     "base": 136.0,
+     "new": 136.0,
+     "delta": 0.0
+    },
+    "subspace_s": {
+     "base": 0.0,
+     "new": 0.007563625,
+     "delta": 0.007563625
+    }
+   },
+   "certificate": {
+    "runs": 3,
+    "performed": 3,
+    "passed": 3,
+    "outcomes": [
+     {
+      "method": "exact",
+      "count_inertia": 40,
+      "count_found": 40,
+      "passed": true,
+      "rigorous": true
+     }
+    ],
+    "notes": [],
+    "text": "3/3 passed (exact: inertia 40 = found 40)"
+   },
+   "base_certificate": {
+    "runs": 3,
+    "performed": 3,
+    "passed": 3,
+    "outcomes": [
+     {
+      "method": "exact",
+      "count_inertia": 40,
+      "count_found": 40,
+      "passed": true,
+      "rigorous": true
+     }
+    ],
+    "notes": [],
+    "text": "3/3 passed (exact: inertia 40 = found 40)"
+   },
+   "certificate_same": true,
+   "fast_path_off": true,
+   "max_backward_error": 8.171576277231062e-12,
+   "peak_gib": 0.4149169921875,
+   "base_peak_gib": 0.3328742980957031,
+   "version": "1.0.0",
+   "base_version": "0.1.0",
+   "host": "c005",
+   "base_host": "gpu02"
+  },
+  {
+   "scenario": "interval-box",
+   "title": "PEC 长方腔区间 [40, 200] 内全部特征值（约 500 个，二重）",
+   "case": "yee-pec-box-1e5",
+   "n": 109744,
+   "problem": "GHEP",
+   "dtype": "float64",
+   "same_scenario": true,
+   "runs": 3,
+   "valid": 3,
+   "invalid": [],
+   "base_runs": 3,
+   "base_valid": 3,
+   "times": [
+    3.2447675820000006,
+    3.218908036,
+    3.2171879629999998
+   ],
+   "base_times": [
+    3.123842963,
+    3.157480399,
+    3.144815893
+   ],
+   "time_s": 3.218908036,
+   "base_time_s": 3.144815893,
+   "ratio": 1.0235600892137822,
+   "speed": "same",
+   "grown_phase": null,
+   "phases": {
+    "setup_factor_s": {
+     "base": 0.8167842869999997,
+     "new": 0.8424317769999996,
+     "delta": 0.025647489999999884
+    },
+    "iterate_s": {
+     "base": 1.37031392,
+     "new": 1.3698695870000002,
+     "delta": -0.00044433299999990794
+    },
+    "verify_s": {
+     "base": 0.08006700900000002,
+     "new": 0.13014389600000004,
+     "delta": 0.050076887000000014
+    },
+    "certificate_s": {
+     "base": 0.8820785450000002,
+     "new": 0.879967264,
+     "delta": -0.0021112810000001314
+    },
+    "analysis_s": {
+     "base": 0.261033118,
+     "new": 0.266945679,
+     "delta": 0.005912560999999983
+    },
+    "numeric_s": {
+     "base": 1.3032575,
+     "new": 1.301426603,
+     "delta": -0.0018308970000000535
+    },
+    "factorizations": {
+     "base": 3.0,
+     "new": 3.0,
+     "delta": 0.0
+    },
+    "solves": {
+     "base": 144.0,
+     "new": 144.0,
+     "delta": 0.0
+    },
+    "subspace_s": {
+     "base": 0.0,
+     "new": 0.048553749,
+     "delta": 0.048553749
+    }
+   },
+   "certificate": {
+    "runs": 3,
+    "performed": 3,
+    "passed": 3,
+    "outcomes": [
+     {
+      "method": "exact",
+      "count_inertia": 37,
+      "count_found": 37,
+      "passed": true,
+      "rigorous": true
+     }
+    ],
+    "notes": [],
+    "text": "3/3 passed (exact: inertia 37 = found 37)"
+   },
+   "base_certificate": {
+    "runs": 3,
+    "performed": 3,
+    "passed": 3,
+    "outcomes": [
+     {
+      "method": "exact",
+      "count_inertia": 37,
+      "count_found": 37,
+      "passed": true,
+      "rigorous": true
+     }
+    ],
+    "notes": [],
+    "text": "3/3 passed (exact: inertia 37 = found 37)"
+   },
+   "certificate_same": true,
+   "fast_path_off": true,
+   "max_backward_error": 5.059400204795027e-12,
+   "peak_gib": 1.2697410583496094,
+   "base_peak_gib": 1.26690673828125,
+   "version": "1.0.0",
+   "base_version": "0.1.0",
+   "host": "c005",
+   "base_host": "c005"
+  },
+  {
+   "scenario": "lowfreq-null-space",
+   "title": "PEC 腔 σ = 0：最低 k 个物理谐振（梯度零空间 35475 维）",
+   "case": "sc-pec-box-1e5-physical",
+   "n": 109744,
+   "problem": "GHEP",
+   "dtype": "float64",
+   "same_scenario": true,
+   "runs": 3,
+   "valid": 3,
+   "invalid": [],
+   "base_runs": 3,
+   "base_valid": 3,
+   "times": [
+    19.490146453,
+    19.564341782,
+    19.470613898000003
+   ],
+   "base_times": [
+    19.614874442,
+    19.422677601,
+    19.434845031
+   ],
+   "time_s": 19.490146453,
+   "base_time_s": 19.434845031,
+   "ratio": 1.002845477898681,
+   "speed": "same",
+   "grown_phase": null,
+   "phases": {
+    "setup_factor_s": {
+     "base": 1.3589417200000025,
+     "new": 1.3655789680000012,
+     "delta": 0.006637247999998763
+    },
+    "iterate_s": {
+     "base": 2.2583339639999997,
+     "new": 2.2425825389999967,
+     "delta": -0.01575142500000304
+    },
+    "verify_s": {
+     "base": 0.03057228200000206,
+     "new": 0.05375798699999623,
+     "delta": 0.023185704999994172
+    },
+    "certificate_s": {
+     "base": 15.784358434000008,
+     "new": 15.848581239000005,
+     "delta": 0.06422280499999644
+    },
+    "analysis_s": {
+     "base": 0.261585293,
+     "new": 0.268064393,
+     "delta": 0.006479100000000015
+    },
+    "numeric_s": {
+     "base": 16.770667067999995,
+     "new": 16.832087182,
+     "delta": 0.06142011400000413
+    },
+    "factorizations": {
+     "base": 40.0,
+     "new": 40.0,
+     "delta": 0.0
+    },
+    "solves": {
+     "base": 256.0,
+     "new": 256.0,
+     "delta": 0.0
+    },
+    "subspace_s": {
+     "base": 0.0,
+     "new": 0.022363665,
+     "delta": 0.022363665
+    }
+   },
+   "certificate": {
+    "runs": 3,
+    "performed": 3,
+    "passed": 3,
+    "outcomes": [
+     {
+      "method": "exact",
+      "count_inertia": 16,
+      "count_found": 16,
+      "passed": true,
+      "rigorous": true
+     }
+    ],
+    "notes": [],
+    "text": "3/3 passed (exact: inertia 16 = found 16)"
+   },
+   "base_certificate": {
+    "runs": 3,
+    "performed": 3,
+    "passed": 3,
+    "outcomes": [
+     {
+      "method": "exact",
+      "count_inertia": 16,
+      "count_found": 16,
+      "passed": true,
+      "rigorous": true
+     }
+    ],
+    "notes": [],
+    "text": "3/3 passed (exact: inertia 16 = found 16)"
+   },
+   "certificate_same": true,
+   "fast_path_off": true,
+   "max_backward_error": 5.958134839022682e-13,
+   "peak_gib": 1.0513801574707031,
+   "base_peak_gib": 1.0674095153808594,
+   "version": "1.0.0",
+   "base_version": "0.1.0",
+   "host": "c005",
+   "base_host": "c005"
+  },
+  {
+   "scenario": "multiplet-cube",
+   "title": "PEC 立方腔：目标集含 3、6、12 重特征值",
+   "case": "yee-pec-cube-32",
+   "n": 92256,
+   "problem": "HEP",
+   "dtype": "float64",
+   "same_scenario": true,
+   "runs": 3,
+   "valid": 3,
+   "invalid": [],
+   "base_runs": 3,
+   "base_valid": 3,
+   "times": [
+    2.7479625410000006,
+    2.533840143,
+    2.52854746
+   ],
+   "base_times": [
+    2.611702595,
+    2.547925479,
+    2.520035568
+   ],
+   "time_s": 2.533840143,
+   "base_time_s": 2.547925479,
+   "ratio": 0.9944718414584369,
+   "speed": "same",
+   "grown_phase": null,
+   "phases": {
+    "setup_factor_s": {
+     "base": 0.703261017,
+     "new": 0.7107798600000002,
+     "delta": 0.007518843000000164
+    },
+    "iterate_s": {
+     "base": 1.146395876,
+     "new": 1.106092342,
+     "delta": -0.040303533999999974
+    },
+    "verify_s": {
+     "base": 0.029303928000000257,
+     "new": 0.04824265900000024,
+     "delta": 0.018938730999999986
+    },
+    "certificate_s": {
+     "base": 0.6693250339999997,
+     "new": 0.669429847,
+     "delta": 0.00010481300000031446
+    },
+    "analysis_s": {
+     "base": 0.23011722,
+     "new": 0.235275495,
+     "delta": 0.00515827499999999
+    },
+    "numeric_s": {
+     "base": 1.0516099620000001,
+     "new": 1.046617959,
+     "delta": -0.004992003000000134
+    },
+    "factorizations": {
+     "base": 3.0,
+     "new": 3.0,
+     "delta": 0.0
+    },
+    "solves": {
+     "base": 232.0,
+     "new": 224.0,
+     "delta": -8.0
+    },
+    "subspace_s": {
+     "base": 0.0,
+     "new": 0.02115718,
+     "delta": 0.02115718
+    }
+   },
+   "certificate": {
+    "runs": 3,
+    "performed": 3,
+    "passed": 3,
+    "outcomes": [
+     {
+      "method": "exact",
+      "count_inertia": 21,
+      "count_found": 21,
+      "passed": true,
+      "rigorous": true
+     }
+    ],
+    "notes": [],
+    "text": "3/3 passed (exact: inertia 21 = found 21)"
+   },
+   "base_certificate": {
+    "runs": 3,
+    "performed": 3,
+    "passed": 3,
+    "outcomes": [
+     {
+      "method": "exact",
+      "count_inertia": 21,
+      "count_found": 21,
+      "passed": true,
+      "rigorous": true
+     }
+    ],
+    "notes": [],
+    "text": "3/3 passed (exact: inertia 21 = found 21)"
+   },
+   "certificate_same": true,
+   "fast_path_off": true,
+   "max_backward_error": 3.049566354912377e-11,
+   "peak_gib": 0.7364463806152344,
+   "base_peak_gib": 0.7147445678710938,
+   "version": "1.0.0",
+   "base_version": "0.1.0",
+   "host": "c005",
+   "base_host": "c005"
+  },
+  {
+   "scenario": "pec-box-1e6",
+   "title": "PEC 长方腔 n = 1027733（广义问题）",
+   "case": "yee-pec-box-1e6",
+   "n": 1027733,
+   "problem": "GHEP",
+   "dtype": "float64",
+   "same_scenario": true,
+   "runs": 3,
+   "valid": 3,
+   "invalid": [],
+   "base_runs": 3,
+   "base_valid": 3,
+   "times": [
+    65.915846508,
+    65.921870796,
+    65.839056068
+   ],
+   "base_times": [
+    65.901020055,
+    65.658044881,
+    65.696447657
+   ],
+   "time_s": 65.915846508,
+   "base_time_s": 65.696447657,
+   "ratio": 1.0033395846933078,
+   "speed": "same",
+   "grown_phase": null,
+   "phases": {
+    "setup_factor_s": {
+     "base": 21.607489649999998,
+     "new": 21.638492324999994,
+     "delta": 0.031002674999996316
+    },
+    "iterate_s": {
+     "base": 11.161601583000003,
+     "new": 11.117841528000003,
+     "delta": -0.04376005499999991
+    },
+    "verify_s": {
+     "base": 0.14852192100000128,
+     "new": 0.3440347070000058,
+     "delta": 0.19551278600000455
+    },
+    "certificate_s": {
+     "base": 32.826483182,
+     "new": 32.796929206,
+     "delta": -0.02955397599999543
+    },
+    "analysis_s": {
+     "base": 2.688194103,
+     "new": 2.734245466,
+     "delta": 0.04605136300000012
+    },
+    "numeric_s": {
+     "base": 50.449591298,
+     "new": 50.465154229999996,
+     "delta": 0.01556293199999459
+    },
+    "factorizations": {
+     "base": 3.0,
+     "new": 3.0,
+     "delta": 0.0
+    },
+    "solves": {
+     "base": 120.0,
+     "new": 120.0,
+     "delta": 0.0
+    },
+    "subspace_s": {
+     "base": 0.0,
+     "new": 0.196414841,
+     "delta": 0.196414841
+    }
+   },
+   "certificate": {
+    "runs": 3,
+    "performed": 3,
+    "passed": 3,
+    "outcomes": [
+     {
+      "method": "exact",
+      "count_inertia": 10,
+      "count_found": 10,
+      "passed": true,
+      "rigorous": true
+     }
+    ],
+    "notes": [],
+    "text": "3/3 passed (exact: inertia 10 = found 10)"
+   },
+   "base_certificate": {
+    "runs": 3,
+    "performed": 3,
+    "passed": 3,
+    "outcomes": [
+     {
+      "method": "exact",
+      "count_inertia": 10,
+      "count_found": 10,
+      "passed": true,
+      "rigorous": true
+     }
+    ],
+    "notes": [],
+    "text": "3/3 passed (exact: inertia 10 = found 10)"
+   },
+   "certificate_same": true,
+   "fast_path_off": true,
+   "max_backward_error": 4.259736799869299e-11,
+   "peak_gib": 11.457626342773438,
+   "base_peak_gib": 11.442943572998047,
+   "version": "1.0.0",
+   "base_version": "0.1.0",
+   "host": "c005",
+   "base_host": "c005"
+  },
+  {
+   "scenario": "sigma-1e-13",
+   "title": "位移 σ 距特征值 1e-13（相对）",
+   "case": "sc-pec-box-1e5-sigma-1e-13",
+   "n": 109744,
+   "problem": "GHEP",
+   "dtype": "float64",
+   "same_scenario": true,
+   "runs": 3,
+   "valid": 3,
+   "invalid": [],
+   "base_runs": 3,
+   "base_valid": 3,
+   "times": [
+    2.775290046,
+    2.805717178,
+    2.748813209
+   ],
+   "base_times": [
+    2.754980907,
+    2.726668502,
+    2.8082960609999996
+   ],
+   "time_s": 2.775290046,
+   "base_time_s": 2.754980907,
+   "ratio": 1.0073717893827856,
+   "speed": "same",
+   "grown_phase": null,
+   "phases": {
+    "setup_factor_s": {
+     "base": 1.262444957,
+     "new": 1.2661833,
+     "delta": 0.0037383429999999773
+    },
+    "iterate_s": {
+     "base": 0.706330399,
+     "new": 0.697646346,
+     "delta": -0.00868405300000008
+    },
+    "verify_s": {
+     "base": 0.008189496000000573,
+     "new": 0.023511591000000054,
+     "delta": 0.01532209499999948
+    },
+    "certificate_s": {
+     "base": 0.7575050110000001,
+     "new": 0.7556516580000001,
+     "delta": -0.001853353000000002
+    },
+    "analysis_s": {
+     "base": 0.260747757,
+     "new": 0.266893189,
+     "delta": 0.006145431999999951
+    },
+    "numeric_s": {
+     "base": 1.645243837,
+     "new": 1.644294132,
+     "delta": -0.0009497050000000229
+    },
+    "factorizations": {
+     "base": 4.0,
+     "new": 4.0,
+     "delta": 0.0
+    },
+    "solves": {
+     "base": 80.0,
+     "new": 80.0,
+     "delta": 0.0
+    },
+    "subspace_s": {
+     "base": 0.0,
+     "new": 0.014357593,
+     "delta": 0.014357593
+    }
+   },
+   "certificate": {
+    "runs": 3,
+    "performed": 3,
+    "passed": 3,
+    "outcomes": [
+     {
+      "method": "exact",
+      "count_inertia": 10,
+      "count_found": 10,
+      "passed": true,
+      "rigorous": true
+     }
+    ],
+    "notes": [],
+    "text": "3/3 passed (exact: inertia 10 = found 10)"
+   },
+   "base_certificate": {
+    "runs": 3,
+    "performed": 3,
+    "passed": 3,
+    "outcomes": [
+     {
+      "method": "exact",
+      "count_inertia": 10,
+      "count_found": 10,
+      "passed": true,
+      "rigorous": true
+     }
+    ],
+    "notes": [],
+    "text": "3/3 passed (exact: inertia 10 = found 10)"
+   },
+   "certificate_same": true,
+   "fast_path_off": true,
+   "max_backward_error": 4.7638271262469e-11,
+   "peak_gib": 0.9734382629394531,
+   "base_peak_gib": 0.9653167724609375,
+   "version": "1.0.0",
+   "base_version": "0.1.0",
+   "host": "c005",
+   "base_host": "c005"
+  },
+  {
+   "scenario": "sigma-on-eigenvalue",
+   "title": "位移 σ 恰为特征值（K = A − σB 奇异）",
+   "case": "sc-pec-box-1e5-sigma-on",
+   "n": 109744,
+   "problem": "GHEP",
+   "dtype": "float64",
+   "same_scenario": true,
+   "runs": 3,
+   "valid": 3,
+   "invalid": [],
+   "base_runs": 3,
+   "base_valid": 3,
+   "times": [
+    2.859644506,
+    2.824500172,
+    2.777404674
+   ],
+   "base_times": [
+    2.8409457079999996,
+    2.8677795140000004,
+    2.805124209
+   ],
+   "time_s": 2.824500172,
+   "base_time_s": 2.8409457079999996,
+   "ratio": 0.9942112459405016,
+   "speed": "same",
+   "grown_phase": null,
+   "phases": {
+    "setup_factor_s": {
+     "base": 1.2633951470000007,
+     "new": 1.301356469,
+     "delta": 0.03796132199999924
+    },
+    "iterate_s": {
+     "base": 0.7747658110000002,
+     "new": 0.7729898419999999,
+     "delta": -0.0017759690000003214
+    },
+    "verify_s": {
+     "base": 0.008669131999999857,
+     "new": 0.02549667400000022,
+     "delta": 0.01682754200000036
+    },
+    "certificate_s": {
+     "base": 0.75518682,
+     "new": 0.7514481649999998,
+     "delta": -0.003738655000000257
+    },
+    "analysis_s": {
+     "base": 0.260630139,
+     "new": 0.268251744,
+     "delta": 0.007621605000000031
+    },
+    "numeric_s": {
+     "base": 1.647234197,
+     "new": 1.6396585890000002,
+     "delta": -0.007575607999999789
+    },
+    "factorizations": {
+     "base": 4.0,
+     "new": 4.0,
+     "delta": 0.0
+    },
+    "solves": {
+     "base": 88.0,
+     "new": 88.0,
+     "delta": 0.0
+    },
+    "subspace_s": {
+     "base": 0.0,
+     "new": 0.016643422,
+     "delta": 0.016643422
+    }
+   },
+   "certificate": {
+    "runs": 3,
+    "performed": 3,
+    "passed": 3,
+    "outcomes": [
+     {
+      "method": "exact",
+      "count_inertia": 10,
+      "count_found": 10,
+      "passed": true,
+      "rigorous": true
+     }
+    ],
+    "notes": [],
+    "text": "3/3 passed (exact: inertia 10 = found 10)"
+   },
+   "base_certificate": {
+    "runs": 3,
+    "performed": 3,
+    "passed": 3,
+    "outcomes": [
+     {
+      "method": "exact",
+      "count_inertia": 10,
+      "count_found": 10,
+      "passed": true,
+      "rigorous": true
+     }
+    ],
+    "notes": [],
+    "text": "3/3 passed (exact: inertia 10 = found 10)"
+   },
+   "certificate_same": true,
+   "fast_path_off": true,
+   "max_backward_error": 6.066373893256938e-11,
+   "peak_gib": 1.0075759887695312,
+   "base_peak_gib": 0.9794387817382812,
+   "version": "1.0.0",
+   "base_version": "0.1.0",
+   "host": "c005",
+   "base_host": "c005"
+  },
+  {
+   "scenario": "ss-2cubes-sphere",
+   "title": "2cubes_sphere（电磁有限元，n = 101492）",
+   "case": "ss-2cubes_sphere",
+   "n": 101492,
+   "problem": "HEP",
+   "dtype": "float64",
+   "same_scenario": true,
+   "runs": 3,
+   "valid": 3,
+   "invalid": [],
+   "base_runs": 3,
+   "base_valid": 3,
+   "times": [
+    2.178569889,
+    2.156096873,
+    2.191272318
+   ],
+   "base_times": [
+    2.139092351,
+    2.14449565,
+    2.137389577
+   ],
+   "time_s": 2.178569889,
+   "base_time_s": 2.139092351,
+   "ratio": 1.0184552751925575,
+   "speed": "same",
+   "grown_phase": null,
+   "phases": {
+    "setup_factor_s": {
+     "base": 0.856734484,
+     "new": 0.8815995099999996,
+     "delta": 0.024865025999999624
+    },
+    "iterate_s": {
+     "base": 0.6317995930000001,
+     "new": 0.632977378,
+     "delta": 0.0011777849999998757
+    },
+    "verify_s": {
+     "base": 0.008551258999999811,
+     "new": 0.023691509999999805,
+     "delta": 0.015140250999999993
+    },
+    "certificate_s": {
+     "base": 0.6433887789999999,
+     "new": 0.6411434490000001,
+     "delta": -0.0022453299999998233
+    },
+    "analysis_s": {
+     "base": 0.330286546,
+     "new": 0.332644971,
+     "delta": 0.0023584249999999973
+    },
+    "numeric_s": {
+     "base": 1.021697957,
+     "new": 1.0179872779999999,
+     "delta": -0.0037106790000001055
+    },
+    "factorizations": {
+     "base": 3.0,
+     "new": 3.0,
+     "delta": 0.0
+    },
+    "solves": {
+     "base": 88.0,
+     "new": 88.0,
+     "delta": 0.0
+    },
+    "subspace_s": {
+     "base": 0.0,
+     "new": 0.013369104,
+     "delta": 0.013369104
+    }
+   },
+   "certificate": {
+    "runs": 3,
+    "performed": 3,
+    "passed": 3,
+    "outcomes": [
+     {
+      "method": "exact",
+      "count_inertia": 10,
+      "count_found": 10,
+      "passed": true,
+      "rigorous": true
+     }
+    ],
+    "notes": [],
+    "text": "3/3 passed (exact: inertia 10 = found 10)"
+   },
+   "base_certificate": {
+    "runs": 3,
+    "performed": 3,
+    "passed": 3,
+    "outcomes": [
+     {
+      "method": "exact",
+      "count_inertia": 10,
+      "count_found": 10,
+      "passed": true,
+      "rigorous": true
+     }
+    ],
+    "notes": [],
+    "text": "3/3 passed (exact: inertia 10 = found 10)"
+   },
+   "certificate_same": true,
+   "fast_path_off": true,
+   "max_backward_error": 1.6790226947060495e-12,
+   "peak_gib": 0.7292251586914062,
+   "base_peak_gib": 0.7095947265625,
+   "version": "1.0.0",
+   "base_version": "0.1.0",
+   "host": "c005",
+   "base_host": "c005"
+  },
+  {
+   "scenario": "ss-qa8fk",
+   "title": "qa8fk/qa8fm（三维声学刚度/质量，GHEP）",
+   "case": "ss-qa8fk-qa8fm",
+   "n": 66127,
+   "problem": "GHEP",
+   "dtype": "float64",
+   "same_scenario": true,
+   "runs": 3,
+   "valid": 3,
+   "invalid": [],
+   "base_runs": 3,
+   "base_valid": 3,
+   "times": [
+    1.3775534199999997,
+    1.370907706,
+    1.3612023700000002
+   ],
+   "base_times": [
+    1.3437884040000003,
+    1.333651323,
+    1.3406154800000003
+   ],
+   "time_s": 1.370907706,
+   "base_time_s": 1.3406154800000003,
+   "ratio": 1.0225957602697529,
+   "speed": "same",
+   "grown_phase": null,
+   "phases": {
+    "setup_factor_s": {
+     "base": 0.5760292410000004,
+     "new": 0.5879061209999998,
+     "delta": 0.011876879999999423
+    },
+    "iterate_s": {
+     "base": 0.4374715229999999,
+     "new": 0.428477204,
+     "delta": -0.008994318999999917
+    },
+    "verify_s": {
+     "base": 0.006150214999999903,
+     "new": 0.03608638200000003,
+     "delta": 0.029936167000000125
+    },
+    "certificate_s": {
+     "base": 0.32126583500000017,
+     "new": 0.31863862100000007,
+     "delta": -0.0026272140000001
+    },
+    "analysis_s": {
+     "base": 0.198969704,
+     "new": 0.204172445,
+     "delta": 0.005202741000000011
+    },
+    "numeric_s": {
+     "base": 0.521866111,
+     "new": 0.520945338,
+     "delta": -0.0009207730000000414
+    },
+    "factorizations": {
+     "base": 3.0,
+     "new": 3.0,
+     "delta": 0.0
+    },
+    "solves": {
+     "base": 84.0,
+     "new": 84.0,
+     "delta": 0.0
+    },
+    "subspace_s": {
+     "base": 0.0,
+     "new": 0.030164606,
+     "delta": 0.030164606
+    }
+   },
+   "certificate": {
+    "runs": 3,
+    "performed": 3,
+    "passed": 3,
+    "outcomes": [
+     {
+      "method": "exact",
+      "count_inertia": 10,
+      "count_found": 10,
+      "passed": true,
+      "rigorous": true
+     }
+    ],
+    "notes": [],
+    "text": "3/3 passed (exact: inertia 10 = found 10)"
+   },
+   "base_certificate": {
+    "runs": 3,
+    "performed": 3,
+    "passed": 3,
+    "outcomes": [
+     {
+      "method": "exact",
+      "count_inertia": 10,
+      "count_found": 10,
+      "passed": true,
+      "rigorous": true
+     }
+    ],
+    "notes": [],
+    "text": "3/3 passed (exact: inertia 10 = found 10)"
+   },
+   "certificate_same": true,
+   "fast_path_off": true,
+   "max_backward_error": 2.7210440501912646e-11,
+   "peak_gib": 0.5096359252929688,
+   "base_peak_gib": 0.5229988098144531,
+   "version": "1.0.0",
+   "base_version": "0.1.0",
+   "host": "c005",
+   "base_host": "c005"
+  },
+  {
+   "scenario": "ss-tem152078",
+   "title": "TEM152078（Nédélec 旋度-旋度/质量，n = 152078）",
+   "case": "ss-tem152078",
+   "n": 152078,
+   "problem": "GHEP",
+   "dtype": "float64",
+   "same_scenario": true,
+   "runs": 3,
+   "valid": 3,
+   "invalid": [],
+   "base_runs": 3,
+   "base_valid": 3,
+   "times": [
+    3.9125816970000002,
+    3.904047839,
+    3.9286485979999997
+   ],
+   "base_times": [
+    3.737189846,
+    3.706686849,
+    3.739527655
+   ],
+   "time_s": 3.9125816970000002,
+   "base_time_s": 3.737189846,
+   "ratio": 1.0469314801301106,
+   "speed": "same",
+   "grown_phase": null,
+   "phases": {
+    "setup_factor_s": {
+     "base": 1.9088594849999998,
+     "new": 1.934587648,
+     "delta": 0.025728163000000137
+    },
+    "iterate_s": {
+     "base": 0.8474345649999999,
+     "new": 0.843385633,
+     "delta": -0.004048931999999894
+    },
+    "verify_s": {
+     "base": 0.017784284000000206,
+     "new": 0.19113158999999968,
+     "delta": 0.17334730599999948
+    },
+    "certificate_s": {
+     "base": 0.9457054839999999,
+     "new": 0.9511097250000002,
+     "delta": 0.005404241000000365
+    },
+    "analysis_s": {
+     "base": 0.393867057,
+     "new": 0.405952929,
+     "delta": 0.012085871999999998
+    },
+    "numeric_s": {
+     "base": 2.05279289,
+     "new": 2.056135634,
+     "delta": 0.0033427439999997866
+    },
+    "factorizations": {
+     "base": 4.0,
+     "new": 4.0,
+     "delta": 0.0
+    },
+    "solves": {
+     "base": 60.0,
+     "new": 60.0,
+     "delta": 0.0
+    },
+    "subspace_s": {
+     "base": 0.0,
+     "new": 0.173712878,
+     "delta": 0.173712878
+    }
+   },
+   "certificate": {
+    "runs": 3,
+    "performed": 3,
+    "passed": 3,
+    "outcomes": [
+     {
+      "method": "exact",
+      "count_inertia": 10,
+      "count_found": 10,
+      "passed": true,
+      "rigorous": true
+     }
+    ],
+    "notes": [],
+    "text": "3/3 passed (exact: inertia 10 = found 10)"
+   },
+   "base_certificate": {
+    "runs": 3,
+    "performed": 3,
+    "passed": 3,
+    "outcomes": [
+     {
+      "method": "exact",
+      "count_inertia": 10,
+      "count_found": 10,
+      "passed": true,
+      "rigorous": true
+     }
+    ],
+    "notes": [],
+    "text": "3/3 passed (exact: inertia 10 = found 10)"
+   },
+   "certificate_same": true,
+   "fast_path_off": true,
+   "max_backward_error": 1.4479223986305927e-15,
+   "peak_gib": 1.1944694519042969,
+   "base_peak_gib": 1.2400856018066406,
+   "version": "1.0.0",
+   "base_version": "0.1.0",
+   "host": "c005",
+   "base_host": "c005"
+  },
+  {
+   "scenario": "ss-tem27623",
+   "title": "TEM27623（Nédélec 旋度-旋度/质量，GHEP）",
+   "case": "ss-tem27623",
+   "n": 27623,
+   "problem": "GHEP",
+   "dtype": "float64",
+   "same_scenario": true,
+   "runs": 3,
+   "valid": 3,
+   "invalid": [],
+   "base_runs": 3,
+   "base_valid": 3,
+   "times": [
+    0.514871429,
+    0.48514271099999995,
+    0.489510028
+   ],
+   "base_times": [
+    0.474111812,
+    0.47141626099999995,
+    0.4682256699999999
+   ],
+   "time_s": 0.489510028,
+   "base_time_s": 0.47141626099999995,
+   "ratio": 1.038381720141809,
+   "speed": "same",
+   "grown_phase": null,
+   "phases": {
+    "setup_factor_s": {
+     "base": 0.26575245499999994,
+     "new": 0.27832513699999994,
+     "delta": 0.012572682000000002
+    },
+    "iterate_s": {
+     "base": 0.105855688,
+     "new": 0.105618606,
+     "delta": -0.00023708199999999957
+    },
+    "verify_s": {
+     "base": 0.0034309749999999195,
+     "new": 0.012391110000000066,
+     "delta": 0.008960135000000147
+    },
+    "certificate_s": {
+     "base": 0.09453515900000004,
+     "new": 0.09417524599999993,
+     "delta": -0.0003599130000001005
+    },
+    "analysis_s": {
+     "base": 0.080496093,
+     "new": 0.0825984,
+     "delta": 0.0021023069999999977
+    },
+    "numeric_s": {
+     "base": 0.207056192,
+     "new": 0.20952291899999997,
+     "delta": 0.002466726999999974
+    },
+    "factorizations": {
+     "base": 4.0,
+     "new": 4.0,
+     "delta": 0.0
+    },
+    "solves": {
+     "base": 64.0,
+     "new": 64.0,
+     "delta": 0.0
+    },
+    "subspace_s": {
+     "base": 0.0,
+     "new": 0.008779955,
+     "delta": 0.008779955
+    }
+   },
+   "certificate": {
+    "runs": 3,
+    "performed": 3,
+    "passed": 3,
+    "outcomes": [
+     {
+      "method": "exact",
+      "count_inertia": 10,
+      "count_found": 10,
+      "passed": true,
+      "rigorous": true
+     }
+    ],
+    "notes": [],
+    "text": "3/3 passed (exact: inertia 10 = found 10)"
+   },
+   "base_certificate": {
+    "runs": 3,
+    "performed": 3,
+    "passed": 3,
+    "outcomes": [
+     {
+      "method": "exact",
+      "count_inertia": 10,
+      "count_found": 10,
+      "passed": true,
+      "rigorous": true
+     }
+    ],
+    "notes": [],
+    "text": "3/3 passed (exact: inertia 10 = found 10)"
+   },
+   "certificate_same": true,
+   "fast_path_off": true,
+   "max_backward_error": 4.862469808681401e-15,
+   "peak_gib": 0.23268508911132812,
+   "base_peak_gib": 0.22121429443359375,
+   "version": "1.0.0",
+   "base_version": "0.1.0",
+   "host": "c005",
+   "base_host": "c005"
+  },
+  {
+   "scenario": "te-tm-pairs-box",
+   "title": "PEC 长方腔：TE/TM 二重简并（广义问题）",
+   "case": "yee-pec-box-1e5",
+   "n": 109744,
+   "problem": "GHEP",
+   "dtype": "float64",
+   "same_scenario": true,
+   "runs": 3,
+   "valid": 3,
+   "invalid": [],
+   "base_runs": 3,
+   "base_valid": 3,
+   "times": [
+    2.370241146,
+    2.2974398330000003,
+    2.310508544
+   ],
+   "base_times": [
+    2.273589517,
+    2.2872630370000007,
+    2.3112982659999997
+   ],
+   "time_s": 2.310508544,
+   "base_time_s": 2.2872630370000007,
+   "ratio": 1.0101630230646705,
+   "speed": "same",
+   "grown_phase": null,
+   "phases": {
+    "setup_factor_s": {
+     "base": 0.8121066809999999,
+     "new": 0.8312389149999999,
+     "delta": 0.01913223399999997
+    },
+    "iterate_s": {
+     "base": 0.6996774960000001,
+     "new": 0.697540818,
+     "delta": -0.0021366780000000585
+    },
+    "verify_s": {
+     "base": 0.007832470000000036,
+     "new": 0.02246616600000012,
+     "delta": 0.014633696000000085
+    },
+    "certificate_s": {
+     "base": 0.7599832279999998,
+     "new": 0.7592626450000002,
+     "delta": -0.0007205829999996638
+    },
+    "analysis_s": {
+     "base": 0.259442512,
+     "new": 0.267439445,
+     "delta": 0.007996932999999984
+    },
+    "numeric_s": {
+     "base": 1.203854889,
+     "new": 1.205308265,
+     "delta": 0.0014533759999999507
+    },
+    "factorizations": {
+     "base": 3.0,
+     "new": 3.0,
+     "delta": 0.0
+    },
+    "solves": {
+     "base": 80.0,
+     "new": 80.0,
+     "delta": 0.0
+    },
+    "subspace_s": {
+     "base": 0.0,
+     "new": 0.014516544,
+     "delta": 0.014516544
+    }
+   },
+   "certificate": {
+    "runs": 3,
+    "performed": 3,
+    "passed": 3,
+    "outcomes": [
+     {
+      "method": "exact",
+      "count_inertia": 10,
+      "count_found": 10,
+      "passed": true,
+      "rigorous": true
+     }
+    ],
+    "notes": [],
+    "text": "3/3 passed (exact: inertia 10 = found 10)"
+   },
+   "base_certificate": {
+    "runs": 3,
+    "performed": 3,
+    "passed": 3,
+    "outcomes": [
+     {
+      "method": "exact",
+      "count_inertia": 10,
+      "count_found": 10,
+      "passed": true,
+      "rigorous": true
+     }
+    ],
+    "notes": [],
+    "text": "3/3 passed (exact: inertia 10 = found 10)"
+   },
+   "certificate_same": true,
+   "fast_path_off": true,
+   "max_backward_error": 6.76170171699355e-12,
+   "peak_gib": 0.7467498779296875,
+   "base_peak_gib": 0.73956298828125,
+   "version": "1.0.0",
+   "base_version": "0.1.0",
+   "host": "c005",
+   "base_host": "c005"
+  },
+  {
+   "scenario": "waveguide-1e6",
+   "title": "方波导 n = 998001（不定 B）",
+   "case": "wg-square-1e6",
+   "n": 998001,
+   "problem": "GHIEP",
+   "dtype": "float64",
+   "same_scenario": true,
+   "runs": 3,
+   "valid": 3,
+   "invalid": [],
+   "base_runs": 3,
+   "base_valid": 3,
+   "times": [
+    5.320500114,
+    5.343481592,
+    5.349899971
+   ],
+   "base_times": [
+    5.29192377,
+    5.321532603999999,
+    5.314269802
+   ],
+   "time_s": 5.343481592,
+   "base_time_s": 5.314269802,
+   "ratio": 1.0054968586632553,
+   "speed": "same",
+   "grown_phase": null,
+   "phases": {
+    "setup_factor_s": {
+     "base": 1.490406692,
+     "new": 1.5039737889999993,
+     "delta": 0.01356709699999925
+    },
+    "iterate_s": {
+     "base": 3.1611616579999993,
+     "new": 3.159509557,
+     "delta": -0.0016521009999994618
+    },
+    "verify_s": {
+     "base": 0.6627014520000007,
+     "new": 0.6799982460000006,
+     "delta": 0.017296793999999838
+    },
+    "certificate_s": {
+     "base": 0.0,
+     "new": 0.0,
+     "delta": 0.0
+    },
+    "analysis_s": {
+     "base": 0.532799702,
+     "new": 0.538086824,
+     "delta": 0.005287121999999922
+    },
+    "numeric_s": {
+     "base": 0.642536355,
+     "new": 0.645763424,
+     "delta": 0.003227069000000027
+    },
+    "factorizations": {
+     "base": 1.0,
+     "new": 1.0,
+     "delta": 0.0
+    },
+    "solves": {
+     "base": 64.0,
+     "new": 64.0,
+     "delta": 0.0
+    },
+    "subspace_s": {
+     "base": 0.0,
+     "new": 8.891e-06,
+     "delta": 8.891e-06
+    }
+   },
+   "certificate": {
+    "runs": 3,
+    "performed": 0,
+    "passed": 0,
+    "outcomes": [],
+    "notes": [
+     "not available for indefinite B (Sylvester inertia does not count eigenvalues)"
+    ],
+    "text": "not performed: not available for indefinite B (Sylvester inertia does not count eigenvalues)"
+   },
+   "base_certificate": {
+    "runs": 3,
+    "performed": 0,
+    "passed": 0,
+    "outcomes": [],
+    "notes": [
+     "not available for indefinite B (Sylvester inertia does not count eigenvalues)"
+    ],
+    "text": "not performed: not available for indefinite B (Sylvester inertia does not count eigenvalues)"
+   },
+   "certificate_same": true,
+   "fast_path_off": true,
+   "max_backward_error": 2.2745079282518487e-13,
+   "peak_gib": 1.9000930786132812,
+   "base_peak_gib": 1.8856849670410156,
+   "version": "1.0.0",
+   "base_version": "0.1.0",
+   "host": "c005",
+   "base_host": "c005"
+  },
+  {
+   "scenario": "waveguide-slab",
+   "title": "半填充介质波导（εr = 2.25）：28 个传播模",
+   "case": "wg-halfslab-1e5",
+   "n": 99225,
+   "problem": "GHIEP",
+   "dtype": "float64",
+   "same_scenario": true,
+   "runs": 3,
+   "valid": 3,
+   "invalid": [],
+   "base_runs": 3,
+   "base_valid": 3,
+   "times": [
+    0.6599755509999999,
+    0.65357034,
+    0.653704988
+   ],
+   "base_times": [
+    0.6527059229999999,
+    0.679265234,
+    0.672808249
+   ],
+   "time_s": 0.653704988,
+   "base_time_s": 0.672808249,
+   "ratio": 0.9716066783836356,
+   "speed": "same",
+   "grown_phase": null,
+   "phases": {
+    "setup_factor_s": {
+     "base": 0.13478663700000004,
+     "new": 0.13955231799999995,
+     "delta": 0.004765680999999911
+    },
+    "iterate_s": {
+     "base": 0.47156553900000003,
+     "new": 0.44785306900000005,
+     "delta": -0.023712469999999986
+    },
+    "verify_s": {
+     "base": 0.06279664600000003,
+     "new": 0.066299601,
+     "delta": 0.0035029549999999743
+    },
+    "certificate_s": {
+     "base": 0.0,
+     "new": 0.0,
+     "delta": 0.0
+    },
+    "analysis_s": {
+     "base": 0.049750537,
+     "new": 0.050473849,
+     "delta": 0.0007233120000000037
+    },
+    "numeric_s": {
+     "base": 0.064998081,
+     "new": 0.0656169,
+     "delta": 0.0006188190000000066
+    },
+    "factorizations": {
+     "base": 1.0,
+     "new": 1.0,
+     "delta": 0.0
+    },
+    "solves": {
+     "base": 96.0,
+     "new": 92.0,
+     "delta": -4.0
+    },
+    "subspace_s": {
+     "base": 0.0,
+     "new": 8.546e-06,
+     "delta": 8.546e-06
+    }
+   },
+   "certificate": {
+    "runs": 3,
+    "performed": 0,
+    "passed": 0,
+    "outcomes": [],
+    "notes": [
+     "not available for indefinite B (Sylvester inertia does not count eigenvalues)"
+    ],
+    "text": "not performed: not available for indefinite B (Sylvester inertia does not count eigenvalues)"
+   },
+   "base_certificate": {
+    "runs": 3,
+    "performed": 0,
+    "passed": 0,
+    "outcomes": [],
+    "notes": [
+     "not available for indefinite B (Sylvester inertia does not count eigenvalues)"
+    ],
+    "text": "not performed: not available for indefinite B (Sylvester inertia does not count eigenvalues)"
+   },
+   "certificate_same": true,
+   "fast_path_off": true,
+   "max_backward_error": 9.439970987217448e-13,
+   "peak_gib": 0.32958984375,
+   "base_peak_gib": 0.3098793029785156,
+   "version": "1.0.0",
+   "base_version": "0.1.0",
+   "host": "c005",
+   "base_host": "c005"
+  },
+  {
+   "scenario": "waveguide-square",
+   "title": "方波导 50 GHz（赛题真实算例）：18 个传播模",
+   "case": "wg-square-1e5",
+   "n": 99225,
+   "problem": "GHIEP",
+   "dtype": "float64",
+   "same_scenario": true,
+   "runs": 3,
+   "valid": 3,
+   "invalid": [],
+   "base_runs": 3,
+   "base_valid": 3,
+   "times": [
+    0.43264164299999996,
+    0.4376988660000001,
+    0.431042919
+   ],
+   "base_times": [
+    0.434856793,
+    0.448598596,
+    0.442321838
+   ],
+   "time_s": 0.43264164299999996,
+   "base_time_s": 0.442321838,
+   "ratio": 0.9781150416543529,
+   "speed": "same",
+   "grown_phase": null,
+   "phases": {
+    "setup_factor_s": {
+     "base": 0.13588787800000002,
+     "new": 0.131893804,
+     "delta": -0.003994074000000014
+    },
+    "iterate_s": {
+     "base": 0.263129171,
+     "new": 0.26041331999999995,
+     "delta": -0.002715851000000047
+    },
+    "verify_s": {
+     "base": 0.03847636299999997,
+     "new": 0.040280561000000034,
+     "delta": 0.0018041980000000624
+    },
+    "certificate_s": {
+     "base": 0.0,
+     "new": 0.0,
+     "delta": 0.0
+    },
+    "analysis_s": {
+     "base": 0.048442332,
+     "new": 0.048694093,
+     "delta": 0.0002517610000000031
+    },
+    "numeric_s": {
+     "base": 0.06326153,
+     "new": 0.06258115,
+     "delta": -0.0006803799999999943
+    },
+    "factorizations": {
+     "base": 1.0,
+     "new": 1.0,
+     "delta": 0.0
+    },
+    "solves": {
+     "base": 62.0,
+     "new": 62.0,
+     "delta": 0.0
+    },
+    "subspace_s": {
+     "base": 0.0,
+     "new": 8.679e-06,
+     "delta": 8.679e-06
+    }
+   },
+   "certificate": {
+    "runs": 3,
+    "performed": 0,
+    "passed": 0,
+    "outcomes": [],
+    "notes": [
+     "not available for indefinite B (Sylvester inertia does not count eigenvalues)"
+    ],
+    "text": "not performed: not available for indefinite B (Sylvester inertia does not count eigenvalues)"
+   },
+   "base_certificate": {
+    "runs": 3,
+    "performed": 0,
+    "passed": 0,
+    "outcomes": [],
+    "notes": [
+     "not available for indefinite B (Sylvester inertia does not count eigenvalues)"
+    ],
+    "text": "not performed: not available for indefinite B (Sylvester inertia does not count eigenvalues)"
+   },
+   "certificate_same": true,
+   "fast_path_off": true,
+   "max_backward_error": 3.7322109901582196e-13,
+   "peak_gib": 0.29407501220703125,
+   "base_peak_gib": 0.2770271301269531,
+   "version": "1.0.0",
+   "base_version": "0.1.0",
+   "host": "c005",
+   "base_host": "c005"
+  },
+  {
+   "scenario": "zero-cluster",
+   "title": "零附近 1e4 个特征值挤在 [−1e−5, 1e−5]",
+   "case": "syn-zero-cluster-real-1e5",
+   "n": 100000,
+   "problem": "HEP",
+   "dtype": "float64",
+   "same_scenario": true,
+   "runs": 3,
+   "valid": 3,
+   "invalid": [],
+   "base_runs": 3,
+   "base_valid": 3,
+   "times": [
+    0.824467473,
+    0.8428485269999999,
+    0.846066121
+   ],
+   "base_times": [
+    0.7861744800000001,
+    0.802527956,
+    0.797710791
+   ],
+   "time_s": 0.8428485269999999,
+   "base_time_s": 0.797710791,
+   "ratio": 1.056584085998656,
+   "speed": "slower",
+   "grown_phase": "verify_s",
+   "phases": {
+    "setup_factor_s": {
+     "base": 0.306083823,
+     "new": 0.315953842,
+     "delta": 0.009870019000000008
+    },
+    "iterate_s": {
+     "base": 0.318364744,
+     "new": 0.31534736900000004,
+     "delta": -0.0030173749999999333
+    },
+    "verify_s": {
+     "base": 0.03430698699999987,
+     "new": 0.06816477700000023,
+     "delta": 0.03385779000000036
+    },
+    "certificate_s": {
+     "base": 0.13864713100000003,
+     "new": 0.1400348990000001,
+     "delta": 0.001387768000000067
+    },
+    "analysis_s": {
+     "base": 0.111023555,
+     "new": 0.113141463,
+     "delta": 0.0021179080000000017
+    },
+    "numeric_s": {
+     "base": 0.221388166,
+     "new": 0.223191256,
+     "delta": 0.0018030900000000072
+    },
+    "factorizations": {
+     "base": 6.0,
+     "new": 6.0,
+     "delta": 0.0
+    },
+    "solves": {
+     "base": 104.0,
+     "new": 104.0,
+     "delta": 0.0
+    },
+    "subspace_s": {
+     "base": 0.0,
+     "new": 0.035607578,
+     "delta": 0.035607578
+    }
+   },
+   "certificate": {
+    "runs": 3,
+    "performed": 3,
+    "passed": 3,
+    "outcomes": [
+     {
+      "method": "exact",
+      "count_inertia": 21,
+      "count_found": 21,
+      "passed": true,
+      "rigorous": true
+     }
+    ],
+    "notes": [],
+    "text": "3/3 passed (exact: inertia 21 = found 21)"
+   },
+   "base_certificate": {
+    "runs": 3,
+    "performed": 3,
+    "passed": 3,
+    "outcomes": [
+     {
+      "method": "exact",
+      "count_inertia": 21,
+      "count_found": 21,
+      "passed": true,
+      "rigorous": true
+     }
+    ],
+    "notes": [],
+    "text": "3/3 passed (exact: inertia 21 = found 21)"
+   },
+   "certificate_same": true,
+   "fast_path_off": true,
+   "max_backward_error": 4.79979152583579e-13,
+   "peak_gib": 0.3118858337402344,
+   "base_peak_gib": 0.27445220947265625,
+   "version": "1.0.0",
+   "base_version": "0.1.0",
+   "host": "c005",
+   "base_host": "c005"
+  }
+ ]
+}

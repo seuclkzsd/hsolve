@@ -1,0 +1,612 @@
+{
+ "schema_version": 1,
+ "scenario": {
+  "id": "zero-cluster",
+  "group": "zero",
+  "title": "零附近 1e4 个特征值挤在 [−1e−5, 1e−5]",
+  "case": "syn-zero-cluster-real-1e5",
+  "source": "syn-zero-cluster-real-1e5",
+  "why": "间距接近容差分辨率的密集簇，最近 21 个须逐一分辨",
+  "target": {
+   "mode": "nearest",
+   "sigma": 0.0,
+   "k": 21
+  },
+  "hsolve": {},
+  "reference": "source",
+  "derived": false,
+  "reps": 3,
+  "timeout_s": 900,
+  "group_label": "零附近密集谱 / 低频击穿",
+  "target_info": {},
+  "override": false,
+  "hsolve_config": {
+   "method": "shift_invert_lanczos"
+  },
+  "n": 100000,
+  "problem": "HEP",
+  "dtype": "float64",
+  "nnz_a": 2399840,
+  "nnz_b": 0,
+  "source_path": "~/os2026/data/cases/syn-zero-cluster-real-1e5",
+  "reference_info": {
+   "schema_version": 1,
+   "kind": "discrete-exact",
+   "note": "exact eigenvalues of the stored matrix up to assembly rounding: unitary similarity of diag(lambda), error ~ eps * max|lambda| over each eigenvalue's block neighbourhood",
+   "count": 100000,
+   "complete": true,
+   "window": null
+  },
+  "target_multiplicities": [
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1
+  ]
+ },
+ "started": "2026-10-23T09:24:22",
+ "finished": "2026-10-23T09:24:26",
+ "conditions": {
+  "host": "c005",
+  "cpu": "Intel(R) Xeon(R) Silver 4314 CPU @ 2.40GHz",
+  "os": "Linux-3.10.0-1160.el7.x86_64-x86_64-with-glibc2.17",
+  "python": "3.11.17",
+  "git_commit": "a3393e61966d49a82c1570526fc2242a1227350c",
+  "source_commit": "47d03dc5f2282ee838b6133d692d7ebabd0d655e",
+  "hsolve_binary": "build/release/hsolve",
+  "hsolve_md5": "c37364bfe7fee478e7ba6e523fdbc48d",
+  "hsolve_build": "hsolve 1.0.0, gcc 13.4, flags: Release -pipe -O3 -DNDEBUG native=OFF mumps=mumps-5.8.2-7eba2d99c3b1127c mumps_blocking=p9, openmp 201511",
+  "cores": "16-31",
+  "ncores": 16,
+  "mem_gb": 32.0,
+  "reps": 3,
+  "solvers": [
+   "hsolve"
+  ],
+  "slepc_version": null,
+  "slepc_env": "~/envs/os2026-ref",
+  "tuned_profiles": "results/showcase/slepc_tuned_profiles.json"
+ },
+ "norms": {
+  "norm2_a": 0.9999954571232647,
+  "norm2_b": 1.0,
+  "scale": 0.9999954571232647,
+  "method": [
+   "eigsh",
+   "identity"
+  ],
+  "seconds": 5.018401518464088
+ },
+ "reference": {
+  "kind": "discrete-exact",
+  "complete": true,
+  "window": null,
+  "eigenvalues": [
+   -3.2349585188304184e-08,
+   -3.118192432761613e-08,
+   -2.7798279601111517e-08,
+   -2.646410003072388e-08,
+   -2.291263831406682e-08,
+   -2.170012632534363e-08,
+   -2.1245392716438488e-08,
+   -1.956260243619853e-08,
+   -1.7703010514502602e-08,
+   -1.5545589012548995e-08,
+   -1.4328988330540769e-08,
+   -1.2242487327356348e-08,
+   -1.005435883632385e-08,
+   -9.888141139440017e-09,
+   -8.303635260105334e-09,
+   -2.9252766115004048e-09,
+   -1.1540045369338672e-09,
+   4.85502957196744e-10,
+   1.1209512575701807e-09,
+   1.5951782828422931e-09,
+   2.014224548421725e-09,
+   4.917557702222288e-09,
+   6.441391624354299e-09,
+   7.0493674607318525e-09,
+   8.144910899569784e-09,
+   8.753491421287698e-09,
+   1.5739588572444925e-08,
+   1.5982505654620833e-08,
+   1.7454967979733423e-08,
+   2.0155542502975064e-08,
+   2.0275554010109007e-08,
+   2.087555732789772e-08,
+   2.27894976876649e-08,
+   2.6348894810235063e-08,
+   2.736670592897891e-08,
+   2.8116187934191104e-08,
+   2.829169599767379e-08,
+   3.0352017774502854e-08
+  ],
+  "truncated": false,
+  "levels": [
+   [
+    -3.2349585188304184e-08,
+    1
+   ],
+   [
+    -3.118192432761613e-08,
+    1
+   ],
+   [
+    -2.7798279601111517e-08,
+    1
+   ],
+   [
+    -2.646410003072388e-08,
+    1
+   ],
+   [
+    -2.291263831406682e-08,
+    1
+   ],
+   [
+    -2.170012632534363e-08,
+    2
+   ],
+   [
+    -1.956260243619853e-08,
+    1
+   ],
+   [
+    -1.7703010514502602e-08,
+    1
+   ],
+   [
+    -1.5545589012548995e-08,
+    1
+   ],
+   [
+    -1.4328988330540769e-08,
+    1
+   ],
+   [
+    -1.2242487327356348e-08,
+    1
+   ],
+   [
+    -1.005435883632385e-08,
+    2
+   ],
+   [
+    -8.303635260105334e-09,
+    1
+   ],
+   [
+    -2.9252766115004048e-09,
+    1
+   ],
+   [
+    -1.1540045369338672e-09,
+    1
+   ],
+   [
+    4.85502957196744e-10,
+    2
+   ],
+   [
+    1.5951782828422931e-09,
+    2
+   ],
+   [
+    4.917557702222288e-09,
+    1
+   ],
+   [
+    6.441391624354299e-09,
+    2
+   ],
+   [
+    8.144910899569784e-09,
+    2
+   ],
+   [
+    1.5739588572444925e-08,
+    2
+   ],
+   [
+    1.7454967979733423e-08,
+    1
+   ],
+   [
+    2.0155542502975064e-08,
+    3
+   ],
+   [
+    2.27894976876649e-08,
+    1
+   ],
+   [
+    2.6348894810235063e-08,
+    1
+   ],
+   [
+    2.736670592897891e-08,
+    3
+   ],
+   [
+    3.0352017774502854e-08,
+    1
+   ]
+  ]
+ },
+ "runs": [
+  {
+   "solver": "hsolve",
+   "wall_s": 1.073,
+   "peak_rss_gib": 0.312,
+   "rc": 0,
+   "killed": null,
+   "claimed_success": true,
+   "success": true,
+   "solver_max_eta": 4.814191062969683e-13,
+   "max_eta": 4.798916477499293e-13,
+   "pairs": 21,
+   "eigenvalues": [
+    4.855029401779854e-10,
+    1.1209512618309783e-09,
+    -1.154004517597018e-09,
+    1.5951782808263558e-09,
+    2.0142245481616795e-09,
+    -2.9252765964845178e-09,
+    4.9175577678292e-09,
+    6.4413916439166825e-09,
+    7.04936746674285e-09,
+    8.144910924180818e-09,
+    -8.303635266392134e-09,
+    8.753491438201026e-09,
+    -9.888141137282523e-09,
+    -1.0054358845888932e-08,
+    -1.2242487388198503e-08,
+    -1.432898834077876e-08,
+    -1.5545589033660216e-08,
+    1.5739588579900784e-08,
+    1.5982505689037542e-08,
+    1.7454968014449955e-08,
+    -1.7703010543809704e-08
+   ],
+   "solver_peak_bytes": 334884864,
+   "verdict": "pass",
+   "eval_reasons": [],
+   "completeness": "complete",
+   "certified": true,
+   "valid": true,
+   "why": [],
+   "solver_s": 0.824467473,
+   "solver_s_scope": "report time_total_s",
+   "phases": {
+    "analysis_s": 0.111967128,
+    "numeric_s": 0.22132624100000003,
+    "factorizations": 6,
+    "solves": 104,
+    "solve_s": 0.161058395,
+    "ortho_s": null,
+    "iterate_s": 0.31529142099999996,
+    "verify_s": 0.06816477700000023
+   },
+   "evaluation": {
+    "verdict": "pass",
+    "reasons": [],
+    "status": "complete",
+    "certified": true,
+    "expected": 21,
+    "found": 21,
+    "missing": [],
+    "boundary_deficit": 0,
+    "spurious": 0,
+    "unmatched": 0,
+    "distinct_returned": 21,
+    "duplicates": 0,
+    "rejected_pairs": 0,
+    "max_backward_error": 4.798916477499293e-13,
+    "max_eig_scaled_error": 6.560720983700346e-17,
+    "max_subspace_angle": null
+   },
+   "outcome": [],
+   "report": {
+    "version": "1.0.0",
+    "method": "shift_invert_lanczos",
+    "candidate_source": "iterative",
+    "problem": "standard",
+    "sigma_used": 0.0,
+    "block_size": 4,
+    "zero_cluster_dim": -1,
+    "zero_modes_filtered": 0,
+    "time_total_s": 0.824467473,
+    "time_setup_s": 0.026969845999999985,
+    "time_factor_s": 0.275485494,
+    "time_iterate_s": 0.31529142099999996,
+    "time_verify_s": 0.06816477700000023,
+    "time_certificate_s": 0.13855593499999985,
+    "warnings": [
+     "shift 0 lies inside an eigenvalue cluster denser than the null-pivot threshold; factorized there without null-pivot detection"
+    ],
+    "certificate": {
+     "count_found": 21,
+     "count_inertia": 21,
+     "endpoint_moves": 0,
+     "failure_probability": 0.0,
+     "lower": -1.8632806536450662e-08,
+     "method": "exact",
+     "note": "endpoint inertia counted without null-pivot detection (dense cluster)",
+     "passed": true,
+     "performed": true,
+     "rigorous": true,
+     "seconds": 0.13855593499999985,
+     "solves": 0,
+     "statement": "double-precision Sylvester counts (main factorization): nu(b) - nu(a) = 21 eigenvalue(s) in [-1.86328e-08, 1.89293e-08], 21 distinct found pair(s) there: every eigenvalue in the window is found",
+     "upper": 1.8929276585558382e-08
+    },
+    "subspace": {
+     "performed": true,
+     "rigorous": true,
+     "max_sin_bound": 0.0005407327688532296,
+     "b_min_source": "identity",
+     "seconds": 0.035607578
+    },
+    "slices": 0,
+    "factorizations": 6
+   },
+   "rep": 0,
+   "position": 0
+  },
+  {
+   "solver": "hsolve",
+   "wall_s": 1.121,
+   "peak_rss_gib": 0.312,
+   "rc": 0,
+   "killed": null,
+   "claimed_success": true,
+   "success": true,
+   "solver_max_eta": 4.81469319420743e-13,
+   "max_eta": 4.799413605024124e-13,
+   "pairs": 21,
+   "eigenvalues": [
+    4.855029258002258e-10,
+    1.120951261385609e-09,
+    -1.1540045325864516e-09,
+    1.5951782866470398e-09,
+    2.0142245610879466e-09,
+    -2.9252766093078505e-09,
+    4.917557783708206e-09,
+    6.441391656117399e-09,
+    7.049367456569769e-09,
+    8.14491091428243e-09,
+    -8.303635269315155e-09,
+    8.753491425352922e-09,
+    -9.888141126271479e-09,
+    -1.0054358865270531e-08,
+    -1.2242487396874762e-08,
+    -1.4328988329579575e-08,
+    -1.554558901639763e-08,
+    1.5739588566881503e-08,
+    1.598250568818061e-08,
+    1.7454968018935434e-08,
+    -1.770301057854915e-08
+   ],
+   "solver_peak_bytes": 334909440,
+   "verdict": "pass",
+   "eval_reasons": [],
+   "completeness": "complete",
+   "certified": true,
+   "valid": true,
+   "why": [],
+   "solver_s": 0.8428485269999999,
+   "solver_s_scope": "report time_total_s",
+   "phases": {
+    "analysis_s": 0.113141463,
+    "numeric_s": 0.223191256,
+    "factorizations": 6,
+    "solves": 104,
+    "solve_s": 0.16167205300000004,
+    "ortho_s": null,
+    "iterate_s": 0.317434114,
+    "verify_s": 0.06923745699999997
+   },
+   "evaluation": {
+    "verdict": "pass",
+    "reasons": [],
+    "status": "complete",
+    "certified": true,
+    "expected": 21,
+    "found": 21,
+    "missing": [],
+    "boundary_deficit": 0,
+    "spurious": 0,
+    "unmatched": 0,
+    "distinct_returned": 21,
+    "duplicates": 0,
+    "rejected_pairs": 0,
+    "max_backward_error": 4.799413605024124e-13,
+    "max_eig_scaled_error": 8.148628761170888e-17,
+    "max_subspace_angle": null
+   },
+   "outcome": [],
+   "report": {
+    "version": "1.0.0",
+    "method": "shift_invert_lanczos",
+    "candidate_source": "iterative",
+    "problem": "standard",
+    "sigma_used": 0.0,
+    "block_size": 4,
+    "zero_cluster_dim": -1,
+    "zero_modes_filtered": 0,
+    "time_total_s": 0.8428485269999999,
+    "time_setup_s": 0.038421077000000095,
+    "time_factor_s": 0.27753276499999996,
+    "time_iterate_s": 0.317434114,
+    "time_verify_s": 0.06923745699999997,
+    "time_certificate_s": 0.14022311399999998,
+    "warnings": [
+     "shift 0 lies inside an eigenvalue cluster denser than the null-pivot threshold; factorized there without null-pivot detection"
+    ],
+    "certificate": {
+     "count_found": 21,
+     "count_inertia": 21,
+     "endpoint_moves": 0,
+     "failure_probability": 0.0,
+     "lower": -1.8632806553820346e-08,
+     "method": "exact",
+     "note": "endpoint inertia counted without null-pivot detection (dense cluster)",
+     "passed": true,
+     "performed": true,
+     "rigorous": true,
+     "seconds": 0.14022311399999998,
+     "solves": 0,
+     "statement": "double-precision Sylvester counts (main factorization): nu(b) - nu(a) = 21 eigenvalue(s) in [-1.86328e-08, 1.89293e-08], 21 distinct found pair(s) there: every eigenvalue in the window is found",
+     "upper": 1.8929276602928086e-08
+    },
+    "subspace": {
+     "performed": true,
+     "rigorous": true,
+     "max_sin_bound": 0.0005408418087955279,
+     "b_min_source": "identity",
+     "seconds": 0.036177736
+    },
+    "slices": 0,
+    "factorizations": 6
+   },
+   "rep": 1,
+   "position": 0
+  },
+  {
+   "solver": "hsolve",
+   "wall_s": 1.12,
+   "peak_rss_gib": 0.271,
+   "rc": 0,
+   "killed": null,
+   "claimed_success": true,
+   "success": true,
+   "solver_max_eta": 4.815070141976327e-13,
+   "max_eta": 4.79979152583579e-13,
+   "pairs": 21,
+   "eigenvalues": [
+    4.855029362773774e-10,
+    1.1209512576703957e-09,
+    -1.1540045221507565e-09,
+    1.5951782821527872e-09,
+    2.0142245610310556e-09,
+    -2.9252766161812404e-09,
+    4.9175577660565115e-09,
+    6.441391651332185e-09,
+    7.049367491340617e-09,
+    8.144910909041614e-09,
+    -8.303635253565808e-09,
+    8.753491427862275e-09,
+    -9.888141119584236e-09,
+    -1.005435885227643e-08,
+    -1.2242487381718916e-08,
+    -1.4328988354489155e-08,
+    -1.5545589021028262e-08,
+    1.5739588581748884e-08,
+    1.59825056715453e-08,
+    1.745496799879694e-08,
+    -1.770301056205228e-08
+   ],
+   "solver_peak_bytes": 291475456,
+   "verdict": "pass",
+   "eval_reasons": [],
+   "completeness": "complete",
+   "certified": true,
+   "valid": true,
+   "why": [],
+   "solver_s": 0.846066121,
+   "solver_s_scope": "report time_total_s",
+   "phases": {
+    "analysis_s": 0.113257111,
+    "numeric_s": 0.23528361599999997,
+    "factorizations": 6,
+    "solves": 104,
+    "solve_s": 0.161272948,
+    "ortho_s": null,
+    "iterate_s": 0.31534736900000004,
+    "verify_s": 0.06779886199999985
+   },
+   "evaluation": {
+    "verdict": "pass",
+    "reasons": [],
+    "status": "complete",
+    "certified": true,
+    "expected": 21,
+    "found": 21,
+    "missing": [],
+    "boundary_deficit": 0,
+    "spurious": 0,
+    "unmatched": 0,
+    "distinct_returned": 21,
+    "duplicates": 0,
+    "rejected_pairs": 0,
+    "max_backward_error": 4.79979152583579e-13,
+    "max_eig_scaled_error": 6.383451320802737e-17,
+    "max_subspace_angle": null
+   },
+   "outcome": [],
+   "report": {
+    "version": "1.0.0",
+    "method": "shift_invert_lanczos",
+    "candidate_source": "iterative",
+    "problem": "standard",
+    "sigma_used": 0.0,
+    "block_size": 4,
+    "zero_cluster_dim": -1,
+    "zero_modes_filtered": 0,
+    "time_total_s": 0.846066121,
+    "time_setup_s": 0.03267302100000005,
+    "time_factor_s": 0.29021197,
+    "time_iterate_s": 0.31534736900000004,
+    "time_verify_s": 0.06779886199999985,
+    "time_certificate_s": 0.1400348990000001,
+    "warnings": [
+     "shift 0 lies inside an eigenvalue cluster denser than the null-pivot threshold; factorized there without null-pivot detection"
+    ],
+    "certificate": {
+     "count_found": 21,
+     "count_inertia": 21,
+     "endpoint_moves": 0,
+     "failure_probability": 0.0,
+     "lower": -1.863280654557193e-08,
+     "method": "exact",
+     "note": "endpoint inertia counted without null-pivot detection (dense cluster)",
+     "passed": true,
+     "performed": true,
+     "rigorous": true,
+     "seconds": 0.1400348990000001,
+     "solves": 0,
+     "statement": "double-precision Sylvester counts (main factorization): nu(b) - nu(a) = 21 eigenvalue(s) in [-1.86328e-08, 1.89293e-08], 21 distinct found pair(s) there: every eigenvalue in the window is found",
+     "upper": 1.8929276594679656e-08
+    },
+    "subspace": {
+     "performed": true,
+     "rigorous": true,
+     "max_sin_bound": 0.000540825609207266,
+     "b_min_source": "identity",
+     "seconds": 0.035268241
+    },
+    "slices": 0,
+    "factorizations": 6
+   },
+   "rep": 2,
+   "position": 0
+  }
+ ]
+}
