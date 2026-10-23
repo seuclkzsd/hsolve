@@ -1,10 +1,13 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 # The continuous-integration pipeline as one script. .github/workflows/ci.yml runs its steps on
 # GitHub's ubuntu-latest runners (environment from env/environment.yml via setup-micromamba); the
 # same script runs unchanged on a developer machine or a cluster node, e.g.
 #     tools/dev/cluster_run.sh gpu01 -- tools/dev/ci.sh
 #
 #   tools/dev/ci.sh [STEP...]          default: every step, in this order
+#     licenses     tools/dev/spdx.py --check: every source file carries its SPDX licence header
 #     deps         MUMPS 5.8.2 from third_party/mumps with the project's patches
 #                  (tools/dev/mumps_cache.sh; installed under $HS_MUMPS_CACHE, default build/deps)
 #     build        the release preset (portable x86-64) with -Werror: no compiler warning passes
@@ -32,7 +35,7 @@ cd "$root"
 source env/activate.sh
 jobs="${HS_JOBS:-4}"
 guard=(python3 tools/run/guard.py --skip-busy-check --mem-gb "${HS_TEST_MEM_GB:-8}" --timeout 3600 --)
-all=(deps build portability ctest ctest-avx2 pytest examples demo package)
+all=(licenses deps build portability ctest ctest-avx2 pytest examples demo package)
 steps=("$@")
 [ ${#steps[@]} -gt 0 ] || steps=("${all[@]}")
 ctest_args=(--preset release --no-tests=error -j "$jobs")
@@ -49,6 +52,7 @@ step() {
 
 for s in "${steps[@]}"; do
   case "$s" in
+    licenses) step licenses python3 tools/dev/spdx.py --check ;;
     deps) step deps "${guard[@]}" tools/dev/mumps_cache.sh ensure ;;
     build) step build env HS_CMAKE_ARGS="-DHSOLVE_WERROR=ON ${HS_CMAKE_ARGS:-}" tools/dev/build.sh release ;;
     portability) step portability python3 tools/release/check_isa.py build/release ;;

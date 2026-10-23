@@ -63,6 +63,9 @@ jobs:
           path: .cache/mumps
           key: ${{ steps.mumps-key.outputs.key }}
 
+      - name: Licence headers (SPDX)
+        run: tools/dev/ci.sh licenses
+
       - name: MUMPS 5.8.2 from third_party (patched)
         run: tools/dev/ci.sh deps
 
