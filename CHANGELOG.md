@@ -43,9 +43,10 @@
 ### 变更
 
 - 默认构建改为可移植的 x86-64 基线（SIMD 内核运行时按 CPUID 选择），实测与 `-march=native` 构建的时间之比为
-  1.001（几何平均，`results/portable-vs-native/`）；`native` 预设改为可选。
+  1.000（走通用路径的 5 个 10⁵ 阶算例的几何平均，`results/portable-vs-native/`）；`native` 预设改为可选。
 - 结构识别快速路径（0.9.0 引入的可分离笛卡尔与 Bloch 周期 curl-curl 候选，`src/eigen/separable_*`）保留，但默认关闭；
-  文档与 README 中的性能数字都不依赖它。开启：配置 `"structure_candidates": "auto"` 或 `--structure-candidates auto`
+  README 与文档引用的性能数字都不依赖它（可移植构建对比中测量时走了这条路径的 yee-pec-box-1e5 一行不计入引用的
+  比值）。开启：配置 `"structure_candidates": "auto"` 或 `--structure-candidates auto`
   （[FORMATS](docs/FORMATS.md) §2），开启后最终残差与完备性证书照常执行。
 - README 改写为面向用户的首页（中文，另有英文版 `README.en.md`）；仓库地址改为 <https://github.com/seuclkzsd/hsolve>。
 

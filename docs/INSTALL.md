@@ -166,9 +166,10 @@ hsolve: error [out_of_memory_budget]: predicted factorization memory 13909 MB (o
 `target` 属性编译，运行时按 CPUID 选 AVX-512、AVX2 或通用实现；OpenBLAS 同样在运行时选内核。所以同一个二进制
 能在任何 x86-64 CPU 上运行，又能在新 CPU 上用满宽向量指令。
 
-- 速度：在 6 个 10⁵ 阶算例上与 `-march=native` 构建交替各跑 10 次，中位时间之比 0.995–1.006，几何平均 1.001，
-  差别在噪声以内；屏蔽 AVX-512 路径（模拟只有 AVX2 的 CPU）后，同一二进制慢 0–6%（几何平均 1.032）。条件与
-  原始数据见 [results/portable-vs-native/](../results/portable-vs-native/)。
+- 速度：在 10⁵ 阶算例上与 `-march=native` 构建交替各跑 10 次。走通用路径的 5 个算例上中位时间之比 0.995–1.006，
+  几何平均 1.000，差别在噪声以内；屏蔽 AVX-512 路径（模拟只有 AVX2 的 CPU）后，同一二进制慢 0–6%（0.995–1.062，
+  几何平均 1.028）。同批的第 6 个算例 yee-pec-box-1e5 测量时结构识别快速路径还是默认开启，它的运行都走了这条路径
+  （1.0 默认关闭），不计入这些数字。条件与原始数据见 [results/portable-vs-native/](../results/portable-vs-native/)。
 - 保证：`tools/release/check_isa.py` 检查构建产物里所有 AVX 类指令都位于运行时分派之后的函数中；CI 每次都做这项
   检查，并在 AVX-512 与模拟的 AVX2 两级上各跑一遍全部 C++ 测试。
 - 需要只为本机编译时用 `tools/dev/build.sh native`（`-march=native`），产物在 `build/native/`，只能在同代 CPU 上运行。
