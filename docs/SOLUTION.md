@@ -289,7 +289,7 @@ T_solve 部分线性增长，T_factor 与 k 无关。
 | 层 | 负责的计算 | 实测加速比（16 核） | 何时启用 |
 |---|---|---|---|
 | 多线程（OpenMP，进程内） | 全部数值计算：排序（自研并行嵌套剖分）、MUMPS 分解与回代（L0 子树 + 多线程 BLAS + BLAS hook）、稀疏核、正交化 | 1 → 16 线程：1e5 三维 3.6–4.5 倍（对最快的 1 线程配置；同一主元顺序 4.3–5.1 倍），二维 2.7 倍；1e6 三维 4 → 16 线程 1.82 倍；受一个 socket 的内存带宽限制 | 总是（默认） |
-| 多进程（MPI，`hsolve-mpirun` / `hsolve-mpi`） | 每个 socket 一个 helper 进程：nearest 证书的两次 Sylvester 计数同时做、窗口目标的谱切片；leader 占全部核做主分解与 Krylov | 两 socket（8 + 8 核）对单进程：1e6 nearest 1.09–1.11 倍，1e5 三维 nearest 1.10–1.20 倍，多片窗口 1.50–1.74 倍；单 socket 0.86–0.93 倍，故单 socket 时启动脚本直接运行单进程 hsolve | 多 socket 机器可选 |
+| 多进程（MPI；启动器 `hsolve-mpirun` 运行 MPI 程序 `hsolve-mpi`） | 每个 socket 一个 helper 进程：nearest 证书的两次 Sylvester 计数同时做、窗口目标的谱切片；leader 占全部核做主分解与 Krylov | 两 socket（8 + 8 核）对单进程：1e6 nearest 1.09–1.11 倍，1e5 三维 nearest 1.10–1.20 倍，多片窗口 1.50–1.74 倍；单 socket 0.86–0.93 倍，故单 socket 时启动脚本直接运行单进程 hsolve | 多 socket 机器可选 |
 | GPU（`--gpu auto\|on`，一张卡） | 1e6 分解（含证书计数）中 L0 层之上的大 dgemm（贡献块更新，k ≥ ~1000），FP64 cuBLAS，运行时加载 | 1e6 三维：三次分解 1.07–1.09 倍（配 P9 块参数 1.08–1.10 倍），整次运行 1.058–1.069 倍；1e5 无值得卸载的调用（强制 on 0.72–0.97 倍） | 有 GPU 且分解估计 ≥ 3e12 flops 时 auto；默认 off |
 | 降级 | 没有 MPI、没有 GPU：单进程 CPU 路径即默认路径，结果相同 | — | 评测机 |
 
@@ -346,7 +346,7 @@ P9 集成初稿以默认配置自己的 1 线程运行作基线，报告的 5.39
 8 线程进程也只有顺序对的 0.92–0.93 倍。另外 ScaLAPACK 根节点（MUMPS 并行的默认）报告的 INFOG(12) 漏掉根前沿的
 负主元，不能用于证书（hsolve 设 ICNTL(13) = 1）。因此单次 16 核运行内 hsolve 用顺序版 MUMPS + OpenMP；多进程只可能
 在跨 socket / 跨节点（更多内存带宽）时有收益。
-**多进程模式（P10，`docs/PARALLEL.md`、`results/p10_mpi.md`）**：既然同一 socket 上多进程只会抢带宽，hsolve-mpi 改为
+**多进程模式（P10，`docs/PARALLEL.md`、`results/p10_mpi.md`）**：既然同一 socket 上多进程只会抢带宽，`hsolve-mpi` 改为
 每个 socket（NUMA 节点）一个 helper 进程：leader 绑定全部核运行与单进程相同的 hs::solve（主分解、Krylov），只把彼此
 独立的大块分解交给 helper——nearest 证书的两次精确计数（两个 helper 同时，各用本 socket 的核与带宽），窗口目标的
 谱切片（每片一次分解 + Krylov）；leader 与 helper 从不同时计算，一次运行不超过 16 核。是否交出由代价规则与覆盖整棵

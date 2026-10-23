@@ -15,10 +15,11 @@
 Finite-element models of cavities, waveguides and photonic crystals lead to sparse Hermitian eigenproblems
 A x = λ B x in which A is indefinite and, for waveguides, B is indefinite too, while engineers need only the dozen modes
 near a target frequency. Shift-invert Krylov solvers miss modes at repeated (degenerate) eigenvalues, null spaces and
-near-singular shifts, sometimes while reporting success: asked for 21 eigenvalues of a PEC cube (n = 92,256) whose target
-set holds 3-, 6- and 12-fold levels, SLEPc with its default settings returned 21 pairs in each of 3 runs and missed 7 of
-them every time; on the 1e6-size box cavity and square waveguide, 4 default SLEPc runs reported success while eigenvalues
-of the target set were missing.
+near-singular shifts. Asked for 21 eigenvalues of a PEC cube (n = 92,256) whose target set holds 3-, 6- and 12-fold
+levels, SLEPc with its default settings returned 21 pairs in each of 3 runs, yet 7 eigenvalues of the target set were
+missing every time and residuals exceeded the tolerance (up to 2.0e-08); SLEPc itself reported no success. Missed modes
+can also go unnoticed: on the 1e6-size box cavity and square waveguide, 4 default SLEPc runs reported success while
+eigenvalues of the target set were missing - only a completeness count or a reference spectrum reveals that.
 hsolve counts Sylvester inertia at both ends of the target window, compares "how many there must be" with "how many
 were found", and computes the missing ones; when B is positive definite the result carries a completeness certificate
 that can be checked.
@@ -28,17 +29,24 @@ that can be checked.
 | Capability | What it does | Evidence |
 |---|---|---|
 | Nothing missed | For positive definite B (including B = I) inertia counts prove that every eigenvalue in the target window was found; the report states the method and the failure probability bound. On 18 hard scenarios hsolve was correct in every run (18/18); SLEPc 6/18 with its defaults, 12/18 tuned per case | [Algorithms](docs/guide/algorithms.md) · [Hard cases](docs/showcase/困难场景对比.md) |
-| Speed | Where both are correct (12 scenarios), against SLEPc tuned per case: faster on 6 (1.05–3.30×), comparable on 1, slower on 5 (0.63–0.92×: two complex Hermitian problems, two SuiteSparse edge-element GHEPs, 1e4 eigenvalues near zero); 1.37–4.29× faster than default SLEPc. hsolve's times include the certificate | [Hard cases](docs/showcase/困难场景对比.md#时间) |
+| Speed | Where both are correct (12 scenarios), against SLEPc tuned per case: faster on 6 (1.05–3.30×), comparable on 1, slower on 5 (0.63–0.92×: two complex Hermitian problems, two SuiteSparse edge-element GHEPs, 1e4 eigenvalues near zero); 1.37–4.29× faster than default SLEPc (the 6 scenarios where both are correct). hsolve's times include the certificate | [Hard cases](docs/showcase/困难场景对比.md#时间) |
 | Scale and memory | 3-D GHEP n = 1.1e5: 2.29 s, 0.75 GiB peak; n = 1.0e6: 65.7 s, 11.5 GiB; indefinite-B waveguide n = 1.0e6: 5.31 s, 1.91 GiB. The memory budget follows the cgroup / ulimit / physical memory, with out-of-core factorization when needed | [Resources](docs/INSTALL.md#5-资源需求) |
 | Problem classes | HEP, GHEP and GHIEP (indefinite B, waveguides); real symmetric and complex Hermitian; k nearest to σ, all in an interval, algebraic extremes | [Scope](docs/SOLUTION.md#12-求解边界能处理--不能处理) |
 | Independent checking | An independent evaluator recomputes backward errors, eigenvalue errors and subspace angles from the original matrices and checks completeness against reference spectra. All 54 hsolve runs above pass; largest backward error 7.5e-11 (tolerance 1e-10); cavity frequencies agree with the exact discrete values to 3.1e-14 | [Evaluation](docs/guide/evaluation.md) |
-| Parallelism | OpenMP threads; one process per socket on multi-socket machines (`hsolve-mpi`); optional cuBLAS offload; without MPI or GPU the default single-process CPU path runs, and with them the certificate's conditions and guarantees are unchanged | [Parallel scheme](docs/PARALLEL.md) |
+| Parallelism | OpenMP threads; a multi-process mode on multi-socket machines (the launcher `hsolve-mpirun` runs the MPI program `hsolve-mpi`, one helper process per socket); optional cuBLAS offload; without MPI or GPU the default single-process CPU path runs, and with them the certificate's conditions and guarantees are unchanged | [Parallel scheme](docs/PARALLEL.md) |
 | Open governance | Apache-2.0; building and the default run depend only on open-source components, each one listed (optional GPU offload loads the user's installed CUDA libraries at run time, NVIDIA license, not distributed); CI; releases with SHA256SUMS; contribution, governance and security policies | [NOTICE](NOTICE) · [CONTRIBUTING](CONTRIBUTING.md) · [GOVERNANCE](GOVERNANCE.md) |
 
 Test conditions: Intel Xeon Silver 4314 nodes (2 × 16 cores); every run pinned to the 16 physical cores of one socket
-with a 32 GiB cap and no other timed run at the same time; hsolve solver source commit b9aadc4, SLEPc/PETSc 3.26.0 +
-MUMPS 5.8.2; 3 interleaved repetitions per scenario, medians. Raw records: [`results/showcase/`](results/showcase/);
-tables and figures are generated by [`tools/showcase/`](tools/showcase/).
+with a 32 GiB cap and no other timed run at the same time; SLEPc/PETSc 3.26.0 + MUMPS 5.8.2; 3 interleaved repetitions
+per scenario, medians. The hsolve figures of the hard-case comparison on this page (times, memory and backward errors
+above and below) were measured with the 0.9.0 solver (source commit b9aadc4) and are kept as measured. The portable
+1.0.0 build (source commit 47d03dc, which computes the eigenvector subspace-angle bound by default) re-ran all 54 hsolve
+runs under the same conditions: all 54 pass the independent evaluation with unchanged certificates, the per-scenario
+median times are 0.913–1.057 of the table's (median 1.004) and the largest backward error is 6.1e-11; only the scenario
+with 1e4 eigenvalues near zero is more than 5% slower (0.798 → 0.843 s, +5.7%, of which the subspace-angle bound takes
+0.036 s). SLEPc was not re-run; with the 1.0.0 hsolve times the ratio to tuned SLEPc is 0.61–3.22 and to default
+SLEPc 1.30–4.19 ([1.0.0 re-measurement](results/showcase/recheck-1.0.0.md)). Raw records:
+[`results/showcase/`](results/showcase/); tables and figures are generated by [`tools/showcase/`](tools/showcase/).
 
 ## Quick start
 
@@ -90,7 +98,9 @@ print(res.success, res.eigenvalues, res.report["certificate"]["statement"])
 On the same 16 cores and 32 GiB, hsolve and SLEPc (Krylov-Schur + shift-and-invert + MUMPS) each solve every case 3
 times, and every result is judged by the solver-independent evaluator `tools/eval` (backward error ≤ 1e-10,
 completeness against a reference spectrum). "Default" is SLEPc and MUMPS with their default settings; "tuned" is the
-fastest valid configuration found for each case by the same tuning program. Eight of the 18 scenarios
+fastest valid configuration found for each case by the same tuning program; 4 scenarios have no valid configuration
+tuned for the case and use the tuned configuration of the same problem class (see
+[limitations](docs/showcase/困难场景对比.md#说明与局限), in Chinese). Eight of the 18 scenarios
 (all of them: [hard cases](docs/showcase/困难场景对比.md), in Chinese):
 
 | Scenario | Case | hsolve | SLEPc default | SLEPc tuned |
@@ -154,7 +164,7 @@ All 10 modes, mode pictures and the command to reproduce them (`tools/showcase/r
 |---|---|---|
 | Threads (OpenMP) | all numerical work: ordering, MUMPS factorization and solves, sparse kernels, orthogonalization | 1 → 16 threads: 3.6–4.5× on 3-D 1e5 problems, 2.3–2.7× on 2-D and complex ones ([P9 record](results/p9_measurements.md) §5) |
 | Processes (`hsolve-mpirun`) | one helper process per socket: the certificate's two counts at once, spectrum slices spread over the sockets | two sockets (8 + 8 cores) against one process on the same cores: 1.09–1.11× at 1e6, 1.15–1.74× on windows with several slices; no gain on one socket, so not the default ([P10 record](results/p10_mpi.md)) |
-| GPU (`--gpu auto`) | large dense updates of 1e6-size factorizations (FP64 cuBLAS, loaded at run time) | one V100: 1.06–1.07× per whole run at 1e6; below 5e5 nothing is offloaded and the CPU path runs ([P10 record](results/p10_gpu.md)) |
+| GPU (`--gpu auto`) | large dense updates of 1e6-size factorizations (FP64 cuBLAS, loaded at run time) | one V100: 1.06–1.07× per whole run at 1e6. `auto` offloads only factorizations whose MUMPS estimate is ≥ 3e12 flops (the 1e6 cases: 5.4–6.7e12), decided by flops, not by order; the 5 measured cases with n = 6.6e4–5.1e5 are all below it, offload nothing and run the CPU path ([P10 record](results/p10_gpu.md)) |
 
 Without MPI or a GPU the single-process CPU path is the default. Multi-process runs and GPU offload keep the
 completeness certificate's conditions and guarantees, and their results pass the same residual acceptance. In the
@@ -232,7 +242,13 @@ hsolve started as an entry for the COMAC enterprise topic "eigenvalues of indefi
 - The structure-recognition fast path (separable / Bloch-periodic curl-curl candidates) is off by default; none of the
   numbers above relies on it.
 - On constructed extreme stress inputs (3- to 25-fold eigenvalue clusters 2⁻²²–2⁻³² away from the shift, matrix scales
-  2^±16) the residual correction can fall short of the 1e-10 backward error or of the missing pairs: of 60 such inputs
-  of development stage P34 the 1.0 solver passes 27, and each of the other 33 reports failure (32 with
-  `success = false`, 1 over the 30 s limit) - none reports success with a wrong result. An improvement that passes all
-  60 has been validated in a prototype and is planned for 1.1 ([P34 record](results/p34_measurements.md)).
+  2^±16) the residual correction can fall short of the 1e-10 backward error or of the missing pairs. Development stage
+  P34 ran the 0.9.0 (P29) solver on 60 such inputs: 27 pass; of the other 33, 32 report `success = false` (exit code 1)
+  and 1 was stopped by the 30 s limit before writing a report; none reports success with a wrong result. 29 of those 32
+  reports still have `certificate.passed = true`: the certificate covers only the window it counted (bounded by the pairs
+  found), and in that window the inertia count equals the number of vectors found, but the residual acceptance failed -
+  28 returned fewer than the k pairs asked for and 10 have pairs with a backward error above `tol` (some both). Such a
+  result is not usable: `success` (exit code 0) decides, not the certificate alone. 1.0 was not re-run on these 60
+  inputs; its residual-correction code is that of 0.9.0 (`src/driver/definite.cpp`; the P34 patch applies to the 1.0
+  sources unchanged). An improvement that passes all 60 has been validated in a prototype and is planned for 1.1
+  ([P34 record](results/p34_measurements.md)).
