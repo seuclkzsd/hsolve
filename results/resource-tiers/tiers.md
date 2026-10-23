@@ -1,24 +1,24 @@
 | case | n | problem | pairs | threads | RAM cap GiB | solve s [min-max] | wall s | peak RSS GiB | memory | certificate | runs ok |
 |---|---:|---|---:|---:|---:|---|---:|---:|---|---|---|
-| yee-pec-box-1e4 | 10064 | generalized_definite | 11 | 16 | 32 | 0.17 [0.16-0.22] | 0.24 | 0.06 | in-core | exact passed | 3/3 |
-| yee-pec-box-1e4 | 10064 | generalized_definite | 11 | 4 | 32 | 0.12 [0.11-0.13] | 0.17 | 0.06 | in-core | exact passed | 3/3 |
-| yee-pec-box-1e5 | 109744 | generalized_definite | 10 | 16 | 32 | 1.25 [1.20-1.41] | 1.44 | 0.54 | in-core | exact passed | 3/3 |
-| yee-pec-box-1e5 | 109744 | generalized_definite | 10 | 4 | 32 | 2.17 [2.15-2.17] | 2.32 | 0.39 | in-core | exact passed | 3/3 |
-| yee-pec-box-1e6 | 1027733 | generalized_definite | 10 | 16 | 32 | 39.80 [39.73-40.71] | 40.62 | 5.79 | in-core | exact passed | 3/3 |
-| yee-pec-box-1e6 | 1027733 | generalized_definite | 10 | 4 | 32 | 77.80 [77.64-77.99] | 78.73 | 5.96 | in-core | exact passed | 3/3 |
-| yee-pec-box-1e6 | 1027733 | generalized_definite | 10 | 16 | 8 | 40.72 [40.72-40.72] | 41.48 | 5.84 | out-of-core | exact passed | 1/1 |
-| yee-pec-box-1e6 | 1027733 | generalized_definite | 10 | 4 | 8 | 79.11 [79.11-79.11] | 79.82 | 5.62 | out-of-core | exact passed | 1/1 |
+| yee-pec-box-1e4 | 10064 | generalized_definite | 11 | 16 | 32 | 0.29 [0.22-0.29] | 0.37 | 0.10 | in-core | exact passed | 3/3 |
+| yee-pec-box-1e4 | 10064 | generalized_definite | 11 | 4 | 32 | 0.19 [0.19-0.20] | 0.22 | 0.07 | in-core | exact passed | 3/3 |
+| yee-pec-box-1e5 | 109744 | generalized_definite | 10 | 16 | 32 | 2.35 [2.28-2.36] | 2.48 | 0.77 | in-core | exact passed | 3/3 |
+| yee-pec-box-1e5 | 109744 | generalized_definite | 10 | 4 | 32 | 3.55 [3.54-3.59] | 3.67 | 0.61 | in-core | exact passed | 3/3 |
+| yee-pec-box-1e6 | 1027733 | generalized_definite | 10 | 16 | 32 | 66.09 [65.87-66.09] | 66.80 | 11.45 | in-core | exact passed | 3/3 |
+| yee-pec-box-1e6 | 1027733 | generalized_definite | 10 | 4 | 32 | 122.08 [122.01-122.10] | 122.65 | 10.83 | in-core | exact passed | 3/3 |
+| yee-pec-box-1e6 | 1027733 | generalized_definite | 10 | 16 | 8 | 121.57 [121.57-121.57] | 122.28 | 5.93 | out-of-core | exact passed | 1/1 |
+| yee-pec-box-1e6 | 1027733 | generalized_definite | 10 | 4 | 8 | 175.31 [175.31-175.31] | 175.94 | 5.62 | out-of-core | exact passed | 1/1 |
 | yee-pec-box-1e6 | - | - | - | 16 | 4 | - | - | 1.11 | - | - | 0/1 (out_of_memory_budget) |
 | yee-pec-box-1e6 | - | - | - | 4 | 4 | - | - | 0.84 | - | - | 0/1 (out_of_memory_budget) |
-| wg-square-1e4 | 9801 | generalized_indefinite | 18 | 16 | 32 | 0.09 [0.08-0.10] | 0.17 | 0.05 | in-core | - | 3/3 |
-| wg-square-1e4 | 9801 | generalized_indefinite | 18 | 4 | 32 | 0.10 [0.09-0.10] | 0.17 | 0.04 | in-core | - | 3/3 |
-| wg-square-1e5 | 99225 | generalized_indefinite | 18 | 16 | 32 | 0.51 [0.50-0.56] | 0.67 | 0.24 | in-core | - | 3/3 |
-| wg-square-1e5 | 99225 | generalized_indefinite | 18 | 4 | 32 | 0.68 [0.68-0.68] | 0.80 | 0.17 | in-core | - | 3/3 |
-| wg-square-1e6 | 998001 | generalized_indefinite | 18 | 16 | 32 | 5.89 [5.73-5.90] | 6.64 | 1.84 | in-core | - | 3/3 |
-| wg-square-1e6 | 998001 | generalized_indefinite | 18 | 4 | 32 | 8.20 [8.19-8.28] | 9.03 | 1.79 | in-core | - | 3/3 |
-| wg-square-1e6 | 998001 | generalized_indefinite | 18 | 16 | 8 | 5.83 [5.83-5.83] | 6.75 | 1.84 | in-core | - | 1/1 |
-| wg-square-1e6 | 998001 | generalized_indefinite | 18 | 4 | 8 | 8.17 [8.17-8.17] | 8.94 | 1.78 | in-core | - | 1/1 |
-| wg-square-1e6 | 998001 | generalized_indefinite | 18 | 16 | 4 | 5.83 [5.83-5.83] | 6.63 | 1.85 | in-core | - | 1/1 |
-| wg-square-1e6 | 998001 | generalized_indefinite | 18 | 4 | 4 | 8.13 [8.13-8.13] | 8.86 | 1.79 | in-core | - | 1/1 |
+| wg-square-1e4 | 9801 | generalized_indefinite | 18 | 16 | 32 | 0.09 [0.07-0.11] | 0.17 | 0.06 | in-core | - | 3/3 |
+| wg-square-1e4 | 9801 | generalized_indefinite | 18 | 4 | 32 | 0.09 [0.09-0.09] | 0.17 | 0.04 | in-core | - | 3/3 |
+| wg-square-1e5 | 99225 | generalized_indefinite | 18 | 16 | 32 | 0.48 [0.48-0.48] | 0.67 | 0.31 | in-core | - | 3/3 |
+| wg-square-1e5 | 99225 | generalized_indefinite | 18 | 4 | 32 | 0.64 [0.64-0.64] | 0.77 | 0.18 | in-core | - | 3/3 |
+| wg-square-1e6 | 998001 | generalized_indefinite | 18 | 16 | 32 | 5.35 [5.34-5.38] | 6.00 | 1.91 | in-core | - | 3/3 |
+| wg-square-1e6 | 998001 | generalized_indefinite | 18 | 4 | 32 | 7.39 [7.38-7.42] | 7.98 | 1.80 | in-core | - | 3/3 |
+| wg-square-1e6 | 998001 | generalized_indefinite | 18 | 16 | 8 | 5.35 [5.35-5.35] | 6.01 | 1.90 | in-core | - | 1/1 |
+| wg-square-1e6 | 998001 | generalized_indefinite | 18 | 4 | 8 | 7.38 [7.38-7.38] | 7.98 | 1.81 | in-core | - | 1/1 |
+| wg-square-1e6 | 998001 | generalized_indefinite | 18 | 16 | 4 | 5.34 [5.34-5.34] | 5.86 | 1.88 | in-core | - | 1/1 |
+| wg-square-1e6 | 998001 | generalized_indefinite | 18 | 4 | 4 | 7.38 [7.38-7.38] | 7.99 | 1.80 | in-core | - | 1/1 |
 
-Hosts: gpu01; build: hsolve 0.1.0, gcc 13.4, flags: Release -pipe -O3 -DNDEBUG native=OFF mumps=mumps-5.8.2-4aa1f2dcd75ea2ff mumps_blocking=p9, openmp 201511. Solve = report time_total_s (after the matrices are loaded), median over the runs; wall = whole process incl. loading the .npz files; peak RSS = tools/run/guard.py's peak of the process tree, max over the runs.
+Hosts: c005; build: hsolve 1.0.0, gcc 13.4, flags: Release -pipe -O3 -DNDEBUG native=OFF mumps=mumps-5.8.2-7eba2d99c3b1127c mumps_blocking=p9, openmp 201511. Solve = report time_total_s (after the matrices are loaded), median over the runs; wall = whole process incl. loading the .npz files; peak RSS = tools/run/guard.py's peak of the process tree, max over the runs. Every report gives candidate_source = iterative (the general path; the structure fast path is off by default).

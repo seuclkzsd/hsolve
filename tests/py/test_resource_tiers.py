@@ -1,10 +1,13 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
 """scripts/resource_tiers.py: core selection for the runs, the tier tables of docs/INSTALL.md §5,
+that only runs of the general path (report candidate_source = iterative) are measured and tabulated,
 and that the committed tables are what the committed raw data give."""
 from __future__ import annotations
 
 import importlib.util
+import json
+import subprocess
 import tarfile
 from pathlib import Path
 
@@ -85,6 +88,83 @@ def test_summary_certificate_holds_for_every_thread_count(states, shown):
     rows = [row("yee-pec-box-1e4", 16, states[0]), row("yee-pec-box-1e4", 4, states[1])]
     line = rt.summary(rows).splitlines()[2]
     assert line.endswith(f"| {shown} |"), line
+
+
+# ------------------------------------------------------------------------------- general path only
+
+def fake_solver(monkeypatch, tmp_path: Path, candidate_source: str) -> list[str]:
+    """`run` arguments for one case with an hsolve whose reports give candidate_source; guard.py and
+    hsolve are replaced by a stand-in for subprocess.run that writes the guard summary and the report."""
+    for var in ("HS_MEASURE_CORES", "HS_TIER_FIRST_CORE", "HS_SLOT_HELD"):
+        monkeypatch.delenv(var, raising=False)
+    hsolve = tmp_path / "hsolve"
+    hsolve.write_text("")
+    (tmp_path / "data" / "cases" / "box").mkdir(parents=True)
+
+    def solve(cmd, **_kw):
+        if cmd[-1] == "--version":
+            return subprocess.CompletedProcess(cmd, 0, "hsolve 1.0.0\n", "")
+        Path(cmd[cmd.index("--summary") + 1]).write_text(json.dumps({"returncode": 0, "wall_s": 1.5,
+                                                                     "peak_rss_gib": 0.25}))
+        report = {"success": True, "time_total_s": 1.0, "problem": "generalized_definite", "n": 100,
+                  "candidate_source": candidate_source, "pairs": [{}] * 10,
+                  "certificate": {"performed": True, "passed": True, "method": "exact"}}
+        (Path(cmd[cmd.index("--out") + 1]) / "report.json").write_text(json.dumps(report))
+        return subprocess.CompletedProcess(cmd, 0, "", "")
+
+    monkeypatch.setattr(rt.subprocess, "run", solve)
+    return ["run", "--root", str(tmp_path / "data"), "--out", str(tmp_path / "raw"), "--cases", "box",
+            "--threads", "1", "--mem-gb", "32", "--reps", "2", "--hsolve", str(hsolve)]
+
+
+def logged(tmp_path: Path) -> list[dict]:
+    return [json.loads(line) for line in (tmp_path / "raw" / "runs.jsonl").read_text().splitlines()]
+
+
+def test_runs_record_the_candidate_source_of_the_general_path(monkeypatch, tmp_path):
+    assert rt.main(fake_solver(monkeypatch, tmp_path, "iterative")) == 0
+    assert [r["candidate_source"] for r in logged(tmp_path)] == ["iterative", "iterative"]
+    rows = rt.summarize([tmp_path / "raw"])
+    assert [(r["ok"], r["candidate_source"]) for r in rows] == [(2, "iterative")]
+
+
+def test_run_stops_at_a_report_of_the_structure_fast_path(monkeypatch, tmp_path):
+    with pytest.raises(SystemExit, match='box t1-m32-r0: report candidate_source = "separable_cartesian_curl"'):
+        rt.main(fake_solver(monkeypatch, tmp_path, "separable_cartesian_curl"))
+    assert [r["candidate_source"] for r in logged(tmp_path)] == ["separable_cartesian_curl"]  # logged, then stopped
+
+
+def raw_dir(tmp_path: Path, *records: dict) -> Path:
+    raw = tmp_path / "tiers-node"
+    raw.mkdir()
+    (raw / "runs.jsonl").write_text("".join(json.dumps(r) + "\n" for r in records))
+    return raw
+
+
+RUN = {"case": "yee-pec-box-1e6", "threads": 16, "mem_gb": 32.0, "rep": 0, "host": "node", "version": "hsolve",
+       "rc": 0, "killed": None, "wall_s": 2.0, "peak_rss_gib": 1.0, "success": True, "time_total_s": 1.5,
+       "n": 1000, "pairs": 10, "certificate": "exact", "certificate_passed": True, "candidate_source": "iterative"}
+
+
+@pytest.mark.parametrize("source", ["separable_cartesian_curl", "separable_bloch_curl", None])
+def test_tables_refuse_runs_off_the_general_path(tmp_path, source):
+    bad = dict(RUN, rep=1, candidate_source=source)
+    if source is None:
+        del bad["candidate_source"]  # raw data from before the field was recorded
+    with pytest.raises(SystemExit, match=f"yee-pec-box-1e6 t16-m32-r1: report candidate_source = {json.dumps(source)}"):
+        rt.summarize([raw_dir(tmp_path, RUN, bad)])
+
+
+def test_a_refused_run_has_no_report_to_check(tmp_path):
+    refused = {k: v for k, v in RUN.items() if k in ("case", "threads", "rep", "host", "version", "killed")}
+    refused.update(mem_gb=4.0, rc=2, wall_s=5.0, peak_rss_gib=1.1, error="FileNotFoundError: no report.json")
+    raw = raw_dir(tmp_path, RUN, refused)
+    (raw / "yee-pec-box-1e6").mkdir()
+    (raw / "yee-pec-box-1e6" / "stderr-t16-m4-r0.txt").write_text(
+        "hsolve: error [out_of_memory_budget]: predicted factorization memory ...\n")
+    rows = {r["mem_gb"]: r for r in rt.summarize([raw])}
+    assert rows[32.0]["candidate_source"] == "iterative"
+    assert (rows[4.0]["candidate_source"], rows[4.0]["errors"]) == (None, ["out_of_memory_budget"])
 
 
 def test_committed_tables_are_those_of_the_committed_raw_data(tmp_path):

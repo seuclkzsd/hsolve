@@ -1,19 +1,19 @@
 | 问题 | n | 非零元 | 峰值内存 | 求解时间，16 线程 | 求解时间，4 线程 | 惯性证书 |
 |---|---:|---:|---:|---:|---:|---|
-| 三维 PEC 谐振腔，GHEP，最近 σ 的 11 个（`yee-pec-box-1e4`） | 10,064 | 132,808 | 62 MiB | 0.17 s | 0.12 s | 通过 |
-| 三维 PEC 谐振腔，GHEP，最近 σ 的 10 个（`yee-pec-box-1e5`） | 109,744 | 1,496,184 | 556 MiB | 1.25 s | 2.17 s | 通过 |
-| 三维 PEC 谐振腔，GHEP，最近 σ 的 10 个（`yee-pec-box-1e6`） | 1,027,733 | 14,208,570 | 6.0 GiB | 40 s | 78 s | 通过 |
-| 二维方波导 50 GHz，GHIEP（B 不定），18 个传播模（`wg-square-1e4`） | 9,801 | 138,521 | 55 MiB | 0.09 s | 0.10 s | 不适用（B 不定） |
-| 二维方波导 50 GHz，GHIEP（B 不定），18 个传播模（`wg-square-1e5`） | 99,225 | 1,419,337 | 245 MiB | 0.51 s | 0.68 s | 不适用（B 不定） |
-| 二维方波导 50 GHz，GHIEP（B 不定），18 个传播模（`wg-square-1e6`） | 998,001 | 14,306,465 | 1.8 GiB | 5.89 s | 8.20 s | 不适用（B 不定） |
+| 三维 PEC 谐振腔，GHEP，最近 σ 的 11 个（`yee-pec-box-1e4`） | 10,064 | 132,808 | 97 MiB | 0.29 s | 0.19 s | 通过 |
+| 三维 PEC 谐振腔，GHEP，最近 σ 的 10 个（`yee-pec-box-1e5`） | 109,744 | 1,496,184 | 784 MiB | 2.35 s | 3.55 s | 通过 |
+| 三维 PEC 谐振腔，GHEP，最近 σ 的 10 个（`yee-pec-box-1e6`） | 1,027,733 | 14,208,570 | 11.4 GiB | 66 s | 122 s | 通过 |
+| 二维方波导 50 GHz，GHIEP（B 不定），18 个传播模（`wg-square-1e4`） | 9,801 | 138,521 | 63 MiB | 0.09 s | 0.09 s | 不适用（B 不定） |
+| 二维方波导 50 GHz，GHIEP（B 不定），18 个传播模（`wg-square-1e5`） | 99,225 | 1,419,337 | 313 MiB | 0.48 s | 0.64 s | 不适用（B 不定） |
+| 二维方波导 50 GHz，GHIEP（B 不定），18 个传播模（`wg-square-1e6`） | 998,001 | 14,306,465 | 1.9 GiB | 5.35 s | 7.39 s | 不适用（B 不定） |
 
 | 问题 | 内存上限 | 线程 | 分解方式 | 峰值内存 | 求解时间 |
 |---|---:|---:|---|---:|---:|
-| `yee-pec-box-1e6` | 8 GiB | 16 | 外存 | 5.8 GiB | 41 s |
-| `yee-pec-box-1e6` | 8 GiB | 4 | 外存 | 5.6 GiB | 79 s |
+| `yee-pec-box-1e6` | 8 GiB | 16 | 外存 | 5.9 GiB | 122 s |
+| `yee-pec-box-1e6` | 8 GiB | 4 | 外存 | 5.6 GiB | 175 s |
 | `yee-pec-box-1e6` | 4 GiB | 16 | 拒绝运行（`out_of_memory_budget`） | 1.1 GiB | - |
-| `yee-pec-box-1e6` | 4 GiB | 4 | 拒绝运行（`out_of_memory_budget`） | 858 MiB | - |
-| `wg-square-1e6` | 8 GiB | 16 | 内存内 | 1.8 GiB | 5.83 s |
-| `wg-square-1e6` | 8 GiB | 4 | 内存内 | 1.8 GiB | 8.17 s |
-| `wg-square-1e6` | 4 GiB | 16 | 内存内 | 1.8 GiB | 5.83 s |
-| `wg-square-1e6` | 4 GiB | 4 | 内存内 | 1.8 GiB | 8.13 s |
+| `yee-pec-box-1e6` | 4 GiB | 4 | 拒绝运行（`out_of_memory_budget`） | 859 MiB | - |
+| `wg-square-1e6` | 8 GiB | 16 | 内存内 | 1.9 GiB | 5.35 s |
+| `wg-square-1e6` | 8 GiB | 4 | 内存内 | 1.8 GiB | 7.38 s |
+| `wg-square-1e6` | 4 GiB | 16 | 内存内 | 1.9 GiB | 5.34 s |
+| `wg-square-1e6` | 4 GiB | 4 | 内存内 | 1.8 GiB | 7.38 s |
