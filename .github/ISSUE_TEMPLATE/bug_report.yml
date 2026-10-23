@@ -27,7 +27,7 @@ body:
     attributes:
       label: 版本与构建
       description: |
-        粘贴 `hsolve --A x --version` 的输出（Python 接口用 `python -c "import hsolve; print(hsolve.build_info())"`），
+        粘贴 `hsolve --version` 的输出（Python 接口用 `python -c "import hsolve; print(hsolve.build_info())"`），
         并说明安装方式：容器镜像、Release 二进制包，或源码构建（预设 release / portable / debug，`HS_MUMPS` 的取值）。
       render: text
     validations:

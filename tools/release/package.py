@@ -351,7 +351,7 @@ def main(argv: list[str] | None = None) -> int:
     shutil.rmtree(stage_dir, ignore_errors=True)
     notes = stage(build, stage_dir, version, ns.allow_missing_legal)
     glibc = check_glibc(stage_dir, tuple(int(x) for x in ns.glibc_max.split(".")))
-    info = subprocess.run([str(stage_dir / "bin" / "hsolve"), "--A", "unused.npz", "--version"], capture_output=True,
+    info = subprocess.run([str(stage_dir / "bin" / "hsolve"), "--version"], capture_output=True,
                           text=True, env={"PATH": "/usr/bin:/bin"}).stdout.strip()
     solved, timing = smoke(stage_dir)
     # HSOLVE_COMMIT / SOURCE_DATE_EPOCH come from the caller where the tree has no .git (container builds).

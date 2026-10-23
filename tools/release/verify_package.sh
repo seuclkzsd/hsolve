@@ -43,7 +43,7 @@ pkg="$work/$name"
 
 echo "== $(uname -sm), $(ldd --version 2>&1 | head -1)"
 bare=(env -i PATH=/usr/bin:/bin HOME="$work" TMPDIR="$work" LANG=C)
-"${bare[@]}" "$pkg/bin/hsolve" --A unused.npz --version | head -1
+"${bare[@]}" "$pkg/bin/hsolve" --version | head -1
 if "${bare[@]}" ldd "$pkg/bin/hsolve" | grep -q "not found"; then
   "${bare[@]}" ldd "$pkg/bin/hsolve" >&2
   echo "verify_package: unresolved libraries" >&2

@@ -47,7 +47,7 @@ if [ -z "$cases" ]; then
   cases="$(cd "$root/examples/cases" && ls)"
 fi
 export OMP_NUM_THREADS="$threads" OPENBLAS_NUM_THREADS="$threads"  # as tools/run/guard.py does
-version="$("$hsolve" --A unused.npz --version 2>&1 || true)"  # the parser wants --A even here
+version="$("$hsolve" --version 2>&1 || true)"
 echo "${version%%$'\n'*}"
 failed=0
 for name in $cases; do

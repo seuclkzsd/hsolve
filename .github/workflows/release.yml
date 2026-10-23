@@ -172,7 +172,7 @@ jobs:
         run: |
           docker run --rm hsolve:test selfcheck
           docker run --rm hsolve:test demo --threads 4
-          docker run --rm hsolve:test --A unused.npz --version
+          docker run --rm hsolve:test --version
 
       - name: Log in to GHCR
         if: github.ref_type == 'tag'
