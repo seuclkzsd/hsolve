@@ -150,6 +150,23 @@ def test_packaging_a_build_twice_gives_the_same_archive(tmp_path):
     assert "success=yes" in info and "time" not in info
 
 
+def test_package_parses_ldd_of_old_and_new_glibc():
+    pkg = load("hsolve_package", ROOT / "tools" / "release" / "package.py")
+    old = """\tlinux-vdso.so.1 =>  (0x00007ffd4b5f2000)
+\tlibm.so.6 => /lib64/libm.so.6 (0x00007f2a1c000000)
+\tlibmissing.so.3 => not found
+\t/lib64/ld-linux-x86-64.so.2 (0x00007f2a1c400000)
+"""
+    new = """\tlinux-vdso.so.1 (0x00007ffd4b5f2000)
+\tlibm.so.6 => /lib/x86_64-linux-gnu/libm.so.6 (0x00007f2a1c000000)
+\t/lib64/ld-linux-x86-64.so.2 (0x00007f2a1c400000)
+"""
+    assert pkg.parse_ldd(old) == {"libm.so.6": "/lib64/libm.so.6", "libmissing.so.3": None,
+                                  "ld-linux-x86-64.so.2": "/lib64/ld-linux-x86-64.so.2"}
+    assert pkg.parse_ldd(new) == {"libm.so.6": "/lib/x86_64-linux-gnu/libm.so.6",
+                                  "ld-linux-x86-64.so.2": "/lib64/ld-linux-x86-64.so.2"}
+
+
 @pytest.mark.skipif(shutil.which("ldd") is None, reason="needs ldd")
 def test_package_resolves_libraries_like_the_loader():
     pkg = load("hsolve_package", ROOT / "tools" / "release" / "package.py")

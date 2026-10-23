@@ -91,17 +91,23 @@ def resolved_libs(elf: Path, env: dict[str, str] | None = None) -> dict[str, str
     else:
         cmd = [str(elf)]
         run_env["LD_TRACE_LOADED_OBJECTS"] = "1"
-    text = subprocess.run(cmd, env=run_env, capture_output=True, text=True).stdout
+    return parse_ldd(subprocess.run(cmd, env=run_env, capture_output=True, text=True).stdout)
+
+
+def parse_ldd(text: str) -> dict[str, str | None]:
+    """soname -> path (None: not found) from ldd / LD_TRACE_LOADED_OBJECTS output. The vDSO has no
+    file and is left out: glibc 2.17 prints it as "linux-vdso.so.1 =>  (0x...)", newer glibc as
+    "linux-vdso.so.1 (0x...)"; the loader's own line is "/lib64/ld-linux-x86-64.so.2 (0x...)"."""
     libs: dict[str, str | None] = {}
     for line in text.splitlines():
         line = line.strip()
         m = re.match(r"^(\S+) => (not found|(\S+) \(0x[0-9a-f]+\))$", line)
         if m:
             libs[m.group(1)] = m.group(3)
-        else:
-            m = re.match(r"^(\S+) \(0x[0-9a-f]+\)$", line)
-            if m:
-                libs[Path(m.group(1)).name] = m.group(1)
+            continue
+        m = re.match(r"^(/\S+) \(0x[0-9a-f]+\)$", line)
+        if m:
+            libs[Path(m.group(1)).name] = m.group(1)
     return libs
 
 
