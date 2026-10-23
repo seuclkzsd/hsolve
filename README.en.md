@@ -233,7 +233,13 @@ hsolve started as an entry for the COMAC enterprise topic "eigenvalues of indefi
 - The structure-recognition fast path (separable / Bloch-periodic curl-curl candidates) is off by default; none of the
   numbers above relies on it.
 - On constructed extreme stress inputs (3- to 25-fold eigenvalue clusters 2⁻²²–2⁻³² away from the shift, matrix scales
-  2^±16) the residual correction can fall short of the 1e-10 backward error or of the missing pairs: of 60 such inputs
-  of development stage P34 the 1.0 solver passes 27, and each of the other 33 reports failure (32 with
-  `success = false`, 1 over the 30 s limit) - none reports success with a wrong result. An improvement that passes all
-  60 has been validated in a prototype and is planned for 1.1 ([P34 record](results/p34_measurements.md)).
+  2^±16) the residual correction can fall short of the 1e-10 backward error or of the missing pairs. Development stage
+  P34 ran the 0.9.0 (P29) solver on 60 such inputs: 27 pass; of the other 33, 32 report `success = false` (exit code 1)
+  and 1 was stopped by the 30 s limit before writing a report; none reports success with a wrong result. 29 of those 32
+  reports still have `certificate.passed = true`: the certificate covers only the window it counted (bounded by the pairs
+  found), and in that window the inertia count equals the number of vectors found, but the residual acceptance failed -
+  28 returned fewer than the k pairs asked for and 10 have pairs with a backward error above `tol` (some both). Such a
+  result is not usable: `success` (exit code 0) decides, not the certificate alone. 1.0 was not re-run on these 60
+  inputs; its residual-correction code is that of 0.9.0 (`src/driver/definite.cpp`; the P34 patch applies to the 1.0
+  sources unchanged). An improvement that passes all 60 has been validated in a prototype and is planned for 1.1
+  ([P34 record](results/p34_measurements.md)).
