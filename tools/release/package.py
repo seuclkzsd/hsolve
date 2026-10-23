@@ -57,6 +57,22 @@ def run(cmd: list[str], **kw) -> str:
     return subprocess.run(cmd, check=True, capture_output=True, text=True, **kw).stdout
 
 
+def default_version(project_version: str, root: Path = ROOT) -> str:
+    """The package version when --version is not given: the tag's for a tagged commit (v1.0.0 ->
+    1.0.0; a later commit 1.0.0-3-gabc1234), else "<CMake project version>-dev.<sha7>" like
+    tools/release/release_info.py's for an untagged build ("-dirty" appended with local changes);
+    the CMake version alone outside a git work tree. cwd, not git -C (git 1.8.3 on CentOS 7)."""
+    try:
+        return run(["git", "describe", "--tags", "--dirty"], cwd=root).strip().lstrip("v")
+    except (OSError, subprocess.CalledProcessError):
+        pass  # no tag (or no git)
+    try:
+        sha = run(["git", "describe", "--always", "--dirty", "--abbrev=7"], cwd=root).strip()
+    except (OSError, subprocess.CalledProcessError):
+        return project_version
+    return f"{project_version}-dev.{sha}"
+
+
 def cmake_cache(build: Path) -> dict[str, str]:
     out = {}
     for line in (build / "CMakeCache.txt").read_text().splitlines():
@@ -317,7 +333,8 @@ def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--build", type=Path, default=ROOT / "build" / "release")
     ap.add_argument("--out", type=Path, default=ROOT / "build" / "package")
-    ap.add_argument("--version", help="package version (default: git describe, else the CMake project version)")
+    ap.add_argument("--version", help="package version (default: the tag's version for a tagged commit, else "
+                                      "<CMake project version>-dev.<commit>)")
     ap.add_argument("--glibc-max", default="2.17")
     ap.add_argument("--allow-missing-legal", action="store_true", help="test packages without LICENSE / NOTICE")
     ns = ap.parse_args(argv)
@@ -327,12 +344,7 @@ def main(argv: list[str] | None = None) -> int:
         raise SystemExit(f"package: {build} is a -march=native build; package the release preset")
     if subprocess.run([sys.executable, str(ROOT / "tools/release/check_isa.py"), str(build)]).returncode != 0:
         raise SystemExit("package: the build is not portable (tools/release/check_isa.py)")
-    version = ns.version
-    if not version:
-        try:
-            version = run(["git", "describe", "--tags", "--always", "--dirty"], cwd=ROOT).strip().lstrip("v")
-        except (OSError, subprocess.CalledProcessError):
-            version = cache.get("CMAKE_PROJECT_VERSION", "0.0.0")
+    version = ns.version or default_version(cache.get("CMAKE_PROJECT_VERSION", "0.0.0"))
     name = f"hsolve-{version}-linux-x86_64"
     ns.out.mkdir(parents=True, exist_ok=True)
     stage_dir = ns.out / name

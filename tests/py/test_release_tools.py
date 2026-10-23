@@ -96,6 +96,27 @@ def test_package_archive_is_reproducible_and_owned_by_root(tmp_path):
     assert members[-1].mode & 0o111
 
 
+@pytest.mark.skipif(shutil.which("git") is None, reason="needs git")
+def test_package_version_without_a_tag_is_the_cmake_version_dev_commit(tmp_path):
+    """Untagged builds are named <X.Y.Z>-dev.<sha7> like release_info.py's, not after the bare commit
+    id; a tag gives its version; outside a git work tree the CMake version alone."""
+    pkg = load("hsolve_package", ROOT / "tools" / "release" / "package.py")
+    assert pkg.default_version("1.2.3", tmp_path) == "1.2.3"  # no git work tree
+    git = ["git", "-c", "user.name=t", "-c", "user.email=t@example.org"]
+    subprocess.run(["git", "init", "-q", str(tmp_path)], check=True)
+    (tmp_path / "a.txt").write_text("a\n")
+    for cmd in (["add", "a.txt"], ["commit", "-q", "-m", "a"]):
+        subprocess.run(git + cmd, cwd=tmp_path, check=True)
+    sha = subprocess.run(["git", "rev-parse", "HEAD"], cwd=tmp_path, check=True, capture_output=True,
+                         text=True).stdout.strip()
+    assert pkg.default_version("1.2.3", tmp_path) == f"1.2.3-dev.{sha[:7]}"
+    (tmp_path / "a.txt").write_text("b\n")
+    assert pkg.default_version("1.2.3", tmp_path) == f"1.2.3-dev.{sha[:7]}-dirty"
+    subprocess.run(git + ["checkout", "-q", "a.txt"], cwd=tmp_path, check=True)
+    subprocess.run(git + ["tag", "v1.2.3"], cwd=tmp_path, check=True)
+    assert pkg.default_version("1.2.3", tmp_path) == "1.2.3"
+
+
 def test_build_info_records_the_smoke_solve_without_time_or_memory():
     pkg = load("hsolve_package", ROOT / "tools" / "release" / "package.py")
     report = {"n": 289, "problem": "generalized_indefinite", "pairs": [{}] * 18, "success": True,
