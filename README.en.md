@@ -164,7 +164,7 @@ All 10 modes, mode pictures and the command to reproduce them (`tools/showcase/r
 |---|---|---|
 | Threads (OpenMP) | all numerical work: ordering, MUMPS factorization and solves, sparse kernels, orthogonalization | 1 → 16 threads: 3.6–4.5× on 3-D 1e5 problems, 2.3–2.7× on 2-D and complex ones ([P9 record](results/p9_measurements.md) §5) |
 | Processes (`hsolve-mpirun`) | one helper process per socket: the certificate's two counts at once, spectrum slices spread over the sockets | two sockets (8 + 8 cores) against one process on the same cores: 1.09–1.11× at 1e6, 1.15–1.74× on windows with several slices; no gain on one socket, so not the default ([P10 record](results/p10_mpi.md)) |
-| GPU (`--gpu auto`) | large dense updates of 1e6-size factorizations (FP64 cuBLAS, loaded at run time) | one V100: 1.06–1.07× per whole run at 1e6; below 5e5 nothing is offloaded and the CPU path runs ([P10 record](results/p10_gpu.md)) |
+| GPU (`--gpu auto`) | large dense updates of 1e6-size factorizations (FP64 cuBLAS, loaded at run time) | one V100: 1.06–1.07× per whole run at 1e6. `auto` offloads only factorizations whose MUMPS estimate is ≥ 3e12 flops (the 1e6 cases: 5.4–6.7e12), decided by flops, not by order; the 5 measured cases with n = 6.6e4–5.1e5 are all below it, offload nothing and run the CPU path ([P10 record](results/p10_gpu.md)) |
 
 Without MPI or a GPU the single-process CPU path is the default. Multi-process runs and GPU offload keep the
 completeness certificate's conditions and guarantees, and their results pass the same residual acceptance. In the
