@@ -30,7 +30,12 @@ PEC 立方腔（n = 92,256）求 21 个特征值、目标集里有 3、6、12 �
 | 开源治理 | Apache-2.0；构建与默认运行只依赖开源组件，逐项登记（可选的 GPU 卸载在运行时加载用户已安装的 CUDA 库，NVIDIA 许可，不随包分发）；CI、带 SHA256SUMS 的 Release；贡献、治理与安全策略 | [NOTICE](NOTICE) · [CONTRIBUTING](CONTRIBUTING.md) · [GOVERNANCE](GOVERNANCE.md) |
 
 测试条件：Intel Xeon Silver 4314 节点（2 × 16 核），每次运行绑定一个 socket 的 16 个物理核、内存上限 32 GiB，同一时刻
-只有一个计时运行；hsolve 求解器源码提交 b9aadc4，SLEPc/PETSc 3.26.0 + MUMPS 5.8.2；每个场景 3 次交错重复，取中位数。
+只有一个计时运行；SLEPc/PETSc 3.26.0 + MUMPS 5.8.2；每个场景 3 次交错重复，取中位数。本页困难场景对比的 hsolve 数字
+（上表与下文的时间、内存、后向误差）测于 0.9.0 的求解器（源码提交 b9aadc4），按测量值保留。1.0.0 的可移植构建（源码
+提交 47d03dc，默认计算特征向量子空间夹角界）在同样条件下重测了全部 54 次 hsolve 运行：54 次都通过独立评测，证书结论
+不变，各场景中位时间是表中的 0.913–1.057 倍（中位数 1.004），最大后向误差 6.1e-11；慢 5% 以上的只有零附近 1e4 个
+特征值的场景（0.798 → 0.843 s，+5.7%，其中子空间夹角界占 0.036 s）。SLEPc 没有重测，按 1.0.0 的 hsolve 时间
+计，对逐例调优 SLEPc 的时间比为 0.61–3.22，对常规用法为 1.30–4.19（[1.0.0 重测记录](results/showcase/recheck-1.0.0.md)）。
 原始记录在 [`results/showcase/`](results/showcase/)，表格与图由 [`tools/showcase/`](tools/showcase/) 生成。
 
 ## 快速开始
