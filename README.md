@@ -5,7 +5,7 @@
 [![Release](https://img.shields.io/github/v/release/seuclkzsd/hsolve)](https://github.com/seuclkzsd/hsolve/releases)
 [![Docs](https://github.com/seuclkzsd/hsolve/actions/workflows/pages.yml/badge.svg)](https://seuclkzsd.github.io/hsolve/)
 
-[文档站](https://seuclkzsd.github.io/hsolve/) · [演示视频]({{TODO:演示视频链接}}) · [下载 Release](https://github.com/seuclkzsd/hsolve/releases) · [English](README.en.md)
+[文档站](https://seuclkzsd.github.io/hsolve/) · [演示视频](https://www.bilibili.com/video/BV1RCn76bEPP/) · [下载 Release](https://github.com/seuclkzsd/hsolve/releases) · [English](README.en.md)
 
 ![左：hsolve 求出的金属谐振腔与方波导的模式场；右：18 个困难场景中每次重复都通过独立评测的场景数，hsolve 18/18，SLEPc 常规用法 6/18，逐例调优 12/18](docs/images/hero.png)
 

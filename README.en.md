@@ -5,7 +5,7 @@
 [![Release](https://img.shields.io/github/v/release/seuclkzsd/hsolve)](https://github.com/seuclkzsd/hsolve/releases)
 [![Docs](https://github.com/seuclkzsd/hsolve/actions/workflows/pages.yml/badge.svg)](https://seuclkzsd.github.io/hsolve/)
 
-[Documentation (Chinese)](https://seuclkzsd.github.io/hsolve/) · [Demo video]({{TODO:demo video link}}) · [Releases](https://github.com/seuclkzsd/hsolve/releases) · [中文](README.md)
+[Documentation (Chinese)](https://seuclkzsd.github.io/hsolve/) · [Demo video (Chinese)](https://www.bilibili.com/video/BV1RCn76bEPP/) · [Releases](https://github.com/seuclkzsd/hsolve/releases) · [中文](README.md)
 
 > This is a translation of [README.md](README.md); the Chinese version is authoritative. The full documentation is
 > written in Chinese.

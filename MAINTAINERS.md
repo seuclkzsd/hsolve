@@ -18,6 +18,6 @@
 
 | 维护者 | 继任联系人 |
 |---|---|
-| @seuclkzsd | {{TODO:由维护者指定}} |
+| @seuclkzsd | 暂未指定：目前是单维护者阶段，第二维护者产生后 30 天内在此补上 |
 
 代码所有权的自动评审分配见 [`.github/CODEOWNERS`](.github/CODEOWNERS)。

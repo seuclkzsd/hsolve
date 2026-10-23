@@ -40,7 +40,7 @@
 
 ## 监督
 
-辱骂、骚扰或其他不可接受的行为可通过电子邮件 {{TODO:行为准则举报邮箱（由维护者确定）}} 向负责监督的社区领袖（[MAINTAINERS.md](MAINTAINERS.md) 中的维护者）报告。所有投诉都将得到及时和公平的审查和调查。
+辱骂、骚扰或其他不可接受的行为可私下报告给负责监督的社区领袖（[MAINTAINERS.md](MAINTAINERS.md) 中的维护者，目前为 @seuclkzsd）：通过 GitHub 的私密报告通道 <https://github.com/seuclkzsd/hsolve/security/advisories/new> 提交（标题注明「行为准则」），或用 GitHub 的「Report content」举报具体的评论、Issue 或 Pull Request。请不要在公开讨论中报告。所有投诉都将得到及时和公平的审查和调查。
 
 所有社区领袖都有义务尊重任何事件报告者的隐私和安全。
 
