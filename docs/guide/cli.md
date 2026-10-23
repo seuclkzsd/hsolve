@@ -56,7 +56,7 @@ hsolve --A A.npz --B B.npz --config config.json --out out/         # 目标与�
 | `--log FILE` | — | 把 JSON-lines 事件日志写到 FILE（分析、排序决策、分解、计数、每次 Krylov 运行、证书各轮） |
 | `-q` / `-v` | — | 不打印摘要 / 打印调试信息 |
 | `--version` | — | 打印版本与构建信息（编译选项、所用的 MUMPS 及其块参数）后退出，不需要 `--A` |
-| `--subspace-bound auto\|on\|off` | auto | 特征向量子空间夹角的后验上界（Davis–Kahan），证书通过时写入报告的 `subspace` 与 `pairs[].subspace_sin_bound`；on 在廉价证明不适用时多做一次惯性计数，使界严格成立 |
+| `--subspace-bound auto\|on\|off` | auto | 特征向量子空间夹角的后验上界（Davis–Kahan），证书通过时写入报告的 `subspace` 与 `pairs[].subspace_sin_bound`。auto：一般 B 的 λ_min(B) 只用廉价的证明（对角、Gershgorin、不完全 Cholesky），都不适用时用估计（`subspace.rigorous = false`）；on：廉价证明都不适用时再对 B − μ·diag(B) 做惯性计数（一到两次 B 的分解）来证明 λ_min(B)，计数证明不了时仍为估计，`subspace.note` 写明计数结果；off：不计算。计算时间计入 `time_verify_s`（[FORMATS](../FORMATS.md) §2） |
 | `--secure` | 关闭 | 数据保护模式：报告与日志不含文件路径，输入按形状、非零元数与 SHA-256 记录，输出文件权限 0600（[FORMATS](../FORMATS.md) §5） |
 | `--structure-candidates off\|auto` | off | 实验性的结构识别快速路径，见下文 |
 
