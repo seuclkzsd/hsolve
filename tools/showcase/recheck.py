@@ -79,7 +79,7 @@ def certificate_summary(runs: list[dict[str, Any]]) -> dict[str, Any]:
                       key=str)
     notes = sorted({c.get("note") for c in certs if not c.get("performed") and c.get("note")})
     if performed == 0:
-        text = "not performed" + (f" ({'; '.join(notes)})" if notes else "")
+        text = "not performed" + (f": {'; '.join(notes)}" if notes else "")
     else:
         parts = [f"{m}: inertia {ci} = found {cf}" if ci == cf else f"{m}: inertia {ci} != found {cf}"
                  for m, ci, cf, _, _ in outcomes]
@@ -186,6 +186,7 @@ def build(new_dir: Path, base_dir: Path = BASE_DIR, slower: float = SLOWER) -> d
                         "faster": [r["scenario"] for r in rows if r["speed"] == "faster"],
                         "certificate_changed": [r["scenario"] for r in rows if not r["certificate_same"]],
                         "scenario_changed": [r["scenario"] for r in rows if not r["same_scenario"]],
+                        "other_host": [r["scenario"] for r in rows if r["host"] != r["base_host"]],
                         "fast_path_used": [r["scenario"] for r in rows if not r["fast_path_off"]],
                         "max_backward_error": max((r["max_backward_error"] for r in rows
                                                    if r["max_backward_error"] is not None), default=None),
@@ -201,8 +202,12 @@ def _t(x: float | None) -> str:
     return f"{x:.3g}" if abs(x) < 10 else f"{x:.1f}"
 
 
-def _d(x: float | None) -> str:
-    return "-" if x is None else f"{x:+.3f}"
+def _r(x: float | None) -> str:
+    return "-" if x is None else f"{x:.3f}"
+
+
+def _n(x: float | None) -> str:
+    return "-" if x is None else f"{x:.0f}"
 
 
 def _commit(c: Any) -> str:
@@ -243,8 +248,8 @@ def render(doc: dict[str, Any]) -> str:
            "",
            f"- Scenarios valid in every repetition: {s['valid_every_rep']}/{s['scenarios']} "
            f"({s['valid_runs']}/{s['runs']} runs).",
-           f"- Median-time ratio now / committed: {_t(s['ratio_min'])} to {_t(s['ratio_max'])} "
-           f"(median {_t(s['ratio_median'])}).",
+           f"- Median-time ratio now / committed: {_r(s['ratio_min'])} to {_r(s['ratio_max'])} "
+           f"(median {_r(s['ratio_median'])}).",
            f"- Slower by more than {pct}: {', '.join(s['slower']) or 'none'}.",
            f"- Faster by more than {pct}: {', '.join(s['faster']) or 'none'}.",
            f"- Certificate outcome changed: {', '.join(s['certificate_changed']) or 'none'}; "
@@ -253,6 +258,10 @@ def render(doc: dict[str, Any]) -> str:
            f"- Largest backward error now: {s['max_backward_error']:.2g} (tolerance 1e-10)."
            if s["max_backward_error"] is not None else "- Largest backward error now: -.",
            ]
+    if s["other_host"]:
+        hosts = sorted({f"{r['base_host']} -> {r['host']}" for r in doc["rows"] if r["scenario"] in s["other_host"]})
+        out.append(f"- Committed on another node (the nodes are identical): {', '.join(s['other_host'])} "
+                   f"({', '.join(hosts)}).")
     if doc["not_remeasured"]:
         out.append(f"- Not re-measured: {', '.join(doc['not_remeasured'])}.")
     out += ["",
@@ -283,8 +292,8 @@ def render(doc: dict[str, Any]) -> str:
         def pair(k: str) -> str:
             return f"{_t(p[k]['base'])} -> {_t(p[k]['new'])}"
         ver = f"{pair('verify_s')} ({_t(p['subspace_s']['new'])})"
-        fac = f"{_t(p['factorizations']['base'])} -> {_t(p['factorizations']['new'])}"
-        sol = f"{_t(p['solves']['base'])} -> {_t(p['solves']['new'])}"
+        fac = f"{_n(p['factorizations']['base'])} -> {_n(p['factorizations']['new'])}"
+        sol = f"{_n(p['solves']['base'])} -> {_n(p['solves']['new'])}"
         out.append(f"| `{r['scenario']}` | {pair('setup_factor_s')} | {pair('iterate_s')} | {ver} | "
                    f"{pair('certificate_s')} | {fac} | {sol} |")
     bad = [r for r in doc["rows"] if r["invalid"]]

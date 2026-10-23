@@ -101,7 +101,7 @@ def test_rows_compare_validity_time_phases_and_certificate(dirs):
     s = doc["summary"]
     assert (s["scenarios"], s["valid_every_rep"], s["runs"], s["valid_runs"]) == (3, 2, 9, 8)
     assert s["slower"] == ["b"] and s["faster"] == ["c"] and s["certificate_changed"] == ["c"]
-    assert doc["not_remeasured"] == ["d"]
+    assert doc["not_remeasured"] == ["d"] and s["other_host"] == []
     assert doc["conditions"]["source_commit"] == "47d03dc" and doc["base_conditions"]["source_commit"] == "b9aadc4"
 
 
@@ -110,7 +110,7 @@ def test_certificate_not_performed_names_the_reason():
     runs = [_run(r, 1.0, cert={"performed": False, "passed": False, "method": "none", "count_inertia": -1,
                                "count_found": -1, "note": note}) for r in range(3)]
     s = recheck.certificate_summary(runs)
-    assert (s["performed"], s["passed"]) == (0, 0) and s["text"] == f"not performed ({note})"
+    assert (s["performed"], s["passed"]) == (0, 0) and s["text"] == f"not performed: {note}"
 
 
 def test_a_changed_scenario_definition_is_flagged(dirs):
@@ -129,7 +129,8 @@ def test_written_files_and_check(dirs, capsys):
     assert js["summary"]["slower"] == ["b"]
     assert "| `b` | case-x, 1,000 | 3/3 | 1.4 | 1 | **1.400** (slower; iterate_s grew) |" in md
     assert "| `c` | case-x, 1,000 | 2/3 **INVALID** |" in md and "- `c` rep 1: missed;" in md
-    assert "Not re-measured: d." in md
+    assert "Not re-measured: d." in md and "| `b` | 0.3 -> 0.22 | 0.4 -> 0.8 |" in md
+    assert "| 2 -> 3 | 100 -> 150 |" in md and "Committed on another node" not in md
     assert recheck.main(["--new", str(new), "--base", str(base), "--check"]) == 0
     (new.parent / "recheck.md").write_text(md + "edited\n")
     assert recheck.main(["--new", str(new), "--base", str(base), "--check"]) == 1
