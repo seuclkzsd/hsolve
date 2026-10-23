@@ -9,7 +9,7 @@
 
 ## [未发布]
 
-## [1.0.0] - {{TODO:发布日期}}
+## [1.0.0] - 2026-10-23
 
 首个正式版本：在 0.9.0 的求解器之上整理为开源项目。
 
@@ -23,14 +23,37 @@
   算法原理、并行方案、评测与对比、设计文档、开发者指南、研发记录、路线图与本更新日志。
 - SLEPc 对照基线的环境：发布的对比所用的精确包列表（`env/slepc-baseline-real.explicit.txt`、
   `env/slepc-baseline-complex.explicit.txt`）与在其它机器上求解同样版本的 `env/slepc-baseline.yml`。
-- {{TODO:rb-eng 的条目：CI 工作流、容器镜像、Release 二进制包与 SHA256SUMS}}
-- {{TODO:rb-evidence 的条目：困难场景对比与展示页、原始数据与生成表格的脚本}}
+- 特征向量子空间夹角的后验上界（Davis–Kahan sinΘ）：HEP/GHEP 的证书通过时，报告 `subspace` 与
+  `pairs[].subspace_sin_bound` 给出每个返回特征对所在簇的上界（配置 `subspace_bound`、`--subspace-bound`，
+  [FORMATS](docs/FORMATS.md) §2–3；实测松紧见 `results/subspace_bound.md`）。
+- 数据保护模式 `--secure`（配置 `"secure": true`）：报告与事件日志不含文件路径，输入按形状、非零元数与 SHA-256
+  记录，输出文件以 0600 权限创建；[FORMATS](docs/FORMATS.md) §5 列出读写的文件、启动的进程、读取的环境变量，
+  不联网。
+- 持续集成 `.github/workflows/ci.yml`：运行 `tools/dev/ci.sh`（`-Werror` 可移植构建、指令集检查、AVX-512 与模拟
+  AVX2 两种 CPU 下的 ctest、pytest、示例演示与打包），本地可原样复跑。
+- 发布流水线 `.github/workflows/release.yml`（`v*` tag）：容器镜像 `ghcr.io/seuclkzsd/hsolve`、可重定位的二进制包
+  `hsolve-<版本>-linux-x86_64.tar.gz`（glibc ≥ 2.17，发布前在 CentOS 7、Debian 12、Ubuntu 24.04 的干净容器中检查）
+  与 `SHA256SUMS`；`Dockerfile`、`tools/release/`。
+- `examples/`：6 个带参考谱的示例（重特征值、σ 贴近特征值、低频零空间、50 GHz 方波导、复厄密 Bloch 胞元、区间
+  切片），`scripts/demo.sh` 逐个求解并用独立评测器复核；`docs/INSTALL.md`：三种安装方式、自检与实测的资源需求。
+- 困难场景对比：18 个场景、162 次运行，hsolve 与 SLEPc（常规用法与逐例调优）同条件对比，全部由独立评测器判定；
+  物理场景页（谐振腔频率、方波导传播常数与解析解对照，模式场图）。原始记录在 `results/showcase/`，表格与图由
+  `tools/showcase/` 生成。
 
 ### 变更
 
+- 默认构建改为可移植的 x86-64 基线（SIMD 内核运行时按 CPUID 选择），实测与 `-march=native` 构建的时间之比为
+  1.001（几何平均，`results/portable-vs-native/`）；`native` 预设改为可选。
 - 结构识别快速路径（0.9.0 引入的可分离笛卡尔与 Bloch 周期 curl-curl 候选，`src/eigen/separable_*`）保留，但默认关闭；
-  文档与 README 中的性能数字都不依赖它。{{TODO:rb-features 的开关名与说明}}
+  文档与 README 中的性能数字都不依赖它。开启：配置 `"structure_candidates": "auto"` 或 `--structure-candidates auto`
+  （[FORMATS](docs/FORMATS.md) §2），开启后最终残差与完备性证书照常执行。
 - README 改写为面向用户的首页（中文，另有英文版 `README.en.md`）；仓库地址改为 <https://github.com/seuclkzsd/hsolve>。
+
+### 修复
+
+- 完备性证书：恰好落在目标窗口端点附近（窗口外）的特征对，只有在端点 ±2δ 处的惯性计数与端点计数一致时才计入，
+  窗口外的真特征值不会再顶替窗口内漏掉的那个（[DESIGN](docs/DESIGN.md) §3.6-8b，[FORMATS](docs/FORMATS.md) §3）。
+- 可移植构建下的 4 个测试失败（窗口端点上的特征对按惯性计数归属，平台相关的逐位参考与舍入假设）。
 
 ### 移除
 

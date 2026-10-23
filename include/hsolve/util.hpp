@@ -120,7 +120,7 @@ class Sha256 {
 /// SHA-256 of a whole file (read in 1 MiB chunks); throws hs::Error(Io) when it cannot be read.
 std::string file_sha256(const std::string& path);
 
-/// Library version string, e.g. "0.1.0".
+/// Library version string, e.g. "1.0.0".
 const char* version();
 /// Build description: compiler, flags, MUMPS/BLAS versions (for reports).
 std::string build_info();

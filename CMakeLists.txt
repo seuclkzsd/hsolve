@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(hsolve VERSION 0.1.0 DESCRIPTION "Sparse Hermitian (indefinite) eigensolver" LANGUAGES C CXX)
+project(hsolve VERSION 1.0.0 DESCRIPTION "Sparse Hermitian (indefinite) eigensolver" LANGUAGES C CXX)
 
 # Instruction set: OFF (default) compiles for the compiler's x86-64 baseline, so that a binary runs
 # on any x86-64 CPU; the hot SIMD kernels (src/sparse/kernels.cpp, src/blas) carry their AVX-512 /

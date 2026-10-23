@@ -447,7 +447,7 @@ def default_config() -> dict:
 
 
 def version() -> str:
-    """hsolve library version, e.g. '0.1.0'."""
+    """hsolve library version, e.g. '1.0.0'."""
     return _hsolve.version()
 
 

@@ -18,7 +18,8 @@ url: "https://seuclkzsd.github.io/hsolve/"
 license: Apache-2.0
 # The version and date-released follow CMakeLists.txt project(VERSION) and the CHANGELOG section of the
 # release (GOVERNANCE.md, release rules); both are set when the release is tagged.
-version: "{{TODO:release version = CMakeLists.txt project(VERSION) = CHANGELOG}}"
+version: "1.0.0"
+date-released: "2026-10-23"
 keywords:
   - eigensolver
   - sparse matrices
