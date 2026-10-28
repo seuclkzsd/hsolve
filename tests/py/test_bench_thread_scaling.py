@@ -249,3 +249,22 @@ def test_table_slepc_rows(tmp_path: Path):
     md = (tmp_path / "t.md").read_text()
     assert "*slepc.tuned* (SLEPc 1x1 eps_ncv=4k; 2x8 eps_ncv=4k; time log_view setup+solve+vectors)" in md
     assert "SLEPc / hsolve default at the same T: T = 1: 0.80, T = 16: 1.60" in md
+
+
+def test_table_factor_entries_from_the_estimate_and_the_rate(tmp_path: Path):
+    # 1.0.0 reports factor_stats.factor_entries = 0 and the analysis estimate; the rate is the
+    # factorizations x the analysed flops over the factorization + certificate phases.
+    rd = tmp_path / "T"
+    rd.mkdir()
+    for t, total in ((1, 60.0), (16, 10.0)):
+        write_run(rd, "c", t, 0, total, factorizations=3)
+        doc = report(0.0, 0.5 * total, 0.3 * total, 0.0, 0.2 * total, 0.1 * total, 0.4 * total, 0.2 * total)
+        doc["factor_stats"].update(factor_entries=0, estimate={"factor_entries": 500, "flops": 2e12})
+        (rd / "c" / f"t{t}-r0" / "report.json").write_text(json.dumps(doc))
+    out = tmp_path / "t.json"
+    assert ts.main(["table", str(rd), "--json", str(out), "--md", str(tmp_path / "t.md")]) == 0
+    rows = {r["threads"]: r for r in json.loads(out.read_text())["cases"][0]["rows"]}
+    assert rows[1]["factor_entries"] == 500
+    assert rows[1]["factor_gflops"] == pytest.approx(3 * 2e12 / (0.6 * 60.0) / 1e9)
+    assert rows[16]["factor_gflops"] == pytest.approx(1000.0)
+    assert "| ND | 500 | 1/1 | 1.00 | 1000.0 |" in (tmp_path / "t.md").read_text()

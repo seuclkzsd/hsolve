@@ -74,8 +74,11 @@ results/p9_measurements.md §5).
                           counts, so it is not used)
            rest           time_setup_s + time_verify_s
          the ordering factorized (factor_options.ordering: 0 AMD, 3 SCOTCH, 4 PORD, 5 METIS, 10 own
-         nested dissection; the adaptive ordering's cost model depends on the thread count) and the
-         main factor's entries (factor_stats.factor_entries; '-' where the runs differ). The table
+         nested dissection; the adaptive ordering's cost model depends on the thread count), the
+         main factor's entries (factor_stats.factor_entries, else its analysis estimate; '-' where
+         the runs differ) and the factorization rate (the report's factorizations, inertia counts
+         included, x the analysed flops factor_stats.estimate.flops over the factorization +
+         certificate phases, GFlop/s; the median over the valid runs). The table
          reads every run's report.json again, so it applies this split to older raw runs too. A run
          is valid as in ab_cases.py (exit 0, not killed, success claimed, tools/eval pass); a speedup
          is given only when every run of both rows was valid.
@@ -244,8 +247,16 @@ def ordering(out: Path) -> str:
 
 
 def factor_entries(out: Path) -> int | None:
-    """The main factor's entries (report factor_stats.factor_entries)."""
-    return (json.loads((out / "report.json").read_text()).get("factor_stats") or {}).get("factor_entries")
+    """The main factor's entries (report factor_stats.factor_entries, else the analysis estimate's -
+    MUMPS INFOG(20) - which identifies the pivot order as well)."""
+    fs = json.loads((out / "report.json").read_text()).get("factor_stats") or {}
+    return fs.get("factor_entries") or (fs.get("estimate") or {}).get("factor_entries")
+
+
+def factor_flops(out: Path) -> float | None:
+    """The main factorization's flops as analysed (report factor_stats.estimate.flops, MUMPS RINFOG(1))."""
+    fs = json.loads((out / "report.json").read_text()).get("factor_stats") or {}
+    return (fs.get("estimate") or {}).get("flops")
 
 
 def slepc_command(cfg: SlepcConfig, case_dir: Path, out: Path, log_view: Path, root: Path, env: str | Path,
@@ -372,6 +383,7 @@ def _reread(run_dirs: list[Path], r: dict[str, Any]) -> None:
         out = rd / r["case"] / f"{r['label']}-r{r['rep']}"
         if (out / "report.json").is_file():
             r["phases"], r["ordering"], r["factor_entries"] = phases(out), ordering(out), factor_entries(out)
+            r["factor_flops"] = factor_flops(out)
             return
 
 
@@ -389,6 +401,16 @@ def _invalid(run_dirs: list[Path], r: dict[str, Any]) -> str:
             + ("" if t is None else f", {t:.3f} s"))
 
 
+def _rate(runs: list[dict[str, Any]]) -> float | None:
+    """Median factorization rate in GFlop/s: the factorizations (the report's count, the inertia
+    counts included) x the analysed flops over the factorization + certificate phases; None where a
+    run lacks them (SLEPc runs, older raw runs)."""
+    rates = [r["factorizations"] * r["factor_flops"] / (r["phases"]["numeric"] + r["phases"]["certificate"]) / 1e9
+             for r in runs if r.get("factorizations") and r.get("factor_flops") and "phases" in r
+             and r["phases"]["numeric"] + r["phases"]["certificate"] > 0]
+    return _median(rates) if rates and len(rates) == len(runs) else None
+
+
 def _row(t: int, runs: list[dict[str, Any]], run_dirs: list[Path]) -> dict[str, Any]:
     for r in runs:
         _reread(run_dirs, r)
@@ -404,6 +426,7 @@ def _row(t: int, runs: list[dict[str, Any]], run_dirs: list[Path]) -> dict[str, 
             "block_size": "/".join(sorted({str(r.get("block_size")) for r in runs})),
             "ordering": "/".join(sorted({str(r.get("ordering", "-")) for r in runs})),
             "factor_entries": entries.pop() if len(entries) == 1 else None,
+            "factor_gflops": _rate(valid),
             "certificate_method": "/".join(sorted({str(r.get("certificate_method")) for r in runs})),
             "slepc_config": "/".join(sorted({r["slepc_config"] for r in runs if r.get("slepc_config")})) or None,
             "time_scope": "/".join(sorted({r.get("time_scope", "report time_total_s") for r in runs}))}
@@ -483,8 +506,8 @@ def markdown(cases: list[dict[str, Any]]) -> str:
                     f"certificate {rows[-1]['certificate_method']}, block p {rows[-1]['block_size']}")
             lines += [f"*{v['variant']}* ({head})", "",
                       "| threads | total s [min-max] | speedup | efficiency | vs fastest | analysis | factorization | "
-                      "solves | iteration | certificate | rest | ordering | factor entries | valid | peak GiB |",
-                      "|" + "---|" * 15]
+                      "solves | iteration | certificate | rest | ordering | factor entries | valid | peak GiB | "
+                      "factorization GFlop/s |", "|" + "---|" * 16]
             for r in rows:
                 p = r["phases"]
                 lines.append(f"| {r['threads']} | {f(r['time_s'], 3)} [{f(r['time_min'], 3)}-{f(r['time_max'], 3)}] | "
@@ -493,7 +516,7 @@ def markdown(cases: list[dict[str, Any]]) -> str:
                              f"{f(p['iterate_other'], 3)} | {f(p['certificate'], 3)} | {f(p['rest'], 3)} | "
                              f"{r['ordering']}{'' if r['same_ordering'] else ' *'} | "
                              f"{'-' if r['factor_entries'] is None else r['factor_entries']} | "
-                             f"{r['valid']}/{r['reps']} | {f(r['peak_rss_gib'])} |")
+                             f"{r['valid']}/{r['reps']} | {f(r['peak_rss_gib'])} | {f(r['factor_gflops'], 1)} |")
             bad = [f"T = {r['threads']} {x}" for r in rows for x in r["invalid"]]
             if bad:
                 lines += ["", "Not valid (not in the medians): " + "; ".join(bad)]
