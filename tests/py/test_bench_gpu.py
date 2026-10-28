@@ -65,6 +65,45 @@ def test_e2e_summary():
     assert "3/4" in auto and "| - |" in auto
 
 
+def test_e2e_phase_table():
+    def line(variant, rep, total, factor, cert, util=None, valid=True):
+        e = e2e_line("c", variant, rep, total, valid=valid)
+        e["times"] = {"time_total_s": total, "time_factor_s": factor, "time_certificate_s": cert}
+        e["peak_rss_gib"] = 10.0 if variant == "off" else 10.5
+        if util is not None:
+            e["smi"] = {"samples": 100, "util_mean": util, "mem_max_mib": 1500.0}
+        return e
+
+    lines = [line("off", r, 100.0 + r, 20.0, 60.0 + r, util=0.0) for r in range(3)]
+    lines += [line("auto", r, 90.0 + r, 18.0, 52.0 + r, util=10.0) for r in range(3)]
+    md = gpu_e2e.phase_table(lines)
+    auto = [ln for ln in md.splitlines() if ln.startswith("| c | auto")][0]
+    cells = [x.strip() for x in auto.split("|")[1:-1]]
+    # solver 91, factorization phases 18 + 53 = 71 (off: 20 + 61 = 81), rest 20, util 10% of 91 s
+    assert cells[2:] == ["3/3", "91.00", f"{101.0 / 91.0:.3f}", "71.00", f"{81.0 / 71.0:.3f}", "20.00", "10.50",
+                         "10.0", "9.1"]
+    off = [ln for ln in md.splitlines() if ln.startswith("| c | off")][0]
+    assert "| 3/3 | 101.00 | - | 81.00 | - |" in off
+    # an invalid run withholds both ratios; runs without samples show no utilization
+    lines.append(line("auto", 3, 70.0, 10.0, 40.0, valid=False))
+    auto = [ln for ln in gpu_e2e.phase_table(lines).splitlines() if ln.startswith("| c | auto")][0]
+    assert "| 3/4 | 91.00 | - | 71.00 | - |" in auto
+    assert gpu_e2e.phase_table([line("off", 0, 5.0, 1.0, 2.0)]).splitlines()[-1].endswith("| - | - |")
+
+
+def test_parse_smi():
+    r = gpu_e2e.parse_smi("10, 300\n30, 1300\n[N/A], 5\nnot a sample\n")
+    assert r == {"samples": 2, "util_mean": 20.0, "mem_max_mib": 1300.0}
+    assert gpu_e2e.parse_smi("") == {}
+
+
+def test_smi_sampler_without_nvidia_smi(monkeypatch):
+    monkeypatch.setenv("PATH", "/nonexistent")
+    with gpu_e2e.SmiSampler("7", 100) as s:
+        pass
+    assert s.result() == {}
+
+
 def test_gpu_slot_rejects_bad_arguments():
     script = REPO / "tools/bench/gpu_slot.sh"
     r = subprocess.run(["bash", str(script), "7", "60"], capture_output=True, text=True)
