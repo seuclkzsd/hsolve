@@ -683,6 +683,9 @@ def _presets() -> dict[str, Callable[[Path], Path]]:
     add("syn-mem27-46", make_memory_case, (46, 46, 46), 1, 0.02)
     add("syn-mem125-46", make_memory_case, (46, 46, 46), 2, 0.02)
     add("syn-mem27-100", make_memory_case, (100, 100, 100), 1, 0.02)
+    # n = 1481544: the larger 3-D case of results/p51_gpu.md (peak ~22 GiB; generate into node-local
+    # storage, not the shared home)
+    add("syn-mem27-114", make_memory_case, (114, 114, 114), 1, 0.02)
     return p
 
 
