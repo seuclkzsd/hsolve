@@ -198,3 +198,7 @@ def test_case_writers(tmp_path):
                                 "yee-photonic-spheres-1e4"}
     # the order-1e6 cavity of the showcase and results/p7_membudget.md: n = 1027733 unknowns
     assert yee.YeeGrid((92, 71, 54), (1.0, 0.75, 0.55)).edge_count == 1027733
+    # the same cavity at the intermediate orders of results/p51_mpi.md (multi-process windows)
+    assert yee.YeeGrid((62, 48, 36), (1.0, 0.75, 0.55)).edge_count == 307682
+    assert yee.YeeGrid((73, 56, 43), (1.0, 0.75, 0.55)).edge_count == 508254
+    assert {"yee-pec-box-3e5", "yee-pec-box-5e5"} <= set(yee.PRESETS)
