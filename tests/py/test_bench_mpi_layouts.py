@@ -124,13 +124,13 @@ def test_hsolve_table_uses_valid_runs_only():
     for rep, (t, ok) in enumerate([(10.0, True), (12.0, True), (1.0, False)]):
         out = f"/x/one-1x16-r{rep}"
         rows.append({"kind": "hsolve", "case": "c", "layout": "one:1x16", "rep": rep, "event": "guard", "out": out,
-                     "returncode": 0, "killed": None, "peak_rss_gib": 2.0,
+                     "returncode": 0, "killed": None, "peak_rss_gib": 2.0, "wall_s": t + 0.5,
                      "report": {"time_total_s": t, "time_factor_s": 1.0, "time_iterate_s": 2.0,
                                 "time_certificate_s": 3.0, "time_verify_s": 0.5, "time_setup_s": 0.5}})
         verdicts[out] = {"valid": ok}
         out2 = f"/x/two-1+2x8-r{rep}"
         rows.append({"kind": "hsolve", "case": "c", "layout": "two:1+2x8", "rep": rep, "event": "guard",
-                     "out": out2, "returncode": 0, "killed": None, "peak_rss_gib": 3.0,
+                     "out": out2, "returncode": 0, "killed": None, "peak_rss_gib": 3.0, "wall_s": 5.5 + 2.0 + rep,
                      "report": {"time_total_s": 5.5, "time_factor_s": 1.0, "time_iterate_s": 2.0,
                                 "time_certificate_s": 1.5, "time_verify_s": 0.5, "time_setup_s": 0.5}})
         verdicts[out2] = {"valid": True}
@@ -139,6 +139,7 @@ def test_hsolve_table_uses_valid_runs_only():
     assert base[2] == "2/3" and base[3].startswith("11.000")   # median of the two valid runs
     assert mpi[2] == "3/3" and mpi[4] == "2.00"                 # 11 / 5.5
     assert mpi[8] == "1.50"                                     # certificate phase
+    assert base[11] == "0.50" and mpi[11] == "3.00"             # wall - solver: median over the valid runs
 
 
 def test_cli_table_reads_the_campaign_files(tmp_path, capsys):

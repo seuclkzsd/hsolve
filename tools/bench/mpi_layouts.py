@@ -332,8 +332,10 @@ def hsolve_table(rows: list[dict[str, Any]], verdicts: dict[str, Any], base: str
     for r in rows:
         if r.get("event") == "guard" and r.get("out"):
             per.setdefault((r["case"], r["layout"]), []).append(r)
+    # wall - solver: the guard's wall time outside time_total_s (loading, writing, process and, for the
+    # multi-process mode, MPI start-up), median of the per-run differences
     lines = ["| case | layout | valid | total s | x vs base | wall s | factor s | iterate s | certificate s | "
-             "verify+setup s | peak GiB (tree / process peaks) |", "|" + "---|" * 11]
+             "verify+setup s | peak GiB (tree / process peaks) | wall - solver s |", "|" + "---|" * 12]
     for name in sorted({k[0] for k in per}):
         def med(lay: str, key: str) -> float | None:
             vals = [(e.get("report") or {}).get(key) for e in per.get((name, lay), [])
@@ -349,11 +351,15 @@ def hsolve_table(rows: list[dict[str, Any]], verdicts: dict[str, Any], base: str
             wall = _med([e.get("wall_s") for e, v in zip(es, valid) if v])
             tree = max((e.get("peak_sampled_gib") or 0.0 for e in es), default=0.0)
             sums = max((e.get("peak_rss_gib") or 0.0 for e in es), default=0.0)
+            outside = _med([e["wall_s"] - e["report"]["time_total_s"] for e, v in zip(es, valid)
+                            if v and e.get("wall_s") is not None
+                            and (e.get("report") or {}).get("time_total_s") is not None])
             lines.append(f"| {name} | {lay} | {sum(valid)}/{len(valid)} | {_span(tot)} | "
                          f"{'-' if not (mb and ml) else f'{mb / ml:.2f}'} | {wall or 0:.2f} | "
                          f"{med(lay, 'time_factor_s') or 0:.2f} | "
                          f"{med(lay, 'time_iterate_s') or 0:.2f} | {med(lay, 'time_certificate_s') or 0:.2f} | "
-                         f"{vs:.2f} | {tree:.1f} / {sums:.1f} |")
+                         f"{vs:.2f} | {tree:.1f} / {sums:.1f} | "
+                         f"{'-' if outside is None else f'{outside:.2f}'} |")
     return lines
 
 
