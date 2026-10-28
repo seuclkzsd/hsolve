@@ -5,6 +5,7 @@ bench table (one count, the pair of counts - the slower of two concurrent ones -
 solve; ratios to a base layout; a failed inertia check or run counts against "runs ok") and the
 hsolve table (valid runs only, phases). Synthetic JSON lines; no MUMPS, MPI or guard needed."""
 import json
+from pathlib import Path
 
 import pytest
 
@@ -17,6 +18,65 @@ def test_layouts_parse_and_reject():
     for bad in ("three:1x16", "one:4x4", "1x16"):
         with pytest.raises(SystemExit):
             mpi_layouts.parse_layouts(bad)
+    assert mpi_layouts.parse_layouts("one:1x1") == [("one", "1x1")]
+
+
+def test_set_replaces_config_keys_of_one_layout_only(tmp_path):
+    layouts = mpi_layouts.parse_layouts("one:1x1,one:1x16")
+    sets = mpi_layouts.parse_sets(['one:1x1={"ordering": 10}', 'one:1x1={"block_size": 4}'], layouts)
+    assert sets == {"one:1x1": {"ordering": 10, "block_size": 4}}
+    for bad in ('two:1x1={"ordering": 10}', "one:1x1", 'one:1x1=[1]', 'one:1x1={"target": {}}'):
+        with pytest.raises(SystemExit):
+            mpi_layouts.parse_sets([bad], layouts)
+    cdir = tmp_path / "data" / "cases" / "c"
+    cdir.mkdir(parents=True)
+    (cdir / "A.npz").write_bytes(b"")
+    (cdir / "config.json").write_text(json.dumps({"target": {"mode": "nearest", "sigma": 1.0, "k": 4},
+                                                  "tol": 1e-10, "ordering": 0}))
+    out = tmp_path / "runs" / "c" / "one-1x1-r0"
+    args = mpi_layouts.hsolve_args(tmp_path / "data", "c", out, {"mode": "interval", "lower": 0, "upper": 2},
+                                   sets["one:1x1"])
+    cfg = json.loads(Path(args[args.index("--config") + 1]).read_text())
+    assert cfg == {"target": {"mode": "interval", "lower": 0, "upper": 2}, "tol": 1e-10, "ordering": 10,
+                   "block_size": 4}
+    assert "--B" not in args
+    plain = mpi_layouts.hsolve_args(tmp_path / "data", "c", tmp_path / "runs" / "c" / "one-1x16-r0", None, None)
+    assert plain[plain.index("--config") + 1] == str(cdir / "config.json")   # the case's own config
+
+
+FAKE_HSOLVE = """#!/usr/bin/env bash
+cpus=$(awk '/^Cpus_allowed_list/ { print $2 }' /proc/self/status)
+echo "{\\"omp\\": \\"$OMP_NUM_THREADS\\", \\"allowed\\": \\"$cpus\\", \\"args\\": \\"$*\\"}"
+"""
+
+
+@pytest.mark.parametrize("split, want_cpus, want_threads", [("1x16", "all", "2"), ("1x8", "first", "1"),
+                                                             ("1x1", "first", "1")])
+def test_socket_run_places_the_single_process_splits(tmp_path, split, want_cpus, want_threads):
+    """mpi_socket_run.sh on two inherited CPUs, with a fake build/release/hsolve that prints its
+    cpuset and OMP_NUM_THREADS: 1x16 takes both, 1x8 and 1x1 the first one with one thread."""
+    import os
+    import shutil
+    import subprocess
+    allowed = sorted(os.sched_getaffinity(0))
+    if len(allowed) < 2 or shutil.which("taskset") is None:
+        pytest.skip("needs two CPUs and taskset")
+    two = allowed[:2]
+    (tmp_path / "tools/bench").mkdir(parents=True)
+    shutil.copy(Path(mpi_layouts.RUN), tmp_path / "tools/bench/mpi_socket_run.sh")
+    exe = tmp_path / "build/release/hsolve"
+    exe.parent.mkdir(parents=True)
+    exe.write_text(FAKE_HSOLVE)
+    exe.chmod(0o755)
+    cmd = ["taskset", "-c", ",".join(map(str, two)), "bash", str(tmp_path / "tools/bench/mpi_socket_run.sh"),
+           split, "hsolve", "--A", "a.npz"]
+    out = subprocess.run(cmd, capture_output=True, text=True, check=True).stdout
+    d = json.loads(out.strip().splitlines()[-1])
+    assert d["omp"] == want_threads and d["args"] == f"--A a.npz --threads {want_threads}"
+    if want_cpus == "first":
+        assert d["allowed"] == str(two[0]) and d["cores"] == str(two[0])
+    else:   # unbound inside the inherited CPUs
+        assert d["cores"] == f"{two[0]},{two[1]}" and d["allowed"] != str(two[0])
 
 
 def _bench_rows(case, lay, rep, procs, count, factor, solve, ok=True):

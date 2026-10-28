@@ -10,17 +10,21 @@ Each (repetition, case, layout) is ONE top-level guard call - `guard.py --exclus
              two = --two-cores (default 8-15,16-23: 8 cores of each socket) - the guard's busy check
              covers them, so the node's lane (8-15) must be idle: build on 0-7 (HS_CORES) meanwhile;
   SPLIT      1x16, 1x16i (numactl --interleave=all), 1x8 (first half, the rest of the cores idle),
-             2x8 (two independent processes, KIND bench), 2x8m (one MPI job of two ranks).
+             1x1 (one thread on the first core, the rest idle), 2x8 (two independent processes, KIND
+             bench), 2x8m (one MPI job of two ranks).
 KIND bench runs build/mpi/seq_factor_bench (mpi_factor_bench for 2x8m) on a K(sigma) dump with a
 fixed pivot order (--kdir: <case>.K.bin from tools/bench/mpi_dump_kernel.py, its .json for the exact
 inertia, <case>.perm: hsolve's raw pivot order from bench_factspeed_factor --perm-out); KIND hsolve
 runs the CLI (build/release/hsolve; 2x8m: mpiexec ... build/release/hsolve-mpi) on the case with its
 config (or --target), output under OUT/TAG/<case>/<layout>-r<rep>/ (--events: also its event log,
-<layout>-r<rep>.events.jsonl, and the helpers' .rank<r> next to it).
+<layout>-r<rep>.events.jsonl, and the helpers' .rank<r> next to it). --set LAYOUT=JSON replaces top-level
+config keys for that layout's runs only: --set 'one:1x1={"ordering": 10}' fixes the pivot order of a
+one-thread step to the one the 16-thread runs factorize (the adaptive ordering is priced by the
+thread count, docs/SOLUTION.md §6).
 
   python3 tools/bench/mpi_layouts.py run --tag T --kind bench|hsolve --layouts one:1x16,two:1x16,...
       --case NAME [--case NAME ...] [--reps 3] [--rep0 0] [--out OUT] [--root DATA] [--kdir DIR]
-      [--bench-args "--modes count,full --nrhs 16 --solve-reps 3"] [--target JSON]
+      [--bench-args "--modes count,full --nrhs 16 --solve-reps 3"] [--target JSON] [--set LAYOUT=JSON]
       [--timeout 1500] [--lock-wait 600] [--mem-gb 32] [--events]
   python3 tools/bench/mpi_layouts.py eval --tag T [--out OUT] [--root DATA]    (lane: tools/eval)
   python3 tools/bench/mpi_layouts.py table --tag T [--out OUT] [--base one:1x16] [--md FILE]
@@ -53,7 +57,7 @@ if str(REPO) not in sys.path:
 
 GUARD = REPO / "tools/run/guard.py"
 RUN = REPO / "tools/bench/mpi_socket_run.sh"
-SPLITS = ("1x16", "1x16i", "1x16g", "1x8", "2x8", "2x8m", "1+2x8", "1x16r")
+SPLITS = ("1x16", "1x16i", "1x16g", "1x8", "1x1", "2x8", "2x8m", "1+2x8", "1x16r")
 DEFAULT_OUT = Path(os.environ.get("HOME", "/tmp")) / "p10mpi" / "runs"
 
 
@@ -82,16 +86,36 @@ def read_jsonl(path: Path) -> list[dict[str, Any]]:
     return rows
 
 
-def hsolve_args(root: Path, name: str, out: Path, target: dict | None) -> list[str]:
-    """CLI arguments of the case (without --threads, which the layout sets)."""
+def parse_sets(items: list[str], layouts: list[tuple[str, str]]) -> dict[str, dict[str, Any]]:
+    """--set LAYOUT=JSON items: the config keys each named layout's runs replace."""
+    names = {layout_name(p, s) for p, s in layouts}
+    out: dict[str, dict[str, Any]] = {}
+    for item in items:
+        lay, sep, text = item.partition("=")
+        if not sep or lay not in names:
+            raise SystemExit(f"bad --set '{item}': LAYOUT=JSON, LAYOUT one of --layouts ({', '.join(sorted(names))})")
+        keys = json.loads(text)
+        if not isinstance(keys, dict) or "target" in keys:
+            raise SystemExit(f"bad --set '{item}': JSON must be an object of config keys (the target: --target)")
+        out.setdefault(lay, {}).update(keys)
+    return out
+
+
+def hsolve_args(root: Path, name: str, out: Path, target: dict | None,
+                keys: dict[str, Any] | None = None) -> list[str]:
+    """CLI arguments of the case (without --threads, which the layout sets). target / keys replace the
+    case config's target / top-level keys: the run's config is then written as config-<run>.json next
+    to its output (where `eval` takes the target from)."""
     cdir = root / "cases" / name
     args = ["--A", str(cdir / "A.npz")]
     if (cdir / "B.npz").exists():
         args += ["--B", str(cdir / "B.npz")]
     cfg_path = cdir / "config.json"
-    if target is not None:
+    if target is not None or keys:
         cfg = json.loads(cfg_path.read_text())
-        cfg["target"] = target
+        cfg.update(keys or {})
+        if target is not None:
+            cfg["target"] = target
         cfg_path = out.parent / f"config-{out.name}.json"
         out.parent.mkdir(parents=True, exist_ok=True)
         cfg_path.write_text(json.dumps(cfg))
@@ -113,6 +137,7 @@ def cmd_run(a: argparse.Namespace) -> int:
     a.out.mkdir(parents=True, exist_ok=True)
     log = a.out / f"{a.tag}.jsonl"
     target = json.loads(a.target) if a.target else None
+    sets = parse_sets(a.set, layouts)
     for r in range(a.rep0, a.rep0 + a.reps):
         for ci, name in enumerate(a.case):
             k = (r + ci) % len(layouts)
@@ -129,7 +154,7 @@ def cmd_run(a: argparse.Namespace) -> int:
                     out = a.out / a.tag / name / f"{place}-{split}-r{r}"
                     if out.exists():
                         subprocess.run(["rm", "-rf", str(out)], check=True)
-                    args = hsolve_args(a.root, name, out, target)
+                    args = hsolve_args(a.root, name, out, target, sets.get(lay))
                     if a.events:
                         for old in out.parent.glob(out.name + ".events.jsonl*"):
                             old.unlink()
@@ -142,6 +167,8 @@ def cmd_run(a: argparse.Namespace) -> int:
                 proc = subprocess.run(cmd, cwd=REPO, capture_output=True, text=True)
                 meta = {"tag": a.tag, "case": name, "layout": lay, "placement": place, "split": split, "rep": r,
                         "kind": a.kind}
+                if sets.get(lay):
+                    meta["config_set"] = sets[lay]
                 with log.open("a") as f:
                     for line in proc.stdout.splitlines():
                         line = line.strip()
@@ -370,6 +397,8 @@ def main(argv: list[str] | None = None) -> int:
             p.add_argument("--kdir", type=Path, default=DEFAULT_OUT.parent / "k")
             p.add_argument("--bench-args", default="--modes count,full --nrhs 16 --solve-reps 3")
             p.add_argument("--target", default=None, help="JSON target replacing the case config's")
+            p.add_argument("--set", action="append", default=[], metavar="LAYOUT=JSON",
+                           help="KIND hsolve: top-level config keys replaced for that layout's runs only")
             p.add_argument("--one-cores", default="16-31")
             p.add_argument("--two-cores", default="8-15,16-23")
             p.add_argument("--mem-gb", type=float, default=32.0)
