@@ -39,7 +39,7 @@ def test_phases_are_exclusive_and_split_the_total(tmp_path: Path):
 
 
 def write_run(rd: Path, case: str, t: int, rep: int, total: float, verdict: str = "pass",
-              label: str | None = None) -> dict:
+              label: str | None = None, **extra) -> dict:
     label = label or f"t{t}"
     out = rd / case / f"{label}-r{rep}"
     out.mkdir(parents=True)
@@ -48,7 +48,7 @@ def write_run(rd: Path, case: str, t: int, rep: int, total: float, verdict: str 
            "killed": None, "wall_s": total + 1, "peak_rss_gib": 1.0, "success": True, "time_total_s": total,
            "n": 1000, "problem": "standard", "block_size": 4, "certificate_method": "exact",
            "phases": {"analysis": 0.1 * total, "numeric": 0.5 * total, "solves": 0.2 * total,
-                      "iterate_other": 0.0, "certificate": 0.2 * total, "rest": 0.0}}
+                      "iterate_other": 0.0, "certificate": 0.2 * total, "rest": 0.0}, **extra}
     with open(rd / "runs.jsonl", "a") as f:
         f.write(json.dumps(rec) + "\n")
     return rec
@@ -73,7 +73,9 @@ def test_table_speedup_and_efficiency(tmp_path: Path):
     d = {r["threads"]: r for r in doc["cases"][1]["rows"]}
     assert d[2]["speedup"] == pytest.approx(1.0)       # the smallest measured thread count is the base
     assert d[8]["speedup"] is None and d[8]["valid"] == 0
-    assert "| 16 | 1.000 [0.900-1.100] | 8.00x | 0.50 |" in (tmp_path / "t.md").read_text()
+    md = (tmp_path / "t.md").read_text()
+    assert "| 16 | 1.000 [0.900-1.100] | 8.00x | 0.50 |" in md
+    assert "Not valid (not in the medians): T = 8 r0: rc=0 killed=None success=True verdict=fail, 2.000 s" in md
 
 
 def test_table_rereads_the_reports(tmp_path: Path):
@@ -99,7 +101,10 @@ def test_variants_parse_and_label():
     assert nd.threads is None and nd.overrides == {"ordering": 10} and nd.label(16) == "nd-t16"
     sc = ts.parse_variant('scotch@1,2={"ordering":3}')
     assert sc.threads == [1, 2] and sc.overrides == {"ordering": 3}
-    for bad in ('default={"ordering":10}', "default@1", "nd", 'a-b={"ordering":3}', "nd=[10]", "nd={}", "nd={"):
+    d1 = ts.parse_variant("default@1,16")
+    assert d1.name == "default" and d1.threads == [1, 16] and d1.label(1) == "t1" and d1.slepc is None
+    for bad in ('default={"ordering":10}', 'default@1={"ordering":10}', "nd", 'a-b={"ordering":3}', "nd=[10]",
+                "nd={}", "nd={", 's={"slepc":"tuned","ordering":3}', 's={"slepc":"best"}', 's={"slepc":{"threads":2}}'):
         with pytest.raises(ValueError):
             ts.parse_variant(bad)
     assert ts.parse_label("t4") == ("default", 4) and ts.parse_label("nd-t16") == ("nd", 16)
@@ -170,3 +175,77 @@ def test_speedup_against_the_fastest_serial_configuration(tmp_path: Path):
     c = json.loads(out.read_text())["cases"][0]
     assert c["fastest"]["variant"] == "metis"
     assert {x["variant"]: x["rows"][-1] for x in c["variants"]}["nd"]["speedup"] is None
+
+
+def test_slepc_variants_parse_and_configure(tmp_path: Path):
+    v = ts.parse_variant('slepc.tuned@1,16={"slepc":"tuned"}')
+    assert v.slepc == "tuned" and v.threads == [1, 16] and v.label(16) == "slepc.tuned-t16"
+    assert ts.parse_variant('s={"slepc":"default"}').slepc == "default"
+    case = tmp_path / "cases" / "c"
+    case.mkdir(parents=True)
+    (case / "meta.json").write_text(json.dumps({"problem": "HEP"}))
+    (case / "config.json").write_text(json.dumps({"target": {"mode": "nearest", "sigma": 1.0, "k": 10}}))
+    prof = tmp_path / "profiles.json"
+    tuned = {"ranks": 4, "threads": 4, "bind": "core",
+             "options": {"eps_ncv": "3k", "st_mat_mumps_icntl_28": "2", "st_mat_mumps_icntl_29": "2"}}
+    prof.write_text(json.dumps({"schema_version": 1, "profiles": [
+        {"scope": "case", "name": "c", "mode": "nearest", "cores": 16, "target": None, "config": tuned}]}))
+    # The default: one rank x T threads, no options.
+    assert ts.slepc_config("default", 1, case, prof, 16).label() == "1x1"
+    assert ts.slepc_config("default", 16, case, prof, 16).label() == "1x16"
+    # The tuned profile keeps its ranks where they divide T, else one rank; one rank drops the
+    # parallel analysis (SlepcConfig.fitted).
+    assert ts.slepc_config("tuned", 16, case, prof, 16).label() == \
+        "4x4/core eps_ncv=3k st_mat_mumps_icntl_28=2 st_mat_mumps_icntl_29=2"
+    assert ts.slepc_config("tuned", 1, case, prof, 16).label() == "1x1/core eps_ncv=3k"
+    assert ts.slepc_config("tuned", 8, case, prof, 16).label().startswith("4x2/core")
+    assert ts.slepc_config({"ranks": 2, "options": {"eps_tol": "1e-11"}}, 4, case, prof, 16).label() == \
+        "2x2 eps_tol=1e-11"
+    with pytest.raises(SystemExit):     # no tuned profile at that core count
+        ts.slepc_config("tuned", 16, case, prof, 32)
+    cmd = ts.slepc_command(ts.slepc_config("tuned", 16, case, prof, 16), case, tmp_path / "o", tmp_path / "lv.txt",
+                           tmp_path, "/env", "/env/lib")
+    assert cmd[:5] == ["env", "LD_LIBRARY_PATH=/env/lib", "/env/bin/mpiexec", "-x", "LD_LIBRARY_PATH"]
+    assert cmd[cmd.index("-n") + 1] == "4" and cmd[cmd.index("-eps_ncv") + 1] == "30"
+    assert cmd[cmd.index("--case") + 1] == "c" and cmd[-2:] == ["-log_view", f":{tmp_path / 'lv.txt'}"]
+    assert ts.slepc_command(ts.slepc_config("default", 1, case, prof, 16), case, tmp_path / "o",
+                            tmp_path / "lv.txt", tmp_path, "/env", None)[0] == "/env/bin/mpiexec"
+
+
+def test_slepc_times_from_the_log_view_or_the_report(tmp_path: Path, monkeypatch):
+    (tmp_path / "report.json").write_text(json.dumps({"time_setup_s": 3.0, "time_solve_s": 2.0, "time_total_s": 9.0}))
+    monkeypatch.setattr(ts.slepc_log, "read_phases", lambda path: None)
+    t = ts.slepc_times(tmp_path, tmp_path / "missing.txt")
+    assert t["time_total_s"] == 5.0 and t["time_scope"] == "report time_setup_s+time_solve_s"
+    assert sum(t["phases"].values()) == 5.0
+    monkeypatch.setattr(ts.slepc_log, "read_phases", lambda path: {
+        "analysis_s": 1.0, "numeric_s": 4.0, "solve_s": 2.0, "solver_s": 8.0})
+    t = ts.slepc_times(tmp_path, tmp_path / "lv.txt")
+    assert t["time_total_s"] == 8.0 and t["time_scope"] == "log_view setup+solve+vectors"
+    assert t["phases"] == {"analysis": 1.0, "numeric": 4.0, "solves": 2.0, "iterate_other": 1.0,
+                           "certificate": 0.0, "rest": 0.0}
+
+
+def test_table_slepc_rows(tmp_path: Path):
+    # SLEPc rows: their own speedup, never hsolve's fastest configuration (though faster here at
+    # T = 1), and their time over hsolve's default at the same T.
+    rd = tmp_path / "T"
+    rd.mkdir()
+    for rep in range(3):
+        write_variant_run(rd, "c", "t1", 1, rep, 100.0, 10, 800)
+        write_variant_run(rd, "c", "t16", 16, rep, 12.5, 10, 800)
+        for t, total, layout in ((1, 80.0, "1x1"), (16, 20.0, "2x8")):
+            write_run(rd, "c", t, rep, total, label=f"slepc.tuned-t{t}", solver="slepc",
+                      slepc_config=f"{layout} eps_ncv=4k", time_scope="log_view setup+solve+vectors")
+    out = tmp_path / "t.json"
+    assert ts.main(["table", str(rd), "--json", str(out), "--md", str(tmp_path / "t.md")]) == 0
+    c = json.loads(out.read_text())["cases"][0]
+    assert c["fastest"]["variant"] == "default"
+    assert [(v["variant"], v["solver"]) for v in c["variants"]] == [("default", "hsolve"), ("slepc.tuned", "slepc")]
+    s = {r["threads"]: r for r in c["variants"][1]["rows"]}
+    assert s[16]["speedup"] == pytest.approx(4.0) and s[16]["speedup_vs_fastest"] is None
+    assert s[1]["slepc_over_default"] == pytest.approx(0.8) and s[16]["slepc_over_default"] == pytest.approx(1.6)
+    assert s[1]["ordering"] == "SLEPc" and s[16]["same_ordering"]
+    md = (tmp_path / "t.md").read_text()
+    assert "*slepc.tuned* (SLEPc 1x1 eps_ncv=4k; 2x8 eps_ncv=4k; time log_view setup+solve+vectors)" in md
+    assert "SLEPc / hsolve default at the same T: T = 1: 0.80, T = 16: 1.60" in md
