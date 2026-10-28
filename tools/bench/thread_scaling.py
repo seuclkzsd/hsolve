@@ -417,6 +417,7 @@ def _row(t: int, runs: list[dict[str, Any]], run_dirs: list[Path]) -> dict[str, 
     valid = [r for r in runs if r["valid"]]
     times = [r["time_total_s"] for r in valid]
     entries = {r.get("factor_entries") for r in runs}
+    flops = {r.get("factor_flops") for r in runs}
     return {"threads": t, "reps": len(runs), "valid": len(valid), "ok": len(valid) == len(runs),
             "invalid": [_invalid(run_dirs, r) for r in runs if not r["valid"]],
             "time_s": _median(times), "time_min": min(times) if times else None,
@@ -426,6 +427,7 @@ def _row(t: int, runs: list[dict[str, Any]], run_dirs: list[Path]) -> dict[str, 
             "block_size": "/".join(sorted({str(r.get("block_size")) for r in runs})),
             "ordering": "/".join(sorted({str(r.get("ordering", "-")) for r in runs})),
             "factor_entries": entries.pop() if len(entries) == 1 else None,
+            "factor_flops": flops.pop() if len(flops) == 1 else None,
             "factor_gflops": _rate(valid),
             "certificate_method": "/".join(sorted({str(r.get("certificate_method")) for r in runs})),
             "slepc_config": "/".join(sorted({r["slepc_config"] for r in runs if r.get("slepc_config")})) or None,

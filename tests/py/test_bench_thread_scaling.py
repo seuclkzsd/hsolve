@@ -264,7 +264,7 @@ def test_table_factor_entries_from_the_estimate_and_the_rate(tmp_path: Path):
     out = tmp_path / "t.json"
     assert ts.main(["table", str(rd), "--json", str(out), "--md", str(tmp_path / "t.md")]) == 0
     rows = {r["threads"]: r for r in json.loads(out.read_text())["cases"][0]["rows"]}
-    assert rows[1]["factor_entries"] == 500
+    assert rows[1]["factor_entries"] == 500 and rows[16]["factor_flops"] == 2e12
     assert rows[1]["factor_gflops"] == pytest.approx(3 * 2e12 / (0.6 * 60.0) / 1e9)
     assert rows[16]["factor_gflops"] == pytest.approx(1000.0)
     assert "| ND | 500 | 1/1 | 1.00 | 1000.0 |" in (tmp_path / "t.md").read_text()
