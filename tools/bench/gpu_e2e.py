@@ -46,6 +46,7 @@ if str(REPO) not in sys.path:
     sys.path.insert(0, str(REPO))
 from tools import case  # noqa: E402
 from tools.bench import compare  # noqa: E402
+from tools.run import guard  # noqa: E402
 
 GPU_KEYS = ("mode", "available", "reason", "device", "init_s", "factorizations", "factorizations_offloaded",
             "calls", "gpu_gflop", "estimated_gflop", "gpu_share", "call_s", "predicted_cpu_s", "h2d_gb", "d2h_gb",
@@ -82,6 +83,33 @@ class SmiSampler:
 
     def result(self) -> dict:
         return parse_smi(self.text)
+
+
+class NeighbourLoad:
+    """Mean utilization (0-1) of the hyperthread siblings of the run's cores between __enter__ and
+    __exit__, from /proc/stat. The runs are pinned to the cores themselves and the slot's guard only
+    checks for foreign load when it starts, so work on a sibling during a run is someone else's -
+    and slows the run (guard.with_siblings). None when the cores have no siblings."""
+
+    def __init__(self, cores: str, read=guard.cpu_times):
+        own = guard.parse_cpulist(cores)
+        self.cpus = [c for c in guard.with_siblings(own) if c not in set(own)]
+        self.read = read
+        self.a: dict = {}
+        self.b: dict = {}
+
+    def __enter__(self) -> "NeighbourLoad":
+        self.a = self.read()
+        return self
+
+    def __exit__(self, *exc) -> None:
+        self.b = self.read()
+
+    def result(self) -> float | None:
+        cpus = [c for c in self.cpus if c in self.a and c in self.b]
+        total = sum(self.b[c][0] - self.a[c][0] for c in cpus)
+        idle = sum(self.b[c][1] - self.a[c][1] for c in cpus)
+        return 1.0 - idle / total if total > 0 else None
 
 
 def parse_smi(text: str) -> dict:
@@ -181,11 +209,13 @@ def phase_table(lines: list[dict]) -> str:
     (report time_factor_s + time_certificate_s: analysis, main factorization and the certificate's
     inertia counts - every factorization the GPU can take), the rest (iteration, verification,
     set-up), the ratios off / variant of the whole run and of the factorization phases (only when
-    every run of both variants is valid), peak RSS, and the GPU's sampled utilization (--smi-gpu) with
-    the GPU-busy seconds it implies (utilization x solver time)."""
+    every run of both variants is valid), peak RSS, the GPU's sampled utilization (--smi-gpu) with
+    the GPU-busy seconds it implies (utilization x solver time), and the largest foreign load on the
+    cores' hyperthread siblings over all runs (NeighbourLoad; "-" for records without it)."""
     out = ["| case | variant | valid | solver s | vs off | factorization phases s (factor + certificate) | "
-           "vs off | rest s (iterate + other) | peak GiB | GPU util. % (mean of samples) | GPU-busy s est. |",
-           "|---|---|---|---|---|---|---|---|---|---|---|"]
+           "vs off | rest s (iterate + other) | peak GiB | GPU util. % (mean of samples) | GPU-busy s est. | "
+           "sibling CPUs busy %, max of the runs |",
+           "|---|---|---|---|---|---|---|---|---|---|---|---|"]
     for name in sorted({r["case"] for r in lines}):
         rows = [r for r in lines if r["case"] == name]
         variants = sorted({r["variant"] for r in rows}, key=lambda v: (v != "off", v))
@@ -198,7 +228,8 @@ def phase_table(lines: list[dict]) -> str:
             return {"n": len(rs), "good": len(good), "solver": _median([r.get("solver_s") for r in good]),
                     "fact": _median(fact), "rest": _median([r["solver_s"] - f for r, f in zip(good, fact)]),
                     "peak": _median([r.get("peak_rss_gib") for r in good]),
-                    "util": _median([(r.get("smi") or {}).get("util_mean") for r in good])}
+                    "util": _median([(r.get("smi") or {}).get("util_mean") for r in good]),
+                    "load": max((r["sibling_busy"] for r in rs if r.get("sibling_busy") is not None), default=None)}
 
         base = stats("off") if "off" in variants else None
         for v in variants:
@@ -210,7 +241,8 @@ def phase_table(lines: list[dict]) -> str:
             busy = s["util"] / 100.0 * s["solver"] if s["util"] is not None and s["solver"] else None
             out.append(f"| {name} | {v} | {s['good']}/{s['n']} | {_fmt(s['solver'])} | {_fmt(whole, '.3f')} | "
                        f"{_fmt(s['fact'])} | {_fmt(fact, '.3f')} | {_fmt(s['rest'])} | {_fmt(s['peak'])} | "
-                       f"{_fmt(s['util'], '.1f')} | {_fmt(busy, '.1f')} |")
+                       f"{_fmt(s['util'], '.1f')} | {_fmt(busy, '.1f')} | "
+                       f"{_fmt(None if s['load'] is None else 100.0 * s['load'], '.1f')} |")
     return "\n".join(out)
 
 
@@ -250,18 +282,21 @@ def main(argv: list[str] | None = None) -> int:
                 for v in order:
                     out = REPO / "results/raw" / args.tag / name / f"{v}-r{rep}"
                     t0 = time.time()
-                    if args.smi_gpu is None:
-                        e = run_variant(v, c, tgt, out, run_args, judge)
-                    else:
-                        with SmiSampler(args.smi_gpu, args.smi_ms) as smi:
+                    with NeighbourLoad(args.cores) as load:
+                        if args.smi_gpu is None:
                             e = run_variant(v, c, tgt, out, run_args, judge)
-                        e["smi"] = smi.result()
+                        else:
+                            with SmiSampler(args.smi_gpu, args.smi_ms) as smi:
+                                e = run_variant(v, c, tgt, out, run_args, judge)
+                            e["smi"] = smi.result()
+                    e["sibling_busy"] = load.result()
                     e.update(case=name, variant=v, rep=rep, started=t0)
                     with jsonl.open("a") as f:
                         f.write(json.dumps(e) + "\n")
                     g = e.get("gpu") or {}
                     print(f"{name} rep {rep} {v}: solver={e.get('solver_s')} valid={e.get('valid')} "
                           f"count={(e.get('certificate') or {}).get('count_inertia')} gpu_gflop={g.get('gpu_gflop')} "
+                          f"sibling_busy={e.get('sibling_busy')} "
                           f"why={'; '.join(e.get('why') or [])[:200]}", flush=True)
     lines = [json.loads(x) for x in jsonl.read_text().splitlines() if x.strip()] if jsonl.exists() else []
     md = summarize(lines) + "\n\n" + phase_table(lines)
