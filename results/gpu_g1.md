@@ -1,6 +1,6 @@
 # G1: SPRAL SSIDS (CPU and one V100) vs hsolve's MUMPS backend
 
-> Negative result kept on main for the record (2026-10-15). The code, benches and scripts this report names are on the unmerged branch `exp-gpu-ssids` (GitHub origin), not on main.
+> Negative result kept on main for the record (2026-10-15). The code, benches and scripts this report names were not merged and are not in this repository.
 
 
 Question: is SPRAL SSIDS (multifrontal LDL^T with inertia, BSD-3, CUDA path) faster than hsolve's

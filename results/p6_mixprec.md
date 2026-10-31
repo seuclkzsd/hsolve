@@ -1,6 +1,6 @@
 # P6 "mixprec": a single-precision factorization in the 16-core shift-invert solver
 
-> Negative result kept on main for the record (2026-10-15). The code, benches and scripts this report names are on the unmerged branch `p6-mixprec-fix` (GitHub origin), not on main.
+> Negative result kept on main for the record (2026-10-15). The code, benches and scripts this report names were not merged and are not in this repository.
 
 
 **Question.** Does a single-precision (smumps) factorization of the shift-invert matrix
