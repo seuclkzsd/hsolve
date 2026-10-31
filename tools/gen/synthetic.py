@@ -450,7 +450,7 @@ SPECTRUM_KINDS = ("zero-cluster", "multiplicity", "near-singular", "wide-range")
 
 
 def spectrum_preset(kind: str, n: int, seed: int, *, cond_b: float = 1.0) -> Spectrum:
-    """Spectra for the solver's failure scenarios (docs: competition item e). Values are O(1)
+    """Spectra for the solver's failure scenarios (docs/SOLUTION.md §7). Values are O(1)
     except 'wide-range'. cond_b bounds cond(B) of the pencil the spectrum will be placed in (1 for
     a standard problem): the targets are decidable at DEFAULT_TOL for it.
 

@@ -34,7 +34,7 @@ Measured on gpu02, 2026-10-13, branch `exp-gpu-ssids`; a measurement prototype, 
 - **G2 (SSIDS GPU as a runtime-selected backend with MUMPS fallback) is not worth it** by the
   agreed criterion (>= 2x factorization on the 3-D cases): it holds only above ~5e11 flops per
   factorization, where the 16 GB card is already nearly full at n = 1e6, and the slower solves and
-  analysis cancel the gain end to end at the competition's 1e5 scale.
+  analysis cancel the gain end to end at the 1e5 scale.
 
 ## G0: building SPRAL with the CUDA path (gpu02, offline)
 
@@ -269,7 +269,7 @@ ss-tem152078, wg-square-1e6 and syn-mem27-100 have no hsolve reference run, henc
   factorizes 0.9-1.85x as fast as MUMPS on the 1e5-unknown 3-D cases, and that only after working
   around SSIDS' thread binding (defaults: 0.7-1.0x); >= 2x only from ~5e11 flops per factorization
   (syn-mem125-46 2.3x, syn-mem27-100 2.9x). Its block solves are ~2x slower, its analysis slower and
-  the CUDA context adds 0.13-0.15 s, so on the competition's cases the projected solver time grows
+  the CUDA context adds 0.13-0.15 s, so on the benchmark cases the projected solver time grows
   by 6% to 3.7x; the one problem class where the GPU clearly wins (1e6 3-D) already fills the 16 GB
   card. The reasons are structural in SSIDS: only leaf subtrees go to the GPU, the top separators
   (the bulk of the 3-D work) are factorized on the CPU after the GPU phase, and GPU solves treat one

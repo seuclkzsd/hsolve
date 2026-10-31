@@ -31,7 +31,7 @@ Node scheduling (set by env/hosts/<host>.sh on the cluster nodes; unset = no pol
   HS_MEASURE_CORES      the measurement slot (cluster: 16-31 = NUMA node 1).  A run pinned to any
                         of these cores must hold the lock (--exclusive), so timed runs never share
                         the socket; --exclusive without --cores pins to the whole slot.
-  HS_MEM_CAP_GB         per-run RSS ceiling (cluster: 32 GiB, the judging machine); --mem-gb above
+  HS_MEM_CAP_GB         per-run RSS ceiling (cluster: 32 GiB, the target machine); --mem-gb above
                         it is refused; --exclusive without --mem-gb uses it.
   HS_MAX_SHARED_MEM_GB  RSS ceiling of runs that do not hold the lock.
   HS_SLOT_MAX_S         longest --timeout of a run that takes the lock, so no run hogs the slot.

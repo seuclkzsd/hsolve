@@ -195,10 +195,9 @@ V100 与 16 核，两个百万阶测例各 5 次运行，[P10 GPU 记录](result
 hsolve 以 [Apache License 2.0](LICENSE) 发布。仓库附带的 MUMPS 5.8.2 官方源码包及我们对它的补丁（`patches/`）适用
 CeCILL-C；其它第三方组件的许可证与分发方式见 [NOTICE](NOTICE) 与 [THIRD_PARTY_NOTICES](THIRD_PARTY_NOTICES)。
 
-## 项目背景
+## 获奖情况
 
-hsolve 起源于 2026 上海开源软件应用创新大赛（主办：开源中国）的中国商飞企业命题「非正定厄密稀疏矩阵特征值求解」，
-命题与规则见主办方网站 <https://www.oschina.net/os2026/>。
+本成果获 2026 上海开源软件应用创新大赛一等奖。
 
 ## 局限与后续工作
 

@@ -12,7 +12,7 @@ export HS_REF_ENV="${HS_REF_ENV:-$HOME/envs/os2026-ref}"   # SLEPc baseline (too
 # home, so that a new clone reuses the install (builds link it by path: never delete it in use).
 export HS_MUMPS_CACHE="${HS_MUMPS_CACHE:-$HOME/deps/mumps-cache}"
 # Scheduling (docs/DESIGN.md §6, tools/run/guard.py): one run at a time in the measurement slot,
-# sized like the judging machine (16 cores, 32 GiB); builds, unit tests and smoke runs share a small
+# sized like the target machine (16 cores, 32 GiB); builds, unit tests and smoke runs share a small
 # lane on the other socket. With two callers per node that is at most 24 of the 32 physical cores
 # and ~56 GiB; the rest of the node stays free for other work.
 export HS_MEASURE_CORES="${HS_MEASURE_CORES:-16-31}"      # NUMA node 1: guard --exclusive only

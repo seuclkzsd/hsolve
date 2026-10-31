@@ -220,11 +220,9 @@ hsolve is released under the [Apache License 2.0](LICENSE). The bundled MUMPS 5.
 it (`patches/`) are under CeCILL-C; the other third-party components, their licenses and how they are distributed are
 listed in [NOTICE](NOTICE) and [THIRD_PARTY_NOTICES](THIRD_PARTY_NOTICES).
 
-## Background
+## Awards
 
-hsolve started as an entry for the COMAC enterprise topic "eigenvalues of indefinite Hermitian sparse matrices" of the
-2026 Shanghai Open Source Software Application Innovation Contest (OSCC 2026, organised by OSCHINA); rules and topics:
-<https://www.oschina.net/os2026/>.
+hsolve won the First Prize at the 2026 Shanghai Open Source Software Application Innovation Contest.
 
 ## Limitations and future work
 

@@ -16,7 +16,7 @@ data/refs/<name>/ref.json        {"kind","note","count","complete","window"}
 ```
 
 - 参考解与输入**物理隔离**：CLI 只接收 `--A --B --config --out`（及 §2 的覆盖参数），从不获得
-  `data/refs` 路径（赛题红线「禁止读取参考结果」）。
+  `data/refs` 路径（禁止读取参考结果）。
 - `meta.json` 字段：`name, family, problem("HEP"|"GHEP"|"GHIEP"), n, nnz_A, nnz_B?, dtype,
   description, params(可复现生成的全部参数), inertia?({"A":[neg,zero,pos],"B":[...],"pencil":[...]}),
   targets?([{"sigma","k","why"}]), scenarios?(["zero-cluster","multiplicity","near-singular",

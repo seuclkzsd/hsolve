@@ -11,7 +11,7 @@
 | copyright | 1991-2026 CERFACS, CNRS, ENS Lyon, INP Toulouse, Inria, Mumps Technologies, University of Bordeaux |
 
 It is shipped in the repository so that a checkout builds offline (the cluster nodes and possibly
-the judging machine have no internet). hsolve's default build (`tools/dev/build.sh`, P9
+the target machine have no internet). hsolve's default build (`tools/dev/build.sh`, P9
 integration) compiles it with `tools/dev/build_mumps.sh` through `tools/dev/mumps_cache.sh`:
 sequential MUMPS with OpenMP, conda-forge's portable compiler flags (`-O2 -march=nocona
 -mtune=haswell`), against the project environment's METIS, SCOTCH and OpenBLAS, **modified by

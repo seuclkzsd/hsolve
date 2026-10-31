@@ -8,7 +8,7 @@
     0) filtered by inertia (zero_filter_tol). Every frequency is compared with the discrete exact one
     (Yee dispersion, what the solver must hit) and the analytic f_mnp = c/2 sqrt((m/a)^2 + (n/b)^2 +
     (p/d)^2) (what the discretization approximates, O(h^2)).
-(b) Square waveguide 10 x 10 mm at 50 GHz (the competition's real case; tools/gen/waveguide.py,
+(b) Square waveguide 10 x 10 mm at 50 GHz (tools/gen/waveguide.py,
     Lee-Sun-Cendes, B indefinite): the 18 propagating modes beta = sqrt(-lambda) at n ~ 1e5 and 1e6
     against the certified discrete reference (tools/showcase/waveguide_ref.py) and the analytic
     beta = sqrt(k0^2 - kc^2), kc^2 = (m pi/a)^2 + (n pi/b)^2; the two mesh sizes show the O(h^2)

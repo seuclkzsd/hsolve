@@ -1,8 +1,7 @@
 # hsolve 的并行方案：多线程与多进程（MPI）
 
-赛题要求（f）与「并行方案」一节：支持多线程、MPI 与 GPU 加速，说明分工并给出**实测**加速比，并提供无 GPU 时可复现的
-降级方案（评测机只有 CPU）。本页说明 hsolve 的线程层与多进程（MPI）模式：做什么、怎么构建和运行、评测机需要什么、
-实测多少。设计契约见 `docs/DESIGN.md` §3.9，全部数据与命令见 `results/p10_mpi.md`。GPU 加速是另一条线（P10 gpu），
+hsolve 支持多线程、MPI 与 GPU 加速，并提供无 GPU 时可复现的降级方案。本页说明 hsolve 的线程层与多进程（MPI）模式：
+做什么、怎么构建和运行、机器需要什么、实测多少。设计契约见 `docs/DESIGN.md` §3.9，全部数据与命令见 `results/p10_mpi.md`。GPU 加速是另一条线（P10 gpu），
 不在本页。
 
 ## 1. 分工
@@ -12,7 +11,7 @@
 | 线程（OpenMP，进程内） | 一切数值计算：MUMPS 的分解与回代（L0 子树并行 + 多线程 BLAS，`docs/BLAS.md`）、稀疏核 SpMV / SpMM 与融合残差、正交化（固定分块的确定性归约）、自研并行嵌套剖分、BLAS hook 的并行切分 | 一个进程的全部核共享内存 | 总是（默认）：`hsolve --threads T`，0 = `OMP_NUM_THREADS` / 进程 cpuset 内的全部核 |
 | 进程（MPI，P10） | 彼此独立的大块分解：nearest 证书的两次 Sylvester 计数（同时），窗口目标（区间 / 最小 / 最大 k 个）的谱切片（每片一次分解 + Krylov） | 每个 socket（NUMA 节点）一个 helper 进程，各用本 socket 的核与内存带宽；leader 跨全部核做顺序部分，二者从不同时计算 | 多 socket 机器上可选：`hsolve-mpirun`；单 socket 机器上不用（实测更慢） |
 
-**降级（评测机只有 CPU、或没有 MPI）**：普通的单进程 `hsolve` 就是默认路径，不需要 MPI 也不需要 GPU；多进程模式的
+**降级（机器只有 CPU、或没有 MPI）**：普通的单进程 `hsolve` 就是默认路径，不需要 MPI 也不需要 GPU；多进程模式的
 惯性计数与谱切片和它相同、结果照常经残差验收（实测见下文 §4），只是在多 socket 机器上更快。
 
 ## 2. 为什么是「每个 socket 一个进程」
@@ -59,7 +58,7 @@ build/release/hsolve-mpirun [--ranks R] [--interleave-leader] [--dry-run] -- --A
 - `hsolve-mpirun` 读本进程的 cpuset 与 NUMA 拓扑：rank 0（leader）绑定全部允许的核、`OMP_NUM_THREADS` = 其个数；
   每个有允许核的 NUMA 节点一个 helper，绑定该节点的核。默认 R = 1 + socket 数。**允许的核只在一个 socket 上（且没给
   `--ranks`）时，它直接以同样的参数运行同目录的普通 `hsolve`**（`$HSOLVE` 可改）：不起 MPI 作业、不需要 mpiexec、
-  没有 MPI 启动开销——单 socket 的评测机上用它与直接用 `hsolve` 一样。`--ranks R` 强制一个 R 个 rank 的 MPI 作业
+  没有 MPI 启动开销——单 socket 的机器上用它与直接用 `hsolve` 一样。`--ranks R` 强制一个 R 个 rank 的 MPI 作业
   （R − 1 个 helper，NUMA 节点不够时把核等分）。`--dry-run` 只打印布局与命令。mpiexec 取 `--mpiexec`、`$MPIEXEC`、
   PATH 或 `$HS_REF_ENV/bin/mpiexec`。
 - 也可以直接 `mpiexec -n R … hsolve-mpi <同样的参数>`（每个 rank 的参数相同；绑定与线程数由调用者负责）。只有一个
@@ -107,7 +106,7 @@ tools/eval 判定有效；时间为报告的 `time_total_s`（求解本身，不
 
 - **要两个 socket。** 单 socket 上 helper 与 leader 共用一份内存带宽，多进程模式更慢（0.86–0.93 倍，多片窗口除外），
   `hsolve-mpirun` 在单 NUMA 节点上因此直接运行普通 hsolve（不起 MPI 作业，墙钟与直接运行 hsolve 相同：
-  `results/p10_mpi.md` §7.3）。评测机的 16 核若是一个 socket，多进程模式不改变结果也不加速。
+  `results/p10_mpi.md` §7.3）。机器的 16 核若是一个 socket，多进程模式不改变结果也不加速。
 - **nearest 只并行证书的两次计数。** 主分解与 Krylov 是一条顺序计算，仍由占全部核的 leader 做；1e6 上证书约占运行的
   40–45%，端到端 1.09–1.11 倍。GHIEP（没有惯性计数）、randomized 证书、只有一片的窗口与太小的问题（代价规则）没有可分的工作。
 - **MPI 启动约 1.7–2.0 s 墙钟**（prterun 与三个进程的 MPI_Init），不计入 `time_total_s`；它超过 1e5 nearest 与

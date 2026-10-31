@@ -13,7 +13,7 @@ choosing automatically when the double factors do not fit in core?
   by `tools/run/guard.py` with the run's RSS cap -, RLIMIT_AS / RLIMIT_DATA, MemTotal). A configured
   number still wins. In the 32 GiB slot the two 3-D 1e6 cases now factorize in core:
   **syn-mem27-100 1.83x (199.1 -> 109.0 s), yee-pec-box-1e6 1.71x (157.6 -> 92.0 s) faster than the
-  14 GB default** (medians of 3, all valid); under a 16 GiB cap (the 16 GB judging machine) they go
+  14 GB default** (medians of 3, all valid); under a 16 GiB cap (the 16 GB target machine) they go
   out of core as before, at the default's speed, and stay valid; the 2-D wg-square-1e6 and the five
   1e5 head-to-head cases make the same decisions and take the same time.
 * **Never above the limit.** Over 103 slot runs under caps of 6 to 32 GiB nothing was killed; the
@@ -68,7 +68,7 @@ and are valid; GHIEP; precision auto on the estimates and end to end), `tests/py
 ## 2. Method
 
 * **Where.** gpu02, measurement slot: cores 16-31, 16 threads, `guard.py --exclusive`, one run at a
-  time, 2026-10-14. Every run's RSS cap is `--mem-gb` (32 = the judging machine with 32 GB, 16 =
+  time, 2026-10-14. Every run's RSS cap is `--mem-gb` (32 = the target machine with 32 GB, 16 =
   with 16 GB, 6-24.5 for the calibration), which the guard enforces (kill above it) and exports as
   `HSOLVE_MEMORY_LIMIT_GB`. gpu02 has a cgroup-v1 memory controller without a limit and 251 GiB
   MemTotal, so the automatic budget of every P7 run below came from the guard's declaration
@@ -204,7 +204,7 @@ peak. P7 binary 0b814ee; the final code's confirmation runs are in the bullets.
   (out-of-core solves read the factors back from disk every time); the factorization is 10-12% faster
   in core. Peak RSS 15.3 / 13.0 GiB, well inside 32. The certificate (two inertia-only counts,
   46-56 s) is now half of the run - the next lever for these cases, outside P7.
-* **16 GiB (auto16, the judging machine with 16 GB).** Budget 13.6 GiB, both 3-D cases out of core,
+* **16 GiB (auto16, the target machine with 16 GB).** Budget 13.6 GiB, both 3-D cases out of core,
   as with the old 14 GB default and at its speed (198.7 vs 199.1 s, 157.3 vs 157.6 s); peak 8.4 /
   7.5 GiB. Valid in every run; the final code: 204.3 / 154.7 s, valid.
 * **wg-square-1e6** (2-D, GHIEP, 1.3 GB in core) is in core under every budget: 5.9 s for all four.
@@ -311,7 +311,7 @@ when double does not fit even out of core while single fits in core).
   refinement.
 * **Next lever for the 1e6 cases in core:** the certificate's two inertia-only counts take 46-56 s,
   about half of the in-core run (`certificate = auto` / the randomized check were not part of P7).
-* **For the judging machine:** with a cgroup (container) or a VM, the budget comes from the cgroup or
+* **For the target machine:** with a cgroup (container) or a VM, the budget comes from the cgroup or
   MemTotal; under `ulimit -v` from RLIMIT_AS, planned in address space (section 8); a harness that
   keeps large data in another process can declare a smaller limit through `HSOLVE_MEMORY_LIMIT_GB`.
 

@@ -58,7 +58,7 @@ deps_jobs() {
 
 # deps_glibc_compat DIR: prints linker flags that keep a library runnable on glibc 2.17.
 # The project environment's compilers use a glibc 2.28 sysroot (sysroot_linux-64 2.28), the
-# cluster nodes (and possibly the judging machine) run glibc 2.17; libm's expf / logf / powf /
+# cluster nodes (and possibly the target machine) run glibc 2.17; libm's expf / logf / powf /
 # exp2f got new symbol versions in 2.27 (exp / log / pow in 2.29), so a library built here would
 # not load there ("version GLIBC_2.27 not found"; OpenBLAS' LAPACK and LIBXSMM call them).
 # The flags wrap those calls (-Wl,--wrap) into a generated object whose hidden __wrap_* functions

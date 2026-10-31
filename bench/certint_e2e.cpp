@@ -15,7 +15,7 @@
 // report.json; docs/FORMATS.md §3), the layout tools/eval/sweep.py evaluates (--log DIR: the
 // driver's event log of every run as DIR/<case>-<mode>-rep<r>.jsonl):
 //   python -m tools.eval.sweep OUT --out OUT/eval.md      (under tools/run/guard.py)
-// Timed runs take a node's measurement slot (docs/DESIGN.md §6: 16 cores, 32 GiB, the judging
+// Timed runs take a node's measurement slot (docs/DESIGN.md §6: 16 cores, 32 GiB, the target
 // configuration; --threads defaults to 16), e.g. on gpu02:
 //   python3 tools/run/guard.py --exclusive --timeout 2700 --
 //     build/release/bench_certint_e2e --case data/cases/<c> --out <run> --threads 16 --reps 5
@@ -51,7 +51,7 @@ namespace fs = std::filesystem;
 
 struct Args {
   fs::path case_dir, out;
-  int threads = 16;  // the judging configuration (one measurement slot)
+  int threads = 16;  // the target configuration (one measurement slot)
   int reps = 3;
   std::vector<std::string> modes{"exact", "auto", "randomized"};
   index_t drop = 0;

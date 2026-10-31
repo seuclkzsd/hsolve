@@ -3,7 +3,7 @@
  "scenario": {
   "id": "waveguide-square",
   "group": "indefinite-b",
-  "title": "方波导 50 GHz（赛题真实算例）：18 个传播模",
+  "title": "方波导 10 × 10 mm、50 GHz：18 个传播模",
   "case": "wg-square-1e5",
   "source": "wg-square-1e5",
   "why": "A、B 都不定（B 有 24649 个负特征值），A 有 24649 维零空间，TE/TM 模简并",

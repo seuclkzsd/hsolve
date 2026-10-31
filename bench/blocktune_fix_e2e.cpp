@@ -30,7 +30,7 @@
 //   python3 tools/run/guard.py --skip-busy-check --timeout 3600 -- python3 -m tools.eval.sweep RUN
 //       --out OUT.md
 //
-// Usage (timed: the measurement slot, 16 threads = the judging configuration):
+// Usage (timed: the measurement slot, 16 threads = the target configuration):
 //   python3 tools/run/guard.py --exclusive --timeout 2700 --
 //     build/release/bench_blocktune_fix_e2e --run RUN [--cli build/release/hsolve] [--data DIR]
 //     [--p 1,0,rule] [--reps 5] [--mem-gb 32] CASE...

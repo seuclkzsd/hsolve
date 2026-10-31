@@ -772,7 +772,7 @@ PlannedWork plan_work(const SolverConfig& cfg, ProblemType type, index_t n, doub
 }
 
 // The ordering cost model (OrderingModel, internal.hpp), fitted on the 40 data cases of MUMPS order
-// >= 5000 and the two 1e6 3-D cases at the judging configuration: bench/anaint_orderings.cpp in the
+// >= 5000 and the two 1e6 3-D cases at the target configuration: bench/anaint_orderings.cpp in the
 // gpu02 (2x Xeon Silver 4314) measurement slot, cores 16-31, 16 threads, one one-process run per
 // case and ordering, plus 4-thread runs (3 interleaved, --nd-serial 1) for the 1-thread work of
 // hsolve's nested dissection, the shapes and the 16 / 4-thread ratios. MUMPS' orderings come from

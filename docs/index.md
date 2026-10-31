@@ -95,8 +95,6 @@ res = hsolve.solve(A, B, sigma=0.5, k=10)       # A、B：SciPy 稀疏矩阵、N
 res.eigenvalues, res.eigenvectors, res.report["certificate"]["statement"]
 ```
 
-## 项目背景
+## 路线图
 
-hsolve 起源于 2026 上海开源软件应用创新大赛（主办：开源中国）的中国商飞企业命题「非正定厄密稀疏矩阵特征值求解」，
-命题与规则见主办方网站 <https://www.oschina.net/os2026/>。此后作为通用的开源求解器继续开发，计划见
-[路线图](../ROADMAP.md)。
+后续计划见[路线图](../ROADMAP.md)。

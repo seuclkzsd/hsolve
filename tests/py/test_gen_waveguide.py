@@ -16,7 +16,7 @@ from tools import case
 from tools.gen import mesh2d
 from tools.gen import waveguide as wg
 
-K0 = wg.wavenumber(50.0)          # 10 mm square guide at 50 GHz: the competition's real case
+K0 = wg.wavenumber(50.0)          # 10 mm square guide at 50 GHz
 A_MM = B_MM = 10.0
 # Slab-loaded test guides: (eps_r, mu_r, width mm, top of the low block of modes compared, mm^-2).
 SLABS = {"slab": (2.25, 1.0, 5.0, -0.15), "magnetic": (4.0, 2.0, 3.0, -5.3)}

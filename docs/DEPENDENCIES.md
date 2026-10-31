@@ -1,6 +1,6 @@
 # 依赖清单与许可证
 
-赛题要求「说明开源依赖、授权和调用方式」，且不得以不可验证的闭源服务为核心能力。
+本页说明开源依赖、授权和调用方式；hsolve 不以不可验证的闭源服务为核心能力。
 新增依赖必须在此登记（名称、版本、许可证、用途、调用方式）。各组件的版权声明与许可证要求复制的文本
 集中在根目录的 `THIRD_PARTY_NOTICES`（分发 hsolve 的二进制时随附）。
 
@@ -65,13 +65,13 @@ P10 多进程模式（可选，`docs/PARALLEL.md`、`docs/DESIGN.md` §3.9）：
   （同为 BSD-2 / GPL-2 双许可）、libnl 3.11（LGPL-2.1+，动态链接）；启动脚本 `hsolve-mpirun` 调用该 MPI 的 `mpiexec`
   （Open MPI 自带的 PRRTE `prterun`）。每个进程仍链接顺序版 MUMPS（其 libmpiseq 的 MPI 桩函数由排在前面的真
   MPI 覆盖，DESIGN §3.9）。版权声明与许可证：`THIRD_PARTY_NOTICES` 3.7。`hsolve` 可执行文件、libhsolve 与 Python
-  模块不链接 MPI；评测机没有 MPI 时不构建 `hsolve-mpi`，普通 `hsolve` 即默认路径。
+  模块不链接 MPI；机器没有 MPI 时不构建 `hsolve-mpi`，普通 `hsolve` 即默认路径。
 - 只测过 Open MPI 5.0.11；启动脚本经环境变量把布局传给各 rank，Open MPI 专有的选项（`-x`、`--bind-to none`、测试的
   `--oversubscribe`）只在 `mpiexec --version` 表明是 Open MPI 时才加（MPICH / Intel MPI 的 Hydra 默认转发环境、
   不绑核、不限 rank 数；其它启动器的选项可经 CMake 的 `MPIEXEC_PREFLAGS` 加给测试）。
 
 不使用：Intel MKL / PARDISO、HSL（MA57/MA97）、Panua-Pardiso 等非开源组件。
-CUDA（若引入）为 NVIDIA 闭源但免费，赛题明确允许；仅作可选加速，不作为核心能力。
+CUDA（若引入）为 NVIDIA 闭源但免费；仅作可选加速，不作为核心能力。
 
 公开测试矩阵（SuiteSparse Matrix Collection）按 CC-BY 4.0 使用，引用见 `tools/gen/` 生成的元数据。
 

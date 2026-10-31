@@ -1,10 +1,10 @@
 # P10 "mpi": hsolve over several processes - one per socket
 
 P10 task "mpi" (branch `p10mpi` from p9-merge cdb0054). Question: can multi-process (MPI) execution
-make hsolve faster at the judging budget of 16 cores per run, and where? P9 measured that on ONE
+make hsolve faster at the target budget of 16 cores per run, and where? P9 measured that on ONE
 16-core socket MPI loses (`results/p9_mpi.md`: MPI MUMPS 2 x 8 .. 16 x 1 = 0.85 .. 0.59x of 1 x 16,
 two concurrent 8-thread counts 0.92x): every factorization is limited by the socket's memory
-bandwidth. A judging machine with 16 cores may also be two sockets of 8 - then a process per socket
+bandwidth. A target machine with 16 cores may also be two sockets of 8 - then a process per socket
 has its own memory bandwidth. This report measures that first (section 2), implements the layouts
 that pay as an optional multi-process mode of hsolve (section 3; `docs/DESIGN.md` §3.9,
 `docs/PARALLEL.md`) and measures it end to end (section 4).
@@ -50,7 +50,7 @@ that pay as an optional multi-process mode of hsolve (section 3; `docs/DESIGN.md
   - The launcher and the tests pass Open MPI's options only to Open MPI.
   - The notices cover hsolve-mpi's MPI libraries.
   - The certificate statement names each count's source.
-* **Honest limits (section 5):** the gain needs two sockets (a 16-core judging machine may be one);
+* **Honest limits (section 5):** the gain needs two sockets (a 16-core target machine may be one);
   only the certificate's counts and the slices run in parallel - main factorization and Krylov stay
   one sequential computation; MPI start-up costs ~1.7-2.0 s of wall time, more than the gain on 1e5
   nearest targets; the process tree's peak grows 1.3-1.4x at 1e6; GHIEP gets nothing; only Open MPI
@@ -449,7 +449,7 @@ Per phase in those runs (two sockets, hsolve -> hsolve-mpi):
 
 * **One socket: no gain.** Helpers on one socket share its memory bandwidth: 0.86-0.93x, except on
   windows with many slices (1.11-1.16x). `hsolve-mpirun` therefore runs the plain hsolve on one NUMA
-  node, without an MPI job or its start-up (section 7.3). The judging machine (16 cores) may well be
+  node, without an MPI job or its start-up (section 7.3). The target machine (16 cores) may well be
   one socket, and then the multi-process mode changes nothing.
 * **Two sockets: modest for nearest targets.** Only the certificate's two counts run concurrently -
   the main factorization and the Krylov run are one sequential computation, which the leader runs on
@@ -583,7 +583,7 @@ tight`). "Before" is the review's result at 6b6afdd.
     6.1 s each). From 3.0 GiB the helpers take two slices. The review saw them used only from
     3.5 GiB, with a wasted cut below that.
 
-### 7.2 The judging scale under 16 GiB (finding 1; g16: syn-mem27-100, two sockets, guard --mem-gb 16, 1 run each)
+### 7.2 The target scale under 16 GiB (finding 1; g16: syn-mem27-100, two sockets, guard --mem-gb 16, 1 run each)
 
 With a 16 GiB limit the budget is 13.6 GiB, and the 1e6 case runs out of core in both modes (P7).
 
@@ -608,7 +608,7 @@ The launcher without `--ranks` (`tools/bench/mpi_review_runs.sh launch`) was run
 | | hsolve-mpirun | 0.295 [0.289-0.299] | 0.420 [0.403-0.468] | 1 |
 
 Before the fix this started a one-rank MPI job. In section 4.1 that job (two:1x16r) cost +1.7-1.9 s
-of wall time per run and 0.95-0.99x of solver time. On a single-socket judging machine,
+of wall time per run and 0.95-0.99x of solver time. On a single-socket target machine,
 `hsolve-mpirun` is now the plain hsolve.
 
 ### 7.4 End to end after the fix (32 GiB; section 4)

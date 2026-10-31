@@ -24,7 +24,7 @@
 // (driver block_size_for(cfg, ShiftInvertShape)). Use bench/blocktune_fix_e2e.cpp (the CLI as
 // tools/bench/compare.py runs it, the main shift's entries from the "factorization" event).
 //
-// Usage (timed: the measurement slot, 16 threads = the judging configuration):
+// Usage (timed: the measurement slot, 16 threads = the target configuration):
 //   python3 tools/run/guard.py --exclusive --timeout 2700 --
 //     build/release/bench_blocktune_e2e [--data DIR] [--p 1,rule,0] [--reps 5] [--budget-gb 28.8]
 //     CASE...

@@ -26,7 +26,7 @@
 //      order of the configurations rotates by one per repetition.
 // Output: one JSON object per line on stdout.
 //
-// Usage (timed: the measurement slot, 16 threads = the judging configuration; one case per call
+// Usage (timed: the measurement slot, 16 threads = the target configuration; one case per call
 // keeps a failing case from ending the others):
 //   python3 tools/run/guard.py --exclusive --timeout 2700 --
 //     build/release/bench_blocktune_sweep [--data DIR] [--p 1,2,4,8,16] [--apply-p 3,6,12,32]

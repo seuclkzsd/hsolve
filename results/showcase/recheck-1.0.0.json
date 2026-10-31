@@ -2044,7 +2044,7 @@
   },
   {
    "scenario": "waveguide-square",
-   "title": "方波导 50 GHz（赛题真实算例）：18 个传播模",
+   "title": "方波导 10 × 10 mm、50 GHz：18 个传播模",
    "case": "wg-square-1e5",
    "n": 99225,
    "problem": "GHIEP",

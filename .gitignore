@@ -15,5 +15,5 @@ __pycache__/
 *.swp
 .DS_Store
 
-# local submission packages (not part of the project)
+# local packages (not part of the project)
 /submission/

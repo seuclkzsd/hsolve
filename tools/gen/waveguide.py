@@ -59,8 +59,8 @@ Structure of the discrete problems (the expectations written into meta.json rely
   Re lambda = -0.149).  The dense check records such pairs and targets keep clear of them.
 
 Units: lengths in mm and frequency in GHz, so k0 [rad/mm] = 2 pi f / c with c = 299.792458 mm/ns
-and every eigenvalue is in mm^-2.  This reproduces the competition's real case (10 mm square air
-guide at 50 GHz: 18 propagating modes with lambda in about [-1, 0)).
+and every eigenvalue is in mm^-2.  The reference case is a 10 mm square air guide at
+50 GHz: 18 propagating modes with lambda in about [-1, 0).
 
 Reference values are those of the continuous model (kind "partial-analytic"); the discrete
 eigenvalues differ by O(h^2), bounded a priori by ``error_bound``.  Reference windows and target

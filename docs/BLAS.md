@@ -8,7 +8,7 @@ open-source kernels (OpenBLAS built from source, BLIS, LIBXSMM) change, and the 
 section 8.
 
 Where: gpu01 (2x Xeon Silver 4314, CentOS 7), the measurement slot - cores 16-31 = NUMA node 1,
-16 physical cores, 32 GiB, one run at a time (`tools/run/guard.py --exclusive`), i.e. the judging
+16 physical cores, 32 GiB, one run at a time (`tools/run/guard.py --exclusive`), i.e. the target
 configuration; runs with fewer threads are pinned to the first cores of the slot while holding all
 of it. Release build, conda-forge OpenBLAS 0.3.34 (DYNAMIC_ARCH, OpenMP, SkylakeX kernels),
 MUMPS 5.8.2 (sequential), 2026-10-12/13. Binaries: the screening of sections 3 / 4.4 and the
@@ -42,7 +42,7 @@ earlier 1/4/8-thread profile from gpu02 cores 16-23 (taken before the slot exist
   5); a one-column solve becomes 21-31% faster per right-hand side (section 2.2).
 * Recommendation (section 6): the hook linked into hsolve with route `all` is the default now
   (`HSOLVE_BLAS_HOOK=ON`, `HSOLVE_BLAS_ROUTE_DEFAULT=all`); keep the environment's OpenBLAS;
-  runtime CPU dispatch makes the same build right for an unknown judging CPU.
+  runtime CPU dispatch makes the same build right for an unknown target CPU.
 * GPU (section 10, P10): the hook can send the large dgemm calls of MUMPS' factorizations to one
   GPU (FP64 cuBLAS, loaded at run time; mode `HS_GPU` / `hsolve --gpu off|auto|on`, default off).
   Bound by the host's memory bandwidth (staging), not by PCIe; it pays only for the contribution-
@@ -654,8 +654,7 @@ inertia-only counts; 22-26 s each at 292-316 GFlop/s, 40-43% of the slot's DGEMM
 
 ## 10. P10: the GPU route (`src/gpu`)
 
-The statement asks for GPU acceleration with a reproducible CPU-only degrade mode (the judging
-machine has no GPU). The only work worth moving is the dense part of the numeric factorizations
+The GPU route is optional acceleration with a reproducible CPU-only degrade mode. The only work worth moving is the dense part of the numeric factorizations
 (section 9: at n = 1e6 the three factorizations of a nearest run - main and the certificate's two
 exact counts - are ~75% of it, BLAS is 65-69% of a factorization); the solves stream the factors
 from host memory, which PCIe 3 (12.8 GB/s) cannot do faster than the socket (36 GB/s). Measurements,

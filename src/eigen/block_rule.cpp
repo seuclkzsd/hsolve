@@ -16,7 +16,7 @@ namespace {
 // ---------------------------------------------------------------------------------------------
 // Calibration: bench/blocktune_sweep.cpp on 17 HEP/GHEP data cases (3-D, 2-D, complex, distinct
 // and multiple eigenvalues, n = 1e4..1.5e5), 16 threads in the measurement slot of a 2x Xeon Silver
-// 4314 node (cores 16-31 = the judging machine's 16 cores), MUMPS L0-OpenMP, the driver's
+// 4314 node (cores 16-31 = the target machine's 16 cores), MUMPS L0-OpenMP, the driver's
 // adaptive ordering, block steps with BlockOrthonormalizer::try_fast (the solver's default).
 // Constants are least-squares fits on relative errors.
 //

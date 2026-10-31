@@ -561,13 +561,13 @@ Reading:
     0 compiler warnings, ctest 1009/1009 (3 disabled performance tests, 2 skipped paths as before),
     pytest 384 passed (380 + the new `--variant` / fastest-baseline tests and `test_mumps_cache.py`).
 * **Other machines.** `env/activate.sh` used to default the guard's cores to the development
-  server's NUMA node (`24-30,33-41`); on a machine without a host file (a user's, the judges') the
+  server's NUMA node (`24-30,33-41`); on a machine without a host file (a user's) the
   guarded build and tests would have refused to start. The default is now the shell's own CPU list;
   the development server's list moved to `env/hosts/CISL-NF5468M6.sh`.
 
 ## 7. Conclusion
 
-* The integrated build is the P9 deliverable: on the judging configuration (16 cores, 32 GiB) it
+* The integrated build is the P9 deliverable: on the target configuration (16 cores, 32 GiB) it
   solves the 1e6 3-D cases 1.28-1.34x faster than main c822126 with the same exact certificate, is
   9% faster on the 1e5 data set without a regression, and beats tuned SLEPc on 5 of 8 head-to-head
   configurations (P5c: 4 of 6) - every run checked by tools/eval.

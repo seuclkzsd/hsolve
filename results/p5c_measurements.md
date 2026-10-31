@@ -23,7 +23,7 @@ node ran these copies in place (shared home, identical nodes: 2x Xeon Silver 431
 `~/os2026-wt/p5c-meas/build/release/hsolve`, the same build as hsolve_new.
 
 **Slot.** Every timed run held the node's measurement slot: cores 16-31 (NUMA node 1, the
-16-core / 32 GiB judging configuration), `guard.py --exclusive`, one run at a time per node, 16
+16-core / 32 GiB target configuration), `guard.py --exclusive`, one run at a time per node, 16
 threads; each guard call <= 45 min. Evaluations (tools/eval) ran in the build lane. Nodes were
 checked idle (`tools/dev/cluster_nodes.sh`) before each campaign; gpu02 was not used.
 
@@ -307,7 +307,7 @@ Not re-measured for this page; the numbers come from the module reports
    fails for memory should not discard converged pairs (fall back to another certificate route,
    retry out of core or with a different order, or report the run as uncertified); the SCOTCH seed
    (anaint interface request) would make the orderings, and with them the estimates, reproducible;
-   whether the CLI's default budget (14 GiB) should follow the 32 GB judging machine is a lead
+   whether the CLI's default budget (14 GiB) should follow the 32 GB target machine is a lead
    decision. The same runs show the budget is not a hard limit: peak RSS 15.1 GiB with a counter
    estimated 13.6 GB against the 13.5 GB cap.
 2. **ss-tem152078 is 1.067x slower than main** (the only case beyond 3 %): the ordering model's ND

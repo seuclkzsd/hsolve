@@ -1,8 +1,8 @@
 # P10 "gpu": offloading the factorizations' dense updates to one GPU
 
-P10 task "gpu" (branch `p10gpu` from p9-merge cdb0054). The statement (item f, "并行方案") asks for
-multithreading, MPI **and GPU** acceleration with the division of labour and measured speedups, and a
-reproducible degrade mode without a GPU - the judging machine is CPU-only. This report covers the GPU
+P10 task "gpu" (branch `p10gpu` from p9-merge cdb0054). The goal is multithreading, MPI **and GPU**
+acceleration with the division of labour and measured speedups, and a reproducible degrade mode
+without a GPU. This report covers the GPU
 part: what can go to one V100, how it is done, what it gains, what it costs, and what it does not do.
 
 **Answers.**
@@ -15,7 +15,7 @@ part: what can go to one V100, how it is done, what it gains, what it costs, and
   through FP64 cuBLAS when a host-traffic model predicts >= 1.25x - in practice MUMPS' contribution-
   block updates (k = the front's pivots >= ~1000), **43-47% of a 1e6 factorization's flops but only
   22% of its CPU time**. The CUDA runtime and cuBLAS are opened at run time (dlopen): no CUDA at
-  build time, no dependency of the binary, the same build on the CPU-only judging machine.
+  build time, no dependency of the binary, the same build on the CPU-only target machine.
 * **Per call 1.7-5.0x, bound by the host's memory bandwidth, not by PCIe or the GPU.** The engine
   stages each tile through pinned memory (non-temporal stores), uploads it, runs cublasDgemm and adds
   the result into C on the host; every staged byte is read, written and read again by the copy engine,
@@ -376,22 +376,22 @@ slot calls; the 8-thread rows are single runs.) yee-pec-box-1e6: factorizations 
 sizes 1.082x), whole run 1.058x. At n <= 2.6e5 the
 GPU has nothing worth offloading (section 5.2) - `auto` keeps those runs on the CPU.
 
-Proposed text for docs/SOLUTION.md §6 (replacing its last line, "GPU：赛题允许但非必需……"):
+Proposed text for docs/SOLUTION.md §6 (replacing its last line, on the GPU):
 
 > GPU（P10，`results/p10_gpu.md`）：BLAS hook 的 GPU 路由（`src/gpu`）在 MUMPS 分解（含证书的两次精确计数）中把
 > L0 层之上、主机流量模型判为划算的大 dgemm（前沿贡献块的更新，k ≥ ~1000）以 FP64 cuBLAS 卸载到一张 GPU，CUDA 库在
 > 运行时 dlopen（构建不依赖 CUDA）。分工：分析与排序、L0 子树、面板与组装、回代与 Krylov 迭代都在 CPU（16 线程）；
 > GPU 承担 1e6 分解约 43–47% 的 flops（只占 CPU 时间的 22%），每次调用 1.7–5.0 倍；1e6 三维测例上三次分解 1.07–1.09 倍（配 P9 块参数 1.08–1.11 倍），整次运行 1.058–1.069 倍（证书 exact，每次有效、计数相同）。受主机内存带宽
 > （暂存与加回的流量，约 30 GB/s）限制，1e5 规模没有值得卸载的调用（`on` 为 0.72–0.97 倍），所以 `--gpu auto` 只在分解
-> 估计 ≥ 3e12 flops 时用 GPU；默认 `off`。无 GPU / 无 CUDA 库 / 显存不足时自动为 CPU 路径并在报告中说明（降级模式，
-> 评测机即此情形）；每次惯性计数仍是双精度 LDLᵀ 的精确 Sylvester 惯性，证书的条件与保证同 CPU 路径（实测计数与 CPU
+> 估计 ≥ 3e12 flops 时用 GPU；默认 `off`。无 GPU / 无 CUDA 库 / 显存不足时自动为 CPU 路径并在报告中说明（降级模式）；
+> 每次惯性计数仍是双精度 LDLᵀ 的精确 Sylvester 惯性，证书的条件与保证同 CPU 路径（实测计数与 CPU
 > 路径相同）。
 
 ## 7. Degrade mode and tests
 
 * **Default: off.** A build's GPU mode is `off` unless `HS_GPU` / `hsolve --gpu` / the CMake cache
   `HSOLVE_GPU_DEFAULT` say otherwise; then no CUDA library is even opened and every call takes
-  exactly today's CPU path (the router's only addition is one atomic load per dgemm). The judging
+  exactly today's CPU path (the router's only addition is one atomic load per dgemm). The target
   machine needs nothing: the binary has no CUDA dependency (`ldd` shows none; the libraries are
   dlopen'ed), so the same build runs there.
 * **auto / on without a GPU** (no driver, no `libcudart.so.12`/`libcublas.so.12`, no visible device,

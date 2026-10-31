@@ -4,8 +4,8 @@
 
 Each Scenario is one row of results/showcase/scenarios.md: the matrices of a data case, the target
 every solver gets, the hsolve configuration keys and the reference the independent evaluation
-(tools/eval) judges completeness against. The scenarios follow the hard cases named by the COMAC
-eigensolver task (https://www.oschina.net/os2026/): multiple eigenvalues, a shift on (or 1e-13 from)
+(tools/eval) judges completeness against. The scenarios cover the hard cases of an interior
+eigensolver: multiple eigenvalues, a shift on (or 1e-13 from)
 an eigenvalue, the gradient null space at zero (low-frequency breakdown) and a dense cluster there,
 generalized problems with an indefinite B, all eigenvalues of an interval, complex Hermitian
 (Bloch-periodic) problems, SuiteSparse matrices and one case of order 1e6.
