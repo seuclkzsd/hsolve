@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
+# SPDX-FileCopyrightText: 2026 Lin Zihan and the hsolve contributors
 """Tests for tools/showcase/waveguide_ref.py: the TE/TM family reference of a hollow guide against a
 dense QZ solve of the full indefinite pencil, the Sylvester count, and the field sampling helpers."""
 import json

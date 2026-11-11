@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
+// SPDX-FileCopyrightText: 2026 Lin Zihan and the hsolve contributors
 // Measurements behind src/factor/inertia_counter.cpp (module certpar): what the inertia
 // certificate's endpoint factorizations cost, and which MUMPS features make them cheaper.
 //

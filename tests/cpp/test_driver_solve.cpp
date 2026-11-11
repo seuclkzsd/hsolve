@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
+// SPDX-FileCopyrightText: 2026 Lin Zihan and the hsolve contributors
 // End-to-end tests of hs::solve (driver + factor + ops + eigen). Every case has an analytic or a
 // dense reference (n <= 2000), and checks the report contract (residuals, certificate, warnings).
 #include <gtest/gtest.h>

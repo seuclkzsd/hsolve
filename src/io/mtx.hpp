@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
+// SPDX-FileCopyrightText: 2026 Lin Zihan and the hsolve contributors
 // Internal to src/io: MatrixMarket (.mtx) reader.
 // Format: https://math.nist.gov/MatrixMarket/formats.html (banner "%%MatrixMarket matrix
 // <coordinate|array> <real|double|integer|pattern|complex> <general|symmetric|hermitian|...>").

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
+// SPDX-FileCopyrightText: 2026 Lin Zihan and the hsolve contributors
 // Tests of the randomized exclusion check (src/verify, include/hsolve/verify.hpp "(1)"): the
 // failure-probability bound, the check on pencils with known spectra (complete X passes; a removed
 // copy of a 4-fold eigenvalue and a removed edge eigenvalue are detected; standard, diagonal-B and

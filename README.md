@@ -182,7 +182,7 @@ V100 与 16 核，两个百万阶测例各 5 次运行，[P10 GPU 记录](result
 
 ```bibtex
 @software{hsolve,
-  author  = {seuclkzsd},
+  author  = {Lin, Zihan},
   title   = {hsolve: a certified shift-invert eigensolver for large sparse Hermitian (indefinite) eigenproblems from electromagnetic simulation},
   year    = {2026},
   version = {1.0.0},

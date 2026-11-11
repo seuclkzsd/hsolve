@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: Apache-2.0
-# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
+# SPDX-FileCopyrightText: 2026 Lin Zihan and the hsolve contributors
 # The showcase evidence step by step (docs/showcase/*.md quote it, section 复现).
 #
 #   tools/showcase/run_all.sh STEP [ARGS...]        from the repository root, in the project env

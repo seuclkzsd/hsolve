@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: Apache-2.0
-# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
+# SPDX-FileCopyrightText: 2026 Lin Zihan and the hsolve contributors
 """Version checks and release notes for .github/workflows/release.yml (standard library only).
 
     release_info.py version REF_TYPE REF_NAME SHA

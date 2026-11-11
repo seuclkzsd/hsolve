@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
+# SPDX-FileCopyrightText: 2026 Lin Zihan and the hsolve contributors
 """Tests of the resource guard (tools/run/guard.py): the node scheduling policy (measurement slot,
 per-run memory cap, lock wait and holder record, nested guards) and signal handling.
 

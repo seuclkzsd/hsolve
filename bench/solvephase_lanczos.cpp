@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
+// SPDX-FileCopyrightText: 2026 Lin Zihan and the hsolve contributors
 // End-to-end effect of the P4 "solvephase" kernels on a shift-invert Lanczos run.
 //
 // For one data case (HEP / GHEP): factorize K = A - sigma B at the case's sigma with the driver's

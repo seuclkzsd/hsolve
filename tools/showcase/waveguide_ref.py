@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
+# SPDX-FileCopyrightText: 2026 Lin Zihan and the hsolve contributors
 """Certified discrete reference of a hollow rectangular waveguide case (tools/gen/waveguide.py).
 
 For an air-filled PEC guide the Lee-Sun-Cendes pencil (A, B) decouples exactly into two

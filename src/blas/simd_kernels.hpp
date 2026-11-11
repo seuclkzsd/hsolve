@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0 AND BSD-3-Clause
-// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
+// SPDX-FileCopyrightText: 2026 Lin Zihan and the hsolve contributors
 // BLAS hook: the SIMD kernels of narrow_kernels.cpp, written once for a vector traits type and
 // compiled once per instruction set. NOT a normal header: narrow_kernels.cpp includes it once per
 // ISA (hence no include guard), inside namespace hs::blas::<anonymous>::<isa>, after defining

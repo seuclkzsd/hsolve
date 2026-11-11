@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
+// SPDX-FileCopyrightText: 2026 Lin Zihan and the hsolve contributors
 // GPU module: CPU affinity of the threads the engine starts (P10 "gpu"; docs/DESIGN.md §3.10,
 // docs/BLAS.md §10). Scalar set: none.
 //

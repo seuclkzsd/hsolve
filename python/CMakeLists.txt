@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
+# SPDX-FileCopyrightText: 2026 Lin Zihan and the hsolve contributors
 # Python package `hsolve` (docs/PYTHON.md): the pybind11 extension hsolve._hsolve plus the
 # pure-Python front end, laid out as ${CMAKE_CURRENT_BINARY_DIR}/hsolve/ so that
 #   PYTHONPATH=build/<preset>/python python -c "import hsolve"

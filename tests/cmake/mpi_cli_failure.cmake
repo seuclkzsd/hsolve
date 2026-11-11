@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
+# SPDX-FileCopyrightText: 2026 Lin Zihan and the hsolve contributors
 # A helper that cannot open its log must terminate the MPI job, not wait in MPI_Finalize
 # while the leader waits for Ready. Keep a successful control run to catch launcher failures.
 file(MAKE_DIRECTORY "${TEST_DIR}" "${TEST_DIR}/blocked.log.rank1")

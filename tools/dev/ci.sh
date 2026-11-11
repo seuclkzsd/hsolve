@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: Apache-2.0
-# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
+# SPDX-FileCopyrightText: 2026 Lin Zihan and the hsolve contributors
 # The continuous-integration pipeline as one script. .github/workflows/ci.yml runs its steps on
 # GitHub's ubuntu-latest runners (environment from env/environment.yml via setup-micromamba); the
 # same script runs unchanged on a developer machine or a cluster node, e.g.

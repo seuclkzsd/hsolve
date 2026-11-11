@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
+# SPDX-FileCopyrightText: 2026 Lin Zihan and the hsolve contributors
 """Re-measurement of the showcase's hsolve rows with a new build, against the committed records.
 
 The new records come from the campaign itself, hsolve alone, in the measurement slot:

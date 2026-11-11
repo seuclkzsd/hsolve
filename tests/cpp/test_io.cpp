@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
+// SPDX-FileCopyrightText: 2026 Lin Zihan and the hsolve contributors
 // Unit tests for src/io, part 1: .npy parsing / conversion / writing and zip / .npz reading.
 // File fixtures come from tests/data/make_io_fixtures.py (expected values in expected.json).
 #include <gtest/gtest.h>

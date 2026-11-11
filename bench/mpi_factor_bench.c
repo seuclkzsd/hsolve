@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
+// SPDX-FileCopyrightText: 2026 Lin Zihan and the hsolve contributors
 /* bench/mpi_factor_bench.c - P9 "mpi": upper bound of hybrid MPI + OpenMP MUMPS for hsolve's
  * factorizations (the certificate's inertia-only counts and the main LDL^T with its block solves).
  *

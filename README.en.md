@@ -206,7 +206,7 @@ Please cite hsolve as described in [CITATION.cff](CITATION.cff) ("Cite this repo
 
 ```bibtex
 @software{hsolve,
-  author  = {seuclkzsd},
+  author  = {Lin, Zihan},
   title   = {hsolve: a certified shift-invert eigensolver for large sparse Hermitian (indefinite) eigenproblems from electromagnetic simulation},
   year    = {2026},
   version = {1.0.0},

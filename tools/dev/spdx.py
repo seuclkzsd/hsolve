@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: Apache-2.0
-# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
+# SPDX-FileCopyrightText: 2026 Lin Zihan and the hsolve contributors
 """Check or add the SPDX licence header of hsolve's own source files.
 
 Every source file of the project carries two comment lines at the top (after a shebang and a Python
 encoding line, if any):
 
     // SPDX-License-Identifier: Apache-2.0
-    // SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
+    // SPDX-FileCopyrightText: 2026 Lin Zihan and the hsolve contributors
 
 Source files are recognised by their extension, by name (CMakeLists.txt, Dockerfile) or, without an
 extension, by a "#!" first line (scripts such as apps/hsolve-mpirun). Files with code adapted from
@@ -32,7 +32,7 @@ import sys
 from pathlib import Path
 
 LICENSE = "Apache-2.0"
-COPYRIGHT = "2026 seuclkzsd and the hsolve contributors"
+COPYRIGHT = "2026 Lin Zihan and the hsolve contributors"
 # Code adapted from OpenBLAS 0.3.34 (BSD-3-Clause; THIRD_PARTY_NOTICES part 1).
 MIXED = {
     "src/blas/narrow_kernels.cpp": "Apache-2.0 AND BSD-3-Clause",
