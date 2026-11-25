@@ -13,6 +13,9 @@
 
 - 事件日志的 `problem` 事件记录诊断各部分的耗时：`input_s`（A、B 的输入检查）、`norm_a_s`、`norm_b_s`（两次范数
   估计），首次分解之前的时间因此可以逐项归因。
+- 文档「从 SLEPc 迁移」（`docs/guide/from-slepc.md`）：适用范围，SLEPc 的求解目标与常用选项在命令行、
+  `config.json` 与 Python 接口中的对应，PETSc 二进制矩阵文件的转换，验收标准、完备性、问题类型、零空间与复厄密
+  谱切片上的行为差异，以及 slepc4py 与 hsolve 的代码对照。
 
 ## [1.0.0] - 2026-10-23
 

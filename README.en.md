@@ -178,7 +178,8 @@ process (2x Xeon Silver 4314, 16 cores, every run checked by the independent eva
 
 All documents are listed in [docs/README.md](docs/README.md); the searchable site is <https://seuclkzsd.github.io/hsolve/>.
 Highlights: [quick start](docs/guide/quickstart.md), [command line](docs/guide/cli.md), [Python](docs/PYTHON.md),
-[formats](docs/FORMATS.md), [diagnostics](docs/guide/diagnostics.md), [algorithms](docs/guide/algorithms.md),
+[formats](docs/FORMATS.md), [diagnostics](docs/guide/diagnostics.md), [migrating from SLEPc](docs/guide/from-slepc.md),
+[algorithms](docs/guide/algorithms.md),
 [solution report](docs/SOLUTION.md), [evaluation](docs/guide/evaluation.md), [design](docs/DESIGN.md),
 [BLAS and GPU (English)](docs/BLAS.md).
 
