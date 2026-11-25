@@ -17,6 +17,12 @@
   `config.json` 与 Python 接口中的对应，PETSc 二进制矩阵文件的转换，验收标准、完备性、问题类型、零空间与复厄密
   谱切片上的行为差异，以及 slepc4py 与 hsolve 的代码对照。
 
+### 变更
+
+- 版权人与作者署名由 GitHub 账号名 seuclkzsd 改为 Lin Zihan：`LICENSE`、`NOTICE`、源文件的 SPDX 头、
+  `CITATION.cff`、README 中的 BibTeX、文档站页脚、`MAINTAINERS.md` 与 `GOVERNANCE.md`。仓库地址、容器镜像与
+  `CODEOWNERS` 仍使用账号名。
+
 ## [1.0.0] - 2026-10-23
 
 首个正式版本：在 0.9.0 的求解器之上整理为开源项目。
