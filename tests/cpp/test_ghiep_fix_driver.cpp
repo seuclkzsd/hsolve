@@ -19,6 +19,7 @@
 #include <array>
 #include <cmath>
 #include <fstream>
+#include <limits>
 #include <nlohmann/json.hpp>
 #include <string>
 #include <utility>
@@ -33,6 +34,12 @@ namespace {
 
 using hs::cplx;
 using hs::index_t;
+
+/// Two computations of a backward error at rounding level - the driver's and this test's, with
+/// different summation orders and, across CPUs, different kernel paths (AVX-512, AVX2, portable) -
+/// agree only to a few units of roundoff, so the comparison has that absolute floor (an observed
+/// pair on a CI runner: 2.65e-16 against 1.63e-16).
+constexpr double kRoundoffFloor = 16 * std::numeric_limits<double>::epsilon();
 
 template <class T>
 struct Pencil {
@@ -199,7 +206,8 @@ void expect_outputs_match_report(const Pencil<T>& p, const hs::Solution<T>& sol)
     EXPECT_NEAR(r.pairs[j].lambda_re, lambda.real(), 0.0) << j;
     EXPECT_NEAR(hs::linalg::norm2(n, x.data()), 1.0, 1e-12) << j;
     const double eta = backward_error(p, r, x.data(), lambda);
-    EXPECT_NEAR(eta, r.pairs[j].backward_error, 1e-3 * r.pairs[j].backward_error + 1e-16) << j << " " << lambda;
+    EXPECT_NEAR(eta, r.pairs[j].backward_error, 1e-3 * r.pairs[j].backward_error + kRoundoffFloor)
+        << j << " " << lambda;
     if (r.pairs[j].accepted) {
       EXPECT_LE(eta, 1e-10) << j << " " << lambda;
     }
