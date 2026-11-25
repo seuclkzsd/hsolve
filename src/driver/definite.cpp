@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
+// SPDX-FileCopyrightText: 2026 Lin Zihan and the hsolve contributors
 // The HEP / GHEP path (B Hermitian positive definite): shift-invert thick-restart Lanczos in the
 // B inner product, Rayleigh-Ritz on the original pencil, residual rescue and the inertia
 // certificate with deflated reruns (docs/DESIGN.md §3.6).

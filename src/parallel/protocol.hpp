@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
+// SPDX-FileCopyrightText: 2026 Lin Zihan and the hsolve contributors
 // Encoding of the driver's helper tasks and replies (driver/helpers.hpp) in session messages
 // (wire.hpp). Module src/parallel, internal. Scalar set of the templates: T in {double, cplx}.
 #pragma once

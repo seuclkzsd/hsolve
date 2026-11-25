@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
+// SPDX-FileCopyrightText: 2026 Lin Zihan and the hsolve contributors
 // Tests of src/linalg/dense_ops: deterministic reductions (bitwise identical for any thread count)
 // and the CGS orthogonalization routines.
 #include <gtest/gtest.h>

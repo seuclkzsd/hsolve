@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
+// SPDX-FileCopyrightText: 2026 Lin Zihan and the hsolve contributors
 // CsrOperator: Op = A through the sparse kernels (docs/DESIGN.md §3.4b).
 #include "hsolve/error.hpp"
 #include "hsolve/operator.hpp"

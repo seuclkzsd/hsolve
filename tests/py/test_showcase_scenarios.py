@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
+# SPDX-FileCopyrightText: 2026 Lin Zihan and the hsolve contributors
 """Tests for tools/showcase/scenarios.py: catalogue integrity, the target resolvers on exact Yee
 spectra, and the preparation of a campaign data root from a small source case."""
 import json

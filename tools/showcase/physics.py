@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
+# SPDX-FileCopyrightText: 2026 Lin Zihan and the hsolve contributors
 """Physics checks for docs/showcase/物理场景.md: hsolve's eigenpairs against closed-form solutions.
 
 (a) PEC rectangular cavity, a x b x d = 22.86 x 10.16 x 30 mm (a WR-90 cross-section closed by two

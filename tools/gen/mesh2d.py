@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
+# SPDX-FileCopyrightText: 2026 Lin Zihan and the hsolve contributors
 """Structured triangulations of rectangles for the 2-D waveguide / cavity generators.
 
 Conventions (shared with tools/gen/waveguide.py)

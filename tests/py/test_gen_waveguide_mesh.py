@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
+# SPDX-FileCopyrightText: 2026 Lin Zihan and the hsolve contributors
 """Tests for tools/gen/mesh2d.py (structured rectangle triangulations and edge topology)."""
 import numpy as np
 import pytest

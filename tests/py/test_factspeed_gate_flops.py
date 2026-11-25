@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
+# SPDX-FileCopyrightText: 2026 Lin Zihan and the hsolve contributors
 """tools/bench/factspeed_gate_flops.py: pooling of ab_cases run directories and flop normalisation."""
 import json
 from pathlib import Path

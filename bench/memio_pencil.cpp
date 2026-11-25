@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
+// SPDX-FileCopyrightText: 2026 Lin Zihan and the hsolve contributors
 // Memory and speed of hs::ShiftedPencil (module memio): what the pencil keeps, what constructing
 // and assembling it costs at peak, and how long assemble() takes.
 //

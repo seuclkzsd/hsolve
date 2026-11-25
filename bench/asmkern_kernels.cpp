@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
+// SPDX-FileCopyrightText: 2026 Lin Zihan and the hsolve contributors
 // Kernel measurements of the BLAS hook (module blas, P5 "asmkern"; docs/BLAS.md).
 //
 //   bench_asmkern_kernels peak   [--n 4096] [--reps 5]

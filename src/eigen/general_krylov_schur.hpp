@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
+// SPDX-FileCopyrightText: 2026 Lin Zihan and the hsolve contributors
 // Instrumented entry point of the general Krylov-Schur solver (module-internal, src/eigen).
 // hs::krylov_schur_general is this function with times == nullptr; benchmarks and the driver's
 // profiling use it to split the run time by phase. Scalar set: T in {double, cplx}.

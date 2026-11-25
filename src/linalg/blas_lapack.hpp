@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
+// SPDX-FileCopyrightText: 2026 Lin Zihan and the hsolve contributors
 // Thin, typed C++ wrappers over the Fortran BLAS/LAPACK routines used by hsolve.
 // LP64 interface (32-bit Fortran INTEGER), as provided by OpenBLAS. Fortran CHARACTER
 // arguments carry hidden length arguments (size_t) which are passed explicitly.

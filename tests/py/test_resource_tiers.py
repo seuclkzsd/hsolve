@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
+# SPDX-FileCopyrightText: 2026 Lin Zihan and the hsolve contributors
 """scripts/resource_tiers.py: core selection for the runs, the tier tables of docs/INSTALL.md §5,
 that only runs of the general path (report candidate_source = iterative) are measured and tabulated,
 and that the committed tables are what the committed raw data give."""

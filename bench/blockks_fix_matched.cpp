@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
+// SPDX-FileCopyrightText: 2026 Lin Zihan and the hsolve contributors
 // Block Krylov-Schur against single-vector Lanczos at MATCHED ACCURACY in the real shift-invert
 // path (module eigen, P3 "blockks" review fixes).
 //

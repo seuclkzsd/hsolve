@@ -2,9 +2,9 @@
 
 角色、决策规则与响应目标见 [GOVERNANCE.md](GOVERNANCE.md)。
 
-| GitHub | 角色 | 负责范围 | 联系方式 |
+| 维护者 | 角色 | 负责范围 | 联系方式 |
 |---|---|---|---|
-| [@seuclkzsd](https://github.com/seuclkzsd) | 维护者、项目负责人 | 全部模块、发布、完备性证书与数值正确性的审核 | GitHub Issue；安全问题见 [SECURITY.md](SECURITY.md) |
+| Lin Zihan（[@seuclkzsd](https://github.com/seuclkzsd)） | 维护者、项目负责人 | 全部模块、发布、完备性证书与数值正确性的审核 | GitHub Issue；安全问题见 [SECURITY.md](SECURITY.md) |
 
 ## 招募中
 
@@ -18,6 +18,6 @@
 
 | 维护者 | 继任联系人 |
 |---|---|
-| @seuclkzsd | 暂未指定：目前是单维护者阶段，第二维护者产生后 30 天内在此补上 |
+| Lin Zihan（@seuclkzsd） | 暂未指定：目前是单维护者阶段，第二维护者产生后 30 天内在此补上 |
 
 代码所有权的自动评审分配见 [`.github/CODEOWNERS`](.github/CODEOWNERS)。

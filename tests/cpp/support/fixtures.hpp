@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
+// SPDX-FileCopyrightText: 2026 Lin Zihan and the hsolve contributors
 // Shared test fixtures (library hsolve_test_support). Dense reference operators and matrices with
 // known spectra, so module tests do not each re-implement them. Test-only code: densification is
 // allowed here for n <= 4000 (docs/DESIGN.md §5). Scalar set: T in {double, cplx}.

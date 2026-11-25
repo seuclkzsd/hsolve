@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
+// SPDX-FileCopyrightText: 2026 Lin Zihan and the hsolve contributors
 // The driver's side of multi-process solves (DESIGN §3.9, driver/helpers.hpp): the nearest
 // certificate's two counts on two helper processes at once, and the helper's side of a count. The
 // slice tasks are in definite.cpp (WindowSolver).

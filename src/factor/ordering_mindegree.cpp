@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
+// SPDX-FileCopyrightText: 2026 Lin Zihan and the hsolve contributors
 // Minimum-degree ordering of the small leaf subgraphs of the nested dissection
 // (ordering_detail.hpp): exact degrees on the explicit elimination graph, stored as bitsets.
 #include <algorithm>

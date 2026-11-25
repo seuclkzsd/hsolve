@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
+// SPDX-FileCopyrightText: 2026 Lin Zihan and the hsolve contributors
 // GPU module: hybrid CPU + GPU dgemm (gemm_engine.hpp).
 #include "gpu/gemm_engine.hpp"
 

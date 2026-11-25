@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
+// SPDX-FileCopyrightText: 2026 Lin Zihan and the hsolve contributors
 // Multilevel vertex separators (ordering_detail.hpp): sorted heavy-edge matching, greedy graph
 // growing with boundary separators on the coarsest graph, node FM refinement during
 // uncoarsening, and for large graphs the best of several complete bisections of a once-coarsened

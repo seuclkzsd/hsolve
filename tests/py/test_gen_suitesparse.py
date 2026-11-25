@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
+# SPDX-FileCopyrightText: 2026 Lin Zihan and the hsolve contributors
 """Offline tests for tools/gen/suitesparse.py: a file:// mirror of tiny .tar.gz archives."""
 import dataclasses
 import gzip

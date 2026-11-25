@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
+// SPDX-FileCopyrightText: 2026 Lin Zihan and the hsolve contributors
 // Measurements behind the P4 driver integration (module drvint): where a whole HEP/GHEP run spends
 // its time outside the Krylov iteration, and the inputs of the driver's run-time models.
 //

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
+// SPDX-FileCopyrightText: 2026 Lin Zihan and the hsolve contributors
 // Tests of hs::lanczos_krylov_schur (thick-restart Lanczos / Hermitian Krylov-Schur) on operators
 // with known spectra, for both scalar types.
 #include <gtest/gtest.h>

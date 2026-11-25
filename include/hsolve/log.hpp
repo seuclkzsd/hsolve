@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
+// SPDX-FileCopyrightText: 2026 Lin Zihan and the hsolve contributors
 // Structured logging: JSON-lines events to a file + human-readable lines on stderr.
 // Only the driver and the applications log; lower layers return statistics in structs.
 #pragma once

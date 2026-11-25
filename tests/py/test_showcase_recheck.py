@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
+# SPDX-FileCopyrightText: 2026 Lin Zihan and the hsolve contributors
 """Tests for the one-solver re-measurement: the campaign's solver filter (run order, command line)
 and tools/showcase/recheck.py (the comparison of new hsolve records with the committed ones)."""
 import json

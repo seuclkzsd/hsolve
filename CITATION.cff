@@ -11,7 +11,10 @@ abstract: >-
   window was missed. It offers nearest-to-shift, interval (spectrum slicing) and extreme targets,
   multi-threaded, multi-process and optional GPU execution, and command-line and Python interfaces.
 authors:
-  - alias: seuclkzsd
+  - family-names: Lin
+    given-names: Zihan
+    alias: seuclkzsd
+    affiliation: Fudan University
     website: "https://github.com/seuclkzsd"
 repository-code: "https://github.com/seuclkzsd/hsolve"
 url: "https://seuclkzsd.github.io/hsolve/"

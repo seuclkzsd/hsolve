@@ -7,8 +7,8 @@
 site_name: hsolve
 site_description: 电磁仿真大规模非正定厄密特征值求解器：位移反演 + 块 Krylov-Schur，带 Sylvester 惯性完备性证书
 site_url: https://seuclkzsd.github.io/hsolve/
-site_author: seuclkzsd and the hsolve contributors
-copyright: Copyright &copy; 2026 seuclkzsd and the hsolve contributors · Apache-2.0
+site_author: Lin Zihan and the hsolve contributors
+copyright: Copyright &copy; 2026 Lin Zihan and the hsolve contributors · Apache-2.0
 repo_url: https://github.com/seuclkzsd/hsolve
 repo_name: seuclkzsd/hsolve
 edit_uri: edit/main/docs/

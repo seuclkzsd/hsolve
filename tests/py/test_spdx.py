@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
+# SPDX-FileCopyrightText: 2026 Lin Zihan and the hsolve contributors
 """tools/dev/spdx.py: every source file carries its SPDX header, and --fix places it correctly; the
 shell scripts that print their own header as usage text skip the SPDX lines."""
 from __future__ import annotations

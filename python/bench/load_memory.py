@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-# SPDX-FileCopyrightText: 2026 seuclkzsd and the hsolve contributors
+# SPDX-FileCopyrightText: 2026 Lin Zihan and the hsolve contributors
 """Memory held by a matrix loaded through hsolve.load_matrix vs scipy.sparse.load_npz.
 
     PYTHONPATH=build/release/python python python/bench/load_memory.py PATH.npz --mode hsolve|scipy
