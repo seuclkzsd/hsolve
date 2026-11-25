@@ -1,0 +1,33 @@
+# Dependabot version updates: a monthly pull request per ecosystem for the pins this repository
+# keeps by hand - the GitHub Actions (pinned to commit SHAs, release tag in the comment) and the
+# documentation toolchain (requirements-docs.txt). Each update is grouped into one pull request,
+# and a version is proposed only 14 days after its release, the rule the pins already follow.
+# The pull requests run the same checks as any other: ci.yml for the workflows, pages.yml
+# (mkdocs build --strict) for the documentation toolchain.
+# Not covered: the conda environment (env/environment.yml) and the container base image
+# (Dockerfile's MICROMAMBA_IMAGE argument), which are updated together with a release.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    cooldown:
+      default-days: 14
+    groups:
+      github-actions:
+        patterns: ["*"]
+    commit-message:
+      prefix: "ci"
+
+  - package-ecosystem: pip
+    directory: /
+    schedule:
+      interval: monthly
+    cooldown:
+      default-days: 14
+    groups:
+      docs-toolchain:
+        patterns: ["*"]
+    commit-message:
+      prefix: "docs"

@@ -4,7 +4,8 @@
 # segmentation for the search index; mkdocs-material uses it when installed). Everything else is
 # their dependency closure for CPython 3.11-3.12 on Linux. Every pin was released at least two weeks
 # before it was chosen. To update: change the direct pins, resolve in a fresh virtual environment
-# and copy the result of `pip freeze` here.
+# and copy the result of `pip freeze` here. Dependabot (.github/dependabot.yml) proposes the updates
+# monthly, each at least 14 days after its release, and the docs workflow builds the site on them.
 mkdocs==1.6.1
 mkdocs-material==9.7.7
 pymdown-extensions==10.21.3

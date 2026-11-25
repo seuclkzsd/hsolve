@@ -93,6 +93,13 @@ mkdocs build --strict           # 与 CI 相同：任何告警（如失效链接
 - 数学公式用 `$$ … $$` 独立成段（GitHub 与文档站都能渲染）；行内尽量用 Unicode 符号。
 - 文中的数字必须能追溯到 `results/` 中的原始数据，并写明测试条件；局限集中写在文末一节。
 
+## 依赖更新
+
+GitHub Actions 固定到提交 SHA（注释写版本号），文档工具链在 `requirements-docs.txt` 中全部固定版本。
+Dependabot（`.github/dependabot.yml`）每月检查两者，各合成一个 PR，只提议发布满 14 天的版本；这些 PR 与其它 PR
+跑同样的检查（`ci.yml`、文档站的 `mkdocs build --strict`）。conda 环境（`env/environment.yml`）与容器基础镜像
+不在其中，随版本发布一起更新。
+
 ## 发布
 
 版本号、tag、Release 附件与 CHANGELOG 的规则见[治理 · 发布](../../GOVERNANCE.md#发布)。
