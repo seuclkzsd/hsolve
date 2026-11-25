@@ -72,7 +72,7 @@ EOF
 
 | 事件 | 内容 |
 |---|---|
-| `problem`、`b_inertia`、`b_proof` | 问题类型与 B 的正定性如何判定 |
+| `problem`、`b_inertia`、`b_proof` | 问题类型、B 的正定性如何判定；`problem` 另记诊断各步的耗时（`input_s`、`norm_a_s`、`norm_b_s`） |
 | `ordering`、`analysis`、`factorization` | 排序决策、符号分析与每次数值分解的统计 |
 | `memory_plan`、`memory_replan`、`precision_choice` | 内存规划与精度选择 |
 | `krylov_schur`、`lanczos`、`block_size_fit` | 每次 Krylov 运行的块宽、重启与收敛 |

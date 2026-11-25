@@ -784,7 +784,9 @@ factor（InertiaCounter）、sparse、linalg；不打印；固定种子与线程
      (c) 仍未定：在主分析上分解 0·A + 1·B 读惯性（主对象为双精度非 BLR；否则 `compute_inertia`），B 为 HPD
          当且仅当没有负、零主元。
      事件 `b_inertia` 的 `how` 记录判定方式（diagonal、dominant、diagonal_entry、lanczos、
-     weighted_dominant、incomplete_cholesky、lanczos_scaled、factorization、compute_inertia），证明的细节在事件 `b_proof`。
+     weighted_dominant、incomplete_cholesky、lanczos_scaled、factorization、compute_inertia），证明的细节在事件 `b_proof`；
+     诊断各部分的耗时记在事件 `problem` 中（`input_s`：两矩阵的输入检查；`norm_a_s`、`norm_b_s`：两次范数
+     估计）。
 2. **策略**：
    - HEP/GHEP → 位移反演 + `lanczos_krylov_schur`（B 内积，块宽见 §3.6-5）：nearest 用单位移
      （§3.6-8）；interval / smallest / largest 用窗口与谱切片（§3.6-8b）。
