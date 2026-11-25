@@ -539,6 +539,7 @@ Solution<T> driver::solve_with_helpers(const CsrMatrix<T>& a_in, const CsrMatrix
   rep.parallel.processes = helpers ? helpers->size() + 1 : 1;
 
   // 1. Diagnosis: exact Hermitian inputs, norms, scale.
+  Timer t_diag;
   CsrMatrix<T> a_store, b_store;
   const CsrMatrix<T>* a = hermitian_input(a_in, cfg.hermitian_tol, "A", rep.hermitian_defect_a, a_store);
   const CsrMatrix<T>* b = nullptr;
@@ -546,21 +547,27 @@ Solution<T> driver::solve_with_helpers(const CsrMatrix<T>& a_in, const CsrMatrix
     if (b_in->nrows != a->nrows) HS_THROW(InvalidInput, "B has order " << b_in->nrows << ", A has " << a->nrows);
     b = hermitian_input(*b_in, cfg.hermitian_tol, "B", rep.hermitian_defect_b, b_store);
   }
+  const double input_s = t_diag.seconds();
   const index_t n = a->nrows;
   rep.n = n;
   rep.nnz_a = a->nnz();
   rep.nnz_b = b ? b->nnz() : 0;
   rep.complex_scalars = is_complex_v<T>;
   Diagnosis d;
+  t_diag.reset();
   d.na = driver::estimate_norm2(*a, 30, cfg.seed);
+  const double norm_a_s = t_diag.seconds();
+  t_diag.reset();
   if (b) d.nb = driver::estimate_norm2(*b, 30, cfg.seed);
+  const double norm_b_s = b ? t_diag.seconds() : 0.0;
   rep.norm2_a = d.na.norm2;
   rep.norm2_b = b ? d.nb.norm2 : 1.0;
   rep.scale = rep.norm2_b > 0 ? rep.norm2_a / rep.norm2_b : rep.norm2_a;
   d.scale = std::max(rep.scale, 1e-300);
   event(c, "problem", {{"n", static_cast<std::int64_t>(n)}, {"nnz_a", static_cast<std::int64_t>(rep.nnz_a)},
                        {"nnz_b", static_cast<std::int64_t>(rep.nnz_b)}, {"complex", rep.complex_scalars},
-                       {"norm2_a", rep.norm2_a}, {"norm2_b", rep.norm2_b}});
+                       {"norm2_a", rep.norm2_a}, {"norm2_b", rep.norm2_b}, {"input_s", input_s},
+                       {"norm_a_s", norm_a_s}, {"norm_b_s", norm_b_s}});
 
   // Memory budget (DESIGN §3.6-3): configured, or derived from the memory limits of the process.
   // Resolved once the diagnosis has run parallel regions: an address-space budget counts what the
