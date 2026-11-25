@@ -13,7 +13,7 @@
 #   1x16i   the same under `numactl --interleave=all` (pages spread over the NUMA nodes)
 #   1x8     one process on the first half (T = half); the other half idles
 #   1x1     one process with one thread on the first inherited core, the others idle (the serial
-#           step of a thread ladder: results/p51_mpi.md)
+#           step of a thread ladder)
 #   2x8     two processes at once, one on each half (T = half each), independent of each other
 #   2x8m    ONE MPI job of two ranks (Open MPI of the os2026-ref env), rank r pinned to half r by
 #           tools/bench/mpi_bind.sh (KIND bench: MPI MUMPS; KIND hsolve: build/release/hsolve-mpi)

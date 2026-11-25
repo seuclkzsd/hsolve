@@ -683,7 +683,7 @@ def _presets() -> dict[str, Callable[[Path], Path]]:
     add("syn-mem27-46", make_memory_case, (46, 46, 46), 1, 0.02)
     add("syn-mem125-46", make_memory_case, (46, 46, 46), 2, 0.02)
     add("syn-mem27-100", make_memory_case, (100, 100, 100), 1, 0.02)
-    # n = 1259712: the larger 3-D case of results/p51_gpu.md, the largest of this family whose MUMPS
+    # n = 1259712: the larger 3-D case for GPU offload runs, the largest of this family whose MUMPS
     # in-core estimate (21.7 GB with hsolve's nested dissection) fits the factorization cap of a
     # 32 GiB run; 114^3 (27.0 GB) would be factorized out of core
     add("syn-mem27-108", make_memory_case, (108, 108, 108), 1, 0.02)
