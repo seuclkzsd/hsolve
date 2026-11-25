@@ -12,6 +12,8 @@
 #   1x16    one process, T = all inherited cores (unbound inside them, as hsolve runs)
 #   1x16i   the same under `numactl --interleave=all` (pages spread over the NUMA nodes)
 #   1x8     one process on the first half (T = half); the other half idles
+#   1x1     one process with one thread on the first inherited core, the others idle (the serial
+#           step of a thread ladder)
 #   2x8     two processes at once, one on each half (T = half each), independent of each other
 #   2x8m    ONE MPI job of two ranks (Open MPI of the os2026-ref env), rank r pinned to half r by
 #           tools/bench/mpi_bind.sh (KIND bench: MPI MUMPS; KIND hsolve: build/release/hsolve-mpi)
@@ -73,9 +75,10 @@ targs() { echo "--threads $1"; }  # both programs take --threads T
 preload=()
 [ "$kind" = bench ] && preload=(LD_PRELOAD="$hook")
 case "$layout" in
-  1x16|1x16i|1x8)
+  1x16|1x16i|1x8|1x1)
     cores=$all t=$n
     [ "$layout" = 1x8 ] && cores=$h0 t=$half
+    [ "$layout" = 1x1 ] && cores=${cpus[0]} t=1
     pre=()
     [ "$layout" = 1x16i ] && pre=(numactl --interleave=all)
     # shellcheck disable=SC2046
@@ -127,5 +130,5 @@ case "$layout" in
     env ${preload[@]+"${preload[@]}"} $(threads_env "$n") MALLOC_MMAP_MAX_=0 MALLOC_TRIM_THRESHOLD_=18446744073709551615 \
       taskset -c "$all" "${seq[@]}" "$@" $(targs "$n") | tag 0 "$all"
     ;;
-  *) echo "mpi_socket_run.sh: unknown LAYOUT $layout (1x16, 1x16i, 1x16g, 1x8, 2x8, 2x8m, 1+2x8, 1x16r)" >&2; exit 2 ;;
+  *) echo "mpi_socket_run.sh: unknown LAYOUT $layout (1x16, 1x16i, 1x16g, 1x8, 1x1, 2x8, 2x8m, 1+2x8, 1x16r)" >&2; exit 2 ;;
 esac

@@ -9,13 +9,31 @@ results/p9_measurements.md §5).
          Repetitions are outermost, then cases; within a case the thread counts go up for even
          repetitions and down for odd ones, and at each T the configurations run in the order given
          (reversed for odd repetitions). A configuration (--variant, repeatable) is
-             default                the case's config.json as it is (label t<T>; the only one when
-                                    no --variant is given)
+             default[@T,T...]       the case's config.json as it is (label t<T>; the only one when
+                                    no --variant is given), at every --threads count or only at
+                                    the counts after '@'
              NAME[@T,T...]=JSON     the case's config.json with JSON's top-level keys replaced
                                     (label NAME-t<T>; NAME of letters, digits, '_' and '.'), at
                                     every --threads count or only at the counts after '@'
-         e.g. --variant default --variant 'nd={"ordering":10}' --variant 'scotch@1={"ordering":3}'
-         runs the adaptive default and the own nested dissection at every T and SCOTCH at T = 1.
+             NAME[@T,T...]={"slepc": PROFILE}
+                                    the SLEPc baseline instead of hsolve (tools/bench/baseline_slepc.py:
+                                    Krylov-Schur + shift-and-invert + MUMPS) on the same T cores.
+                                    PROFILE "default": SLEPc/MUMPS defaults, one MPI rank x T OpenMP
+                                    threads (tools/showcase/campaign.py's slepc-default); "tuned":
+                                    the case's tuned profile at --slepc-profile-cores cores
+                                    (--slepc-profiles; campaign.py's slepc-tuned) with its options
+                                    on T cores - its ranks where they divide T, else one rank, x
+                                    T / ranks threads, less what one rank cannot use
+                                    (SlepcConfig.fitted); {"ranks": R, "options": {...}} likewise.
+                                    --slepc-env / --slepc-ld-path select the SLEPc environment
+                                    (the complex-scalar build for complex cases). Its time is
+                                    -log_view setup + solve + vectors (tools/bench/compare.py's
+                                    scope), its phases analysis / factorization / solves / the
+                                    rest of it as iteration; it never counts as hsolve's fastest
+                                    configuration
+         e.g. --variant default@1,16 --variant 'nd={"ordering":10}' --variant 'scotch@1={"ordering":3}'
+         runs the adaptive default at T = 1 and 16, the own nested dissection at every T and SCOTCH
+         at T = 1; --variant 'slepc.tuned@1,16={"slepc":"tuned"}' adds the tuned SLEPc there.
          A fixed ordering is how the speedup of one and the same computation is measured: the
          adaptive ordering's cost model prices the parallel nested dissection by the thread count,
          so the default configuration may factorize another pivot order at T = 1 than at T = 16.
@@ -39,6 +57,8 @@ results/p9_measurements.md §5).
                                 configuration at the smallest T measured (every run valid), so that
                                 no speedup is taken against a slower serial configuration; the
                                 summary's efficiency is this speedup x T_min / T
+           SLEPc / hsolve       a SLEPc configuration's rows: its median over the default
+                                configuration's at the same T (> 1: hsolve is faster)
          with the medians of an exclusive phase split of the report's five exclusive phases
          (docs/FORMATS.md §3; the columns add up to time_total_s):
            analysis       factor_stats.analyze_s (ordering and symbolic analysis of the main
@@ -54,8 +74,11 @@ results/p9_measurements.md §5).
                           counts, so it is not used)
            rest           time_setup_s + time_verify_s
          the ordering factorized (factor_options.ordering: 0 AMD, 3 SCOTCH, 4 PORD, 5 METIS, 10 own
-         nested dissection; the adaptive ordering's cost model depends on the thread count) and the
-         main factor's entries (factor_stats.factor_entries; '-' where the runs differ). The table
+         nested dissection; the adaptive ordering's cost model depends on the thread count), the
+         main factor's entries (factor_stats.factor_entries, else its analysis estimate; '-' where
+         the runs differ) and the factorization rate (the report's factorizations, inertia counts
+         included, x the analysed flops factor_stats.estimate.flops over the factorization +
+         certificate phases, GFlop/s; the median over the valid runs). The table
          reads every run's report.json again, so it applies this split to older raw runs too. A run
          is valid as in ab_cases.py (exit 0, not killed, success claimed, tools/eval pass); a speedup
          is given only when every run of both rows was valid.
@@ -86,19 +109,25 @@ from pathlib import Path
 from typing import Any
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+from tools.bench import slepc_log, slepc_profile  # noqa: E402
 from tools.bench.ab_cases import GUARD, PROBLEM, collect, hsolve_command, report_fields  # noqa: E402
+from tools.bench.slepc_profile import SlepcConfig  # noqa: E402
 
+REPO = Path(__file__).resolve().parents[2]
 PHASES = ("analysis", "numeric", "solves", "iterate_other", "certificate", "rest")
 LABELS = dict(zip(PHASES, ("analysis", "factorization", "solves", "iteration", "certificate", "rest")))
 ORDERINGS = {0: "AMD", 2: "AMF", 3: "SCOTCH", 4: "PORD", 5: "METIS", 6: "QAMD", 7: "auto", 10: "ND"}
 DEFAULT = "default"
+SLEPC = "slepc"                       # the JSON key of a SLEPc configuration, and its runs' "solver"
+SLEPC_PROFILES = REPO / "results/showcase/slepc_tuned_profiles.json"
 _VARIANT = re.compile(r"^(?P<name>[A-Za-z0-9_.]+)(?:@(?P<threads>[0-9]+(?:,[0-9]+)*))?(?:=(?P<json>.+))?$", re.S)
 _LABEL = re.compile(r"^(?:(?P<name>[A-Za-z0-9_.]+)-)?t(?P<threads>[0-9]+)$")
 
 
 @dataclass
 class Variant:
-    """One configuration of a case: its replacements of config.json keys and its thread counts."""
+    """One configuration of a case: its replacements of config.json keys (or its SLEPc profile) and
+    its thread counts."""
     name: str
     threads: list[int] | None = None      # None: every --threads count
     overrides: dict[str, Any] = field(default_factory=dict)
@@ -106,23 +135,63 @@ class Variant:
     def label(self, t: int) -> str:
         return f"t{t}" if self.name == DEFAULT else f"{self.name}-t{t}"
 
+    @property
+    def slepc(self) -> Any:
+        """The SLEPc profile of a SLEPc configuration ("default", "tuned" or {ranks, options}), else None."""
+        return self.overrides.get(SLEPC)
+
 
 def parse_variant(spec: str) -> Variant:
-    """default | NAME[@T,T...]=JSON (a non-empty object of top-level config.json keys)."""
+    """default[@T,T...] | NAME[@T,T...]=JSON (a non-empty object of top-level config.json keys, or
+    {"slepc": PROFILE} alone)."""
     m = _VARIANT.match(spec)
     if not m:
-        raise ValueError(f"bad --variant '{spec}': default or NAME[@T,T...]=JSON")
+        raise ValueError(f"bad --variant '{spec}': default[@T,...] or NAME[@T,T...]=JSON")
     name, threads, js = m["name"], m["threads"], m["json"]
+    counts = [int(t) for t in threads.split(",")] if threads else None
     if name == DEFAULT:
-        if threads or js:
-            raise ValueError("--variant default is the case's own configuration at every thread count")
-        return Variant(DEFAULT)
+        if js:
+            raise ValueError("--variant default is the case's own configuration (no JSON)")
+        return Variant(DEFAULT, counts)
     if js is None:
         raise ValueError(f"--variant '{spec}': a configuration other than default needs =JSON")
     overrides = json.loads(js)
     if not isinstance(overrides, dict) or not overrides:
         raise ValueError(f"--variant '{spec}': JSON must be a non-empty object")
-    return Variant(name, [int(t) for t in threads.split(",")] if threads else None, overrides)
+    if SLEPC in overrides:
+        p = overrides[SLEPC]
+        if len(overrides) != 1:
+            raise ValueError(f"--variant '{spec}': a SLEPc configuration takes no hsolve keys")
+        if not (p in (DEFAULT, "tuned") or (isinstance(p, dict) and set(p) <= {"ranks", "bind", "options"})):
+            raise ValueError(f"--variant '{spec}': slepc is \"default\", \"tuned\" or {{ranks, bind, options}}")
+    return Variant(name, counts, overrides)
+
+
+def slepc_config(profile: Any, t: int, case_dir: Path, profiles: Path, profile_cores: int) -> SlepcConfig:
+    """The SLEPc configuration of PROFILE (Variant.slepc) on t cores (see the module docstring)."""
+    if profile == DEFAULT:
+        return slepc_profile.default_config(t)
+    if profile == "tuned":
+        meta = json.loads((case_dir / "meta.json").read_text())
+        target = json.loads((case_dir / "config.json").read_text()).get("target") or {}
+        hit = slepc_profile.lookup(slepc_profile.load_profiles(profiles), case_dir.name, meta["problem"],
+                                   target.get("mode", "nearest"), profile_cores, target=target, config_target=target)
+        if hit is None or hit[1]["scope"] != "case":
+            raise SystemExit(f"thread_scaling run: no tuned SLEPc profile of {case_dir.name} at "
+                             f"{profile_cores} cores in {profiles}")
+        cfg = hit[0]
+    else:
+        cfg = SlepcConfig.make(int(profile.get("ranks", 1)), 1, profile.get("bind", "none"), profile.get("options", {}))
+    ranks = cfg.ranks if t % cfg.ranks == 0 else 1
+    return cfg.with_layout(ranks, t // ranks).fitted()
+
+
+def slepc_phases(ph: dict[str, Any]) -> dict[str, float]:
+    """The phase split of a SLEPc run's -log_view (slepc_log.phases): MUMPS analysis, numeric
+    factorization and solves, the rest of setup + solve + vectors as iteration; sums to solver_s."""
+    a, f, s = ph["analysis_s"], ph["numeric_s"], ph["solve_s"]
+    return {"analysis": a, "numeric": f, "solves": s, "iterate_other": max(0.0, ph["solver_s"] - a - f - s),
+            "certificate": 0.0, "rest": 0.0}
 
 
 def parse_label(label: str) -> tuple[str, int] | None:
@@ -178,8 +247,42 @@ def ordering(out: Path) -> str:
 
 
 def factor_entries(out: Path) -> int | None:
-    """The main factor's entries (report factor_stats.factor_entries)."""
-    return (json.loads((out / "report.json").read_text()).get("factor_stats") or {}).get("factor_entries")
+    """The main factor's entries (report factor_stats.factor_entries, else the analysis estimate's -
+    MUMPS INFOG(20) - which identifies the pivot order as well)."""
+    fs = json.loads((out / "report.json").read_text()).get("factor_stats") or {}
+    return fs.get("factor_entries") or (fs.get("estimate") or {}).get("factor_entries")
+
+
+def factor_flops(out: Path) -> float | None:
+    """The main factorization's flops as analysed (report factor_stats.estimate.flops, MUMPS RINFOG(1))."""
+    fs = json.loads((out / "report.json").read_text()).get("factor_stats") or {}
+    return (fs.get("estimate") or {}).get("flops")
+
+
+def slepc_command(cfg: SlepcConfig, case_dir: Path, out: Path, log_view: Path, root: Path, env: str | Path,
+                  ld_path: str | None) -> list[str]:
+    """argv of one SLEPc run in the environment env (slepc_profile.mpiexec_command); ld_path is
+    exported to the SLEPc processes only, as tools/showcase/campaign.py does for the complex build."""
+    target = json.loads((case_dir / "config.json").read_text()).get("target") or {}
+    k = int(target["k"]) if target.get("mode", "nearest") == "nearest" and "k" in target else None
+    cmd = slepc_profile.mpiexec_command(cfg, case_dir.name, out, k=k, log_view=log_view, root=root,
+                                        ref_env=Path(env))
+    if ld_path:
+        cmd = ["env", f"LD_LIBRARY_PATH={ld_path}", cmd[0], "-x", "LD_LIBRARY_PATH", *cmd[1:]]
+    return cmd
+
+
+def slepc_times(out: Path, log_view: Path) -> dict[str, Any]:
+    """A SLEPc run's time and phases: -log_view setup + solve + vectors (tools/bench/compare.py's
+    scope), else the report's setup + solve (the scope says which)."""
+    ph = slepc_log.read_phases(log_view)
+    if ph is not None:
+        return {"time_total_s": ph["solver_s"], "time_scope": "log_view setup+solve+vectors",
+                "phases": slepc_phases(ph)}
+    rep = json.loads((out / "report.json").read_text())
+    t = (rep.get("time_setup_s") or 0.0) + (rep.get("time_solve_s") or 0.0)
+    return {"time_total_s": t, "time_scope": "report time_setup_s+time_solve_s",
+            "phases": {k: (t if k == "iterate_other" else 0.0) for k in PHASES}}
 
 
 def cmd_run(a: argparse.Namespace) -> int:
@@ -213,7 +316,10 @@ def cmd_run(a: argparse.Namespace) -> int:
     run_dir = Path(a.run_dir)
     run_dir.mkdir(parents=True, exist_ok=True)
     configs = {(name, v.name): variant_config(data / "cases" / name, run_dir / name, v)
-               for name in a.cases for v in variants}
+               for name in a.cases for v in variants if v.slepc is None}
+    slepc = {(name, v.name, t): slepc_config(v.slepc, t, data / "cases" / name, Path(a.slepc_profiles),
+                                             a.slepc_profile_cores)
+             for name in a.cases for v in variants if v.slepc is not None for t in (v.threads or threads)}
     host = socket.gethostname().split(".")[0]
     t0 = time.time()
     with open(run_dir / "runs.jsonl", "a") as log:
@@ -231,8 +337,14 @@ def cmd_run(a: argparse.Namespace) -> int:
             out.mkdir(parents=True, exist_ok=True)
             g = [sys.executable, str(GUARD), "--skip-busy-check", "--cores", f"{first}-{first + t - 1}",
                  "--threads", str(t), "--timeout", str(a.timeout), "--summary", str(gsum)]
-            cmd = hsolve_command(binary, data / "cases" / name, out, t)
-            cmd[cmd.index("--config") + 1] = str(configs[(name, v.name)])
+            log_view = run_dir / name / f"log_view-{run}.txt"
+            if v.slepc is None:
+                cmd = hsolve_command(binary, data / "cases" / name, out, t)
+                cmd[cmd.index("--config") + 1] = str(configs[(name, v.name)])
+            else:
+                log_view.unlink(missing_ok=True)
+                cfg = slepc[(name, v.name, t)]
+                cmd = slepc_command(cfg, data / "cases" / name, out, log_view, data, a.slepc_env, a.slepc_ld_path)
             p = subprocess.run(g + ["--"] + cmd, capture_output=True, text=True)
             (run_dir / name / f"stderr-{run}.txt").write_text(p.stderr)
             s = json.loads(gsum.read_text()) if gsum.exists() else {"returncode": p.returncode}
@@ -240,9 +352,14 @@ def cmd_run(a: argparse.Namespace) -> int:
                                    "threads": t, "rep": rep, "host": host, "binary": str(binary),
                                    "rc": s.get("returncode"), "killed": s.get("killed"), "wall_s": s.get("wall_s"),
                                    "peak_rss_gib": s.get("peak_rss_gib")}
+            if v.slepc is not None:
+                rec.update(solver=SLEPC, binary=str(a.slepc_env), slepc_config=cfg.label())
             try:
                 rec.update(report_fields(out))
-                rec["phases"] = phases(out)
+                if v.slepc is None:
+                    rec["phases"] = phases(out)
+                else:
+                    rec.update(slepc_times(out, log_view))
             except (OSError, ValueError, KeyError) as err:
                 rec["error"] = f"{type(err).__name__}: {err}; {p.stderr[-300:]}"
             log.write(json.dumps(rec) + "\n")
@@ -257,12 +374,41 @@ def _median(xs: list[float]) -> float | None:
 
 
 def _reread(run_dirs: list[Path], r: dict[str, Any]) -> None:
-    """Phases, ordering and factor entries of run r from its report.json, when it is there."""
+    """Phases, ordering and factor entries of run r from its report.json, when it is there (a SLEPc
+    run keeps the phases of its -log_view)."""
+    if r.get("solver") == SLEPC:
+        r["ordering"], r["factor_entries"] = "SLEPc", None
+        return
     for rd in run_dirs:
         out = rd / r["case"] / f"{r['label']}-r{r['rep']}"
         if (out / "report.json").is_file():
             r["phases"], r["ordering"], r["factor_entries"] = phases(out), ordering(out), factor_entries(out)
+            r["factor_flops"] = factor_flops(out)
             return
+
+
+def _invalid(run_dirs: list[Path], r: dict[str, Any]) -> str:
+    """Why run r is not valid: exit, success claim, the evaluation's verdict and reasons, its time."""
+    reasons: list[str] = []
+    for rd in run_dirs:
+        ev = rd / r["case"] / f"{r['label']}-r{r['rep']}" / "evaluation.json"
+        if ev.is_file():
+            reasons = json.loads(ev.read_text()).get("reasons") or []
+            break
+    t = r.get("time_total_s")
+    return (f"r{r['rep']}: rc={r.get('rc')} killed={r.get('killed')} success={r.get('success')} "
+            f"verdict={r['verdict']}" + (f" ({'; '.join(reasons)})" if reasons else "")
+            + ("" if t is None else f", {t:.3f} s"))
+
+
+def _rate(runs: list[dict[str, Any]]) -> float | None:
+    """Median factorization rate in GFlop/s: the factorizations (the report's count, the inertia
+    counts included) x the analysed flops over the factorization + certificate phases; None where a
+    run lacks them (SLEPc runs, older raw runs)."""
+    rates = [r["factorizations"] * r["factor_flops"] / (r["phases"]["numeric"] + r["phases"]["certificate"]) / 1e9
+             for r in runs if r.get("factorizations") and r.get("factor_flops") and "phases" in r
+             and r["phases"]["numeric"] + r["phases"]["certificate"] > 0]
+    return _median(rates) if rates and len(rates) == len(runs) else None
 
 
 def _row(t: int, runs: list[dict[str, Any]], run_dirs: list[Path]) -> dict[str, Any]:
@@ -271,7 +417,9 @@ def _row(t: int, runs: list[dict[str, Any]], run_dirs: list[Path]) -> dict[str, 
     valid = [r for r in runs if r["valid"]]
     times = [r["time_total_s"] for r in valid]
     entries = {r.get("factor_entries") for r in runs}
+    flops = {r.get("factor_flops") for r in runs}
     return {"threads": t, "reps": len(runs), "valid": len(valid), "ok": len(valid) == len(runs),
+            "invalid": [_invalid(run_dirs, r) for r in runs if not r["valid"]],
             "time_s": _median(times), "time_min": min(times) if times else None,
             "time_max": max(times) if times else None, "times": times,
             "phases": {k: _median([r["phases"][k] for r in valid if "phases" in r]) for k in PHASES},
@@ -279,7 +427,11 @@ def _row(t: int, runs: list[dict[str, Any]], run_dirs: list[Path]) -> dict[str, 
             "block_size": "/".join(sorted({str(r.get("block_size")) for r in runs})),
             "ordering": "/".join(sorted({str(r.get("ordering", "-")) for r in runs})),
             "factor_entries": entries.pop() if len(entries) == 1 else None,
-            "certificate_method": "/".join(sorted({str(r.get("certificate_method")) for r in runs}))}
+            "factor_flops": flops.pop() if len(flops) == 1 else None,
+            "factor_gflops": _rate(valid),
+            "certificate_method": "/".join(sorted({str(r.get("certificate_method")) for r in runs})),
+            "slepc_config": "/".join(sorted({r["slepc_config"] for r in runs if r.get("slepc_config")})) or None,
+            "time_scope": "/".join(sorted({r.get("time_scope", "report time_total_s") for r in runs}))}
 
 
 def _ratio(base: dict[str, Any] | None, r: dict[str, Any]) -> float | None:
@@ -294,11 +446,15 @@ def case_table(name: str, labels: dict[str, list[dict[str, Any]]], run_dirs: lis
         p = parse_label(lb)
         if p:
             by_v.setdefault(p[0], {})[p[1]] = runs
-    variants = [{"variant": v, "rows": [_row(t, by_v[v][t], run_dirs) for t in sorted(by_v[v])]}
-                for v in sorted(by_v, key=lambda v: (v != DEFAULT, v))]
-    t_min = min(v["rows"][0]["threads"] for v in variants)
-    at_min = [(v["variant"], v["rows"][0]) for v in variants if v["rows"][0]["threads"] == t_min]
+    solver = {v: SLEPC if any(r.get("solver") == SLEPC for runs in by_v[v].values() for r in runs) else "hsolve"
+              for v in by_v}
+    variants = [{"variant": v, "solver": solver[v], "rows": [_row(t, by_v[v][t], run_dirs) for t in sorted(by_v[v])]}
+                for v in sorted(by_v, key=lambda v: (solver[v] == SLEPC, v != DEFAULT, v))]
+    own = [v for v in variants if v["solver"] != SLEPC] or variants
+    t_min = min(v["rows"][0]["threads"] for v in own)
+    at_min = [(v["variant"], v["rows"][0]) for v in own if v["rows"][0]["threads"] == t_min]
     fast = min((x for x in at_min if x[1]["ok"] and x[1]["time_s"]), key=lambda x: x[1]["time_s"], default=None)
+    default_rows = {r["threads"]: r for v in variants if v["variant"] == DEFAULT for r in v["rows"]}
     for v in variants:
         base = v["rows"][0]
         for r in v["rows"]:
@@ -308,6 +464,10 @@ def case_table(name: str, labels: dict[str, list[dict[str, Any]]], run_dirs: lis
             r["phase_speedup"] = {k: (base["phases"][k] / r["phases"][k]
                                       if r["speedup"] and base["phases"][k] and r["phases"][k] else None)
                                   for k in PHASES}
+            if v["solver"] == SLEPC:     # not one of hsolve's configurations: against hsolve's default
+                r["speedup_vs_fastest"] = r["efficiency_vs_fastest"] = None
+                r["slepc_over_default"] = _ratio(r, default_rows[r["threads"]]) if r["threads"] in default_rows else None
+                continue
             r["speedup_vs_fastest"] = _ratio(fast[1] if fast else None, r)
             r["efficiency_vs_fastest"] = (r["speedup_vs_fastest"] * t_min / r["threads"]
                                           if r["speedup_vs_fastest"] else None)
@@ -343,11 +503,13 @@ def markdown(cases: list[dict[str, Any]]) -> str:
                      if fast else "-: no configuration with every run valid)"), ""]
         for v in c["variants"]:
             rows = v["rows"]
-            lines += [f"*{v['variant']}* (certificate {rows[-1]['certificate_method']}, block p "
-                      f"{rows[-1]['block_size']})", "",
+            head = (f"SLEPc {'; '.join(r['slepc_config'] or '-' for r in rows)}; time {rows[-1]['time_scope']}"
+                    if v["solver"] == SLEPC else
+                    f"certificate {rows[-1]['certificate_method']}, block p {rows[-1]['block_size']}")
+            lines += [f"*{v['variant']}* ({head})", "",
                       "| threads | total s [min-max] | speedup | efficiency | vs fastest | analysis | factorization | "
-                      "solves | iteration | certificate | rest | ordering | factor entries | valid | peak GiB |",
-                      "|" + "---|" * 15]
+                      "solves | iteration | certificate | rest | ordering | factor entries | valid | peak GiB | "
+                      "factorization GFlop/s |", "|" + "---|" * 16]
             for r in rows:
                 p = r["phases"]
                 lines.append(f"| {r['threads']} | {f(r['time_s'], 3)} [{f(r['time_min'], 3)}-{f(r['time_max'], 3)}] | "
@@ -356,7 +518,10 @@ def markdown(cases: list[dict[str, Any]]) -> str:
                              f"{f(p['iterate_other'], 3)} | {f(p['certificate'], 3)} | {f(p['rest'], 3)} | "
                              f"{r['ordering']}{'' if r['same_ordering'] else ' *'} | "
                              f"{'-' if r['factor_entries'] is None else r['factor_entries']} | "
-                             f"{r['valid']}/{r['reps']} | {f(r['peak_rss_gib'])} |")
+                             f"{r['valid']}/{r['reps']} | {f(r['peak_rss_gib'])} | {f(r['factor_gflops'], 1)} |")
+            bad = [f"T = {r['threads']} {x}" for r in rows for x in r["invalid"]]
+            if bad:
+                lines += ["", "Not valid (not in the medians): " + "; ".join(bad)]
             last, base = rows[-1], rows[0]
             if len(rows) > 1 and last["speedup"]:
                 note = "" if last["same_ordering"] else (
@@ -364,6 +529,9 @@ def markdown(cases: list[dict[str, Any]]) -> str:
                     f"{last['threads']}): not the parallel speedup of one computation")
                 lines += ["", f"Phase speedups {base['threads']} -> {last['threads']} threads: " + ", ".join(
                     f"{LABELS[k]} {f(x)}x" for k, x in last["phase_speedup"].items() if x) + note]
+            if v["solver"] == SLEPC:
+                lines += ["", "SLEPc / hsolve default at the same T: " + ", ".join(
+                    f"T = {r['threads']}: {f(r.get('slepc_over_default'))}" for r in rows)]
             lines.append("")
     return "\n".join(lines)
 
@@ -397,6 +565,11 @@ def main(argv: list[str] | None = None) -> int:
                    help="data root with cases/ (default $HS_DATA_ROOT or the repository's data/)")
     r.add_argument("--first-core", type=int, help="first core of the runs (default: the slot's first)")
     r.add_argument("--timeout", type=int, default=1500, help="per run, seconds")
+    r.add_argument("--slepc-env", default=str(slepc_profile.REF_ENV),
+                   help="SLEPc environment of the SLEPc configurations (default: HS_REF_ENV, the real build)")
+    r.add_argument("--slepc-ld-path", default=None, help="LD_LIBRARY_PATH of the SLEPc processes")
+    r.add_argument("--slepc-profiles", default=str(SLEPC_PROFILES), help="tuned SLEPc profiles (\"tuned\")")
+    r.add_argument("--slepc-profile-cores", type=int, default=16, help="the core count the profiles were tuned at")
     r.add_argument("--deadline", type=float, default=2400, help="no run starts after so many seconds")
     t = sub.add_parser("table", help="speedup, efficiency and phases per case, configuration and thread count")
     t.add_argument("run_dirs", nargs="+")

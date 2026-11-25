@@ -65,6 +65,66 @@ def test_e2e_summary():
     assert "3/4" in auto and "| - |" in auto
 
 
+def test_e2e_phase_table():
+    def line(variant, rep, total, factor, cert, util=None, valid=True):
+        e = e2e_line("c", variant, rep, total, valid=valid)
+        e["times"] = {"time_total_s": total, "time_factor_s": factor, "time_certificate_s": cert}
+        e["peak_rss_gib"] = 10.0 if variant == "off" else 10.5
+        if util is not None:
+            e["smi"] = {"samples": 100, "util_mean": util, "mem_max_mib": 1500.0}
+        return e
+
+    lines = [line("off", r, 100.0 + r, 20.0, 60.0 + r, util=0.0) for r in range(3)]
+    lines += [line("auto", r, 90.0 + r, 18.0, 52.0 + r, util=10.0) for r in range(3)]
+    for i, e in enumerate(lines):
+        e["sibling_busy"] = 0.001 * i
+    md = gpu_e2e.phase_table(lines)
+    auto = [ln for ln in md.splitlines() if ln.startswith("| c | auto")][0]
+    cells = [x.strip() for x in auto.split("|")[1:-1]]
+    # solver 91, factorization phases 18 + 53 = 71 (off: 20 + 61 = 81), rest 20, util 10% of 91 s,
+    # the auto runs' siblings at most 0.5% busy
+    assert cells[2:] == ["3/3", "91.00", f"{101.0 / 91.0:.3f}", "71.00", f"{81.0 / 71.0:.3f}", "20.00", "10.50",
+                         "10.0", "9.1", "0.5"]
+    off = [ln for ln in md.splitlines() if ln.startswith("| c | off")][0]
+    assert "| 3/3 | 101.00 | - | 81.00 | - |" in off and off.endswith("| 0.2 |")
+    # an invalid run withholds both ratios (its sibling load still counts); runs without samples
+    # show no utilization and no load
+    bad = line("auto", 3, 70.0, 10.0, 40.0, valid=False)
+    bad["sibling_busy"] = 0.25
+    auto = [ln for ln in gpu_e2e.phase_table(lines + [bad]).splitlines() if ln.startswith("| c | auto")][0]
+    assert "| 3/4 | 91.00 | - | 71.00 | - |" in auto and auto.endswith("| 25.0 |")
+    assert gpu_e2e.phase_table([line("off", 0, 5.0, 1.0, 2.0)]).splitlines()[-1].endswith("| - | - | - |")
+
+
+def test_neighbour_load_counts_only_the_siblings():
+    # cores 0-1 with siblings 2-3 (from sysfs on a real machine; here the reader is faked)
+    ticks = [{0: (100, 0), 1: (100, 0), 2: (100, 100), 3: (100, 100)},
+             {0: (200, 0), 1: (200, 0), 2: (200, 190), 3: (200, 170)}]
+    load = gpu_e2e.NeighbourLoad("0-1", read=lambda: ticks.pop(0))
+    load.cpus = [2, 3]
+    with load:
+        pass
+    assert abs(load.result() - 0.2) < 1e-12  # (10 + 30) busy of 200 ticks
+    empty = gpu_e2e.NeighbourLoad("0", read=dict)
+    empty.cpus = []
+    with empty:
+        pass
+    assert empty.result() is None
+
+
+def test_parse_smi():
+    r = gpu_e2e.parse_smi("10, 300\n30, 1300\n[N/A], 5\nnot a sample\n")
+    assert r == {"samples": 2, "util_mean": 20.0, "mem_max_mib": 1300.0}
+    assert gpu_e2e.parse_smi("") == {}
+
+
+def test_smi_sampler_without_nvidia_smi(monkeypatch):
+    monkeypatch.setenv("PATH", "/nonexistent")
+    with gpu_e2e.SmiSampler("7", 100) as s:
+        pass
+    assert s.result() == {}
+
+
 def test_gpu_slot_rejects_bad_arguments():
     script = REPO / "tools/bench/gpu_slot.sh"
     r = subprocess.run(["bash", str(script), "7", "60"], capture_output=True, text=True)
