@@ -371,6 +371,10 @@ void ghep_without_factorizing_b() {
   const auto bp = events(path, "b_proof");
   ASSERT_EQ(bp.size(), 1u);
   EXPECT_TRUE(bp[0].at("proven").get<bool>());
+  // The diagnosis times its parts (problem event).
+  const auto pr = events(path, "problem");
+  ASSERT_EQ(pr.size(), 1u);
+  for (const char* k : {"input_s", "norm_a_s", "norm_b_s"}) EXPECT_GE(pr[0].at(k).get<double>(), 0.0) << k;
   auto given = cfg;
   given.problem = hs::ProblemType::GeneralizedDefinite;
   const auto ref = hs::solve(a, &b, given);
