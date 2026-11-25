@@ -113,5 +113,6 @@ print(res.report["certificate"]["statement"])    # B = I：完备性证书的文
 
 - [命令行](cli.md)：全部求解目标（区间、两端）、常用选项、配置文件与环境变量。
 - [结果解读与诊断](diagnostics.md)：`report.json` 的字段、退出码、常见问题的处置。
+- [从 SLEPc 迁移](from-slepc.md)：已经在用 SLEPc 时，选项与求解目标怎样对应、行为上有哪些差异。
 - [算法原理概览](algorithms.md)：位移反演、块 Krylov-Schur 与完备性证书。
 - [评测方法](evaluation.md)：怎样独立复核结果、怎样与 SLEPc 公平对比。

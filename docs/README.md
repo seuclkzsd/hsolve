@@ -12,6 +12,7 @@
 | [Python 接口](PYTHON.md) | `hsolve.solve`：SciPy / NumPy 进出，异常、线程与拷贝策略 | 用户 |
 | [配置与输出格式](FORMATS.md) | `config.json` 的全部键，结果目录与 `report.json` 的全部字段，评测输出 | 用户、集成者 |
 | [结果解读与诊断](guide/diagnostics.md) | 先看什么、证书的各种状态、时间与内存、常见现象的处置、事件日志 | 用户 |
+| [从 SLEPc 迁移](guide/from-slepc.md) | 适用范围，求解目标、选项与矩阵文件的对应，两者行为上的差异，代码对照 | SLEPc 用户 |
 
 ## 原理与设计
 

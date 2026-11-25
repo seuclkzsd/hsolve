@@ -153,6 +153,7 @@ V100 与 16 核，两个百万阶测例各 5 次运行，[P10 GPU 记录](result
 | [快速开始](docs/guide/quickstart.md) | 安装与第一次求解 |
 | [命令行](docs/guide/cli.md) · [Python 接口](docs/PYTHON.md) · [配置与输出格式](docs/FORMATS.md) | 用法与全部选项、配置键、报告字段 |
 | [结果解读与诊断](docs/guide/diagnostics.md) | 证书的各种状态、时间与内存、常见现象的处置 |
+| [从 SLEPc 迁移](docs/guide/from-slepc.md) | SLEPc 选项、求解目标与矩阵文件的对应，两者行为上的差异 |
 | [算法原理概览](docs/guide/algorithms.md) · [方案说明](docs/SOLUTION.md) | 原理、复杂度、收敛性、故障场景与安全设计 |
 | [评测方法](docs/guide/evaluation.md) · [研发记录](docs/guide/history.md) | 怎样得到每个数字；各阶段的测量报告 |
 | [设计文档](docs/DESIGN.md) · [开发与测试](docs/guide/developing.md) | 模块契约、构建、测试与测量纪律 |

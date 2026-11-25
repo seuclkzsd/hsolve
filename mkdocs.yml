@@ -124,6 +124,7 @@ nav:
       - Python 接口: PYTHON.md
       - 配置与输出格式: FORMATS.md
       - 结果解读与诊断: guide/diagnostics.md
+      - 从 SLEPc 迁移: guide/from-slepc.md
   - 算法原理:
       - 原理概览: guide/algorithms.md
       - 方案说明（全文）: SOLUTION.md
